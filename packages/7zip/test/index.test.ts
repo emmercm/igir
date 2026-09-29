@@ -1231,37 +1231,45 @@ describe('openEntryReader', () => {
     30_000,
   );
 
-  it('should terminate workers with pending native reads and listings', async () => {
-    for (let i = 0; i < 20; i++) {
-      const worker = new worker_threads.Worker(
-        `const { parentPort, workerData } = require('node:worker_threads');
-         import(workerData.indexUrl).then(({ default: sevenZip, SevenZipFormat }) => {
-           const options = { inputFilename: workerData.archivePath, format: SevenZipFormat.SEVEN_ZIP };
-           for (let j = 0; j < 8; j++) {
-             sevenZip
-               .openEntryReader({ ...options, entryPath: '8mb', highWaterMark: 4096 })
-               .on('error', () => {})
-               .resume();
-             sevenZip.listEntries(options).catch(() => {});
-           }
-           parentPort.postMessage('ready');
-           setInterval(() => {}, 1000);
-         });`,
-        {
-          eval: true,
-          workerData: {
-            indexUrl: new URL('../index.ts', import.meta.url).href,
-            archivePath: path.resolve(FIXTURE_DIR, 'one-large-file/7z-lz4-level1-non-solid.7z'),
+  // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
+  // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
+  // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
+  // to be fixed by https://github.com/oven-sh/bun/pull/40249
+  it.skipIf(process.versions.bun)(
+    'should terminate workers with pending native reads and listings',
+    async () => {
+      for (let i = 0; i < 20; i++) {
+        const worker = new worker_threads.Worker(
+          `const { parentPort, workerData } = require('node:worker_threads');
+           import(workerData.indexUrl).then(({ default: sevenZip, SevenZipFormat }) => {
+             const options = { inputFilename: workerData.archivePath, format: SevenZipFormat.SEVEN_ZIP };
+             for (let j = 0; j < 8; j++) {
+               sevenZip
+                 .openEntryReader({ ...options, entryPath: '8mb', highWaterMark: 4096 })
+                 .on('error', () => {})
+                 .resume();
+               sevenZip.listEntries(options).catch(() => {});
+             }
+             parentPort.postMessage('ready');
+             setInterval(() => {}, 1000);
+           });`,
+          {
+            eval: true,
+            workerData: {
+              indexUrl: new URL('../index.ts', import.meta.url).href,
+              archivePath: path.resolve(FIXTURE_DIR, 'one-large-file/7z-lz4-level1-non-solid.7z'),
+            },
           },
-        },
-      );
-      try {
-        await events.once(worker, 'message');
-        // Vary when the worker terminates relative to its opens and reads
-        await new Promise((resolve) => setTimeout(resolve, i % 5));
-      } finally {
-        await worker.terminate();
+        );
+        try {
+          await events.once(worker, 'message');
+          // Vary when the worker terminates relative to its opens and reads
+          await new Promise((resolve) => setTimeout(resolve, i % 5));
+        } finally {
+          await worker.terminate();
+        }
       }
-    }
-  }, 30_000);
+    },
+    30_000,
+  );
 });
