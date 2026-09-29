@@ -104,13 +104,6 @@ dist
 .tern-port
 
 
-# Claude
-.claude/
-!.claude/agents/
-!.claude/rules/
-!.claude/skills/
-docs/superpowers/
-
 # Bun
 *.map
 CPU.*.md
