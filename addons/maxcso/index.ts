@@ -45,22 +45,31 @@ interface MaxcsoBinding {
   openReader: (inputFilename: string) => NativeReader;
 }
 
-const binding = ((): MaxcsoBinding => {
-  try {
-    // Try to load the development build
-    return require('./build/Release/maxcso.node') as MaxcsoBinding;
-  } catch {
+const bindingInstance: { binding?: MaxcsoBinding } = {};
+
+/**
+ * Load the native addon on first use, rather than at import, so that importing this
+ * module's types and constants never loads a binary that may go unused.
+ */
+function loadBinding(): MaxcsoBinding {
+  bindingInstance.binding ??= ((): MaxcsoBinding => {
     try {
-      // Try to load the prebuild
-      return require(
-        `./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-      ) as MaxcsoBinding;
+      // Try to load the development build
+      return require('./build/Release/maxcso.node') as MaxcsoBinding;
     } catch {
-      // Try to load the postinstall build
-      return require('./addon-maxcso/build/Release/maxcso.node') as MaxcsoBinding;
+      try {
+        // Try to load the prebuild
+        return require(
+          `./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+        ) as MaxcsoBinding;
+      } catch {
+        // Try to load the postinstall build
+        return require('./addon-maxcso/build/Release/maxcso.node') as MaxcsoBinding;
+      }
     }
-  }
-})();
+  })();
+  return bindingInstance.binding;
+}
 
 /**
  * Wrap a native maxcso reader in a {@link stream.Readable}. The reader is closed
@@ -106,7 +115,7 @@ export default {
    * still return information.
    */
   async info(options: InfoOptions): Promise<MaxcsoInfo> {
-    const raw = await binding.info(options.inputFilename);
+    const raw = await loadBinding().info(options.inputFilename);
     const format = Object.values(MaxcsoFormat).find((value) => value === raw.format);
     if (format === undefined) {
       throw new Error(`unexpected maxcso container format: ${raw.format}`);
@@ -123,7 +132,7 @@ export default {
    * Open a {@link stream.Readable} over the full decompressed ISO byte range.
    */
   openReader(options: OpenReaderOptions): stream.Readable {
-    const reader = binding.openReader(options.inputFilename);
+    const reader = loadBinding().openReader(options.inputFilename);
     return readableFromReader(reader, options.highWaterMark);
   },
 };

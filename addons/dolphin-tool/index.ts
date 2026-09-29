@@ -42,22 +42,31 @@ interface DolphinBinding {
   openReader: (inputFilename: string) => NativeReader;
 }
 
-const binding = ((): DolphinBinding => {
-  try {
-    // Try to load the development build
-    return require('./build/Release/dolphin-tool.node') as DolphinBinding;
-  } catch {
+const bindingInstance: { binding?: DolphinBinding } = {};
+
+/**
+ * Load the native addon on first use, rather than at import, so that importing this
+ * module's types and constants never loads a binary that may go unused.
+ */
+function loadBinding(): DolphinBinding {
+  bindingInstance.binding ??= ((): DolphinBinding => {
     try {
-      // Try to load the prebuild
-      return require(
-        `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-      ) as DolphinBinding;
+      // Try to load the development build
+      return require('./build/Release/dolphin-tool.node') as DolphinBinding;
     } catch {
-      // Try to load the postinstall build
-      return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
+      try {
+        // Try to load the prebuild
+        return require(
+          `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+        ) as DolphinBinding;
+      } catch {
+        // Try to load the postinstall build
+        return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
+      }
     }
-  }
-})();
+  })();
+  return bindingInstance.binding;
+}
 
 /**
  * Wrap a native Dolphin reader in a {@link stream.Readable}. The reader is closed
@@ -101,7 +110,7 @@ export default {
    * Return structured header information about a Dolphin disc image without decompressing.
    */
   async info(options: InfoOptions): Promise<DolphinInfo> {
-    const raw = await binding.info(options.inputFilename);
+    const raw = await loadBinding().info(options.inputFilename);
     const format = Object.values(ContainerFormat).find((value) => value === raw.format);
     if (format === undefined) {
       throw new Error(`unexpected Dolphin container format: ${raw.format}`);
@@ -113,7 +122,7 @@ export default {
    * Open a {@link stream.Readable} over the full decompressed ISO byte range.
    */
   openReader(options: OpenReaderOptions): stream.Readable {
-    const reader = binding.openReader(options.inputFilename);
+    const reader = loadBinding().openReader(options.inputFilename);
     return readableFromReader(reader, options.highWaterMark);
   },
 };
