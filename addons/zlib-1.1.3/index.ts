@@ -51,20 +51,49 @@ export type ZlibCompressionLevelKey = keyof typeof ZlibCompressionLevel;
 export type ZlibCompressionLevelValue =
   (typeof ZlibCompressionLevel)[keyof typeof ZlibCompressionLevel];
 
-const zlib = ((): ZlibBinding => {
-  try {
-    // Try to load the development build
-    return require('./build/Release/zlib.node') as ZlibBinding;
-  } catch {
+const bindingInstance: { binding?: ZlibBinding } = {};
+
+/**
+ * Load the native addon on first use, rather than at import, so that importing this
+ * module's types and constants never loads a binary that may go unused.
+ */
+function loadBinding(): ZlibBinding {
+  bindingInstance.binding ??= ((): ZlibBinding => {
     try {
-      // Try to load the prebuild
-      return require(
-        `./addon-zlib-1.1.3/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-      ) as ZlibBinding;
+      // Try to load the development build
+      return require('./build/Release/zlib.node') as ZlibBinding;
     } catch {
-      // Try to load the postinstall build
-      return require('./addon-zlib-1.1.3/build/Release/zlib.node') as ZlibBinding;
+      try {
+        // Try to load the prebuild
+        return require(
+          `./addon-zlib-1.1.3/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+        ) as ZlibBinding;
+      } catch {
+        // Try to load the postinstall build
+        return require('./addon-zlib-1.1.3/build/Release/zlib.node') as ZlibBinding;
+      }
     }
-  }
-})();
-export default zlib;
+  })();
+  return bindingInstance.binding;
+}
+
+export default {
+  get Deflater(): ZlibBinding['Deflater'] {
+    return loadBinding().Deflater;
+  },
+  getZlibVersion(): string {
+    return loadBinding().getZlibVersion();
+  },
+  get Z_NO_FLUSH(): number {
+    return loadBinding().Z_NO_FLUSH;
+  },
+  get Z_SYNC_FLUSH(): number {
+    return loadBinding().Z_SYNC_FLUSH;
+  },
+  get Z_FULL_FLUSH(): number {
+    return loadBinding().Z_FULL_FLUSH;
+  },
+  get Z_FINISH(): number {
+    return loadBinding().Z_FINISH;
+  },
+} satisfies ZlibBinding;

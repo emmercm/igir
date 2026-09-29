@@ -96,39 +96,62 @@ interface SevenZipBinding {
   ) => NativeEntryReader;
 }
 
-const binding = ((): SevenZipBinding => {
-  try {
-    // Try to load the development build
-    return require('./build/Release/binding.node') as SevenZipBinding;
-  } catch {
-    try {
-      // Try to load the prebuild
-      return require(
-        `./addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-      ) as SevenZipBinding;
-    } catch {
-      // Try to load the postinstall build
-      return require('./addon-7zip/build/Release/binding.node') as SevenZipBinding;
-    }
+interface LoadedSevenZip {
+  binding: SevenZipBinding;
+  /**
+   * Handler names, lowercased, to their registration index. It is not exported:
+   * callers name a format from SevenZipFormat, never an index.
+   */
+  formatIndices: Map<string, number>;
+}
+
+const bindingInstance: { loaded?: LoadedSevenZip } = {};
+
+/**
+ * Load the native addon on first use, rather than at import, so that importing
+ * this module's types and constants never loads a binary that may go unused.
+ */
+function loadBinding(): LoadedSevenZip {
+  if (bindingInstance.loaded !== undefined) {
+    return bindingInstance.loaded;
   }
-})();
 
-// The handler list is fixed at build time, so this is computed once. It is not
-// exported: callers name a format from SevenZipFormat, never an index.
-const FORMAT_INDICES = new Map(
-  binding.formats.map((name, index) => [name.toLowerCase(), index] as const),
-);
+  const binding = ((): SevenZipBinding => {
+    try {
+      // Try to load the development build
+      return require('./build/Release/binding.node') as SevenZipBinding;
+    } catch {
+      try {
+        // Try to load the prebuild
+        return require(
+          `./addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+        ) as SevenZipBinding;
+      } catch {
+        // Try to load the postinstall build
+        return require('./addon-7zip/build/Release/binding.node') as SevenZipBinding;
+      }
+    }
+  })();
 
-// Fail at load, not at the first call, if a vendored 7-Zip upgrade renames or
-// drops a handler. Without this, the union above could silently drift out of
-// step with what the addon actually registered.
-const MISSING_FORMATS = Object.values(SevenZipFormat).filter(
-  (format) => !FORMAT_INDICES.has(format.toLowerCase()),
-);
-if (MISSING_FORMATS.length > 0) {
-  throw new Error(
-    `the 7-Zip addon registered no handler for: ${MISSING_FORMATS.join(', ')} (it has: ${binding.formats.join(', ')})`,
+  // The handler list is fixed at build time, so this is computed once.
+  const formatIndices = new Map(
+    binding.formats.map((name, index) => [name.toLowerCase(), index] as const),
   );
+
+  // Fail at load, not at some later call, if a vendored 7-Zip upgrade renames
+  // or drops a handler. Without this, the union above could silently drift out
+  // of step with what the addon actually registered.
+  const missingFormats = Object.values(SevenZipFormat).filter(
+    (format) => !formatIndices.has(format.toLowerCase()),
+  );
+  if (missingFormats.length > 0) {
+    throw new Error(
+      `the 7-Zip addon registered no handler for: ${missingFormats.join(', ')} (it has: ${binding.formats.join(', ')})`,
+    );
+  }
+
+  bindingInstance.loaded = { binding, formatIndices };
+  return bindingInstance.loaded;
 }
 
 /**
@@ -136,7 +159,7 @@ if (MISSING_FORMATS.length > 0) {
  * accepts.
  */
 function formatIndex(format: SevenZipFormat): number {
-  const index = FORMAT_INDICES.get(format.toLowerCase());
+  const index = loadBinding().formatIndices.get(format.toLowerCase());
   if (index === undefined) {
     // Unreachable via the union, but reachable from untyped JavaScript.
     throw new Error(`unknown format: ${format}`);
@@ -223,7 +246,10 @@ export default {
    * volumes.
    */
   async listEntries(options: ListEntriesOptions): Promise<SevenZipEntry[]> {
-    const entries = await binding.listEntries(options.inputFilename, formatIndex(options.format));
+    const entries = await loadBinding().binding.listEntries(
+      options.inputFilename,
+      formatIndex(options.format),
+    );
     return entries.map((entry) => ({
       ...entry,
       crc32: entry.crc32?.toString(16).padStart(8, '0'),
@@ -243,7 +269,7 @@ export default {
   openEntryReader(options: OpenEntryReaderOptions): stream.Readable {
     return readableFromReader(
       (chunkBytes) =>
-        new binding.EntryReader(
+        new (loadBinding().binding.EntryReader)(
           options.inputFilename,
           formatIndex(options.format),
           options.entryPath,

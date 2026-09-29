@@ -108,22 +108,31 @@ interface ChdmanBinding {
   openRawReader: (inputFilename: string) => NativeTrackReader;
 }
 
-const binding = ((): ChdmanBinding => {
-  try {
-    // Try to load the development build
-    return require('./build/Release/chdman.node') as ChdmanBinding;
-  } catch {
+const bindingInstance: { binding?: ChdmanBinding } = {};
+
+/**
+ * Load the native addon on first use, rather than at import, so that importing this
+ * module's types and constants never loads a binary that may go unused.
+ */
+function loadBinding(): ChdmanBinding {
+  bindingInstance.binding ??= ((): ChdmanBinding => {
     try {
-      // Try to load the prebuild
-      return require(
-        `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-      ) as ChdmanBinding;
+      // Try to load the development build
+      return require('./build/Release/chdman.node') as ChdmanBinding;
     } catch {
-      // Try to load the postinstall build
-      return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
+      try {
+        // Try to load the prebuild
+        return require(
+          `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+        ) as ChdmanBinding;
+      } catch {
+        // Try to load the postinstall build
+        return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
+      }
     }
-  }
-})();
+  })();
+  return bindingInstance.binding;
+}
 
 /**
  * Wrap a native CHD reader in a {@link stream.Readable}. The reader is closed when the
@@ -169,7 +178,7 @@ export default {
    * Return structured information about a CHD file's header.
    */
   async info(options: InfoOptions): Promise<CHDInfo> {
-    const raw = await binding.info(options.inputFilename);
+    const raw = await loadBinding().info(options.inputFilename);
     const type = Object.values(CHDType).find((value) => value === raw.type);
     if (type === undefined) {
       throw new Error(`unexpected CHD type: ${raw.type}`);
@@ -182,7 +191,7 @@ export default {
    * pair, returning the cue TOC text and a descriptor for every track.
    */
   async listCdBinCueTracks(options: ListCdBinCueOptions): Promise<TrackListing> {
-    return await binding.listTracks(
+    return await loadBinding().listTracks(
       options.inputFilename,
       ChdmanMode.CUEBIN,
       options.binNamePattern,
@@ -195,7 +204,7 @@ export default {
    * split track files, returning the gdi TOC text and a descriptor for every track.
    */
   async listGdRomTracks(options: ListGdRomOptions): Promise<TrackListing> {
-    return await binding.listTracks(
+    return await loadBinding().listTracks(
       options.inputFilename,
       ChdmanMode.GDI,
       options.trackBaseName,
@@ -209,7 +218,7 @@ export default {
    */
   openTrackReader(options: OpenTrackReaderOptions): stream.Readable {
     const mode = options.mode === TrackReaderMode.GDI ? ChdmanMode.GDI : ChdmanMode.CUEBIN;
-    const reader = binding.openTrackReader(options.inputFilename, mode, options.trackIndex);
+    const reader = loadBinding().openTrackReader(options.inputFilename, mode, options.trackIndex);
     return readableFromReader(reader, options.highWaterMark);
   },
 
@@ -218,7 +227,7 @@ export default {
    * DVD CHD, yielding exactly the bytes chdman's extractRaw would write.
    */
   openRawReader(options: OpenReaderOptions): stream.Readable {
-    const reader = binding.openRawReader(options.inputFilename);
+    const reader = loadBinding().openRawReader(options.inputFilename);
     return readableFromReader(reader, options.highWaterMark);
   },
 };

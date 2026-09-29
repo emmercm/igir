@@ -64,20 +64,40 @@ export interface ZstdThreadedCompressorInstance {
   end: () => Promise<Buffer>;
 }
 
-const zstd = ((): ZstdBinding => {
-  try {
-    // Try to load the development build
-    return require('./build/Release/binding.node') as ZstdBinding;
-  } catch {
+const bindingInstance: { binding?: ZstdBinding } = {};
+
+/**
+ * Load the native addon on first use, rather than at import, so that importing this
+ * module's types and constants never loads a binary that may go unused.
+ */
+function loadBinding(): ZstdBinding {
+  bindingInstance.binding ??= ((): ZstdBinding => {
     try {
-      // Try to load the prebuild
-      return require(
-        `./addon-zstd-1.5.5/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-      ) as ZstdBinding;
+      // Try to load the development build
+      return require('./build/Release/binding.node') as ZstdBinding;
     } catch {
-      // Try to load the postinstall build
-      return require('./addon-zstd-1.5.5/build/Release/binding.node') as ZstdBinding;
+      try {
+        // Try to load the prebuild
+        return require(
+          `./addon-zstd-1.5.5/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+        ) as ZstdBinding;
+      } catch {
+        // Try to load the postinstall build
+        return require('./addon-zstd-1.5.5/build/Release/binding.node') as ZstdBinding;
+      }
     }
-  }
-})();
-export default zstd;
+  })();
+  return bindingInstance.binding;
+}
+
+export default {
+  get ThreadedCompressor(): ZstdBinding['ThreadedCompressor'] {
+    return loadBinding().ThreadedCompressor;
+  },
+  compressNonThreaded(input: Buffer, compressionLevel: number): Buffer {
+    return loadBinding().compressNonThreaded(input, compressionLevel);
+  },
+  getZstdVersion(): string {
+    return loadBinding().getZstdVersion();
+  },
+} satisfies ZstdBinding;
