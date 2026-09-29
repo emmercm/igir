@@ -43,7 +43,7 @@ function fixturePayload(): Buffer {
   return payload;
 }
 
-const FIXTURE_DIR = path.join('packages', 'maxcso', 'test', 'fixtures');
+const FIXTURE_DIR = path.join('addons', 'maxcso', 'test', 'fixtures');
 const DAX_FRAME_SIZE = 8192;
 const PAYLOAD = fixturePayload();
 

@@ -13,7 +13,7 @@ import sevenZip, { SevenZipFormat } from '../index.js';
 
 gracefulFs.gracefulify(fs);
 
-const FIXTURE_DIR = path.join('packages', '7zip', 'test', 'fixtures');
+const FIXTURE_DIR = path.join('addons', '7zip', 'test', 'fixtures');
 
 /**
  * The format each fixture's extension names. Fixtures are grouped on disk by

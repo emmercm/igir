@@ -111,7 +111,7 @@ jobs:
             while IFS= read -r file; do
               [[ -z "${file}" ]] && continue
               case "${file}" in
-                packages/*/addon-*/prebuilds/*/*.node) ;;
+                addons/*/addon-*/prebuilds/*/*.node) ;;
                 *) all_prebuilds=false ;;
               esac
             done <<< "${conflicted}"

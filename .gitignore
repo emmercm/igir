@@ -104,6 +104,13 @@ dist
 .tern-port
 
 
+# Claude
+.claude/
+!.claude/agents/
+!.claude/rules/
+!.claude/skills/
+docs/superpowers/
+
 # Bun
 *.map
 CPU.*.md
@@ -112,9 +119,9 @@ Heap.*.md
 # Custom
 dist/
 /package
-packages/*/build/**
-packages/*/addon-*/build/**
-packages/*/package-lock.json
+addons/*/build/**
+addons/*/addon-*/build/**
+addons/*/package-lock.json
 ./prebuilds/
 site/
 *.bat
@@ -123,8 +130,8 @@ site/
 igir
 igir.exe
 !test/*.sh
+!addons/*/scripts/*.sh
 !packages/*
-!packages/*/scripts/*.sh
 
 # DATs
 *.dat
@@ -216,6 +223,6 @@ igir.exe
 !docs/*
 
 # Always commit fixtures
-!packages/*/test/fixtures/**
+!addons/*/test/fixtures/**
 !packages/zip/test/**/*.zip
 !test/fixtures/**
