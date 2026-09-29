@@ -5,10 +5,9 @@
 name: Node.js Native Addons Prebuild
 
 on:
-  # Note: dorny/paths-filter can't use 'pull_request' with the 'base' option
-  push:
-    branches-ignore:
-      - 'main'
+  # Pull requests from forks build and test the addons, but they can't sign or commit prebuilds;
+  #   node-addon-provenance.yml explains how a maintainer supplies them
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -16,9 +15,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Perform some `on.push.branches-ignore` here so that the 'prebuild-status-check' job can still run
+  # Gate branches here so that the 'prebuild-status-check' job can still run
   branch-gate:
-    if: ${{ github.actor == 'emmercm' }}
+    if: ${{ github.actor == 'emmercm' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
     permissions: {}
     runs-on: ubuntu-latest
     outputs:
@@ -27,7 +26,7 @@ jobs:
       - id: branch-gate
         run: |
           set -x
-          branch="${GITHUB_REF#refs/heads/}"
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
           # Don't prebuild on version bump branches (e.g. 'emmercm/1.2.3')
           if [[ "${branch}" =~ /[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "should-prebuild=false" >> "${GITHUB_OUTPUT}"
@@ -36,7 +35,7 @@ jobs:
           fi
 
   path-filter:
-    if: ${{ github.actor == 'emmercm' }}
+    if: ${{ github.actor == 'emmercm' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
     permissions:
       pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
@@ -46,13 +45,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2 # commit-filter
       # Prebuild if any relevant source file has changed
       - id: change-filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           filters: |
             changes:
+              - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-addon-prebuild.yml'
               - '.gitmodules'
               - 'packages/7zip/**'
@@ -64,12 +65,12 @@ jobs:
               - 'package*.json'
       # DON'T prebuild if the last commit was prebuilds
       - id: commit-filter
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        with:
-          base: ${{ github.ref }}
-          filters: |
-            changes:
-              - 'packages/*/addon-*/**'
+        run: |
+          if git diff --quiet HEAD~1 HEAD -- 'packages/*/addon-*/**'; then
+            echo "changes=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changes=true" >> "${GITHUB_OUTPUT}"
+          fi
 
   prebuild:
     name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch || 'default' }})
@@ -96,26 +97,18 @@ jobs:
           - os: windows-11-arm
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # QEMU cross-builds
+    env:
+      JOBS: max # node-gyp: compile using all available CPUs
     steps:
       # Setup and install
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
-          submodules: 'recursive'
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/checkout-submodules
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
           node-version: 22
-      - id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-            ${{ runner.os }}-
 
       # Prebuild
       - run: |
@@ -123,6 +116,9 @@ jobs:
 
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          # Prebuilds are published, so they must never restore a (possibly poisoned) cache
+          cache-image: false
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         name: Determine Linux Docker architecture
@@ -145,6 +141,7 @@ jobs:
             --platform ${{ matrix.docker_arch }}
             --volume ${{ github.workspace }}:/build
             --workdir /build
+            --env JOBS=${{ env.JOBS }}
           run: |
             set -euo pipefail
             set -x
@@ -275,8 +272,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
-          submodules: 'recursive'
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/checkout-submodules
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - name: Install dependencies
         run: |
@@ -317,20 +314,22 @@ jobs:
     needs:
       - prebuild
       - cpp-lint
+    # Pull requests from forks can't sign or push
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read # actions/checkout
-      id-token: write # actions/attest-build-provenance
-      attestations: write # actions/attest-build-provenance
+      id-token: write # actions/attest
+      attestations: write # actions/attest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # zizmor: ignore[artipacked] The persisted credentials are required for the
           #   subsequent `git push` that commits the prebuilds back to the branch.
-          # Check out the commit that triggered this run, which is the source commit in the
-          #   attestation, so that the prebuilds are committed directly on top of it
-          ref: ${{ github.sha }}
-          # Token needed to trigger Actions on push
+          # Check out the commit that was built, so that the prebuilds are committed directly on top
+          #   of it. Otherwise, 'pull_request' would check out the merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # Token needed so that the push triggers Actions (i.e. 'pull_request' and node-addon-provenance.yml)
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
           set -x
@@ -346,6 +345,8 @@ jobs:
         with:
           subject-path: 'packages/*/addon-*/**'
       - id: bump-and-commit
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           set -x
           find packages/*/addon-* -type f -print0 | xargs -0 ls -al
@@ -363,7 +364,7 @@ jobs:
           git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}" || exit 0
           # HEAD is detached; if the branch has moved since this run was triggered, the push is
           #   rejected as a non-fast-forward instead of committing prebuilds for stale source
-          git push origin "HEAD:${GITHUB_REF}"
+          git push origin "HEAD:refs/heads/${BRANCH}"
 
   # !!! This check should be required by GitHub !!!
   prebuild-status-check:
