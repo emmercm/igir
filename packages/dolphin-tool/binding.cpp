@@ -5,11 +5,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <future>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
 
@@ -33,12 +31,14 @@
 
 namespace DiscIO
 {
-// VolumeWii.cpp lines 509-572.
+// VolumeWii.cpp lines 509-572. Upstream hashes each of the 64 blocks on its own std::async
+// thread; here they are hashed serially on the calling thread, which is a libuv thread pool
+// worker, so that the addon creates no threads of its own. The H0/H1/H2 results are unchanged,
+// as is the early stop: once a read fails, no later block is read or hashed.
 bool VolumeWii::HashGroup(const std::array<u8, BLOCK_DATA_SIZE> in[BLOCKS_PER_GROUP],
                           HashBlock out[BLOCKS_PER_GROUP],
                           const std::function<bool(size_t block)>& read_function)
 {
-  std::array<std::future<void>, BLOCKS_PER_GROUP> hash_futures;
   bool success = true;
 
   for (size_t i = 0; i < BLOCKS_PER_GROUP; ++i)
@@ -46,66 +46,51 @@ bool VolumeWii::HashGroup(const std::array<u8, BLOCK_DATA_SIZE> in[BLOCKS_PER_GR
     if (read_function && success)
       success = read_function(i);
 
-    hash_futures[i] = std::async(std::launch::async, [&in, &out, &hash_futures, success, i] {
-      const size_t h1_base = Common::AlignDown(i, 8);
+    const size_t h1_base = Common::AlignDown(i, 8);
 
-      if (success)
+    if (success)
+    {
+      // H0 hashes
+      for (size_t j = 0; j < 31; ++j)
+        out[i].h0[j] = Common::SHA1::CalculateDigest(in[i].data() + j * 0x400, 0x400);
+
+      // H0 padding
+      out[i].padding_0 = {};
+
+      // H1 hash
+      out[h1_base].h1[i - h1_base] = Common::SHA1::CalculateDigest(out[i].h0);
+    }
+
+    if (i % 8 == 7 && success)
+    {
+      // H1 padding
+      out[h1_base].padding_1 = {};
+
+      // H1 copies
+      for (size_t j = 1; j < 8; ++j)
+        out[h1_base + j].h1 = out[h1_base].h1;
+
+      // H2 hash
+      out[0].h2[h1_base / 8] = Common::SHA1::CalculateDigest(out[i].h1);
+
+      if (i == BLOCKS_PER_GROUP - 1)
       {
-        // H0 hashes
-        for (size_t j = 0; j < 31; ++j)
-          out[i].h0[j] = Common::SHA1::CalculateDigest(in[i].data() + j * 0x400, 0x400);
+        // H2 padding
+        out[0].padding_2 = {};
 
-        // H0 padding
-        out[i].padding_0 = {};
-
-        // H1 hash
-        out[h1_base].h1[i - h1_base] = Common::SHA1::CalculateDigest(out[i].h0);
+        // H2 copies
+        for (size_t j = 1; j < BLOCKS_PER_GROUP; ++j)
+          out[j].h2 = out[0].h2;
       }
-
-      if (i % 8 == 7)
-      {
-        for (size_t j = 0; j < 7; ++j)
-          hash_futures[h1_base + j].get();
-
-        if (success)
-        {
-          // H1 padding
-          out[h1_base].padding_1 = {};
-
-          // H1 copies
-          for (size_t j = 1; j < 8; ++j)
-            out[h1_base + j].h1 = out[h1_base].h1;
-
-          // H2 hash
-          out[0].h2[h1_base / 8] = Common::SHA1::CalculateDigest(out[i].h1);
-        }
-
-        if (i == BLOCKS_PER_GROUP - 1)
-        {
-          for (size_t j = 0; j < 7; ++j)
-            hash_futures[j * 8 + 7].get();
-
-          if (success)
-          {
-            // H2 padding
-            out[0].padding_2 = {};
-
-            // H2 copies
-            for (size_t j = 1; j < BLOCKS_PER_GROUP; ++j)
-              out[j].h2 = out[0].h2;
-          }
-        }
-      }
-    });
+    }
   }
-
-  // Wait for all the async tasks to finish
-  hash_futures.back().get();
 
   return success;
 }
 
-// VolumeWii.cpp lines 580-642.
+// VolumeWii.cpp lines 580-642. Upstream encrypts across up to hardware_concurrency() std::async
+// threads; here every block is encrypted serially on the calling thread, for the same reason as
+// HashGroup above.
 bool VolumeWii::EncryptGroup(
     u64 offset, u64 partition_data_offset, u64 partition_data_decrypted_size,
     const std::array<u8, AES_KEY_SIZE>& key, BlobReader* blob,
@@ -138,34 +123,18 @@ bool VolumeWii::EncryptGroup(
   if (hash_exception_callback)
     hash_exception_callback(unencrypted_hashes.data());
 
-  const unsigned int threads =
-      std::min(BLOCKS_PER_GROUP, std::max<unsigned int>(1, std::thread::hardware_concurrency()));
-
-  std::vector<std::future<void>> encryption_futures(threads);
-
   auto aes_context = Common::AES::CreateContextEncrypt(key.data());
 
-  for (size_t i = 0; i < threads; ++i)
+  for (size_t j = 0; j < BLOCKS_PER_GROUP; ++j)
   {
-    encryption_futures[i] = std::async(
-        std::launch::async,
-        [&unencrypted_data, &unencrypted_hashes, &aes_context, &out](size_t start, size_t end) {
-          for (size_t j = start; j < end; ++j)
-          {
-            u8* out_ptr = out->data() + j * BLOCK_TOTAL_SIZE;
+    u8* out_ptr = out->data() + j * BLOCK_TOTAL_SIZE;
 
-            aes_context->CryptIvZero(reinterpret_cast<u8*>(&unencrypted_hashes[j]), out_ptr,
-                                     BLOCK_HEADER_SIZE);
+    aes_context->CryptIvZero(reinterpret_cast<u8*>(&unencrypted_hashes[j]), out_ptr,
+                             BLOCK_HEADER_SIZE);
 
-            aes_context->Crypt(out_ptr + 0x3D0, unencrypted_data[j].data(),
-                               out_ptr + BLOCK_HEADER_SIZE, BLOCK_DATA_SIZE);
-          }
-        },
-        i * BLOCKS_PER_GROUP / threads, (i + 1) * BLOCKS_PER_GROUP / threads);
+    aes_context->Crypt(out_ptr + 0x3D0, unencrypted_data[j].data(),
+                       out_ptr + BLOCK_HEADER_SIZE, BLOCK_DATA_SIZE);
   }
-
-  for (std::future<void>& future : encryption_futures)
-    future.get();
 
   return true;
 }
@@ -207,6 +176,24 @@ static void QueueWorker(Args&&... args) {
     }
 }
 
+// Drops a Source's last reference on the thread pool, so that its blob closes there, as Node.js'
+// own fs.close() does. A read worker in flight may hold the other reference, in which case it
+// drops the last one at the end of its own Execute(), also on the thread pool.
+template <typename Source>
+class CloseWorker : public Napi::AsyncWorker {
+   public:
+    CloseWorker(Napi::Env env, std::shared_ptr<Source> source) : Napi::AsyncWorker(env), source_(std::move(source)) {}
+
+    // Release the Source. Runs on the worker thread.
+    void Execute() override { source_.reset(); }
+
+    // Nothing to settle: close() does not report its outcome
+    void OnOK() override {}
+
+   private:
+    std::shared_ptr<Source> source_;
+};
+
 // Runs one read() on the thread pool: fills a Buffer from a Source's Produce(), then tells the
 // Reader the read is done and settles the read's promise. Source and Reader must provide:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
@@ -238,6 +225,10 @@ class ReadWorker : public Napi::AsyncWorker {
         } catch (...) {
             SetError("unknown blob read error");
         }
+
+        // If the reader was closed mid-read, this is the last reference, and the blob closes here
+        // on the thread pool rather than when this worker is destroyed on the main thread
+        source_.reset();
     }
 
     // Resolve with the bytes read: the whole Buffer, a view of its filled start, or null at the end
@@ -280,7 +271,7 @@ class ReadWorker : public Napi::AsyncWorker {
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
 
-    // Keeps the blob open until this worker is destroyed, even if the reader is closed or destroyed first
+    // Keeps the blob open until Execute() is done with it, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
 
     // The Buffer that Execute() fills, and its memory
@@ -294,8 +285,10 @@ class ReadWorker : public Napi::AsyncWorker {
 // one read at a time. Each Derived constructor stores the Source it reads from in source_.
 //
 // Safety invariant: the reader and the read worker in flight each hold the Source, so it is
-// freed on the main thread only once neither does. Produce() never runs on a freed Source,
-// even if the reader is closed or destroyed mid-read.
+// freed only once neither does. Produce() never runs on a freed Source, even if the reader is
+// closed or destroyed mid-read. close() and the read worker both drop their references on the
+// thread pool; only a reader garbage collected without close() frees its Source on the main
+// thread, as Node.js does for a FileHandle that was never closed.
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
@@ -315,9 +308,22 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     // close() or while another read is in flight.
     Napi::Value Read(const Napi::CallbackInfo& info);
 
-    // Release this reader's hold on the blob. A read worker in flight holds it too, so the
-    // blob closes once the worker thread is done with it.
-    void Close(const Napi::CallbackInfo& /*unused*/) { source_.reset(); }
+    // Release this reader's hold on the blob, on the thread pool. A read worker in flight holds
+    // it too, so the blob closes once the worker thread is done with it.
+    void Close(const Napi::CallbackInfo& info) {
+        if (!source_) {
+            return;
+        }
+        // Moved out first, so that the worker's reference is never the last one while this
+        // reader's is still being dropped here on the main thread
+        std::shared_ptr<Source> source = std::move(source_);
+        try {
+            QueueWorker<CloseWorker<Source>>(info.Env(), std::move(source));
+        } catch (...) {  // NOLINT(bugprone-empty-catch)
+            // The worker could not be created or queued, so the blob closes here instead, on the
+            // main thread, when `source` goes out of scope
+        }
+    }
 
     // Mark the read as done. Called on the main thread by the read worker after Execute has returned.
     void FinishRead() {
@@ -375,15 +381,22 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
 // ---- Dolphin blob reader ----
 
 // A Dolphin blob's full logical (decompressed ISO) range. Owns its own BlobReader so
-// concurrent readers are independent.
+// concurrent readers are independent. The blob is opened lazily by the first read's worker, so no
+// filesystem I/O runs on the main thread.
 class DolphinSource {
    public:
-    // Take ownership of an opened blob
-    explicit DolphinSource(std::unique_ptr<DiscIO::BlobReader> blob)
-        : blob_(std::move(blob)), total_(blob_->GetDataSize()) {}
+    // Remember the path; the blob isn't opened until the first Produce()
+    explicit DolphinSource(std::string input) : input_(std::move(input)) {}
 
     // Emit up to maxBytes of decompressed bytes starting at pos_. Runs on the worker thread.
     size_t Produce(uint8_t* out, size_t maxBytes) {
+        if (!blob_) {
+            blob_ = DiscIO::CreateBlobReader(input_);
+            if (!blob_) {
+                throw std::runtime_error("failed to open blob: " + input_);
+            }
+            total_ = blob_->GetDataSize();
+        }
         if (pos_ >= total_) return 0;
         uint64_t const n = std::min<uint64_t>(maxBytes, total_ - pos_);
         if (!blob_->Read(pos_, n, out)) {
@@ -394,6 +407,7 @@ class DolphinSource {
     }
 
    private:
+    std::string input_;
     std::unique_ptr<DiscIO::BlobReader> blob_;
     uint64_t total_ = 0;
     uint64_t pos_ = 0;
@@ -411,20 +425,19 @@ class DolphinReader : public ReaderBase<DolphinReader, DolphinSource> {
                            });
     }
 
-    // new DolphinReader(inputFilename): open the blob, throwing to JavaScript on failure
+    // new DolphinReader(inputFilename): throws to JavaScript for a missing filename; the blob is
+    // opened by the first read()
     explicit DolphinReader(const Napi::CallbackInfo& info) : ReaderBase<DolphinReader, DolphinSource>(info) {
         Napi::Env const env = info.Env();
         if (info.Length() < 1 || !info[0].IsString()) {
             Napi::TypeError::New(env, "DolphinReader(inputFilename) required").ThrowAsJavaScriptException();
             return;
         }
-        std::string const input = info[0].As<Napi::String>();
-        std::unique_ptr<DiscIO::BlobReader> blob = DiscIO::CreateBlobReader(input);
-        if (!blob) {
-            Napi::Error::New(env, "failed to open blob: " + input).ThrowAsJavaScriptException();
-            return;
+        try {
+            source_ = std::make_shared<DolphinSource>(info[0].As<Napi::String>().Utf8Value());
+        } catch (const std::exception& e) {
+            Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
         }
-        source_ = std::make_shared<DolphinSource>(std::move(blob));
     }
 };
 
@@ -444,31 +457,64 @@ static std::string BlobFormatString(DiscIO::BlobType type) {
     }
 }
 
+// Opens a blob on the thread pool and resolves its format and decompressed size. Opening reads
+// more than the header: a GCZ's block pointer and hash tables, and a WIA/RVZ's partition, raw
+// data, and group tables, the last two of which may be compressed.
+class InfoWorker : public Napi::AsyncWorker {
+   public:
+    InfoWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::string path)
+        : Napi::AsyncWorker(env), deferred_(deferred), path_(std::move(path)) {}
+
+    // Open the blob and keep its format and size. Runs on the worker thread.
+    void Execute() override {
+        try {
+            std::unique_ptr<DiscIO::BlobReader> const blob = DiscIO::CreateBlobReader(path_);
+            if (!blob) {
+                SetError("failed to open blob: " + path_);
+                return;
+            }
+            format_ = BlobFormatString(blob->GetBlobType());
+            size_ = blob->GetDataSize();
+        } catch (const std::exception& e) {
+            SetError(e.what());
+        } catch (...) {
+            SetError("unknown blob info error");
+        }
+    }
+
+    // Resolve with the format and decompressed size
+    void OnOK() override {
+        Napi::Env const env = Env();
+        Napi::Object const out = Napi::Object::New(env);
+        out.Set("inputFile", path_);
+        out.Set("format", format_);
+        out.Set("decompressedSize", Napi::Number::New(env, static_cast<double>(size_)));
+        deferred_.Resolve(out);
+    }
+
+    // Reject with the error Execute() set
+    void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
+
+   private:
+    Napi::Promise::Deferred deferred_;
+    std::string path_;
+    std::string format_;
+    uint64_t size_ = 0;
+};
+
 // info(inputFilename): resolve a blob's format and decompressed size
 static Napi::Value Info(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
-    if (info.Length() < 1 || !info[0].IsString()) {
-        Napi::TypeError::New(env, "inputFilename (string) required").ThrowAsJavaScriptException();
-        return env.Null();
-    }
-    std::string const inputPath = info[0].As<Napi::String>();
-
-    // Runs synchronously on the main thread. Opening reads more than the header: a GCZ's block
-    // pointer and hash tables, and a WIA/RVZ's partition, raw data, and group tables, the last two
-    // of which may be compressed.
-    std::unique_ptr<DiscIO::BlobReader> blob = DiscIO::CreateBlobReader(inputPath);
-    if (!blob) {
-        Napi::Error::New(env, "failed to open blob: " + inputPath).ThrowAsJavaScriptException();
-        return env.Null();
-    }
-
-    const Napi::Object out = Napi::Object::New(env);
-    out.Set("inputFile", inputPath);
-    out.Set("format", BlobFormatString(blob->GetBlobType()));
-    out.Set("decompressedSize", Napi::Number::New(env, static_cast<double>(blob->GetDataSize())));
-
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
-    deferred.Resolve(out);
+    if (info.Length() < 1 || !info[0].IsString()) {
+        deferred.Reject(Napi::TypeError::New(env, "inputFilename (string) required").Value());
+        return deferred.Promise();
+    }
+    try {
+        QueueWorker<InfoWorker>(env, deferred, info[0].As<Napi::String>().Utf8Value());
+    } catch (const Napi::Error& e) {
+        deferred.Reject(e.Value());
+    }
     return deferred.Promise();
 }
 

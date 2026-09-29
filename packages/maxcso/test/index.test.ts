@@ -997,6 +997,39 @@ describe('openReader', () => {
     expect(readable.destroyed).toEqual(true);
   });
 
+  it('should close cleanly when destroyed before the first read settles', async () => {
+    const readables = Array.from({ length: 16 }, () =>
+      maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 4096 }),
+    );
+    await Promise.all(
+      readables.map(async (readable) => {
+        // Starts the first read, and so the lazy open, without waiting for it
+        readable.resume();
+        readable.destroy();
+        await events.once(readable, 'close');
+        expect(readable.destroyed).toEqual(true);
+      }),
+    );
+    const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: CSO1_ZLIB }));
+    expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
+  });
+
+  it('should keep serving readers after many failed opens at once', async () => {
+    const results = await Promise.allSettled(
+      Array.from(
+        { length: 32 },
+        async (_, i) =>
+          await BufferUtil.fromReadable(
+            maxcso.openReader({ inputFilename: path.join(FIXTURE_DIR, `nope-${i}.cso`) }),
+          ),
+      ),
+    );
+    expect(results.every((result) => result.status === 'rejected')).toEqual(true);
+
+    const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: CSO1_ZLIB }));
+    expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
+  });
+
   it('should not let abandoned streams block new ones', async () => {
     const abandoned = Array.from({ length: 8 }, () =>
       maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 4096 }),

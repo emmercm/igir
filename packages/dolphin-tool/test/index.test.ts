@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
 import events from 'node:events';
+import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
 import worker_threads from 'node:worker_threads';
 
+import BufferUtil from '../../../src/utils/bufferUtil.js';
 import dolphin, { ContainerFormat } from '../index.js';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
@@ -89,12 +91,33 @@ describe('info', () => {
     },
   );
 
-  it('should reject a non-Dolphin file', async () => {
+  it('should reject a missing file', async () => {
     await expect(
       dolphin.info({
         inputFilename: `${path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz')}.missing`,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow('failed to open blob');
+  });
+
+  it('should reject a non-Dolphin file', async () => {
+    // Dolphin opens any file it does not recognize as a plain disc image, which
+    // is not a container format this package reports
+    await expect(dolphin.info({ inputFilename: path.join(FIXTURES, 'README.md') })).rejects.toThrow(
+      'unexpected Dolphin container format',
+    );
+  });
+
+  it('should read many headers concurrently', async () => {
+    const infos = await Promise.all(
+      Array.from(
+        { length: 16 },
+        async () =>
+          await dolphin.info({ inputFilename: path.join(FIXTURES, '240pSuite-Wii-1.20.lzma.wia') }),
+      ),
+    );
+    expect(new Set(infos.map((info) => info.decompressedSize))).toEqual(
+      new Set([WII_DECOMPRESSED_SIZE]),
+    );
   });
 });
 
@@ -133,12 +156,28 @@ describe('openReader', () => {
     );
   });
 
-  it('should throw on a missing file', () => {
-    expect(() =>
-      dolphin.openReader({
-        inputFilename: `${path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz')}.missing`,
-      }),
-    ).toThrow('failed to open blob');
+  it('should reject on a missing file', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: `${path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz')}.missing`,
+    });
+    await expect(readable.toArray()).rejects.toThrow('failed to open blob');
+  });
+
+  it('should pass a non-Dolphin file through unchanged', async () => {
+    // Dolphin opens any file it does not recognize as a plain disc image
+    const filePath = path.join(FIXTURES, 'README.md');
+    const output = await BufferUtil.fromReadable(dolphin.openReader({ inputFilename: filePath }));
+    expect(output.equals(await fs.promises.readFile(filePath))).toEqual(true);
+  });
+
+  it('should close cleanly when destroyed before the first read settles', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-Wii-1.20.lzma.wia'),
+    });
+    readable.resume();
+    readable.destroy();
+    await events.once(readable, 'close');
+    expect(readable.destroyed).toEqual(true);
   });
 
   it('should not leak a handle when destroyed mid-stream', async () => {

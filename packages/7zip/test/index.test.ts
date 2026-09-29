@@ -1,8 +1,6 @@
 import crypto from 'node:crypto';
 import events from 'node:events';
 import fs from 'node:fs';
-import module from 'node:module';
-import os from 'node:os';
 import path from 'node:path';
 import type stream from 'node:stream';
 import worker_threads from 'node:worker_threads';
@@ -16,43 +14,6 @@ import sevenZip, { SevenZipFormat } from '../index.js';
 gracefulFs.gracefulify(fs);
 
 const FIXTURE_DIR = path.join('packages', '7zip', 'test', 'fixtures');
-
-it('should terminate workers with pending native reads and listings', async () => {
-  const require = module.createRequire(import.meta.url);
-  let bindingPath: string;
-  try {
-    bindingPath = require.resolve(
-      `../addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    );
-  } catch {
-    bindingPath = require.resolve('../addon-7zip/build/Release/binding.node');
-  }
-  for (let i = 0; i < 20; i++) {
-    const worker = new worker_threads.Worker(
-      `const { parentPort, workerData } = require('node:worker_threads');
-       const binding = require(workerData.bindingPath);
-       const format = binding.formats.findIndex((name) => name.toLowerCase() === '7z');
-       const readers = Array.from({ length: 8 }, () =>
-         new binding.EntryReader(workerData.archivePath, format, '8mb', undefined, 4096));
-       for (const reader of readers) reader.read().catch(() => {});
-       for (let j = 0; j < 8; j++) binding.listEntries(workerData.archivePath, format).catch(() => {});
-       parentPort.postMessage('ready');
-       setInterval(() => {}, 1000);`,
-      {
-        eval: true,
-        workerData: {
-          bindingPath,
-          archivePath: path.resolve(FIXTURE_DIR, 'one-large-file/7z-lz4-level1-non-solid.7z'),
-        },
-      },
-    );
-    try {
-      await events.once(worker, 'message');
-    } finally {
-      await worker.terminate();
-    }
-  }
-}, 30_000);
 
 /**
  * The format each fixture's extension names. Fixtures are grouped on disk by
@@ -521,6 +482,42 @@ describe('listEntries', () => {
     });
   });
 
+  it('should list many archives at once, more than the thread pool has threads', async () => {
+    const listings = await Promise.all(
+      Array.from(
+        { length: 32 },
+        async () =>
+          await sevenZip.listEntries({
+            inputFilename: SEVEN_ZIP_ARCHIVE,
+            format: SevenZipFormat.SEVEN_ZIP,
+          }),
+      ),
+    );
+    for (const entries of listings) {
+      expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
+    }
+  });
+
+  it('should keep listing after many listings of missing files fail at once', async () => {
+    const results = await Promise.allSettled(
+      Array.from(
+        { length: 32 },
+        async (_, i) =>
+          await sevenZip.listEntries({
+            inputFilename: path.join(FIXTURE_DIR, `nope-${i}.7z`),
+            format: SevenZipFormat.SEVEN_ZIP,
+          }),
+      ),
+    );
+    expect(results.every((result) => result.status === 'rejected')).toEqual(true);
+
+    const entries = await sevenZip.listEntries({
+      inputFilename: SEVEN_ZIP_ARCHIVE,
+      format: SevenZipFormat.SEVEN_ZIP,
+    });
+    expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
+  });
+
   it('should reject a 7z download cut off partway through', async () => {
     await withTempDir(async (directory) => {
       const truncated = path.join(directory, 'truncated.7z');
@@ -888,6 +885,98 @@ describe('openEntryReader', () => {
     });
   });
 
+  it.each([
+    {
+      label: 'a missing file',
+      inputFilename: path.join(FIXTURE_DIR, 'nope.7z'),
+      rejectMessage: /could not read/,
+    },
+    {
+      label: 'a directory',
+      inputFilename: FIXTURE_DIR,
+      rejectMessage: /directory/i,
+    },
+  ])(
+    'should reject $label through the stream rather than when opened',
+    async ({ inputFilename, rejectMessage }) => {
+      const readable = sevenZip.openEntryReader({
+        inputFilename,
+        format: SevenZipFormat.SEVEN_ZIP,
+        entryPath: '1kb',
+      });
+      await expect(drain(readable)).rejects.toThrow(rejectMessage);
+    },
+  );
+
+  it('should reject a file that is not an archive through the stream', async () => {
+    await withTempDir(async (directory) => {
+      const garbage = path.join(directory, 'garbage');
+      await FsUtil.writeFile(garbage, crypto.randomBytes(4096));
+
+      await expect(
+        drain(
+          sevenZip.openEntryReader({
+            inputFilename: garbage,
+            format: SevenZipFormat.SEVEN_ZIP,
+            entryPath: '1kb',
+          }),
+        ),
+      ).rejects.toThrow(/is not a valid 7z archive/);
+    });
+  });
+
+  it('should close cleanly when destroyed before the archive has opened', async () => {
+    const readables = Array.from({ length: 16 }, () =>
+      sevenZip.openEntryReader({
+        inputFilename: SEVEN_ZIP_ARCHIVE,
+        format: SevenZipFormat.SEVEN_ZIP,
+        entryPath: '4kb',
+      }),
+    );
+    await Promise.all(
+      readables.map(async (readable) => {
+        // Starts the first read, and so the open, without waiting for either
+        readable.resume();
+        readable.destroy();
+        await events.once(readable, 'close');
+        expect(readable.destroyed).toEqual(true);
+      }),
+    );
+
+    // Nothing the abandoned opens left behind stops a later reader
+    const extracted = await drain(
+      sevenZip.openEntryReader({
+        inputFilename: SEVEN_ZIP_ARCHIVE,
+        format: SevenZipFormat.SEVEN_ZIP,
+        entryPath: '4kb',
+      }),
+    );
+    expect(extracted.length).toEqual(4096);
+  });
+
+  it('should extract more entries at once than the thread pool has threads', async () => {
+    // Every reader holds its producer blocked on backpressure until it is
+    // read, so extraction occupying pool threads would starve the later opens
+    await withLargeArchive(async (largeArchive) => {
+      const readables = Array.from({ length: 16 }, () =>
+        sevenZip.openEntryReader({
+          inputFilename: largeArchive,
+          format: SevenZipFormat.ZIP,
+          entryPath: 'stored.bin',
+        }),
+      );
+      for (const readable of readables) {
+        expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
+      }
+      await Promise.all(
+        readables.map(async (readable) => {
+          readable.destroy();
+          await events.once(readable, 'close');
+        }),
+      );
+    });
+  });
+
   it('should accept an entry path spelled with either separator', async () => {
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'backslash.zip');
@@ -1138,6 +1227,48 @@ describe('openEntryReader', () => {
       expect(
         extracted.equals(Buffer.from(Array.from({ length: LARGE_ENTRY_SIZE }, (_, i) => i % 251))),
       ).toEqual(true);
+    },
+    30_000,
+  );
+
+  // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
+  // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
+  // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
+  // to be fixed by https://github.com/oven-sh/bun/pull/40249
+  it.skipIf(process.versions.bun)(
+    'should terminate workers with pending native reads and listings',
+    async () => {
+      for (let i = 0; i < 20; i++) {
+        const worker = new worker_threads.Worker(
+          `const { parentPort, workerData } = require('node:worker_threads');
+           import(workerData.indexUrl).then(({ default: sevenZip, SevenZipFormat }) => {
+             const options = { inputFilename: workerData.archivePath, format: SevenZipFormat.SEVEN_ZIP };
+             for (let j = 0; j < 8; j++) {
+               sevenZip
+                 .openEntryReader({ ...options, entryPath: '8mb', highWaterMark: 4096 })
+                 .on('error', () => {})
+                 .resume();
+               sevenZip.listEntries(options).catch(() => {});
+             }
+             parentPort.postMessage('ready');
+             setInterval(() => {}, 1000);
+           });`,
+          {
+            eval: true,
+            workerData: {
+              indexUrl: new URL('../index.ts', import.meta.url).href,
+              archivePath: path.resolve(FIXTURE_DIR, 'one-large-file/7z-lz4-level1-non-solid.7z'),
+            },
+          },
+        );
+        try {
+          await events.once(worker, 'message');
+          // Vary when the worker terminates relative to its opens and reads
+          await new Promise((resolve) => setTimeout(resolve, i % 5));
+        } finally {
+          await worker.terminate();
+        }
+      }
     },
     30_000,
   );

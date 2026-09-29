@@ -352,6 +352,7 @@
         "src/errors.cpp",
         "src/jobRegistry.cpp",
         "src/lister.cpp",
+        "src/poolTask.cpp",
         "src/pump.cpp",
         "src/sevenZip.cpp",
         "src/asyncSignal.cpp",
@@ -374,6 +375,10 @@
         "NAPI_VERSION=<(napi_build_version)",
         "NODE_ADDON_API_DISABLE_DEPRECATED",
         "NAPI_CPP_EXCEPTIONS",
+        # A pool task, or a reader's construction or read, can finish while its worker thread's
+        # environment is being torn down, when JS can no longer run. Without this, node-addon-api
+        # aborts the process instead of dropping the result nobody can receive.
+        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS",
         "Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0"
       ],
       "cflags": ["-U__ARM_FEATURE_CRC32", "-U__ARM_FEATURE_CRYPTO", "-U__ARM_FEATURE_SHA2",

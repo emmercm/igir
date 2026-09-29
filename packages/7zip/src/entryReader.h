@@ -11,7 +11,7 @@
 namespace sevenzip {
 
 /**
- * Exposes one archive entry as a pull-based JavaScript reader backed by a decoder thread.
+ * Exposes one archive entry as a pull-based JavaScript reader, opened on the libuv pool and backed by a decoder thread.
  *
  * Each read lends the producer a fresh JavaScript buffer to fill and resolves
  * with it once it is full, without blocking the event loop. A read parks until
