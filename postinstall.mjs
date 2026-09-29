@@ -30,21 +30,20 @@ while (!fs.existsSync(path.join(modulesParentDir, 'node_modules'))) {
   modulesParentDir = nextParentDir;
 }
 
-for (let napiPackage of [
-  path.join('packages', '7zip'),
-  path.join('packages', 'chdman'),
-  path.join('packages', 'dolphin-tool'),
-  path.join('packages', 'maxcso'),
-  path.join('packages', 'zlib-1.1.3'),
-  path.join('packages', 'zstd-1.5.5'),
-]) {
-  try {
-    await fs.promises.stat('dist');
-    napiPackage = path.join('dist', napiPackage);
-  } catch {
-    // ignored
-  }
+let addonsDir = 'addons';
+try {
+  await fs.promises.stat('dist');
+  addonsDir = path.join('dist', addonsDir);
+} catch {
+  // ignored
+}
 
+const napiPackages = (await fs.promises.readdir(addonsDir, { withFileTypes: true }))
+  .filter((dirent) => dirent.isDirectory())
+  .map((dirent) => path.join(addonsDir, dirent.name))
+  .toSorted((a, b) => a.localeCompare(b));
+
+for (const napiPackage of napiPackages) {
   // Do nothing if `node-gyp-build` can find a prebuild or a full build
   const addonDirectory = path.join(napiPackage, `addon-${path.basename(napiPackage)}`);
   try {

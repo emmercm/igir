@@ -40,6 +40,7 @@ jobs:
             should-test:
               - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-test.yml'
+              - 'addons/**'
               - 'packages/**'
               - 'src/**'
               - 'test/**'
@@ -54,12 +55,7 @@ jobs:
               - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-addon-prebuild.yml'
               - '.gitmodules'
-              - 'packages/7zip/**'
-              - 'packages/chdman/**'
-              - 'packages/dolphin-tool/**'
-              - 'packages/maxcso/**'
-              - 'packages/zlib*/**'
-              - 'packages/zstd*/**'
+              - 'addons/**'
               - 'package*.json'
               - 'postinstall.mjs'
 
@@ -142,7 +138,7 @@ jobs:
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
         run: |
-          rm -rf packages/*/addon-* packages/*/prebuilds*
+          rm -rf addons/*/addon-*
       - run: npm install --foreground-scripts
 
       # Test the source files

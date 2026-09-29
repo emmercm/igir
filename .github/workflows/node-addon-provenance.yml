@@ -49,7 +49,7 @@ jobs:
           # Every prebuild that changed, one per line. `-z` can't be used because variables can't
           #   hold NUL bytes; instead, git wraps any path with a newline or other unusual character
           #   in double quotes, which then fails as "not a blob" below.
-          paths="$(git -C "${repo_dir}" -c core.quotePath=true diff --no-renames --diff-filter=d --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'packages/*/addon-*/**')"
+          paths="$(git -C "${repo_dir}" -c core.quotePath=true diff --no-renames --diff-filter=d --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'addons/*/addon-*/**')"
           if [[ -z "${paths}" ]]; then
             echo "No prebuilds were added or modified"
             exit 0
@@ -164,18 +164,13 @@ jobs:
 
           # Keep in sync with node-addon-prebuild.yml's 'change-filter'
           source_paths=(
+            ':(glob)addons/**'
+            ':(glob,exclude)addons/*/addon-*/**'
             ':(glob).github/workflows/node-addon-prebuild.yml'
             ':(glob).gitmodules'
-            ':(glob)packages/7zip/**'
-            ':(glob)packages/chdman/**'
-            ':(glob)packages/dolphin-tool/**'
-            ':(glob)packages/maxcso/**'
-            ':(glob)packages/zlib*/**'
-            ':(glob)packages/zstd*/**'
             ':(glob)package*.json'
-            ':(glob,exclude)packages/*/addon-*/**'
           )
-          prebuild_paths=':(glob)packages/*/addon-*/**'
+          prebuild_paths=':(glob)addons/*/addon-*/**'
 
           # The prebuilds are stale if no commit changed them after the last source change
           stale=false

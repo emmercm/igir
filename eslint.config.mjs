@@ -25,7 +25,7 @@ const __dirname = path.dirname(__filename);
 
 export default eslintConfig.defineConfig([
   {
-    ignores: ['.*/**', 'dist/**', 'packages/*/deps/**', 'site/**'],
+    ignores: ['.*/**', 'addons/*/deps/**', 'dist/**', 'site/**'],
   },
 
   // @typescript-eslint
@@ -344,7 +344,7 @@ export default eslintConfig.defineConfig([
 
   // Ignore JSDoc requirements for some files
   {
-    files: ['test/**/*.ts', 'packages/*/test/**/*.ts'],
+    files: ['test/**/*.ts', '{addons,packages}/*/test/**/*.ts'],
     rules: {
       'jsdoc/require-jsdoc': 'off',
     },

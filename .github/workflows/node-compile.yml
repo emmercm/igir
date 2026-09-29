@@ -39,6 +39,7 @@ jobs:
           filters: |
             changes:
               - '.github/workflows/node-compile.yml'
+              - 'addons/**'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'scripts/compile.ts'

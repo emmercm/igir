@@ -35,6 +35,7 @@ jobs:
           filters: |
             source-changes:
               - '.github/workflows/node-test-package.yml'
+              - 'addons/**'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'src/**'
@@ -46,6 +47,7 @@ jobs:
               - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-test-package.yml'
               - '.gitmodules'
+              - 'addons/**'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'index.ts'
@@ -213,12 +215,9 @@ jobs:
 
           # Runtime smoke test: executing the module runs its top-level require of
           # the freshly compiled addon, which fails loudly if the .node didn't link.
-          node "$(find . -path '*/packages/7zip/index.js')"
-          node "$(find . -path '*/packages/chdman/index.js')"
-          node "$(find . -path '*/packages/dolphin-tool/index.js')"
-          node "$(find . -path '*/packages/maxcso/index.js')"
-          node "$(find . -path '*/packages/zlib*/index.js')"
-          node "$(find . -path '*/packages/zstd*/index.js')"
+          for addon in dist/addons/*/index.js; do
+            node "${addon}"
+          done
 
   # !!! This check should be required by GitHub !!!
   test-package-status-check:

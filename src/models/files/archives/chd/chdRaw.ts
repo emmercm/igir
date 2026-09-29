@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type stream from 'node:stream';
 
-import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
+import chdman, { CHDType } from '../../../../../addons/chdman/index.js';
 import Defaults from '../../../../globals/defaults.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import StreamUtil from '../../../../utils/streamUtil.js';
