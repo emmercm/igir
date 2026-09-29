@@ -23,8 +23,8 @@ export default class ZipSpanned extends SevenZipLib {
     return ['.zip.001', '.z01'];
   }
 
-  getExtension(): string {
-    return ZipSpanned.getExtensions()[0];
+  getExtensions(): string[] {
+    return ZipSpanned.getExtensions();
   }
 
   /**

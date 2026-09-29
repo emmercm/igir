@@ -27,8 +27,8 @@ export default class Split extends SevenZipLib {
     return ['.001'];
   }
 
-  getExtension(): string {
-    return Split.getExtensions()[0];
+  getExtensions(): string[] {
+    return Split.getExtensions();
   }
 
   /**

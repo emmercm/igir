@@ -23,8 +23,8 @@ export default class Z extends SevenZipLib {
     return ['.z'];
   }
 
-  getExtension(): string {
-    return Z.getExtensions()[0];
+  getExtensions(): string[] {
+    return Z.getExtensions();
   }
 
   /**

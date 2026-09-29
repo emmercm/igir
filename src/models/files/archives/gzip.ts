@@ -34,8 +34,8 @@ export default class Gzip extends Archive {
     return ['.gz', '.gzip'];
   }
 
-  getExtension(): string {
-    return Gzip.getExtensions()[0];
+  getExtensions(): string[] {
+    return Gzip.getExtensions();
   }
 
   /**

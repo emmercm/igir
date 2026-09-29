@@ -55,8 +55,8 @@ export default class Rar extends Archive {
     return ['.rar'];
   }
 
-  getExtension(): string {
-    return Rar.getExtensions()[0];
+  getExtensions(): string[] {
+    return Rar.getExtensions();
   }
 
   /**

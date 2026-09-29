@@ -641,12 +641,18 @@ export default class OutputFactory {
 
     // Should leave archived (are raw-copying/moving)
 
+    const archive = inputFile.getArchive();
+    const hasValidExt = archive
+      .getExtensions()
+      .some((ext) => inputFile.getFilePath().toLowerCase().endsWith(ext));
+
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());
     const oldExt =
-      oldExtMatch === null
-        ? // The input file has no extension, get the canonical extension from the {@link Archive}
-          inputFile.getArchive().getExtension()
+      oldExtMatch === null || (options.shouldFixExtension() && !hasValidExt)
+        ? // The input file has no extension, or it has an invalid one we should correct, get the
+          // canonical extension from the {@link Archive}
+          archive.getExtensions()[0]
         : // Respect the input file's extension
           oldExtMatch[1];
 

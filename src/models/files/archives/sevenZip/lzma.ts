@@ -24,8 +24,8 @@ export default class Lzma extends SevenZipLib {
     return ['.lzma'];
   }
 
-  getExtension(): string {
-    return Lzma.getExtensions()[0];
+  getExtensions(): string[] {
+    return Lzma.getExtensions();
   }
 
   /**

@@ -24,8 +24,8 @@ export default class SevenZip extends SevenZipLib {
     return ['.7z'];
   }
 
-  getExtension(): string {
-    return SevenZip.getExtensions()[0];
+  getExtensions(): string[] {
+    return SevenZip.getExtensions();
   }
 
   /**

@@ -14,7 +14,6 @@ import type File from '../../models/files/file.js';
 import type FileSignature from '../../models/files/fileSignature.js';
 import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
 import type Options from '../../models/options.js';
-import { FixExtension } from '../../models/options.js';
 import type ROMWithFiles from '../../models/romWithFiles.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
 import OutputFactory from '../../modules/candidates/utils/outputFactory.js';
@@ -80,9 +79,10 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     if (inputFile instanceof ArchiveFile) {
-      // Whole archives are raw-copied, and OutputFactory always takes their output extension from
-      // the input file, so a corrected ROM name would never be used. Renaming the ROM anyway would
-      // break anything that matches ROMs by name, such as the sub-games of a MergedDiscGame.
+      // Whole archives are raw-copied, and OutputFactory takes their output extension from the
+      // archive (correcting it there if needed), so a corrected ROM name would never be used.
+      // Renaming the ROM anyway would break anything that matches ROMs by name, such as the
+      // sub-games of a MergedDiscGame.
       return false;
     }
 
@@ -95,12 +95,7 @@ export default class CandidateExtensionCorrector extends Module {
       return false;
     }
 
-    return (
-      this.options.getFixExtension() === FixExtension.ALWAYS ||
-      (this.options.getFixExtension() === FixExtension.AUTO &&
-        !this.options.shouldDir2Dat() &&
-        (!this.options.usingDats() || romWithFiles.getRom().getName().trim() === ''))
-    );
+    return this.options.shouldFixExtension();
   }
 
   private async correctExtensions(
