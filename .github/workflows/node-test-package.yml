@@ -197,26 +197,29 @@ jobs:
           cd node_modules/igir
 
           # Load every addon's WebAssembly builds, the same as each addon falls back to on a
-          # platform without prebuilds
-          node --input-type=module --eval "
-            import fs from 'node:fs';
-            import module from 'node:module';
-            import path from 'node:path';
-            const require = module.createRequire(path.join(process.cwd(), 'package.json'));
-            const { getDefaultContext } = require('@emnapi/runtime');
-            for (const addon of fs.readdirSync(path.join('dist', 'addons'))) {
-              const glues = fs
-                .readdirSync(path.join('dist', 'addons', addon), { recursive: true })
-                .filter((file) => path.basename(path.dirname(file)) === 'wasm' && file.endsWith('.cjs'));
-              if (glues.length === 0) {
-                throw new Error('no WebAssembly build for the ' + addon + ' addon');
-              }
-              for (const glue of glues) {
-                const binding = require(path.resolve('dist', 'addons', addon, glue)).emnapiInit({ context: getDefaultContext() });
-                console.log(addon, glue, Object.keys(binding));
-              }
+          # platform without prebuilds. The script is a file because Volta's Windows shim cuts a
+          # multi-line `--eval` argument off at its first newline, leaving an empty script.
+          script="${RUNNER_TEMP}/wasm-fallback.mjs"
+          cat > "${script}" <<'EOF'
+          import fs from 'node:fs';
+          import module from 'node:module';
+          import path from 'node:path';
+          const require = module.createRequire(path.join(process.cwd(), 'package.json'));
+          const { getDefaultContext } = require('@emnapi/runtime');
+          for (const addon of fs.readdirSync(path.join('dist', 'addons'))) {
+            const glues = fs
+              .readdirSync(path.join('dist', 'addons', addon), { recursive: true })
+              .filter((file) => path.basename(path.dirname(file)) === 'wasm' && file.endsWith('.cjs'));
+            if (glues.length === 0) {
+              throw new Error('no WebAssembly build for the ' + addon + ' addon');
             }
-          "
+            for (const glue of glues) {
+              const binding = require(path.resolve('dist', 'addons', addon, glue)).emnapiInit({ context: getDefaultContext() });
+              console.log(addon, glue, Object.keys(binding));
+            }
+          }
+          EOF
+          node "${script}"
 
   # !!! This check should be required by GitHub !!!
   test-package-status-check:

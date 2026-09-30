@@ -61,10 +61,10 @@ jobs:
       # DON'T prebuild if the last commit was prebuilds
       - id: commit-filter
         run: |
-          if git diff --quiet HEAD~1 HEAD -- 'addons/*/addon-*/**'; then
-            echo "changes=false" >> "${GITHUB_OUTPUT}"
-          else
+          if [[ "$(git log -1 --format=%ae HEAD)" == "41898282+github-actions[bot]@users.noreply.github.com" ]] && ! git diff --quiet HEAD~1 HEAD -- 'addons/*/addon-*/**'; then
             echo "changes=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changes=false" >> "${GITHUB_OUTPUT}"
           fi
 
   prebuild:
