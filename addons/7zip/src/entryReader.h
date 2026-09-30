@@ -14,9 +14,10 @@ namespace sevenzip {
  * Exposes one archive entry as a pull-based JavaScript reader, opened on the libuv pool and backed by a decoder thread.
  *
  * Each read lends the producer a fresh JavaScript buffer to fill and resolves
- * with it once it is full, without blocking the event loop. A read parks until
- * the producer wakes it through AsyncSignal; only the producer may block, while
- * no buffer is lent.
+ * with it once it is full, without blocking the event loop. Under Emscripten,
+ * each read lends reused scratch memory instead and resolves with a copy of it.
+ * A read parks until the producer wakes it through AsyncSignal; only the
+ * producer may block, while no buffer is lent.
  */
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
    public:
@@ -84,16 +85,26 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
      */
     bool TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled);
 
+    /** Releases the lent memory; only while nothing is lent, or after the Pump is cancelled. */
+    void ReleaseLent();
+
     /** Releases a parked read's object and loop references; must be last because it may destroy `this`. */
     void ReleasePending(Napi::Env env);
 
     std::shared_ptr<Pump> pump_;
     size_t chunkBytes_ = kDefaultChunkBytes;
 
+#ifdef __EMSCRIPTEN__
+    // The memory lent to the producer for each read, which the read copies into
+    // a Buffer. Lending Buffers would exhaust the WebAssembly heap, because
+    // emnapi frees their memory only on garbage collection.
+    std::unique_ptr<uint8_t[]> scratch_;  // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+#else
     // The buffer lent to the producer for the read in flight, held so that V8
     // cannot collect it while the producer is writing into it. Released only
     // once the slot has handed it back, or after the Pump is cancelled.
     Napi::Reference<Napi::Buffer<uint8_t>> lent_;
+#endif
     Napi::ObjectReference readFailure_;
     std::shared_ptr<Bridge> bridge_;
 

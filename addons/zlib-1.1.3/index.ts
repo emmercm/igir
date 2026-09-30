@@ -1,6 +1,8 @@
 import module from 'node:module';
 import os from 'node:os';
 
+import { type Context, getDefaultContext } from '@emnapi/runtime';
+
 const require = module.createRequire(import.meta.url);
 
 export interface ZlibBinding {
@@ -59,20 +61,32 @@ const bindingInstance: { binding?: ZlibBinding } = {};
  */
 function loadBinding(): ZlibBinding {
   bindingInstance.binding ??= ((): ZlibBinding => {
-    try {
-      // Try to load the development build
-      return require('./build/Release/zlib.node') as ZlibBinding;
-    } catch {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
+      try {
+        // Try to load the development build
+        return require('./build/Release/zlib.node') as ZlibBinding;
+      } catch {
+        // Ignored
+      }
+
       try {
         // Try to load the prebuild
         return require(
           `./addon-zlib-1.1.3/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as ZlibBinding;
-      } catch {
-        // Try to load the postinstall build
-        return require('./addon-zlib-1.1.3/build/Release/zlib.node') as ZlibBinding;
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
+
+    // Load the WebAssembly build, which runs on any platform, but slower than a native build
+    const wasmModule = require('./addon-zlib-1.1.3/wasm/zlib.cjs') as {
+      emnapiInit: (options: { context: Context }) => ZlibBinding;
+    };
+    return wasmModule.emnapiInit({ context: getDefaultContext() });
   })();
   return bindingInstance.binding;
 }

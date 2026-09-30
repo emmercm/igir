@@ -61,10 +61,10 @@ jobs:
       # DON'T prebuild if the last commit was prebuilds
       - id: commit-filter
         run: |
-          if git diff --quiet HEAD~1 HEAD -- 'addons/*/addon-*/**'; then
-            echo "changes=false" >> "${GITHUB_OUTPUT}"
-          else
+          if [[ "$(git log -1 --format=%ae HEAD)" == "41898282+github-actions[bot]@users.noreply.github.com" ]] && ! git diff --quiet HEAD~1 HEAD -- 'addons/*/addon-*/**'; then
             echo "changes=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changes=false" >> "${GITHUB_OUTPUT}"
           fi
 
   prebuild:
@@ -84,14 +84,12 @@ jobs:
             docker_arch: linux/amd64
           - os: ubuntu-24.04-arm
             docker_arch: linux/arm64/v8
-          - os: ubuntu-24.04-arm
-            docker_arch: linux/arm/v7
           - os: macos-15-intel
           - os: macos-latest
           - os: windows-latest
           - os: windows-11-arm
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30 # QEMU cross-builds
+    timeout-minutes: 30
     env:
       JOBS: max # node-gyp: compile using all available CPUs
     steps:
@@ -109,11 +107,6 @@ jobs:
       - run: |
           npm ci --ignore-scripts
 
-      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
-        with:
-          # Prebuilds are published, so they must never restore a (possibly poisoned) cache
-          cache-image: false
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         name: Determine Linux Docker architecture
@@ -153,7 +146,7 @@ jobs:
             # Test the build
             rm -rf addons/*/build
             npm ci --foreground-scripts
-            npm run test:unit addons packages
+            npm run test:unit -- --project=native addons packages
 
       - id: build
         if: ${{ !startsWith(matrix.os, 'ubuntu') }}
@@ -173,7 +166,7 @@ jobs:
           # Test the build
           rm -rf addons/*/build
           npm ci --foreground-scripts
-          npm run test:unit addons packages
+          npm run test:unit -- --project=native addons packages
 
       # Validate the prebuilt addons have no unexpected shared-library dependencies
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
@@ -255,6 +248,89 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  prebuild-wasm:
+    name: prebuild (WebAssembly)
+    needs:
+      - branch-gate
+      - path-filter
+    if: ${{ (needs.branch-gate.outputs.should-prebuild == 'true' && needs.path-filter.outputs.changes == 'true') || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: read # actions/checkout
+    runs-on: ubuntu-latest
+    # The Emscripten SDK
+    container:
+      image: emscripten/emsdk:6.0.2@sha256:644883f58ca15c38c8be59b3a727ba0eff347729bc31d50a3348a6c9ed92bc07
+      # Run as the runner's user, which owns the workspace, rather than root; git otherwise
+      #   refuses the workspace's "dubious ownership"
+      options: --user 1001:1001
+    timeout-minutes: 30
+    env:
+      JOBS: max # node-gyp: compile using all available CPUs
+    steps:
+      # Setup and install
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/checkout-submodules
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          check-latest: true
+          package-manager-cache: false
+      - run: |
+          npm ci --ignore-scripts
+
+      # Prebuild
+      - name: Build WebAssembly addons
+        shell: bash
+        env:
+          # node-gyp's make generator reads the cross compilers from these
+          GYP_CROSSCOMPILE: 1
+          AR_target: emar
+          CC_target: emcc
+          CXX_target: em++
+        run: |
+          set -euxo pipefail
+          emcc --version
+          for gyp in addons/*/binding.gyp; do
+            addon_dir=$(dirname "${gyp}")
+            addon=$(basename "${addon_dir}")
+            # emnapi's `--nodedir` supplies its Node-API headers and common.gypi, which sets `OS=="emscripten"`
+            (
+              cd "${addon_dir}"
+              emmake "${GITHUB_WORKSPACE}/node_modules/.bin/node-gyp" rebuild \
+                --arch=wasm32 \
+                --nodedir="${GITHUB_WORKSPACE}/node_modules/emnapi" \
+                -- \
+                --format=make-emscripten \
+                -Dwasm_threads=1 \
+                -Demnapi_manual_linking=1 \
+                -Dmax_memory=4294967296 \
+                -Dstack_size=2097152
+            )
+            # Each executable target is a pair of files, and the glue locates its .wasm by name
+            wasm_dir="${addon_dir}/addon-${addon}/wasm"
+            mkdir -p "${wasm_dir}"
+            for glue in "${addon_dir}"/build/Release/*.cjs; do
+              cp "${glue}" "${glue%.cjs}.wasm" "${wasm_dir}/"
+            done
+          done
+          find addons/*/addon-*/wasm -type f -print0 | xargs -0 ls -al
+
+      # Test the build
+      - run: |
+          rm -rf addons/*/build
+          npm ci --foreground-scripts
+          npm run test:unit -- --project=wasm
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: prebuild-wasm
+          path: addons/*/addon-*/wasm/
+          if-no-files-found: error
+          retention-days: 7
+
   cpp-lint:
     needs:
       - branch-gate
@@ -308,6 +384,7 @@ jobs:
   commit:
     needs:
       - prebuild
+      - prebuild-wasm
       - cpp-lint
     # Pull requests from forks can't sign or push
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch' }}
@@ -335,7 +412,8 @@ jobs:
         with:
           path: addons/
           merge-multiple: true
-      # Sign the prebuilds so that node-addon-provenance.yml can verify they were built by this workflow
+      # Sign the prebuilds and WebAssembly builds so that node-addon-provenance.yml can verify they
+      #   were built by this workflow
       - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: 'addons/*/addon-*/**'
@@ -367,6 +445,7 @@ jobs:
       - path-filter
       - branch-gate
       - prebuild
+      - prebuild-wasm
       - cpp-lint
       - commit
     if: always()
@@ -376,4 +455,4 @@ jobs:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: path-filter, branch-gate, prebuild, cpp-lint, commit
+          allowed-skips: path-filter, branch-gate, prebuild, prebuild-wasm, cpp-lint, commit

@@ -2,6 +2,8 @@ import module from 'node:module';
 import os from 'node:os';
 import stream from 'node:stream';
 
+import { type Context, getDefaultContext } from '@emnapi/runtime';
+
 const require = module.createRequire(import.meta.url);
 
 export const MaxcsoFormat = {
@@ -53,20 +55,32 @@ const bindingInstance: { binding?: MaxcsoBinding } = {};
  */
 function loadBinding(): MaxcsoBinding {
   bindingInstance.binding ??= ((): MaxcsoBinding => {
-    try {
-      // Try to load the development build
-      return require('./build/Release/maxcso.node') as MaxcsoBinding;
-    } catch {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
+      try {
+        // Try to load the development build
+        return require('./build/Release/maxcso.node') as MaxcsoBinding;
+      } catch {
+        // Ignored
+      }
+
       try {
         // Try to load the prebuild
         return require(
           `./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as MaxcsoBinding;
-      } catch {
-        // Try to load the postinstall build
-        return require('./addon-maxcso/build/Release/maxcso.node') as MaxcsoBinding;
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
+
+    // Load the WebAssembly build, which runs on any platform, but slower than a native build
+    const wasmModule = require('./addon-maxcso/wasm/maxcso.cjs') as {
+      emnapiInit: (options: { context: Context }) => MaxcsoBinding;
+    };
+    return wasmModule.emnapiInit({ context: getDefaultContext() });
   })();
   return bindingInstance.binding;
 }

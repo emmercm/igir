@@ -1,13 +1,9 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {
     "mame": "deps/mame"
   },
   "target_defaults": {
-    # Node's common.gypi defines _HAS_EXCEPTIONS=0 on Windows, which puts MSVC's STL in a
-    # no-exceptions mode at odds with /EHsc: std::exception keeps a borrowed message pointer
-    # instead of a copy, so a std::runtime_error built from a temporary string reports freed
-    # memory. Removing the define restores MSVC's default of 1.
-    "defines!": ["_HAS_EXCEPTIONS=0"],
     "conditions": [
       # Windows defines mirroring MAME's windows_cfg.lua:
       #   NOMINMAX           - stop <windows.h> defining min()/max() macros, which
@@ -23,22 +19,8 @@
 
       # mac_cfg.lua, sdl_cfg.lua, sdlprefix.h defines
       ["OS=='mac'", { "defines": ["SDLMAME_UNIX", "SDLMAME_MACOSX", "SDLMAME_DARWIN"] }],
-      ["OS=='linux'", { "defines": ["SDLMAME_UNIX", "SDLMAME_LINUX"] }],
-
-      # Build optimizations
-      ["OS=='linux'", {
-        "cflags": [
-          "-ffunction-sections", "-fdata-sections",
-          "-fvisibility=hidden",
-          "-fno-semantic-interposition",
-          "-flto=auto"
-        ],
-        "cflags_cc": ["-fvisibility-inlines-hidden"],
-        "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
-      }]
+      ["OS=='linux' or OS=='emscripten'", { "defines": ["SDLMAME_UNIX", "SDLMAME_LINUX"] }]
     ],
-    "cflags!": ["-fno-omit-frame-pointer"],
-
     "cflags_cc!": [
       # Override Node.js' common.gypi
       "-std=gnu++17",
@@ -56,42 +38,11 @@
         "-std=c++20",
         # MAME uses C++ exceptions and RTTI
         "-fexceptions", "-frtti"
-      ],
-      # Build optimizations
-      "LLVM_LTO": "YES",
-      "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
-      "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
-      "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
-      "DEAD_CODE_STRIPPING": "YES",
-      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
+      ]
     },
     "msvs_settings": {
       "VCCLCompilerTool": {
-        "RuntimeLibrary": "0",
-        "EnableFunctionLevelLinking": "true",
-        "WholeProgramOptimization": "true",
-        "AdditionalOptions": [
-          "/std:c++20",
-          # MAME uses C++ exceptions and RTTI
-          "/EHsc"
-        ]
-      },
-      "VCLibrarianTool": {
-        "AdditionalOptions": ["/LTCG"]
-      },
-      "VCLinkerTool": {
-        # Build optimizations
-        "OptimizeReferences": "2",
-        "EnableCOMDATFolding": "2",
-        "LinkTimeCodeGeneration": "1",
-        "AdditionalOptions": [
-          "/Brepro",
-          "/DEBUG:NONE"
-        ],
-        # Node.js v26.3.0 Windows started adding "/opt:lldltojobs=<lto_jobs>" which MSVC throws LNK1117 on
-        "AdditionalOptions/": [
-          ["exclude", "lldltojobs"]
-        ]
+        "AdditionalOptions": ["/std:c++20"]
       }
     }
   },
@@ -185,7 +136,7 @@
       ],
       "conditions": [
         ["OS=='mac'", { "defines": ["FLAC__SYS_DARWIN"] }],
-        ["OS=='linux'", { "defines": ["FLAC__SYS_LINUX"] }]
+        ["OS=='linux' or OS=='emscripten'", { "defines": ["FLAC__SYS_LINUX"] }]
       ],
       # The *_intrin_*.c SIMD files (AVX2/SSE2/SSSE3/SSE4/FMA/NEON) are
       # intentionally omitted; FLAC__NO_ASM above selects the scalar paths.

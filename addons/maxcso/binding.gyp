@@ -1,38 +1,18 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {
-    "maxcso": "deps/maxcso",
-    # `node-gyp configure -- -Dmaxcso_sanitize=true` builds with ASan and UBSan (Linux only)
-    "maxcso_sanitize%": "false"
+    "maxcso": "deps/maxcso"
   },
   "target_defaults": {
-    # Node's common.gypi defines _HAS_EXCEPTIONS=0 on Windows, which puts MSVC's STL in a
-    # no-exceptions mode at odds with /EHsc: std::exception keeps a borrowed message pointer
-    # instead of a copy, so a std::runtime_error built from a temporary string reports freed
-    # memory. Removing the define restores MSVC's default of 1.
-    "defines!": ["_HAS_EXCEPTIONS=0"],
     "conditions": [
       ["OS=='win'", {
         "defines": ["NOMINMAX", "UNICODE", "_UNICODE", "WIN32_LEAN_AND_MEAN", "_CRT_SECURE_NO_WARNINGS"]
       }],
 
-      # Build optimizations
       ["OS=='linux'", {
         # 64-bit file offsets on 32-bit targets (linux/arm/v7)
-        "defines": ["_FILE_OFFSET_BITS=64"],
-        "cflags": [
-          "-ffunction-sections", "-fdata-sections",
-          "-fvisibility=hidden",
-          "-fno-semantic-interposition",
-          "-flto=auto"
-        ],
-        "cflags_cc": ["-fvisibility-inlines-hidden"],
-        "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
+        "defines": ["_FILE_OFFSET_BITS=64"]
       }],
-      # The sanitizers need frame pointers for their stack traces
-      ["maxcso_sanitize!='true'", {
-        "cflags!": ["-fno-omit-frame-pointer"]
-      }],
-
       # Baseline x86-64 only (SSE2), so a toolchain's newer default -march can't leak in
       ["OS=='mac' and target_arch=='x64'", {
         "xcode_settings": {
@@ -42,15 +22,6 @@
       }],
       ["OS=='linux' and target_arch=='x64'", {
         "cflags": ["-march=x86-64", "-mtune=generic"]
-      }],
-
-      ["OS=='linux' and maxcso_sanitize=='true'", {
-        "cflags": [
-          "-fsanitize=address,undefined",
-          "-fno-sanitize-recover=undefined",
-          "-fno-omit-frame-pointer"
-        ],
-        "ldflags": ["-fsanitize=address,undefined"]
       }]
     ],
 
@@ -71,44 +42,8 @@
       "OTHER_CPLUSPLUSFLAGS": [
         "-std=c++23",
         # The binding uses C++ exceptions
-        "-fexceptions", "-frtti",
-        "-ffunction-sections", "-fdata-sections"
-      ],
-      # Build optimizations
-      "LLVM_LTO": "YES",
-      "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
-      "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
-      "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
-      "DEAD_CODE_STRIPPING": "YES",
-      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
-    },
-    "msvs_settings": {
-      "VCCLCompilerTool": {
-        "RuntimeLibrary": "0",
-        "EnableFunctionLevelLinking": "true",
-        "WholeProgramOptimization": "true",
-        "AdditionalOptions": [
-          # The binding uses C++ exceptions
-          "/EHsc"
-        ]
-      },
-      "VCLibrarianTool": {
-        "AdditionalOptions": ["/LTCG"]
-      },
-      "VCLinkerTool": {
-        # Build optimizations
-        "OptimizeReferences": "2",
-        "EnableCOMDATFolding": "2",
-        "LinkTimeCodeGeneration": "1",
-        "AdditionalOptions": [
-          "/Brepro",
-          "/DEBUG:NONE"
-        ],
-        # Node.js v26.3.0 Windows started adding "/opt:lldltojobs=<lto_jobs>" which MSVC throws LNK1117 on
-        "AdditionalOptions/": [
-          ["exclude", "lldltojobs"]
-        ]
-      }
+        "-fexceptions", "-frtti"
+      ]
     }
   },
 
@@ -171,9 +106,8 @@
         }
       },
       "conditions": [
-        # Static linking. Skipped under the sanitizers, because a static libstdc++ would shadow
-        # ASan's operator new/delete interceptors.
-        ["OS=='linux' and maxcso_sanitize!='true'", {
+        # Static linking
+        ["OS=='linux'", {
           "ldflags": ["-static-libstdc++", "-static-libgcc"]
         }]
       ]

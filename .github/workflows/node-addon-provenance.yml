@@ -17,8 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Every prebuild that a pull request adds or modifies must have been signed by the
-  #   node-addon-prebuild.yml workflow in this repository, built from the parent of the commit
+  # Every prebuild (native or WebAssembly) that a pull request adds or modifies must have been signed
+  #   by the node-addon-prebuild.yml workflow in this repository, built from the parent of the commit
   #   that last changed it. Prebuilds from forks, local builds, or other branches are rejected.
   #   'pull_request' runs are signed for GitHub's temporary merge commit (refs/pull/N/merge), so
   #   for those the parent must be the merge commit's second parent, the pull request's head.

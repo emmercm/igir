@@ -2,6 +2,8 @@ import module from 'node:module';
 import os from 'node:os';
 import stream from 'node:stream';
 
+import { type Context, getDefaultContext } from '@emnapi/runtime';
+
 const require = module.createRequire(import.meta.url);
 
 /**
@@ -117,20 +119,32 @@ function loadBinding(): LoadedSevenZip {
   }
 
   const binding = ((): SevenZipBinding => {
-    try {
-      // Try to load the development build
-      return require('./build/Release/binding.node') as SevenZipBinding;
-    } catch {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
+      try {
+        // Try to load the development build
+        return require('./build/Release/binding.node') as SevenZipBinding;
+      } catch {
+        // Ignored
+      }
+
       try {
         // Try to load the prebuild
         return require(
           `./addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as SevenZipBinding;
-      } catch {
-        // Try to load the postinstall build
-        return require('./addon-7zip/build/Release/binding.node') as SevenZipBinding;
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
+
+    // Load the WebAssembly build, which runs on any platform, but slower than a native build
+    const wasmModule = require('./addon-7zip/wasm/binding.cjs') as {
+      emnapiInit: (options: { context: Context }) => SevenZipBinding;
+    };
+    return wasmModule.emnapiInit({ context: getDefaultContext() });
   })();
 
   // The handler list is fixed at build time, so this is computed once.

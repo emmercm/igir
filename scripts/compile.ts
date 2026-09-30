@@ -97,6 +97,15 @@ const bunBuildConfig = {
             },
           );
 
+          // Rewrite addons' WebAssembly `require('...cjs')` fallbacks into a throw so Bun
+          // doesn't bundle their Emscripten glue, which locates its `.wasm` relative to
+          // `__dirname`. The executable always embeds its target's prebuild instead.
+          source = source.replaceAll(
+            /require\(\s*[`'"]([^`'"]+[/\\]wasm[/\\][^`'"]+\.cjs)[`'"]\s*\)/g,
+            (_match, spec: string) =>
+              `(() => { throw new Error(${JSON.stringify(`the WebAssembly build '${spec}' isn't bundled`)}); })()`,
+          );
+
           // Detect `const NAME = path.dirname(require.resolve('PKG/package.json'))`
           // declarations, resolve each PKG to its on-disk root directory, and
           // strip the declaration from the source. Source files use this pattern

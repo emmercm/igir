@@ -14,6 +14,17 @@
 
 namespace sevenzip {
 
+#ifdef __EMSCRIPTEN__
+// Copies bytes into a new Buffer. It calls Node-API directly because Napi::Buffer makes emnapi mirror
+// the Buffer on the WebAssembly heap until garbage collection.
+static Napi::Value CopyToBuffer(Napi::Env env, const uint8_t* data, size_t length) {
+    napi_value value = nullptr;
+    napi_status const status = napi_create_buffer_copy(env, length, data, nullptr, &value);
+    NAPI_THROW_IF_FAILED(env, status, Napi::Value());
+    return {env, value};
+}
+#endif
+
 Napi::Function EntryReader::GetClass(Napi::Env env) {
     return DefineClass(env, "EntryReader",
                        {
@@ -145,9 +156,9 @@ EntryReader::~EntryReader() {
     // other one and will finish unwinding on its own; nothing here waits.
     pump_.reset();
 
-    // `lent_` is released by its own destructor after this body, so only
-    // after Cancel(), which guarantees the producer has stopped writing into
-    // it; unlike Reset(), its destructor cannot throw.
+    // `lent_` or `scratch_` is released by its own destructor after this body,
+    // so only after Cancel(), which guarantees the producer has stopped writing
+    // into it; unlike Reset(), its destructor cannot throw.
 }
 
 bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled) {
@@ -159,12 +170,12 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         // The producer's own message, which names the archive, the entry and
         // what went wrong with it. It only throws at the end, so nothing is
         // lent any more.
-        lent_.Reset();
+        ReleaseLent();
         *settled = true;
         deferred.Reject(Napi::Error::New(env, e.what()).Value());
         return true;
     } catch (...) {
-        lent_.Reset();
+        ReleaseLent();
         *settled = true;
         deferred.Reject(Napi::Error::New(env, "unknown 7-Zip read error").Value());
         return true;
@@ -174,12 +185,19 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         return false;
     }
     if (status == OutputSlot::Status::kEnd) {
-        lent_.Reset();
+        ReleaseLent();
         *settled = true;
         deferred.Resolve(env.Null());
         return true;
     }
 
+#ifdef __EMSCRIPTEN__
+    // The slot has handed the scratch memory back. Copied before settling, so
+    // that failing to allocate the copy still rejects the read.
+    Napi::Value const chunk = CopyToBuffer(env, scratch_.get(), length);
+    *settled = true;
+    deferred.Resolve(chunk);
+#else
     // The slot has handed the buffer back, so the producer is done with it
     Napi::Buffer<uint8_t> const buffer = lent_.Value();
     lent_.Reset();
@@ -194,6 +212,7 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
                 .As<Napi::Function>()
                 .Call(buffer, {Napi::Number::New(env, 0), Napi::Number::New(env, static_cast<double>(length))}));
     }
+#endif
     return true;
 }
 
@@ -220,11 +239,20 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
             settled = true;
             deferred.Reject(Napi::Error::New(env, "the entry reader was never opened").Value());
         } else {
+#ifdef __EMSCRIPTEN__
+            // Allocated once and reused, since reads are one at a time
+            if (!scratch_) {
+                // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+                scratch_ = std::make_unique_for_overwrite<uint8_t[]>(chunkBytes_);
+            }
+            pump_->Lend(scratch_.get(), chunkBytes_);
+#else
             // Referenced before it is lent, so that V8 cannot collect it while
             // the producer holds its address
             Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, chunkBytes_);
             lent_ = Napi::Persistent(buffer);
             pump_->Lend(buffer.Data(), buffer.Length());
+#endif
             if (!TrySettle(env, deferred, &settled)) {
                 // The producer has not filled the buffer yet, which is the
                 // common case, since it only starts once the buffer is lent.
@@ -244,8 +272,8 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
         if (!parked) {
             // Nothing is lent: allocating, referencing and lending all fail
             // before the producer learns the address, and a settled read has
-            // already had its buffer handed back
-            lent_.Reset();
+            // already had its memory handed back
+            ReleaseLent();
         }
         if (!settled) {
             deferred.Reject(Napi::Error::New(env, "failed to start a read").Value());
@@ -268,7 +296,7 @@ void EntryReader::OnProducerReady(Napi::Env env) {
         }
     } catch (...) {
         pump_->Cancel();
-        lent_.Reset();
+        ReleaseLent();
         if (!settled) {
             try {
                 // Created before the producer started: reporting a failed
@@ -280,6 +308,14 @@ void EntryReader::OnProducerReady(Napi::Env env) {
         }
     }
     ReleasePending(env);
+}
+
+void EntryReader::ReleaseLent() {
+#ifdef __EMSCRIPTEN__
+    scratch_.reset();
+#else
+    lent_.Reset();
+#endif
 }
 
 void EntryReader::ReleasePending(Napi::Env env) {
@@ -298,7 +334,7 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
         if (pump_) {
             pump_->Cancel();
         }
-        lent_.Reset();
+        ReleaseLent();
 
         // Copied, then cleared: Napi::Promise::Deferred is trivially copyable,
         // so moving out of the optional would leave `pending_` engaged and this

@@ -194,32 +194,56 @@ class CloseWorker : public Napi::AsyncWorker {
     std::shared_ptr<Source> source_;
 };
 
-// Runs one read() on the thread pool: fills a Buffer from a Source's Produce(), then tells the
-// Reader the read is done and settles the read's promise. Source and Reader must provide:
+#ifdef __EMSCRIPTEN__
+// Copies bytes into a new Buffer. It calls Node-API directly because Napi::Buffer makes emnapi mirror
+// the Buffer on the WebAssembly heap until garbage collection.
+static Napi::Value CopyToBuffer(Napi::Env env, const uint8_t* data, size_t length) {
+    napi_value value = nullptr;
+    napi_status const status = napi_create_buffer_copy(env, length, data, nullptr, &value);
+    NAPI_THROW_IF_FAILED(env, status, Napi::Value());
+    return {env, value};
+}
+#endif
+
+// Runs one read() on the thread pool: fills memory from a Source's Produce(), then tells the Reader
+// the read is done and settles the read's promise. Source and Reader must provide:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
 //   void   Reader::FinishRead();                             // main thread, after Execute()
+//
+// Under Emscripten, it fills scratch memory and resolves with a copy, because emnapi frees a Buffer's
+// WebAssembly heap memory only on garbage collection.
 template <typename Reader, typename Source>
 class ReadWorker : public Napi::AsyncWorker {
    public:
-    // Fills buffer, which is V8's own allocation rather than an external one: freeing an external
-    // Buffer's memory posts its finalizer to the owning environment's thread, which races a
+    // Natively, fills a Buffer, which is V8's own allocation rather than an external one: freeing an
+    // external Buffer's memory posts its finalizer to the owning environment's thread, which races a
     // terminating Worker closing that environment's handles. The reference keeps the Buffer alive
     // while the worker thread writes to it; an environment tearing down waits for thread pool work
     // to finish before it releases any reference.
     ReadWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::shared_ptr<Reader*> reader,
-               std::shared_ptr<Source> source, const Napi::Buffer<uint8_t>& buffer)
+               std::shared_ptr<Source> source, size_t maxBytes)
         : Napi::AsyncWorker(env),
           deferred_(deferred),
           reader_(std::move(reader)),
           source_(std::move(source)),
-          buffer_(Napi::Persistent(buffer)),
-          data_(buffer.Data()),
-          cap_(buffer.Length()) {}
+#ifndef __EMSCRIPTEN__
+          buffer_(Napi::Persistent(Napi::Buffer<uint8_t>::New(env, maxBytes))),
+          data_(buffer_.Value().Data()),
+#endif
+          cap_(maxBytes) {
+    }
 
-    // Fill the Buffer from the Source. Runs on the worker thread.
+    // Fill the memory from the Source. Runs on the worker thread.
     void Execute() override {
         try {
+#ifdef __EMSCRIPTEN__
+            // Allocated here so that failing to allocate rejects the read
+            // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+            scratch_ = std::make_unique_for_overwrite<uint8_t[]>(cap_);
+            n_ = source_->Produce(scratch_.get(), cap_);
+#else
             n_ = source_->Produce(data_, cap_);
+#endif
         } catch (const std::exception& e) {
             SetError(e.what());
         } catch (...) {
@@ -231,15 +255,20 @@ class ReadWorker : public Napi::AsyncWorker {
         source_.reset();
     }
 
-    // Resolve with the bytes read: the whole Buffer, a view of its filled start, or null at the end
+    // Resolve with the bytes read, or null at the end
     void OnOK() override {
         // First, so that resolving can't throw past it and leave the reader Ref()'d and reading
         NotifyReader();
         Napi::Env const env = Env();
-        Napi::Buffer<uint8_t> const buffer = buffer_.Value();
         if (n_ == 0) {
             deferred_.Resolve(env.Null());
-        } else if (n_ == cap_) {
+            return;
+        }
+#ifdef __EMSCRIPTEN__
+        deferred_.Resolve(CopyToBuffer(env, scratch_.get(), n_));
+#else
+        Napi::Buffer<uint8_t> const buffer = buffer_.Value();
+        if (n_ == cap_) {
             deferred_.Resolve(buffer);
         } else {
             // A view of the first n_ bytes, which shares the Buffer's memory rather than copying
@@ -249,6 +278,7 @@ class ReadWorker : public Napi::AsyncWorker {
                     .As<Napi::Function>()
                     .Call(buffer, {Napi::Number::New(env, 0), Napi::Number::New(env, static_cast<double>(n_))}));
         }
+#endif
     }
 
     // Reject with the error Execute() set
@@ -274,9 +304,13 @@ class ReadWorker : public Napi::AsyncWorker {
     // Keeps the blob open until Execute() is done with it, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
 
-    // The Buffer that Execute() fills, and its memory
+    // The memory that Execute() fills, and its size
+#ifdef __EMSCRIPTEN__
+    std::unique_ptr<uint8_t[]> scratch_;  // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+#else
     Napi::Reference<Napi::Buffer<uint8_t>> buffer_;
     uint8_t* data_;
+#endif
     size_t cap_;
     size_t n_ = 0;
 };
@@ -366,8 +400,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     try {
-        Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
-        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, buffer);
+        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, static_cast<size_t>(requested));
     } catch (const Napi::Error& e) {
         deferred.Reject(e.Value());
         return deferred.Promise();
