@@ -258,7 +258,11 @@ jobs:
       contents: read # actions/checkout
     runs-on: ubuntu-latest
     # The Emscripten SDK
-    container: emscripten/emsdk:6.0.2@sha256:644883f58ca15c38c8be59b3a727ba0eff347729bc31d50a3348a6c9ed92bc07
+    container:
+      image: emscripten/emsdk:6.0.2@sha256:644883f58ca15c38c8be59b3a727ba0eff347729bc31d50a3348a6c9ed92bc07
+      # Run as the runner's user, which owns the workspace, rather than root; git otherwise
+      #   refuses the workspace's "dubious ownership"
+      options: --user 1001:1001
     timeout-minutes: 30
     env:
       JOBS: max # node-gyp: compile using all available CPUs
