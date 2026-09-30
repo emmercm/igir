@@ -25,7 +25,14 @@ const __dirname = path.dirname(__filename);
 
 export default eslintConfig.defineConfig([
   {
-    ignores: ['.*/**', 'addons/*/deps/**', 'dist/**', 'site/**'],
+    ignores: [
+      '.*/**',
+      'addons/*/deps/**',
+      'addons/*/build/**',
+      'addons/*/addon-*/**',
+      'dist/**',
+      'site/**',
+    ],
   },
 
   // @typescript-eslint

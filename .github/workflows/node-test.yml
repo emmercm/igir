@@ -57,7 +57,6 @@ jobs:
               - '.gitmodules'
               - 'addons/**'
               - 'package*.json'
-              - 'postinstall.mjs'
 
   node-lint:
     needs:
@@ -134,15 +133,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
-      - run: npm ci --ignore-scripts
+      - run: npm ci --foreground-scripts
+      # The addons' sources changed, so build them rather than test their outdated prebuilds
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
         run: |
-          rm -rf addons/*/addon-*
-      - run: npm install --foreground-scripts
+          set -euo pipefail
+          rm -rf addons/*/addon-*/prebuilds
+          for gyp in addons/*/binding.gyp; do
+            ( cd "$(dirname "${gyp}")" && ../../node_modules/.bin/node-gyp rebuild )
+          done
 
       # Test the source files
-      - run: npm run test:unit
+      - run: npm run test:unit -- --project=native
 
   bun-unit:
     needs:

@@ -153,7 +153,7 @@ jobs:
             # Test the build
             rm -rf addons/*/build
             npm ci --foreground-scripts
-            npm run test:unit addons packages
+            npm run test:unit -- --project=native addons packages
 
       - id: build
         if: ${{ !startsWith(matrix.os, 'ubuntu') }}
@@ -173,7 +173,7 @@ jobs:
           # Test the build
           rm -rf addons/*/build
           npm ci --foreground-scripts
-          npm run test:unit addons packages
+          npm run test:unit -- --project=native addons packages
 
       # Validate the prebuilt addons have no unexpected shared-library dependencies
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
@@ -255,6 +255,82 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  prebuild-wasm:
+    name: prebuild (WebAssembly)
+    needs:
+      - branch-gate
+      - path-filter
+    if: ${{ (needs.branch-gate.outputs.should-prebuild == 'true' && needs.path-filter.outputs.changes == 'true') || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: read # actions/checkout
+    runs-on: ubuntu-latest
+    # The Emscripten SDK
+    container: emscripten/emsdk:6.0.2@sha256:644883f58ca15c38c8be59b3a727ba0eff347729bc31d50a3348a6c9ed92bc07
+    timeout-minutes: 30
+    env:
+      JOBS: max # node-gyp: compile using all available CPUs
+    steps:
+      # Setup and install
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/checkout-submodules
+      - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
+        with:
+          node-version: 22
+      - run: |
+          npm ci --ignore-scripts
+
+      # Prebuild
+      - name: Build WebAssembly addons
+        shell: bash
+        env:
+          # node-gyp's make generator reads the cross compilers from these
+          GYP_CROSSCOMPILE: 1
+          AR_target: emar
+          CC_target: emcc
+          CXX_target: em++
+        run: |
+          set -euxo pipefail
+          emcc --version
+          for gyp in addons/*/binding.gyp; do
+            addon_dir=$(dirname "${gyp}")
+            addon=$(basename "${addon_dir}")
+            # emnapi's `--nodedir` supplies its Node-API headers and common.gypi, which sets `OS=="emscripten"`
+            (
+              cd "${addon_dir}"
+              emmake "${GITHUB_WORKSPACE}/node_modules/.bin/node-gyp" rebuild \
+                --arch=wasm32 \
+                --nodedir="${GITHUB_WORKSPACE}/node_modules/emnapi" \
+                -- \
+                --format=make-emscripten \
+                -Dwasm_threads=1 \
+                -Demnapi_manual_linking=1 \
+                -Dmax_memory=4294967296 \
+                -Dstack_size=2097152
+            )
+            # Each executable target is a pair of files, and the glue locates its .wasm by name
+            wasm_dir="${addon_dir}/addon-${addon}/wasm"
+            mkdir -p "${wasm_dir}"
+            for glue in "${addon_dir}"/build/Release/*.cjs; do
+              cp "${glue}" "${glue%.cjs}.wasm" "${wasm_dir}/"
+            done
+          done
+          find addons/*/addon-*/wasm -type f -print0 | xargs -0 ls -al
+
+      # Test the build
+      - run: |
+          rm -rf addons/*/build
+          npm run test:unit -- --project=wasm addons
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: prebuild-wasm
+          path: addons/*/addon-*/wasm/
+          if-no-files-found: error
+          retention-days: 7
+
   cpp-lint:
     needs:
       - branch-gate
@@ -308,6 +384,7 @@ jobs:
   commit:
     needs:
       - prebuild
+      - prebuild-wasm
       - cpp-lint
     # Pull requests from forks can't sign or push
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch' }}
@@ -367,6 +444,7 @@ jobs:
       - path-filter
       - branch-gate
       - prebuild
+      - prebuild-wasm
       - cpp-lint
       - commit
     if: always()
@@ -376,4 +454,4 @@ jobs:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: path-filter, branch-gate, prebuild, cpp-lint, commit
+          allowed-skips: path-filter, branch-gate, prebuild, prebuild-wasm, cpp-lint, commit

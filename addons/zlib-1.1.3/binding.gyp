@@ -52,6 +52,9 @@
           # Modern Apple Clang defines TARGET_OS_MAC. The legacy zconf.h then
           # expects Byte from classic Mac headers; supply only that missing type.
           "defines+": ["Byte=unsigned char"]
+        }],
+        ["OS=='emscripten'", {
+          "includes": ["../wasm.gypi"]
         }]
       ],
 

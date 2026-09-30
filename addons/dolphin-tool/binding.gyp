@@ -23,6 +23,9 @@
         ],
         "cflags_cc": ["-fvisibility-inlines-hidden"],
         "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
+      }],
+      ["OS=='emscripten'", {
+        "includes": ["../wasm.gypi"]
       }]
     ],
     "cflags!": ["-fno-omit-frame-pointer"],

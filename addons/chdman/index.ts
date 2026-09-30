@@ -2,6 +2,8 @@ import module from 'node:module';
 import os from 'node:os';
 import stream from 'node:stream';
 
+import { type Context, getDefaultContext } from '@emnapi/runtime';
+
 const require = module.createRequire(import.meta.url);
 
 export const CHDType = {
@@ -116,20 +118,29 @@ const bindingInstance: { binding?: ChdmanBinding } = {};
  */
 function loadBinding(): ChdmanBinding {
   bindingInstance.binding ??= ((): ChdmanBinding => {
-    try {
-      // Try to load the development build
-      return require('./build/Release/chdman.node') as ChdmanBinding;
-    } catch {
+    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+      try {
+        // Try to load the development build
+        return require('./build/Release/chdman.node') as ChdmanBinding;
+      } catch {
+        // Ignored
+      }
+
       try {
         // Try to load the prebuild
         return require(
           `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as ChdmanBinding;
       } catch {
-        // Try to load the postinstall build
-        return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
+        // Ignored
       }
     }
+
+    // Load the WebAssembly build, which runs on any platform, but slower than a native build
+    const wasmModule = require('./addon-chdman/wasm/chdman.cjs') as {
+      emnapiInit: (options: { context: Context }) => ChdmanBinding;
+    };
+    return wasmModule.emnapiInit({ context: getDefaultContext() });
   })();
   return bindingInstance.binding;
 }

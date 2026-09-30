@@ -2,6 +2,8 @@ import module from 'node:module';
 import os from 'node:os';
 import stream from 'node:stream';
 
+import { type Context, getDefaultContext } from '@emnapi/runtime';
+
 const require = module.createRequire(import.meta.url);
 
 export const ContainerFormat = {
@@ -50,20 +52,29 @@ const bindingInstance: { binding?: DolphinBinding } = {};
  */
 function loadBinding(): DolphinBinding {
   bindingInstance.binding ??= ((): DolphinBinding => {
-    try {
-      // Try to load the development build
-      return require('./build/Release/dolphin-tool.node') as DolphinBinding;
-    } catch {
+    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+      try {
+        // Try to load the development build
+        return require('./build/Release/dolphin-tool.node') as DolphinBinding;
+      } catch {
+        // Ignored
+      }
+
       try {
         // Try to load the prebuild
         return require(
           `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as DolphinBinding;
       } catch {
-        // Try to load the postinstall build
-        return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
+        // Ignored
       }
     }
+
+    // Load the WebAssembly build, which runs on any platform, but slower than a native build
+    const wasmModule = require('./addon-dolphin-tool/wasm/dolphin-tool.cjs') as {
+      emnapiInit: (options: { context: Context }) => DolphinBinding;
+    };
+    return wasmModule.emnapiInit({ context: getDefaultContext() });
   })();
   return bindingInstance.binding;
 }

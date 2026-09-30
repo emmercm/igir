@@ -23,7 +23,7 @@
 
       # mac_cfg.lua, sdl_cfg.lua, sdlprefix.h defines
       ["OS=='mac'", { "defines": ["SDLMAME_UNIX", "SDLMAME_MACOSX", "SDLMAME_DARWIN"] }],
-      ["OS=='linux'", { "defines": ["SDLMAME_UNIX", "SDLMAME_LINUX"] }],
+      ["OS=='linux' or OS=='emscripten'", { "defines": ["SDLMAME_UNIX", "SDLMAME_LINUX"] }],
 
       # Build optimizations
       ["OS=='linux'", {
@@ -35,6 +35,9 @@
         ],
         "cflags_cc": ["-fvisibility-inlines-hidden"],
         "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
+      }],
+      ["OS=='emscripten'", {
+        "includes": ["../wasm.gypi"]
       }]
     ],
     "cflags!": ["-fno-omit-frame-pointer"],
@@ -185,7 +188,7 @@
       ],
       "conditions": [
         ["OS=='mac'", { "defines": ["FLAC__SYS_DARWIN"] }],
-        ["OS=='linux'", { "defines": ["FLAC__SYS_LINUX"] }]
+        ["OS=='linux' or OS=='emscripten'", { "defines": ["FLAC__SYS_LINUX"] }]
       ],
       # The *_intrin_*.c SIMD files (AVX2/SSE2/SSSE3/SSE4/FMA/NEON) are
       # intentionally omitted; FLAC__NO_ASM above selects the scalar paths.

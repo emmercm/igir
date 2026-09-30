@@ -37,6 +37,22 @@ export default defineConfig({
     // Only run the committed test files
     exclude: [...configDefaults.exclude, '.*/**', 'addons/*/deps/**', 'dist/**'],
 
+    projects: [
+      {
+        extends: true,
+        test: { name: 'native' },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'wasm',
+          // Run the addons' tests again against the WebAssembly builds that they fall back to
+          include: ['addons/*/test/**/*.test.ts'],
+          env: { IGIR_ADDONS_WASM: 'true' },
+        },
+      },
+    ],
+
     coverage: {
       provider: 'v8',
       // include: ['{addons,packages,src}/**/*.{js,cjs,mjs,ts}'],

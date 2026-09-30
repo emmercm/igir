@@ -85,6 +85,9 @@
         "cflags": ["-flto"],
         "ldflags": ["-flto"]
       }],
+      ["OS=='emscripten'", {
+        "includes": ["../wasm.gypi"]
+      }],
       ["target_arch=='x64' or target_arch=='ia32'", {
         "defines": ["XXH_VECTOR=1"], # SSE2, never auto-select AVX variants
         "cflags": ["-mno-sse3", "-mno-ssse3", "-mno-sse4.1", "-mno-sse4.2",
@@ -140,6 +143,9 @@
         # ARM Apple Clang uses the reverse-bits instruction, not the table.
         ["OS=='mac' and target_arch=='arm64'", {
           "sources!": ["<(z7)/CPP/7zip/Compress/BitlDecoder.cpp"]
+        }],
+        ["OS=='emscripten'", {
+          "sources": ["stubs/emscriptenSysinfo.c"]
         }]
       ],
       "defines": ["Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0",

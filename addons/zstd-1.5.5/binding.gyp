@@ -20,6 +20,9 @@
       ["OS=='linux'", {
         "cflags": ["-flto=auto"],
         "ldflags": ["-flto=auto"]
+      }],
+      ["OS=='emscripten'", {
+        "includes": ["../wasm.gypi"]
       }]
     ],
     "xcode_settings": {

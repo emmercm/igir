@@ -51,6 +51,9 @@
           "-fno-omit-frame-pointer"
         ],
         "ldflags": ["-fsanitize=address,undefined"]
+      }],
+      ["OS=='emscripten'", {
+        "includes": ["../wasm.gypi"]
       }]
     ],
 
