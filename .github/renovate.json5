@@ -125,6 +125,13 @@
         enabled: false,
       },
 
+      // Emscripten 6.0.3 removed a macro that emnapi v1's JS library uses; remove this hold when
+      // updating to emnapi v2
+      {
+        matchPackageNames: ['emscripten/emsdk'],
+        allowedVersions: '<=6.0.2',
+      },
+
       // Pin actions to their digest hashes, remembering the semver in a comment
       {
         // helpers:pinGitHubActionDigests
