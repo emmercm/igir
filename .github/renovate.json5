@@ -119,9 +119,17 @@
 
   "github-actions": {
     packageRules: [
-      // Don't update some non-action packages
+      // Don't update some non-action packages, such as the runtime versions given to setup-* actions
       {
+        // Dependencies that follow semver
+        matchDepNames: ['node'],
+        matchUpdateTypes: ['major'],
+        enabled: false,
+      },
+      {
+        // Dependencies whose minor versions act like major versions
         matchDepNames: ['python'],
+        matchUpdateTypes: ['major', 'minor'],
         enabled: false,
       },
 
