@@ -194,6 +194,10 @@
         groupName: 'dev dependencies',
         matchDepTypes: ['devDependencies'],
         matchPackageNames: [
+          // Packages that affect the compiled addons, which ship with igir
+          '!emnapi',
+          '!node-addon-api',
+          '!node-gyp',
           '!@types/async',
           '!@types/cli-progress',
           '!@types/micromatch',

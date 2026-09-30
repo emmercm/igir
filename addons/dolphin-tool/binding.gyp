@@ -3,29 +3,14 @@
     "dolphin": "deps/dolphin"
   },
   "target_defaults": {
-    # Node's common.gypi defines _HAS_EXCEPTIONS=0 on Windows, which puts MSVC's STL in a
-    # no-exceptions mode at odds with /EHsc: std::exception keeps a borrowed message pointer
-    # instead of a copy, so a std::runtime_error built from a temporary string reports freed
-    # memory. Removing the define restores MSVC's default of 1.
-    "defines!": ["_HAS_EXCEPTIONS=0"],
     "conditions": [
-      ["OS=='win'", {
-        "defines": ["NOMINMAX", "UNICODE", "_UNICODE", "WIN32_LEAN_AND_MEAN"]
-      }],
-
-      # Build optimizations
-      ["OS=='linux'", {
-        "cflags": [
-          "-ffunction-sections", "-fdata-sections",
-          "-fvisibility=hidden",
-          "-fno-semantic-interposition",
-          "-flto=auto"
-        ],
-        "cflags_cc": ["-fvisibility-inlines-hidden"],
-        "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
-      }],
       ["OS=='emscripten'", {
         "includes": ["../wasm.gypi"]
+      }, {
+        "includes": ["../native.gypi"]
+      }],
+      ["OS=='win'", {
+        "defines": ["NOMINMAX", "UNICODE", "_UNICODE", "WIN32_LEAN_AND_MEAN"]
       }]
     ],
     "cflags!": ["-fno-omit-frame-pointer"],
@@ -48,42 +33,7 @@
         "-std=c++23",
         # Dolphin uses C++ exceptions and RTTI
         "-fexceptions", "-frtti"
-      ],
-      # Build optimizations
-      "LLVM_LTO": "YES",
-      "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
-      "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
-      "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
-      "DEAD_CODE_STRIPPING": "YES",
-      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
-    },
-    "msvs_settings": {
-      "VCCLCompilerTool": {
-        "RuntimeLibrary": "0",
-        "EnableFunctionLevelLinking": "true",
-        "WholeProgramOptimization": "true",
-        "AdditionalOptions": [
-          # Dolphin uses C++ exceptions and RTTI
-          "/EHsc"
-        ]
-      },
-      "VCLibrarianTool": {
-        "AdditionalOptions": ["/LTCG"]
-      },
-      "VCLinkerTool": {
-        # Build optimizations
-        "OptimizeReferences": "2",
-        "EnableCOMDATFolding": "2",
-        "LinkTimeCodeGeneration": "1",
-        "AdditionalOptions": [
-          "/Brepro",
-          "/DEBUG:NONE"
-        ],
-        # Node.js v26.3.0 Windows started adding "/opt:lldltojobs=<lto_jobs>" which MSVC throws LNK1117 on
-        "AdditionalOptions/": [
-          ["exclude", "lldltojobs"]
-        ]
-      }
+      ]
     }
   },
 

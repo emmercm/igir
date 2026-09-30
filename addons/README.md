@@ -38,5 +38,5 @@ C++ code must pass `clang-format` and `clang-tidy`, configured by [`.clang-forma
 
 ## Adding an addon
 
-- Include `../wasm.gypi` from the new `binding.gyp` under `OS=="emscripten"`
+- Include `../wasm.gypi` from the new `binding.gyp` under `OS=="emscripten"`, and `../native.gypi` otherwise
 - Follow the other addons' `index.ts` loaders, including their `IGIR_ADDONS_WASM` check

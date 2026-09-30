@@ -1,5 +1,5 @@
 # Emscripten settings shared by every addon's wasm build, included from each binding.gyp's
-# `OS=="emscripten"` condition. node-gyp only sets that OS when it's run with emnapi's
+# `OS=="emscripten"` condition, in place of native.gypi. node-gyp only sets that OS when it's run with emnapi's
 # `--nodedir` and the `make-emscripten` generator; see addons/README.md.
 {
   "target_conditions": [
@@ -59,7 +59,6 @@
     "-sMIN_CHROME_VERSION=85",
     "-sMIN_NODE_VERSION=161500",
     # Unsupported by wasm-ld
-    "-Wl,--exclude-libs,ALL",
     "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
     "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
   ]

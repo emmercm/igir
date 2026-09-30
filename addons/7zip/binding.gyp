@@ -2,11 +2,6 @@
   "variables": {"z7": "deps/7-Zip-zstd"},
 
   "target_defaults": {
-    # Node's common.gypi defines _HAS_EXCEPTIONS=0 on Windows, which puts MSVC's STL in a
-    # no-exceptions mode at odds with /EHsc: std::exception keeps a borrowed message pointer
-    # instead of a copy, so a std::runtime_error built from a temporary string reports freed
-    # memory. Removing the define restores MSVC's default of 1.
-    "defines!": ["_HAS_EXCEPTIONS=0"],
     "defines": ["DYNAMIC_BMI2=0"],
     "cflags_cc!": [
       # Override Node.js' common.gypi
@@ -21,16 +16,7 @@
       # Stubs
       "-include", "handlerOut.h"
     ],
-
-    # Build optimizations
-    "cflags": [
-      "-ffunction-sections", "-fdata-sections",
-      "-fvisibility=hidden",
-      "-fno-semantic-interposition"
-    ],
     "cflags!": ["-fno-omit-frame-pointer"],
-    "cflags_cc+": ["-fvisibility-inlines-hidden"],
-    "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL"],
 
     "xcode_settings": {
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
@@ -41,53 +27,27 @@
         # Stubs
         "-include", "handlerOut.h"
       ],
-      # Build optimizations
-      "LLVM_LTO": "YES",
-      "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
-      "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
-      "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
-      "DEAD_CODE_STRIPPING": "YES",
-      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"],
       "GCC_OPTIMIZATION_LEVEL": "3"
     },
 
     "msvs_settings": {
       "VCCLCompilerTool": {
-        "ExceptionHandling": 1,
         "RuntimeTypeInfo": "true",
-        "EnableFunctionLevelLinking": "true",
-        "WholeProgramOptimization": "true",
-        "AdditionalOptions": ["/std:c++20", "/EHsc", "/FIhandlerOut.h"]
-      },
-      "VCLibrarianTool": {
-        "AdditionalOptions": ["/LTCG"]
-      },
-      "VCLinkerTool": {
-        # Build optimizations
-        "OptimizeReferences": 2,
-        "EnableCOMDATFolding": 2,
-        "LinkTimeCodeGeneration": "1",
-        "AdditionalOptions": ["/Brepro", "/DEBUG:NONE"],
-        "AdditionalOptions/": [["exclude", "lldltojobs"]]
+        "AdditionalOptions": ["/std:c++20", "/FIhandlerOut.h"]
       }
     },
 
-    # Pin instruction sets for various architectures
     "conditions": [
+      ["OS=='emscripten'", {
+        "includes": ["../wasm.gypi"]
+      }, {
+        "includes": ["../native.gypi"]
+      }],
       ["OS=='win'", {
         "defines": ["NOMINMAX"]
       }],
-      ["OS=='linux'", {
-        "cflags": ["-flto=auto"],
-        "ldflags": ["-flto=auto"]
-      }],
-      ["OS=='mac'", {
-        "cflags": ["-flto"],
-        "ldflags": ["-flto"]
-      }],
-      ["OS=='emscripten'", {
-        "includes": ["../wasm.gypi"]
-      }],
+
+      # Pin instruction sets for various architectures
       ["target_arch=='x64' or target_arch=='ia32'", {
         "defines": ["XXH_VECTOR=1"], # SSE2, never auto-select AVX variants
         "cflags": ["-mno-sse3", "-mno-ssse3", "-mno-sse4.1", "-mno-sse4.2",
