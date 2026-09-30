@@ -74,7 +74,7 @@ const bindingInstance: { binding?: ZstdBinding } = {};
  */
 function loadBinding(): ZstdBinding {
   bindingInstance.binding ??= ((): ZstdBinding => {
-    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
       try {
         // Try to load the development build
         return require('./build/Release/binding.node') as ZstdBinding;
@@ -87,8 +87,11 @@ function loadBinding(): ZstdBinding {
         return require(
           `./addon-zstd-1.5.5/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as ZstdBinding;
-      } catch {
-        // Ignored
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
 

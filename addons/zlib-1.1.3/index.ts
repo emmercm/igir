@@ -61,7 +61,7 @@ const bindingInstance: { binding?: ZlibBinding } = {};
  */
 function loadBinding(): ZlibBinding {
   bindingInstance.binding ??= ((): ZlibBinding => {
-    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
       try {
         // Try to load the development build
         return require('./build/Release/zlib.node') as ZlibBinding;
@@ -74,8 +74,11 @@ function loadBinding(): ZlibBinding {
         return require(
           `./addon-zlib-1.1.3/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as ZlibBinding;
-      } catch {
-        // Ignored
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
 

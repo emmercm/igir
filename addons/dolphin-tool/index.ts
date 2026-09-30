@@ -52,7 +52,7 @@ const bindingInstance: { binding?: DolphinBinding } = {};
  */
 function loadBinding(): DolphinBinding {
   bindingInstance.binding ??= ((): DolphinBinding => {
-    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
       try {
         // Try to load the development build
         return require('./build/Release/dolphin-tool.node') as DolphinBinding;
@@ -65,8 +65,11 @@ function loadBinding(): DolphinBinding {
         return require(
           `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as DolphinBinding;
-      } catch {
-        // Ignored
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
 

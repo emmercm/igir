@@ -40,7 +40,11 @@ export default defineConfig({
     projects: [
       {
         extends: true,
-        test: { name: 'native' },
+        test: {
+          name: 'native',
+          // Fail rather than fall back to the WebAssembly builds when a native build won't load
+          env: { IGIR_ADDONS: 'native' },
+        },
       },
       {
         extends: true,
@@ -48,7 +52,7 @@ export default defineConfig({
           name: 'wasm',
           // Run every test again against the addons' WebAssembly builds that they fall back to,
           // because tests everywhere use the addons
-          env: { IGIR_ADDONS_WASM: 'true' },
+          env: { IGIR_ADDONS: 'wasm' },
         },
       },
     ],

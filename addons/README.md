@@ -30,7 +30,12 @@ cd addons/<name>
 
 The WebAssembly builds use [Emscripten](https://emscripten.org/) and [emnapi](https://github.com/toyobayashi/emnapi)'s Node-API implementation. Every `binding.gyp` includes the shared [`common.gypi`](common.gypi) settings, which add [`wasm.gypi`](wasm.gypi)'s under `OS=="emscripten"`, an OS that `node-gyp` only sets when it's run with emnapi.
 
-Tests run twice, once in Vitest's `native` project and again in its `wasm` project, which sets `IGIR_ADDONS_WASM=true` to make every `index.ts` skip straight to its WebAssembly build. Run just one of them with `npm run test:unit -- --project=native` or `--project=wasm`.
+Every `index.ts` loads its development build, then its prebuild, then its WebAssembly build, and the `IGIR_ADDONS` environment variable narrows that down:
+
+- `IGIR_ADDONS=native` throws when neither native build loads, rather than falling back to the WebAssembly build
+- `IGIR_ADDONS=wasm` skips straight to the WebAssembly build
+
+Tests run twice, once in Vitest's `native` project and again in its `wasm` project, which set `IGIR_ADDONS` to their names. Run just one of them with `npm run test:unit -- --project=native` or `--project=wasm`.
 
 ## C++ linting
 
@@ -39,4 +44,4 @@ C++ code must pass `clang-format` and `clang-tidy`, configured by [`.clang-forma
 ## Adding an addon
 
 - Include `../common.gypi` from the top of the new `binding.gyp`
-- Follow the other addons' `index.ts` loaders, including their `IGIR_ADDONS_WASM` check
+- Follow the other addons' `index.ts` loaders, including their `IGIR_ADDONS` checks

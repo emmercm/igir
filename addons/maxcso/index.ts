@@ -55,7 +55,7 @@ const bindingInstance: { binding?: MaxcsoBinding } = {};
  */
 function loadBinding(): MaxcsoBinding {
   bindingInstance.binding ??= ((): MaxcsoBinding => {
-    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
       try {
         // Try to load the development build
         return require('./build/Release/maxcso.node') as MaxcsoBinding;
@@ -68,8 +68,11 @@ function loadBinding(): MaxcsoBinding {
         return require(
           `./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as MaxcsoBinding;
-      } catch {
-        // Ignored
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
 

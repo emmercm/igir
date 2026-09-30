@@ -119,7 +119,7 @@ function loadBinding(): LoadedSevenZip {
   }
 
   const binding = ((): SevenZipBinding => {
-    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
       try {
         // Try to load the development build
         return require('./build/Release/binding.node') as SevenZipBinding;
@@ -132,8 +132,11 @@ function loadBinding(): LoadedSevenZip {
         return require(
           `./addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as SevenZipBinding;
-      } catch {
-        // Ignored
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
 

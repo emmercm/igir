@@ -118,7 +118,7 @@ const bindingInstance: { binding?: ChdmanBinding } = {};
  */
 function loadBinding(): ChdmanBinding {
   bindingInstance.binding ??= ((): ChdmanBinding => {
-    if (process.env.IGIR_ADDONS_WASM !== 'true') {
+    if (process.env.IGIR_ADDONS !== 'wasm') {
       try {
         // Try to load the development build
         return require('./build/Release/chdman.node') as ChdmanBinding;
@@ -131,8 +131,11 @@ function loadBinding(): ChdmanBinding {
         return require(
           `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
         ) as ChdmanBinding;
-      } catch {
-        // Ignored
+      } catch (error) {
+        // The native build is required, rather than falling back to the WebAssembly build
+        if (process.env.IGIR_ADDONS === 'native') {
+          throw error;
+        }
       }
     }
 
