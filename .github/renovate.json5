@@ -119,9 +119,9 @@
 
   "github-actions": {
     packageRules: [
-      // Don't update some non-action packages
+      // Don't update some non-action packages, such as the runtime versions given to setup-* actions
       {
-        matchDepNames: ['python'],
+        matchDepNames: ['node', 'python'],
         enabled: false,
       },
 
