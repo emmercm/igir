@@ -121,8 +121,13 @@
     packageRules: [
       // Don't update some non-action packages, such as the runtime versions given to setup-* actions
       {
+        matchDepNames: ['node'],
+        matchUpdateTypes: ['major'],
+        enabled: false,
+      },
+      {
         matchDepNames: ['node', 'python'],
-        matchUpdateTypes: ['major', 'minor', 'patch'],
+        matchUpdateTypes: ['major', 'minor'],
         enabled: false,
       },
 
