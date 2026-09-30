@@ -1,4 +1,5 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {"z7": "deps/7-Zip-zstd"},
 
   "target_defaults": {
@@ -16,8 +17,6 @@
       # Stubs
       "-include", "handlerOut.h"
     ],
-    "cflags!": ["-fno-omit-frame-pointer"],
-
     "xcode_settings": {
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
       "OTHER_CPLUSPLUSFLAGS": [
@@ -37,11 +36,6 @@
     },
 
     "conditions": [
-      ["OS=='emscripten'", {
-        "includes": ["../wasm.gypi"]
-      }, {
-        "includes": ["../native.gypi"]
-      }],
       ["OS=='win'", {
         "defines": ["NOMINMAX"]
       }],

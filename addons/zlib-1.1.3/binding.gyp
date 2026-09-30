@@ -1,4 +1,5 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {
     "openssl_fips": ""
   },
@@ -27,15 +28,9 @@
         "deps/zlib"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      "cflags!": ["-fno-omit-frame-pointer"],
       "cflags_cc": ["-std=c++17"],
 
       "conditions": [
-        ["OS=='emscripten'", {
-          "includes": ["../wasm.gypi"]
-        }, {
-          "includes": ["../native.gypi"]
-        }],
         ["OS=='mac'", {
           # Modern Apple Clang defines TARGET_OS_MAC. The legacy zconf.h then
           # expects Byte from classic Mac headers; supply only that missing type.

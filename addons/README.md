@@ -28,7 +28,7 @@ cd addons/<name>
 
 ## WebAssembly
 
-The WebAssembly builds use [Emscripten](https://emscripten.org/) and [emnapi](https://github.com/toyobayashi/emnapi)'s Node-API implementation. Every `binding.gyp` includes the shared [`wasm.gypi`](wasm.gypi) settings under `OS=="emscripten"`, which `node-gyp` only sets when it's run with emnapi.
+The WebAssembly builds use [Emscripten](https://emscripten.org/) and [emnapi](https://github.com/toyobayashi/emnapi)'s Node-API implementation. Every `binding.gyp` includes the shared [`common.gypi`](common.gypi) settings, which add [`wasm.gypi`](wasm.gypi)'s under `OS=="emscripten"`, an OS that `node-gyp` only sets when it's run with emnapi.
 
 Tests run twice, once in Vitest's `native` project and again in its `wasm` project, which sets `IGIR_ADDONS_WASM=true` to make every `index.ts` skip straight to its WebAssembly build. Run just one of them with `npm run test:unit -- --project=native` or `--project=wasm`.
 
@@ -38,5 +38,5 @@ C++ code must pass `clang-format` and `clang-tidy`, configured by [`.clang-forma
 
 ## Adding an addon
 
-- Include `../wasm.gypi` from the new `binding.gyp` under `OS=="emscripten"`, and `../native.gypi` otherwise
+- Include `../common.gypi` from the top of the new `binding.gyp`
 - Follow the other addons' `index.ts` loaders, including their `IGIR_ADDONS_WASM` check

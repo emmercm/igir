@@ -1,16 +1,7 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {
     "openssl_fips": ""
-  },
-  "target_defaults": {
-    "cflags!": ["-fno-omit-frame-pointer"],
-    "conditions": [
-      ["OS=='emscripten'", {
-        "includes": ["../wasm.gypi"]
-      }, {
-        "includes": ["../native.gypi"]
-      }]
-    ]
   },
   "targets": [
     {
@@ -73,8 +64,7 @@
         "deps/zstd/lib/compress/zstdmt_compress.c"
       ],
       "direct_dependent_settings": {
-        "include_dirs": ["deps/zstd/lib"],
-        "ldflags": ["-Wl,--trace"]
+        "include_dirs": ["deps/zstd/lib"]
       },
       "defines": [
         "ZSTD_STATIC_LINKING_ONLY=",
@@ -88,8 +78,7 @@
         "ZSTD_LIB_MINIFY=1",
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
-      ],
-      "ldflags": ["-Wl,--trace"]
+      ]
     }
   ]
 }

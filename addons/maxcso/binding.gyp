@@ -1,16 +1,10 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {
-    "maxcso": "deps/maxcso",
-    # `node-gyp configure -- -Dmaxcso_sanitize=true` builds with ASan and UBSan (Linux only)
-    "maxcso_sanitize%": "false"
+    "maxcso": "deps/maxcso"
   },
   "target_defaults": {
     "conditions": [
-      ["OS=='emscripten'", {
-        "includes": ["../wasm.gypi"]
-      }, {
-        "includes": ["../native.gypi"]
-      }],
       ["OS=='win'", {
         "defines": ["NOMINMAX", "UNICODE", "_UNICODE", "WIN32_LEAN_AND_MEAN", "_CRT_SECURE_NO_WARNINGS"]
       }],
@@ -19,11 +13,6 @@
         # 64-bit file offsets on 32-bit targets (linux/arm/v7)
         "defines": ["_FILE_OFFSET_BITS=64"]
       }],
-      # The sanitizers need frame pointers for their stack traces
-      ["maxcso_sanitize!='true'", {
-        "cflags!": ["-fno-omit-frame-pointer"]
-      }],
-
       # Baseline x86-64 only (SSE2), so a toolchain's newer default -march can't leak in
       ["OS=='mac' and target_arch=='x64'", {
         "xcode_settings": {
@@ -33,15 +22,6 @@
       }],
       ["OS=='linux' and target_arch=='x64'", {
         "cflags": ["-march=x86-64", "-mtune=generic"]
-      }],
-
-      ["OS=='linux' and maxcso_sanitize=='true'", {
-        "cflags": [
-          "-fsanitize=address,undefined",
-          "-fno-sanitize-recover=undefined",
-          "-fno-omit-frame-pointer"
-        ],
-        "ldflags": ["-fsanitize=address,undefined"]
       }]
     ],
 
@@ -126,9 +106,8 @@
         }
       },
       "conditions": [
-        # Static linking. Skipped under the sanitizers, because a static libstdc++ would shadow
-        # ASan's operator new/delete interceptors.
-        ["OS=='linux' and maxcso_sanitize!='true'", {
+        # Static linking
+        ["OS=='linux'", {
           "ldflags": ["-static-libstdc++", "-static-libgcc"]
         }]
       ]

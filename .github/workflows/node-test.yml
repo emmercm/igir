@@ -50,7 +50,7 @@ jobs:
               - 'index.ts'
               - 'package*.json'
               - 'tsconfig.json'
-              - 'vitest.config.json'
+              - 'vitest.config.ts'
             should-delete-prebuilds:
               - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-addon-prebuild.yml'

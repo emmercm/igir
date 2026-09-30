@@ -1,20 +1,14 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {
     "dolphin": "deps/dolphin"
   },
   "target_defaults": {
     "conditions": [
-      ["OS=='emscripten'", {
-        "includes": ["../wasm.gypi"]
-      }, {
-        "includes": ["../native.gypi"]
-      }],
       ["OS=='win'", {
         "defines": ["NOMINMAX", "UNICODE", "_UNICODE", "WIN32_LEAN_AND_MEAN"]
       }]
     ],
-    "cflags!": ["-fno-omit-frame-pointer"],
-
     "cflags_cc!": [
       # Override Node.js' common.gypi
       "-std=gnu++17",

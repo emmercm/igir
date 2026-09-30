@@ -1,15 +1,10 @@
 {
+  "includes": ["../common.gypi"],
   "variables": {
     "mame": "deps/mame"
   },
   "target_defaults": {
     "conditions": [
-      ["OS=='emscripten'", {
-        "includes": ["../wasm.gypi"]
-      }, {
-        "includes": ["../native.gypi"]
-      }],
-
       # Windows defines mirroring MAME's windows_cfg.lua:
       #   NOMINMAX           - stop <windows.h> defining min()/max() macros, which
       #                        clobber std::numeric_limits<>::max() etc. (strconv.cpp)
@@ -26,8 +21,6 @@
       ["OS=='mac'", { "defines": ["SDLMAME_UNIX", "SDLMAME_MACOSX", "SDLMAME_DARWIN"] }],
       ["OS=='linux' or OS=='emscripten'", { "defines": ["SDLMAME_UNIX", "SDLMAME_LINUX"] }]
     ],
-    "cflags!": ["-fno-omit-frame-pointer"],
-
     "cflags_cc!": [
       # Override Node.js' common.gypi
       "-std=gnu++17",
