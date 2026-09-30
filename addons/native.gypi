@@ -9,6 +9,7 @@
 
   # Build optimizations
   "cflags": [
+    "-O3",
     "-ffunction-sections", "-fdata-sections",
     "-fvisibility=hidden",
     "-fno-semantic-interposition"
@@ -24,6 +25,7 @@
 
   "xcode_settings": {
     # Build optimizations
+    "GCC_OPTIMIZATION_LEVEL": "3",
     "LLVM_LTO": "YES",
     "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
     "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",

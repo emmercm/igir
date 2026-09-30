@@ -27,8 +27,6 @@
         "deps/zlib"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      # Build optimizations
-      "cflags": ["-O3"],
       "cflags!": ["-fno-omit-frame-pointer"],
       "cflags_cc": ["-std=c++17"],
 
@@ -44,10 +42,6 @@
           "defines+": ["Byte=unsigned char"]
         }]
       ],
-
-      "xcode_settings": {
-        "GCC_OPTIMIZATION_LEVEL": "3"
-      },
 
       "msvs_settings": {
         "VCCLCompilerTool": {

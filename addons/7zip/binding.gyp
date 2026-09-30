@@ -26,8 +26,7 @@
         "-fexceptions", "-frtti",
         # Stubs
         "-include", "handlerOut.h"
-      ],
-      "GCC_OPTIMIZATION_LEVEL": "3"
+      ]
     },
 
     "msvs_settings": {
