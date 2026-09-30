@@ -273,9 +273,11 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/checkout-submodules
-      - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
+          check-latest: true
+          package-manager-cache: false
       - run: |
           npm ci --ignore-scripts
 
