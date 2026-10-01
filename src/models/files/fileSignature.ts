@@ -63,7 +63,7 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
           return false;
         }
 
-        if (buffer.length < offset + 0x2c + 2) {
+        if (buffer.length < offset + 0x2e + 2) {
           return false;
         }
         const checksumComplement = buffer.readUInt16LE(offset + 0x2c);
@@ -94,6 +94,16 @@ export default class FileSignature {
     '7z': new FileSignature('.7z', [{ value: Buffer.from('377ABCAF271C', 'hex') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
+    ace: new FileSignature('.ace', [{ offset: 7, value: Buffer.from('**ACE**') }]),
+
+    // @see https://en.wikipedia.org/wiki/List_of_file_signatures
+    // @see https://www.fileformat.info/format/arj/corion.htm
+    arj: new FileSignature('.arj', [
+      { value: Buffer.from('60EA', 'hex') },
+      { offset: 0x0a, value: Buffer.from('02', 'hex') }, // main header file type ("comment header")
+    ]),
+
+    // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     bz2: new FileSignature('.bz2', [
       { value: Buffer.from('BZh') },
       { offset: 4, value: Buffer.from('314159265359', 'hex') }, // BCD of pi
@@ -103,6 +113,14 @@ export default class FileSignature {
       { offset: 4, value: Buffer.from('177245385090', 'hex') }, // BCD of sqrt(pi)
     ]),
 
+    // @see https://learn.microsoft.com/en-us/previous-versions/bb417343(v=msdn.10)#cfheader
+    cab: new FileSignature('.cab', [
+      { value: Buffer.from('MSCF\u{0}\u{0}\u{0}\u{0}') }, // signature + reserved1
+    ]),
+
+    // @see http://justsolve.archiveteam.org/wiki/Disk_Masher_System
+    dms: new FileSignature('.dms', [{ value: Buffer.from('DMS!') }]),
+
     // @see https://docs.fileformat.com/compression/gz/
     gz: new FileSignature('.gz', [{ value: Buffer.from('1F8B08', 'hex') }]), // deflate
     // .tar.gz has the same file signature
@@ -110,18 +128,21 @@ export default class FileSignature {
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     lz: new FileSignature('.lz', [{ value: Buffer.from('LZIP') }]),
 
-    // @see https://en.wikipedia.org/wiki/List_of_file_signatures
-    lz4: new FileSignature('.lz4', [{ value: Buffer.from('04224D18', 'hex') }]),
+    // @see https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)
+    lz4_new: new FileSignature('.lz4', [{ value: Buffer.from('04224D18', 'hex') }]),
+    lz4_legacy: new FileSignature('.lz4', [{ value: Buffer.from('02214C18', 'hex') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     lzh: new FileSignature('.lzh', [
-      { value: Buffer.from('-lh') },
-      { offset: 4, value: Buffer.from('-') },
+      { offset: 2, value: Buffer.from('-lh') },
+      { offset: 6, value: Buffer.from('-') },
     ]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     oar: new FileSignature('.oar', [{ value: Buffer.from('OAR') }]),
 
+    // @see https://github.com/MacPaw/XADMaster/blob/master/XADRARParser.m
+    rar_old: new FileSignature('.rar', [{ value: Buffer.from('RE~^') }]), // <v1.50
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     rar1: new FileSignature('.rar', [{ value: Buffer.from('Rar!\u{1A}\u{7}\u{0}') }]), // v1.50+
     rar5: new FileSignature('.rar', [{ value: Buffer.from('Rar!\u{1A}\u{7}\u{1}\u{0}') }]), // v5.00+
@@ -163,8 +184,31 @@ export default class FileSignature {
 
     chd: new FileSignature('.chd', [{ value: Buffer.from('MComprHD') }]),
 
-    // @see https://docs.fileformat.com/disc-and-media/cso/
-    cso: new FileSignature('.cso', [{ value: Buffer.from('CISO') }]),
+    // @see https://github.com/unknownbrackets/maxcso/blob/master/README_CSO.md
+    // @see https://github.com/unknownbrackets/maxcso/blob/master/src/input.cpp
+    cso: new FileSignature('.cso', [
+      { value: Buffer.from('CISO') },
+      {
+        offset: 0,
+        length: 0x18,
+        match: (buffer): boolean => {
+          if (buffer.length < 0x18) {
+            return false;
+          }
+          // uncompressed_size & SECTOR_MASK
+          if ((buffer.readBigUInt64LE(0x08) & 0x7_ffn) !== 0n) {
+            return false;
+          }
+          // sector_size < SECTOR_SIZE || sector_size > MAX_BLOCK_SIZE
+          const blockSize = buffer.readUInt32LE(0x10);
+          if (blockSize < 0x8_00 || blockSize > 0x4_00_00) {
+            return false;
+          }
+          // version
+          return buffer.readUInt8(0x14) <= 2;
+        },
+      },
+    ]),
 
     dax: new FileSignature('.dax', [{ value: Buffer.from('DAX') }]),
 
@@ -233,6 +277,13 @@ export default class FileSignature {
     // @see https://vice-emu.sourceforge.io/vice_17.html#SEC415
     x64: new FileSignature('.x64', [{ value: Buffer.from('43154164', 'hex') }]),
 
+    // Microsoft - Xbox / Xbox 360
+    // @see https://xboxdevwiki.net/XDVDFS
+    xiso: new FileSignature('.iso', [
+      { offset: 0x1_00_00, value: Buffer.from('MICROSOFT*XBOX*MEDIA') },
+      { offset: 0x1_07_ec, value: Buffer.from('MICROSOFT*XBOX*MEDIA') },
+    ]),
+
     // Nintendo - Nintendo 3DS
     // @see https://www.3dbrew.org/wiki/CCI
     '3ds': new FileSignature(
@@ -253,8 +304,34 @@ export default class FileSignature {
       { offset: 0x06, value: Buffer.from('0000', 'hex') }, // version
     ]),
     // @see https://www.3dbrew.org/wiki/NCCH
-    // TODO(cemmer): .cfa
-    // TODO(cemmer): .cxi
+    cfa: new FileSignature('.cfa', [
+      { offset: 0x1_00, value: Buffer.from('NCCH') },
+      {
+        offset: 0x1_8d,
+        length: 1,
+        match: (buffer): boolean => {
+          if (buffer.length < 0x1_8d + 1) {
+            return false;
+          }
+          // flags[5] bits 0-1: content form type, 1 = simple content
+          return (buffer.readUInt8(0x1_8d) & 0b11) === 1;
+        },
+      },
+    ]),
+    cxi: new FileSignature('.cxi', [
+      { offset: 0x1_00, value: Buffer.from('NCCH') },
+      {
+        offset: 0x1_8d,
+        length: 1,
+        match: (buffer): boolean => {
+          if (buffer.length < 0x1_8d + 1) {
+            return false;
+          }
+          // flags[5] bits 0-1: content form type, 2 = executable without RomFS, 3 = executable
+          return (buffer.readUInt8(0x1_8d) & 0b11) >= 2;
+        },
+      },
+    ]),
 
     // Nintendo - Nintendo 64
     // @see http://n64dev.org/romformats.html
@@ -273,6 +350,12 @@ export default class FileSignature {
     gw: new FileSignature('.bin', [{ value: Buffer.from('main.bs') }]),
 
     // Nintendo - GameCube
+    // @see https://github.com/FIX94/Nintendont/blob/master/kernel/ISO.c
+    // @see https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/DiscIO/CISOBlob.h
+    ciso_gamecube: new FileSignature('.ciso', [
+      { value: Buffer.from('CISO') },
+      { offset: 0x80_1c, value: Buffer.from('C2339F3D', 'hex') }, // GameCube disc magic
+    ]),
     // TODO(cemmer): .fdi
     // @see https://github.com/dolphin-emu/dolphin/blob/1f5e100a0e6dd4f9ab3784fd6373d452054d08bf/Source/Core/DiscIO/CompressedBlob.h#L25 (reversed)
     gcz: new FileSignature('.gcz', [{ value: Buffer.from('01C00BB1', 'hex') }]),
@@ -280,7 +363,9 @@ export default class FileSignature {
     nkit_iso: new FileSignature('.nkit.iso', [{ offset: 0x2_00, value: Buffer.from('NKIT') }]),
     // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
     rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\u{1}') }]),
-    // TODO(cemmer): .tgc
+    // @see https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/DiscIO/TGCBlob.h
+    tgc: new FileSignature('.tgc', [{ value: Buffer.from('AE0F38A2', 'hex') }]),
+    // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
     wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\u{1}') }]),
 
     // Nintendo - Game Boy
@@ -369,8 +454,41 @@ export default class FileSignature {
 
     // Nintendo - Nintendo Entertainment System
     // @see https://www.nesdev.org/wiki/INES
+    nes_ines: new FileSignature('.nes', [
+      { value: Buffer.from('NES\u{1A}') },
+      {
+        offset: 7,
+        length: 1,
+        match: (buffer): boolean => {
+          if (buffer.length < 7 + 1) {
+            return false;
+          }
+          return (buffer.readUInt8(7) & 0x0c) === 0x00;
+        },
+      },
+      { offset: 12, value: Buffer.from('00000000', 'hex') },
+    ]),
     // @see https://www.nesdev.org/wiki/NES_2.0
+    nes_2: new FileSignature('.nes', [
+      { value: Buffer.from('NES\u{1A}') },
+      {
+        offset: 7,
+        length: 1,
+        match: (buffer): boolean => {
+          if (buffer.length < 7 + 1) {
+            return false;
+          }
+          return (buffer.readUInt8(7) & 0x0c) === 0x08;
+        },
+      },
+    ]),
+    // @see https://www.nesdev.org/wiki/INES#Variant_comparison
     nes: new FileSignature('.nes', [{ value: Buffer.from('NES\u{1A}') }]),
+    // @see https://www.nesdev.org/wiki/UNIF
+    unf: new FileSignature('.unf', [
+      { value: Buffer.from('UNIF') },
+      { offset: 8, value: Buffer.from('00'.repeat(24), 'hex') }, // reserved
+    ]),
 
     // Nintendo - Pokemon Mini
     // @see https://www.pokemon-mini.net/documentation/cartridge/
@@ -385,7 +503,41 @@ export default class FileSignature {
     ]),
 
     // Nintendo - Super Nintendo Entertainment System
-    // TODO(cemmer): .fig
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/fig.h
+    fig: new FileSignature('.fig', [
+      {
+        offset: 3,
+        length: 3,
+        match: (buffer): boolean => {
+          if (buffer.length < 3 + 3) {
+            return false;
+          }
+          const memoryMap = buffer.readUInt8(3);
+          const emulation = buffer.readUInt16BE(4);
+          if (memoryMap === 0x00) {
+            return [
+              0x77_83, // No SRAM
+              0x00_80, // 16 KBit, 64 KBit
+              // 0x00_00 is omitted because it might conflict with .smc detection
+              0x47_83, // No SRAM, with DSP
+              0x11_02, // 256 KBit, with SFX
+            ].includes(emulation);
+          }
+          if (memoryMap === 0x80) {
+            return [
+              0x77_83, // No SRAM
+              0xdd_82, // 16 KBit, 64 KBit
+              0xdd_02, // 256 KBit
+              0xf7_83, // No SRAM, with DSP
+              0xfd_82, // 16 KBit, with DSP
+            ].includes(emulation);
+          }
+          return false;
+        },
+      },
+      { offset: 6, value: Buffer.from('00'.repeat(506), 'hex') }, // reserved
+      superNintendoDynamicPiece(512),
+    ]),
     // @see https://snes.nesdev.org/wiki/ROM_header
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
     smc: new FileSignature('.smc', [
@@ -425,6 +577,12 @@ export default class FileSignature {
     // Nintendo - Wii
     // @see http://wiibrew.org/wiki/CCF_archive
     ccf: new FileSignature('.ccf', [{ value: Buffer.from('CCF\u{0}') }]),
+    // @see https://github.com/Wiimm/wiimms-iso-tools/blob/master/project/src/lib-ciso.h
+    // @see https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/DiscIO/CISOBlob.h
+    ciso_wii: new FileSignature('.ciso', [
+      { value: Buffer.from('CISO') },
+      { offset: 0x80_18, value: Buffer.from('5D1C9EA3', 'hex') }, // Wii disc magic
+    ]),
     // @see http://wiibrew.org/wiki/VFF
     vff: new FileSignature('.vff', [{ value: Buffer.from('VFF ') }]),
     // @see http://wiibrew.org/wiki/WAD_files
@@ -446,17 +604,30 @@ export default class FileSignature {
       { offset: 0x06, value: Buffer.from('\u{0}\u{1}') }, // WAD version
       { offset: 0x6e, value: Buffer.from('\u{0}\u{0}') }, // reserved
     ]),
+    // @see https://github.com/kwiirk/wbfs/blob/master/libwbfs/libwbfs.h
+    wbfs: new FileSignature('.wbfs', [{ value: Buffer.from('WBFS') }]),
     // @see https://wit.wiimm.de/info/wdf.html
     wdf: new FileSignature('.wdf', [{ value: Buffer.from('WII\u{1}DISC') }]),
 
     // Nintendo - Wii U
     // @see https://gbatemp.net/threads/the-different-wiiu-games-formats-and-how-to-convert-them.449212/post-6845070
-    // TODO(cemmer): .rpx
+    // Note: .rpx and .rpl are difficult to differentiate
     // Note: .wua doesn't appear to have any consistent signature
     wud: new FileSignature('.wud', [{ value: Buffer.from('WUP-') }]),
-    // TODO(cemmer): .wup
     // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25-L26
     wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\u{2E}\u{D0}\u{99}\u{10}') }]),
+
+    // Panasonic - 3DO
+    // @see https://github.com/trapexit/portfolio_os/blob/bee7b0c8e4287083c73cb5497b658880c9e7af8e/src/dipir/cdipir.c#L1286-L1310
+    '3do_iso': new FileSignature('.iso', [
+      { value: Buffer.from('01', 'hex') }, // record type
+      { offset: 0x01, value: Buffer.from('5A5A5A5A5A', 'hex') }, // volume sync bytes
+    ]),
+    '3do_bin': new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 0x10, value: Buffer.from('01', 'hex') }, // record type
+      { offset: 0x11, value: Buffer.from('5A5A5A5A5A', 'hex') }, // volume sync bytes
+    ]),
 
     // Sega - 32X
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
@@ -464,8 +635,57 @@ export default class FileSignature {
     '32x': new FileSignature('.32x', [{ offset: 0x1_00, value: Buffer.from('SEGA 32X') }]),
 
     // Sega - Game Gear
-    // @see https://gbatemp.net/threads/help-with-rom-iso-console-identification.611378/
-    gg: new FileSignature('.gg', [{ offset: 0x7f_f0, value: Buffer.from('TMR SEGA') }]),
+    // @see https://www.smspower.org/Development/ROMHeader
+    gg: new FileSignature('.gg', [
+      { offset: 0x7f_f0, value: Buffer.from('TMR SEGA') },
+      {
+        offset: 0x7f_ff,
+        length: 1,
+        match: (buffer): boolean => {
+          if (buffer.length < 0x7f_ff + 1) {
+            return false;
+          }
+          // Region code (upper nibble): 5 = GG Japan, 6 = GG Export, 7 = GG International
+          return [0x5, 0x6, 0x7].includes(buffer.readUInt8(0x7f_ff) >> 4);
+        },
+      },
+    ]),
+
+    // Sega - Master System
+    // @see https://www.smspower.org/Development/ROMHeader
+    sms: new FileSignature('.sms', [
+      { offset: 0x7f_f0, value: Buffer.from('TMR SEGA') },
+      {
+        offset: 0x7f_ff,
+        length: 1,
+        match: (buffer): boolean => {
+          if (buffer.length < 0x7f_ff + 1) {
+            return false;
+          }
+          // Region code (upper nibble): 3 = SMS Japan, 4 = SMS Export
+          return [0x3, 0x4].includes(buffer.readUInt8(0x7f_ff) >> 4);
+        },
+      },
+    ]),
+
+    // Sega - Mega-CD / Sega CD
+    // @see https://segaretro.org/images/a/a5/Mega-CD_Disc_Format_Specifications.pdf
+    segacd_iso_system: new FileSignature('.iso', [
+      { value: Buffer.from('SEGADISCSYSTEM') },
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+    ]),
+    segacd_iso_boot: new FileSignature('.iso', [
+      { value: Buffer.from('SEGABOOTDISC') },
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+    ]),
+    segacd_bin_system: new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 0x10, value: Buffer.from('SEGADISCSYSTEM') },
+    ]),
+    segacd_bin_boot: new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 0x10, value: Buffer.from('SEGABOOTDISC') },
+    ]),
 
     // Sega - Mega Drive / Genesis
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
@@ -497,6 +717,28 @@ export default class FileSignature {
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
     // @see https://plutiedev.com/rom-header
     pico: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA PICO') }]),
+
+    // Sega - Saturn
+    // @see https://antime.kapsi.fi/sega/files/ST-040-R4-051795.pdf
+    saturn_iso: new FileSignature('.iso', [
+      { value: Buffer.from('SEGA SEGASATURN ') },
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+    ]),
+    saturn_bin: new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 0x10, value: Buffer.from('SEGA SEGASATURN ') },
+    ]),
+
+    // SNK - Neo Geo Pocket / Neo Geo Pocket Color
+    // @see https://github.com/hiddenpalaceorg/rom-info/issues/24
+    ngp: new FileSignature('.ngp', [
+      { offset: 9, value: Buffer.from(' BY SNK CORPORATION') },
+      { offset: 0x23, value: Buffer.from('00', 'hex') }, // compatible system: monochrome
+    ]),
+    ngc: new FileSignature('.ngc', [
+      { offset: 9, value: Buffer.from(' BY SNK CORPORATION') },
+      { offset: 0x23, value: Buffer.from('10', 'hex') }, // compatible system: color
+    ]),
 
     // Sony - PlayStation Portable
     // @see https://www.psdevwiki.com/ps3/Eboot.PBP
