@@ -1,0 +1,6 @@
+config_version = "0"
+
+exclude_patterns = [
+  # Emscripten-generated WebAssembly glue code
+  "addons/**/wasm/*.cjs",
+]
