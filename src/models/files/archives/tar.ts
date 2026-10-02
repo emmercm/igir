@@ -42,7 +42,11 @@ export default class Tar extends Archive {
     return true;
   }
 
-  getExtension(): string {
+  getExtensions(): string[] {
+    return Tar.getExtensions();
+  }
+
+  override getExtension(): string {
     for (const ext of Tar.getExtensions()) {
       if (this.getFilePath().toLowerCase().endsWith(ext)) {
         return ext;

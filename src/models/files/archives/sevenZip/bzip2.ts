@@ -23,8 +23,8 @@ export default class Bzip2 extends SevenZipLib {
     return ['.bz2', '.bzip2'];
   }
 
-  getExtension(): string {
-    return Bzip2.getExtensions()[0];
+  getExtensions(): string[] {
+    return Bzip2.getExtensions();
   }
 
   /**

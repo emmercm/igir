@@ -16,7 +16,7 @@ export default class Wia extends Dolphin {
     return ['.wia'];
   }
 
-  getExtension(): string {
-    return Wia.getExtensions()[0];
+  getExtensions(): string[] {
+    return Wia.getExtensions();
   }
 }

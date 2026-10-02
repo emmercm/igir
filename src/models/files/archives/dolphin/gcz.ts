@@ -16,7 +16,7 @@ export default class Gcz extends Dolphin {
     return ['.gcz'];
   }
 
-  getExtension(): string {
-    return Gcz.getExtensions()[0];
+  getExtensions(): string[] {
+    return Gcz.getExtensions();
   }
 }

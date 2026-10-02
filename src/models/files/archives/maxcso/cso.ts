@@ -16,7 +16,7 @@ export default class Cso extends Maxcso {
     return ['.cso'];
   }
 
-  getExtension(): string {
-    return Cso.getExtensions()[0];
+  getExtensions(): string[] {
+    return Cso.getExtensions();
   }
 }

@@ -31,7 +31,17 @@ export default abstract class Archive {
 
   protected abstract new(filePath: string): Archive;
 
-  abstract getExtension(): string;
+  /**
+   * @returns every extension that is valid for this archive type, with the canonical one first
+   */
+  abstract getExtensions(): string[];
+
+  /**
+   * @returns the canonical extension for this archive type
+   */
+  getExtension(): string {
+    return this.getExtensions()[0];
+  }
 
   getFilePath(): string {
     return this.filePath;

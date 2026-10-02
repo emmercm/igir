@@ -52,8 +52,8 @@ export default class Zip extends Archive {
     return ['.zip', '.zip64', '.apk', '.ipa', '.jar', '.pk3'];
   }
 
-  getExtension(): string {
-    return Zip.getExtensions()[0];
+  getExtensions(): string[] {
+    return Zip.getExtensions();
   }
 
   /**

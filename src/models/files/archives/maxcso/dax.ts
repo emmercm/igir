@@ -16,7 +16,7 @@ export default class Dax extends Maxcso {
     return ['.dax'];
   }
 
-  getExtension(): string {
-    return Dax.getExtensions()[0];
+  getExtensions(): string[] {
+    return Dax.getExtensions();
   }
 }

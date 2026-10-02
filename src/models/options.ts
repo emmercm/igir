@@ -1171,6 +1171,17 @@ export default class Options implements OptionsProps {
     return FixExtension[fixExtensionMode as FixExtensionKey];
   }
 
+  /**
+   * Should output file extensions be corrected, given the "--fix-extension" mode and whether
+   * there's a more trustworthy source of filenames (DATs, or input files when generating a dir2dat)?
+   */
+  shouldFixExtension(): boolean {
+    return (
+      this.getFixExtension() === FixExtension.ALWAYS ||
+      (this.getFixExtension() === FixExtension.AUTO && !this.shouldDir2Dat() && !this.usingDats())
+    );
+  }
+
   getOverwrite(): boolean {
     return this.overwrite;
   }
