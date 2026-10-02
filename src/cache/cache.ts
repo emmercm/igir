@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
+import string_decoder from 'node:string_decoder';
 import zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
 
 import KeyedMutex from '../async/keyedMutex.js';
-import Timer from '../async/timer.js';
 import FsUtil from '../utils/fsUtil.js';
 
 export interface CacheProps {
@@ -19,13 +19,19 @@ export interface CacheProps {
  * A cache of an unbounded size.
  */
 export default class Cache<V> {
+  // Serialized records are flushed once a batch reaches this many characters: large enough to
+  // amortize the per-chunk overhead, far below V8's maximum string length.
+  private static readonly BATCH_LENGTH = 1024 * 1024;
+
   private keyValues = new Map<string, V>();
 
   private readonly keyedMutex = new KeyedMutex(1000);
 
   private hasChanged = false;
 
-  private saveToFileTimeout?: Timer;
+  // Seeded to construction time so the first flush is a full interval away: firing immediately races
+  // the `set()` calls that follow it, and a save clears `hasChanged` for the snapshot it captured.
+  private lastSaveMillis = Date.now();
 
   readonly filePath?: string;
 
@@ -262,26 +268,77 @@ export default class Cache<V> {
     }
 
     try {
-      const chunks: Buffer[] = [];
+      // Parse the cache file incrementally, one newline-delimited [key, value] record at a time.
+      // Never rebuild the whole file into a single string: on large collections the serialized
+      // cache can exceed V8's maximum string length and throw a `RangeError`.
+      const decoder = new string_decoder.StringDecoder('utf8');
+      const map = new Map<string, V>();
+      let buffer = '';
+      // Older versions wrote the whole map as one JSON object. Such a file is still read whole: the
+      // old writer had to materialize that string to produce it, so reading it back the same way
+      // cannot exceed a limit the file was written under. Detecting it up front keeps the newline
+      // splitting, which is quadratic over one long line, off those files entirely.
+      const readState: { hasData: boolean; format: 'unknown' | 'legacy' | 'records' } = {
+        hasData: false,
+        format: 'unknown',
+      };
+      const legacy: string[] = [];
+      const ingestLine = (line: string): void => {
+        if (line.length === 0) {
+          return;
+        }
+        const entry = JSON.parse(line) as unknown;
+        if (!Array.isArray(entry) || entry.length !== 2) {
+          return;
+        }
+        const [key, value] = entry as [string, V];
+        map.set(key, value);
+      };
       await stream.promises.pipeline(
         fs.createReadStream(this.filePath),
         zlib.createGunzip(),
         new stream.Writable({
           write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
-            chunks.push(chunk);
+            readState.hasData = true;
+            const text = decoder.write(chunk);
+            if (readState.format === 'unknown') {
+              buffer += text;
+              const trimmed = buffer.trimStart();
+              if (trimmed.length === 0) {
+                cb();
+                return;
+              }
+              readState.format = trimmed.startsWith('{') ? 'legacy' : 'records';
+            } else if (readState.format === 'records') {
+              buffer += text;
+            }
+            if (readState.format === 'legacy') {
+              legacy.push(buffer);
+              buffer = '';
+              cb();
+              return;
+            }
+            let idx = buffer.indexOf('\n');
+            while (idx !== -1) {
+              ingestLine(buffer.slice(0, idx));
+              buffer = buffer.slice(idx + 1);
+              idx = buffer.indexOf('\n');
+            }
             cb();
           },
         }),
       );
-      if (chunks.length === 0) {
+      if (!readState.hasData) {
         return this;
       }
-      const keyValuesObject = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<
-        string,
-        V
-      >;
-      const keyValuesEntries = Object.entries(keyValuesObject);
-      this.keyValues = new Map(keyValuesEntries);
+      buffer += decoder.end();
+      if (readState.format === 'legacy') {
+        legacy.push(buffer);
+        this.keyValues = new Map(Object.entries(JSON.parse(legacy.join('')) as Record<string, V>));
+      } else {
+        ingestLine(buffer);
+        this.keyValues = map;
+      }
     } catch {
       // ignored
     }
@@ -291,21 +348,19 @@ export default class Cache<V> {
 
   private saveWithTimeout(): void {
     this.hasChanged = true;
-    if (
-      this.filePath === undefined ||
-      this.fileFlushMillis === undefined ||
-      this.saveToFileTimeout !== undefined
-    ) {
+    if (this.filePath === undefined || this.fileFlushMillis === undefined) {
       return;
     }
 
-    this.saveToFileTimeout = Timer.setTimeout(async () => {
-      try {
-        await this.save();
-      } finally {
-        this.saveToFileTimeout = undefined;
-      }
-    }, this.fileFlushMillis);
+    // Flush on elapsed wall-clock rather than on a timer. Scanning a large collection keeps the event
+    // loop saturated for hours, and a starved timer means the cache is never written again -- and
+    // because the pending timer also blocks a later one from being armed, it never recovers.
+    const now = Date.now();
+    if (now - this.lastSaveMillis < this.fileFlushMillis) {
+      return;
+    }
+    this.lastSaveMillis = now;
+    void this.save();
   }
 
   /**
@@ -314,18 +369,11 @@ export default class Cache<V> {
   async save(): Promise<void> {
     try {
       await this.saveMutex.runExclusive(async () => {
-        // Clear any existing timeout
-        if (this.saveToFileTimeout !== undefined) {
-          this.saveToFileTimeout.cancel();
-          this.saveToFileTimeout = undefined;
-        }
-
         if (this.filePath === undefined || !this.hasChanged) {
           return;
         }
 
-        const keyValuesObject = Object.fromEntries(this.keyValues);
-        const json = JSON.stringify(keyValuesObject);
+        const entries = [...this.keyValues];
         // Reset before I/O so mid-save changes re-set the flag
         this.hasChanged = false;
 
@@ -338,26 +386,33 @@ export default class Cache<V> {
         // Write to a temp file first
         const tempFile = await FsUtil.mktemp(this.filePath);
         try {
-          await stream.promises.pipeline(
-            stream.Readable.from([Buffer.from(json, 'utf8')]),
-            zlib.createGzip(),
-            fs.createWriteStream(tempFile),
-          );
-
-          // Validate the file was written correctly; gunzip will throw if the archive is missing
-          // its trailer (file is truncated) or if the CRC32 doesn't match (which shouldn't happen)
-          await stream.promises.pipeline(
-            fs.createReadStream(tempFile),
-            zlib.createGunzip(),
-            new stream.Writable({
-              write: (_chunk, _enc, cb): void => {
-                cb();
-              },
-            }),
-          );
+          // Write newline-delimited [key, value] records, batched so no single string ever holds the
+          // whole cache -- a large collection's serialized cache exceeds V8's maximum string length
+          // and a single `JSON.stringify()` of it throws `RangeError`. The writes are synchronous:
+          // every asynchronous alternative needs an event-loop turn to make progress, and a scan of a
+          // large collection can starve the loop for hours, which leaves a half-written temp file
+          // behind and the cache never updated at all. Concatenated gzip members are valid gzip.
+          const fd = fs.openSync(tempFile, 'w');
+          try {
+            let batch = '';
+            for (const entry of entries) {
+              batch += `${JSON.stringify(entry)}\n`;
+              if (batch.length < Cache.BATCH_LENGTH) {
+                continue;
+              }
+              fs.writeSync(fd, zlib.gzipSync(batch));
+              batch = '';
+            }
+            if (batch.length > 0) {
+              fs.writeSync(fd, zlib.gzipSync(batch));
+            }
+          } finally {
+            fs.closeSync(fd);
+          }
 
           // Overwrite the real file with the temp file
           await FsUtil.mv(tempFile, this.filePath);
+          this.lastSaveMillis = Date.now();
         } catch {
           await FsUtil.rm(tempFile, { force: true });
           this.hasChanged = true;

@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 import Cache from '../../src/cache/cache.js';
 import Temp from '../../src/globals/temp.js';
@@ -243,6 +245,150 @@ describe('save', () => {
   });
 });
 
+describe('save and load', () => {
+  it('should round-trip values containing newlines, quotes, and backslashes', async () => {
+    // Records are newline-delimited, so any newlines inside a value must survive a save+load.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const values = new Map<string, string>([
+      ['newlines', 'line1\nline2\r\nline3\n'],
+      ['quotes', 'has "double" and \'single\' quotes'],
+      ['backslashes', 'c:\\path\\to\\file'],
+      ['looks-like-record', '["not","a","real","entry"]'],
+      ['empty', ''],
+    ]);
+
+    const firstCache = new Cache<string>({ filePath: tempFile });
+    for (const [key, value] of values) {
+      await firstCache.set(key, value);
+    }
+    await firstCache.save();
+
+    try {
+      const secondCache = new Cache<string>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(values.size);
+      for (const [key, value] of values) {
+        await expect(secondCache.get(key)).resolves.toEqual(value);
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should load a legacy single-object-format cache file', async () => {
+    // Older versions wrote the whole map as one gzipped JSON object rather than newline-delimited
+    // records. Those files must still load, so an upgrade doesn't discard a warm cache.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const legacy = zlib.gzipSync(Buffer.from(JSON.stringify({ a: 1, b: 2, c: 3 }), 'utf8'));
+    await FsUtil.writeFile(tempFile, legacy);
+
+    try {
+      const cache = new Cache<number>({ filePath: tempFile });
+      await cache.load();
+      expect(cache.size()).toEqual(3);
+      await expect(cache.get('a')).resolves.toEqual(1);
+      await expect(cache.get('b')).resolves.toEqual(2);
+      await expect(cache.get('c')).resolves.toEqual(3);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should load a legacy file whose values contain newlines', async () => {
+    // Detection keys off the leading `{`. A value containing a newline must not be mistaken for the
+    // newline-delimited format.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const values = { 'line\nbreak': 'value\nwith\nnewlines', quoted: 'a "b" c' };
+    const legacy = zlib.gzipSync(Buffer.from(JSON.stringify(values), 'utf8'));
+    await FsUtil.writeFile(tempFile, legacy);
+
+    try {
+      const cache = new Cache<string>({ filePath: tempFile });
+      await cache.load();
+      expect(cache.size()).toEqual(2);
+      await expect(cache.get('line\nbreak')).resolves.toEqual('value\nwith\nnewlines');
+      await expect(cache.get('quoted')).resolves.toEqual('a "b" c');
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should write a cache whose serialized size exceeds one batch', async () => {
+    // Records are flushed in batches of ~1 MiB of serialized text, so this crosses a batch boundary
+    // several times over. Batching must not merge records or lose the boundary between batches.
+    const entryCount = 5000;
+    const value = 'x'.repeat(500);
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const firstCache = new Cache<string>({ filePath: tempFile });
+    for (let i = 0; i < entryCount; i += 1) {
+      await firstCache.set(String(i), value);
+    }
+    await firstCache.save();
+
+    try {
+      const serialized = zlib.gunzipSync(await fs.promises.readFile(tempFile)).toString('utf8');
+      expect(serialized.length).toBeGreaterThan(1024 * 1024);
+      const lines = serialized.split('\n').filter((line) => line.length > 0);
+      expect(lines).toHaveLength(entryCount);
+      for (const line of lines) {
+        expect(Array.isArray(JSON.parse(line))).toEqual(true);
+      }
+
+      const secondCache = new Cache<string>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(entryCount);
+      for (let i = 0; i < entryCount; i += 1) {
+        await expect(secondCache.get(String(i))).resolves.toEqual(value);
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should save each entry as its own newline-delimited record', async () => {
+    // The fix for large caches is to serialize one newline-delimited [key, value] record per
+    // entry and stream them, instead of building a single `JSON.stringify()` string of the whole
+    // cache (which throws `RangeError: Invalid string length` once it would exceed V8's ~512 MiB
+    // maximum string length). This asserts the on-disk format is one record per entry, so no
+    // single string is ever built from the entire cache.
+    const entryCount = 1000;
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const firstCache = new Cache<number>({ filePath: tempFile });
+    for (let i = 0; i < entryCount; i += 1) {
+      await firstCache.set(String(i), i);
+    }
+    await firstCache.save();
+
+    try {
+      // The file is gzipped newline-delimited JSON: one [key, value] array per line.
+      const lines = zlib
+        .gunzipSync(await fs.promises.readFile(tempFile))
+        .toString('utf8')
+        .split('\n')
+        .filter((line) => line.length > 0);
+      expect(lines).toHaveLength(entryCount);
+      for (const line of lines) {
+        const record = JSON.parse(line) as unknown;
+        expect(Array.isArray(record)).toEqual(true);
+        expect((record as unknown[]).length).toEqual(2);
+      }
+
+      // ...and it round-trips back into an equivalent cache.
+      const secondCache = new Cache<number>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(entryCount);
+      for (let i = 0; i < entryCount; i += 1) {
+        await expect(secondCache.get(String(i))).resolves.toEqual(i);
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+});
+
 describe('getOrComputeAllKeys', () => {
   it('should compute all values when all keys are missing', async () => {
     const cache = new Cache<number>();
@@ -413,5 +559,45 @@ describe('getOrComputeAnyKeys', () => {
     const result = await cache.getOrComputeAnyKeys(['a', 'b'], runnable, (value) => value < 10);
     expect(result).toEqual(100);
     expect(computed).toEqual(0);
+  });
+});
+
+describe('flush', () => {
+  it('should not write the cache on its own when no flush interval is set', async () => {
+    // Without `fileFlushMillis` there is no automatic flush: only an explicit save() writes.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const cache = new Cache<number>({ filePath: tempFile });
+
+    await cache.set('a', 1);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+
+    expect(await FsUtil.exists(tempFile)).toEqual(false);
+    await FsUtil.rm(tempFile, { force: true });
+  });
+
+  it('should write the cache once the flush interval has elapsed, without an explicit save', async () => {
+    // The flush is driven from set() on elapsed wall-clock, not from a timer: a scan can hold the
+    // event loop for hours, and a starved timer is how the cache stopped being written at all.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const cache = new Cache<number>({ filePath: tempFile, fileFlushMillis: 50 });
+
+    await cache.set('a', 1);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 120);
+    });
+    await cache.set('b', 2); // the interval has now elapsed, so this set() flushes
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50); // the flush is kicked off but not awaited by set()
+    });
+
+    expect(await FsUtil.exists(tempFile)).toEqual(true);
+
+    const reloaded = new Cache<number>({ filePath: tempFile });
+    await reloaded.load();
+    expect(await reloaded.get('a')).toEqual(1);
+
+    await FsUtil.rm(tempFile, { force: true });
   });
 });
