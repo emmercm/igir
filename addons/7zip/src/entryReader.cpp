@@ -33,60 +33,71 @@ Napi::Function EntryReader::GetClass(Napi::Env env) {
                        });
 }
 
+/** Validates reader arguments on the loop thread, reporting TypeError and retaining the existing output locals. */
+static bool ParseReadArguments(const Napi::CallbackInfo& info, std::optional<std::string>& entryPath,
+                               std::optional<uint32_t>& entryIndex, size_t& chunkBytes) {
+    Napi::Env const env = info.Env();
+    // An entry is named by path, or not named at all. An index may accompany
+    // the path, but only as a hint the Pump verifies against it.
+    bool const named = info.Length() >= 3 && info[2].IsString();
+    bool const unnamed = info.Length() < 3 || info[2].IsUndefined();
+    bool const hinted = info.Length() >= 4 && info[3].IsNumber();
+    bool const unhinted = info.Length() < 4 || info[3].IsUndefined();
+    bool const sized = info.Length() < 5 || info[4].IsUndefined() || info[4].IsNumber();
+    if (!info[0].IsString() || !info[1].IsNumber() || (!named && !unnamed) || (!hinted && !unhinted) || !sized) {
+        Napi::TypeError::New(env,
+                             "expected (path: string, formatIndex: number, entryPath?: string, "
+                             "entryIndex?: number, chunkBytes?: number)")
+            .ThrowAsJavaScriptException();
+        return false;
+    }
+    if (named) {
+        entryPath = info[2].As<Napi::String>().Utf8Value();
+        if (entryPath->empty()) {
+            // An empty path would otherwise be indistinguishable from naming no
+            // entry at all, silently extracting a single-entry archive's member
+            Napi::TypeError::New(env, "entry path must not be empty").ThrowAsJavaScriptException();
+            return false;
+        }
+    }
+    // An out-of-range or non-integral hint is not an error: it cannot match
+    // any item, and the Pump falls back to the scan
+    if (hinted) {
+        double const requested = info[3].As<Napi::Number>().DoubleValue();
+        if (requested >= 0 && requested <= UINT32_MAX && requested == std::floor(requested)) {
+            entryIndex = static_cast<uint32_t>(requested);
+        }
+    }
+
+    // Fixed for the life of the reader rather than passed to each read(),
+    // so that every chunk but the last is the same size
+    if (info.Length() >= 5 && info[4].IsNumber()) {
+        double const requested = info[4].As<Napi::Number>().DoubleValue();
+        if (!(requested >= 1)) {
+            // Catches 0, negatives and NaN alike. A zero-byte chunk would
+            // make every read return an empty buffer.
+            Napi::TypeError::New(env, "chunkBytes must be at least 1").ThrowAsJavaScriptException();
+            return false;
+        }
+        if (requested > static_cast<double>(EntryReader::kMaxChunkBytes)) {
+            Napi::RangeError::New(env, "chunkBytes is too large").ThrowAsJavaScriptException();
+            return false;
+        }
+        chunkBytes = static_cast<size_t>(requested);
+    }
+
+    return true;
+}
+
 EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<EntryReader>(info) {
     try {
         Napi::Env const env = info.Env();
 
-        // An entry is named by path, or not named at all. An index may accompany
-        // the path, but only as a hint the Pump verifies against it.
-        bool const named = info.Length() >= 3 && info[2].IsString();
-        bool const unnamed = info.Length() < 3 || info[2].IsUndefined();
-        bool const hinted = info.Length() >= 4 && info[3].IsNumber();
-        bool const unhinted = info.Length() < 4 || info[3].IsUndefined();
-        bool const sized = info.Length() < 5 || info[4].IsUndefined() || info[4].IsNumber();
-        if (!info[0].IsString() || !info[1].IsNumber() || (!named && !unnamed) || (!hinted && !unhinted) || !sized) {
-            Napi::TypeError::New(env,
-                                 "expected (path: string, formatIndex: number, entryPath?: string, "
-                                 "entryIndex?: number, chunkBytes?: number)")
-                .ThrowAsJavaScriptException();
-            return;
-        }
         std::optional<std::string> entryPath;
-        if (named) {
-            entryPath = info[2].As<Napi::String>().Utf8Value();
-            if (entryPath->empty()) {
-                // An empty path would otherwise be indistinguishable from naming no
-                // entry at all, silently extracting a single-entry archive's member
-                Napi::TypeError::New(env, "entry path must not be empty").ThrowAsJavaScriptException();
-                return;
-            }
-        }
-        // An out-of-range or non-integral hint is not an error: it cannot match
-        // any item, and the Pump falls back to the scan
         std::optional<uint32_t> entryIndex;
-        if (hinted) {
-            double const requested = info[3].As<Napi::Number>().DoubleValue();
-            if (requested >= 0 && requested <= UINT32_MAX && requested == std::floor(requested)) {
-                entryIndex = static_cast<uint32_t>(requested);
-            }
-        }
-
-        // Fixed for the life of the reader rather than passed to each read(),
-        // so that every chunk but the last is the same size
         size_t chunkBytes = kDefaultChunkBytes;
-        if (info.Length() >= 5 && info[4].IsNumber()) {
-            double const requested = info[4].As<Napi::Number>().DoubleValue();
-            if (!(requested >= 1)) {
-                // Catches 0, negatives and NaN alike. A zero-byte chunk would
-                // make every read return an empty buffer.
-                Napi::TypeError::New(env, "chunkBytes must be at least 1").ThrowAsJavaScriptException();
-                return;
-            }
-            if (requested > static_cast<double>(kMaxChunkBytes)) {
-                Napi::RangeError::New(env, "chunkBytes is too large").ThrowAsJavaScriptException();
-                return;
-            }
-            chunkBytes = static_cast<size_t>(requested);
+        if (!ParseReadArguments(info, entryPath, entryIndex, chunkBytes)) {
+            return;
         }
 
         // The bridge exists before the producer does, because the producer

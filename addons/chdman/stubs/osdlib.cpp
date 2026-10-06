@@ -16,5 +16,5 @@
 
 #include "osdcore.h"  // const char *osd_getenv(const char *)
 
-// Returns the environment variable's value, or nullptr if it isn't set
+/** Returns the environment variable's value, or nullptr if it isn't set */
 const char* osd_getenv(const char* name) { return std::getenv(name); }

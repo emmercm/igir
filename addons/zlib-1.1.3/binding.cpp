@@ -19,37 +19,44 @@
 #endif
 #endif
 
-// A std::allocator that default-initializes elements instead of value-initializing them, so that
-// sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
-// that is written before it is read.
+/**
+ * A std::allocator that default-initializes elements instead of value-initializing them, so that
+ * sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
+ * that is written before it is read.
+ */
 template <typename T>
 struct DefaultInitAllocator : std::allocator<T> {
+    /** Rebinds the allocator to another element type without adding state. */
     template <typename U>
     struct rebind {
         using other = DefaultInitAllocator<U>;
     };
 
+    /** Constructs a stateless allocator. */
     DefaultInitAllocator() = default;
+    /** Converts between stateless allocator specializations. */
     template <typename U>
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions): allocators must convert implicitly
     DefaultInitAllocator(const DefaultInitAllocator<U>& /*unused*/) noexcept {}
 
+    /** Default-initializes storage without zeroing trivial elements; callers must write before reading. */
     template <typename U>
     void construct(U* ptr) noexcept(std::is_nothrow_default_constructible_v<U>) {
         ::new (static_cast<void*>(ptr)) U;
     }
+    /** Constructs an element in place with the supplied arguments. */
     template <typename U, typename... Args>
     void construct(U* ptr, Args&&... args) {
         ::new (static_cast<void*>(ptr)) U(std::forward<Args>(args)...);
     }
 };
 
-// getZlibVersion(): the linked zlib's version string
+/** getZlibVersion(): the linked zlib's version string */
 static Napi::String GetZlibVersion(const Napi::CallbackInfo& info) {
     return Napi::String::New(info.Env(), zlibVersion());
 }
 
-// A zlib return code's name and description, for error messages
+/** A zlib return code's name and description, for error messages */
 static std::string ZlibErrorToString(int ret) {
     switch (ret) {
         case Z_OK:
@@ -71,17 +78,19 @@ static std::string ZlibErrorToString(int ret) {
     }
 }
 
-// A JavaScript raw deflate stream, compressing synchronously on the main thread
+/** A JavaScript raw deflate stream, compressing synchronously on the main thread */
 class Deflater : public Napi::ObjectWrap<Deflater> {
    public:
-    // Define the JavaScript class and add it to exports
+    /** Define the JavaScript class and add it to exports */
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
 
-    // new Deflater(level | {level, memLevel, chunkSize}): start a raw deflate stream, throwing to
-    // JavaScript for an invalid option
+    /**
+     * new Deflater(level | {level, memLevel, chunkSize}): start a raw deflate stream, throwing to
+     * JavaScript for an invalid option
+     */
     Deflater(const Napi::CallbackInfo& info);
 
-    // End the stream, if end() or dispose() hasn't
+    /** End the stream, if end() or dispose() hasn't */
     ~Deflater() override;
 
     Deflater(const Deflater&) = delete;
@@ -99,19 +108,23 @@ class Deflater : public Napi::ObjectWrap<Deflater> {
     // Accumulation buffer, which deflate writes to directly; cleared at start of each call
     std::vector<uint8_t, DefaultInitAllocator<uint8_t>> output_;
 
-    // Run one deflate() call that writes straight onto the end of output_. It is given exactly
-    // chunkSize_ bytes of output space every time, which deflate's output can depend on, so the
-    // stream is the same as one deflated through a fixed buffer of that size.
+    /**
+     * Run one deflate() call that writes straight onto the end of output_. It is given exactly
+     * chunkSize_ bytes of output space every time, which deflate's output can depend on, so the
+     * stream is the same as one deflated through a fixed buffer of that size.
+     */
     int DeflateInto(int flush);
 
-    // compressChunk(chunk, flush): return the compressed bytes deflate produces for chunk
+    /** compressChunk(chunk, flush): return the compressed bytes deflate produces for chunk */
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
 
-    // end(): finish the stream and return its remaining compressed bytes, or an empty Buffer if
-    // the stream has already ended
+    /**
+     * end(): finish the stream and return its remaining compressed bytes, or an empty Buffer if
+     * the stream has already ended
+     */
     Napi::Value End(const Napi::CallbackInfo& info);
 
-    // dispose(): end the stream without finishing it
+    /** dispose(): end the stream without finishing it */
     Napi::Value Dispose(const Napi::CallbackInfo& info);
 };
 
@@ -352,7 +365,7 @@ Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
         }
     } while (ret != Z_STREAM_END);
 
-    // Clean up
+    /** Clean up */
     deflateEnd(&stream_);
     initialized_ = false;
 
@@ -372,7 +385,7 @@ Napi::Value Deflater::Dispose(const Napi::CallbackInfo& info) {
     return env.Undefined();
 }
 
-// Export the Deflater class, getZlibVersion(), and the flush mode constants
+/** Export the Deflater class, getZlibVersion(), and the flush mode constants */
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     Deflater::Init(env, exports);
     exports.Set("getZlibVersion", Napi::Function::New(env, GetZlibVersion));

@@ -11,6 +11,7 @@ Every subdirectory of `addons/` with a `binding.gyp` is treated as an addon by t
   2. `addon-<name>/prebuilds/<platform>-<arch>/node.node`, a committed prebuild
   3. `addon-<name>/wasm/<target>.cjs`, a committed WebAssembly build, which runs on any platform but slower than a native build
 - `binding.cpp` and `binding.gyp` — the C++ bindings and their `node-gyp` build configuration
+- `src/` — addon-local C++ implementations and headers, split by responsibility
 - `addon-<name>/prebuilds/` and `addon-<name>/wasm/` — builds that are built and signed by CI; don't commit these by hand
 - `deps/` — vendored Git submodules, which are excluded from linting, type-checking, and tests
 - `test/` — tests, which should only use the `index.ts` API

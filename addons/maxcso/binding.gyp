@@ -80,7 +80,10 @@
 
     {
       "target_name": "maxcso",
-      "sources": ["binding.cpp"],
+      "sources": [
+        "binding.cpp",
+        "src/container.cpp"
+      ],
       "dependencies": ["lz4", "libdeflate", "zlib_adler"],
       "defines": [
         "NAPI_CPP_EXCEPTIONS",
