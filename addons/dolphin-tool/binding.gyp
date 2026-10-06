@@ -243,6 +243,7 @@
       "target_name": "dolphin-tool",
       "sources": [
         "binding.cpp",
+        "src/volumeWii.cpp",
         "stubs/directoryBlob.cpp",
         "stubs/logging.cpp",
         "stubs/fileUtil.cpp",

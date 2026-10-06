@@ -14,6 +14,7 @@
 #include "addon.h"
 #include "asyncSignal.h"
 #include "errors.h"
+#include "listEntry.h"
 #include "poolTask.h"
 #include "sevenZip.h"
 
@@ -21,18 +22,7 @@ namespace sevenzip {
 
 namespace {
 
-/** Native snapshot of the six archive-item properties exposed to JavaScript. */
-struct Entry {
-    // The archive's own item index, stored rather than recovered from this
-    // queue's position, so that it stays correct however the list is later
-    // filtered or ordered
-    uint32_t index = 0;
-    std::optional<std::string> entryPath;
-    std::optional<uint64_t> size;
-    std::optional<uint32_t> crc32;
-    bool isDirectory = false;
-    bool isEncrypted = false;
-};
+using detail::Entry;
 
 /**
  * Owns one listing task and incrementally marshals results on the event loop.
@@ -143,29 +133,7 @@ void ListJob::List() {
         }
 
         Entry entry;
-        entry.index = i;
-
-        std::string entryPath;
-        if (GetStringProp(*opened.archive, i, kpidPath, &entryPath)) {
-            // An empty string stays an empty string: the format did record a
-            // name, and that name is "". Only a missing kpidPath is undefined.
-            //
-            // Normalized rather than passed through, because some handlers
-            // rewrite `/` to the host's separator on the way out, so the same
-            // archive would list `sub/file.bin` on Linux and `sub\file.bin` on
-            // Windows.
-            entry.entryPath = NormalizeEntryPath(std::move(entryPath));
-        }
-        uint64_t size = 0;
-        if (GetUInt64Prop(*opened.archive, i, kpidSize, &size)) {
-            entry.size = size;
-        }
-        uint32_t crc = 0;
-        if (GetUInt32Prop(*opened.archive, i, kpidCRC, &crc)) {
-            entry.crc32 = crc;
-        }
-        entry.isDirectory = GetBoolProp(*opened.archive, i, kpidIsDir);
-        entry.isEncrypted = GetBoolProp(*opened.archive, i, kpidEncrypted);
+        detail::ReadEntry(*opened.archive, i, entry);
         entries_.push_back(std::move(entry));
     }
     // `opened` is destroyed here: every file handle is released before the
@@ -231,24 +199,7 @@ bool ListJob::Emit(Napi::Env env) {
         Napi::Object const out = result_.Value();
         const Entry& entry = entries_.front();
         Napi::Object const object = Napi::Object::New(env);
-        object.Set("entryIndex", Napi::Number::New(env, entry.index));
-
-        // Undefined rather than "" when the format records no name: "" is a
-        // name an entry could really have
-        object.Set("entryPath", entry.entryPath.has_value() ? Napi::Value(Napi::String::New(env, *entry.entryPath))
-                                                            : env.Undefined());
-
-        // Undefined rather than 0 when the format records no size: 0 is a real
-        // length, and a single-stream member genuinely can be empty
-        object.Set("size", entry.size.has_value()
-                               ? Napi::Value(Napi::Number::New(env, static_cast<double>(*entry.size)))
-                               : env.Undefined());
-
-        // A number, left for JavaScript to format as hex
-        object.Set("crc32",
-                   entry.crc32.has_value() ? Napi::Value(Napi::Number::New(env, *entry.crc32)) : env.Undefined());
-        object.Set("isDirectory", Napi::Boolean::New(env, entry.isDirectory));
-        object.Set("isEncrypted", Napi::Boolean::New(env, entry.isEncrypted));
+        detail::WriteEntry(env, entry, object);
         out.Set(emitted_++, object);
         entries_.pop_front();
         if (std::chrono::steady_clock::now() >= deadline) {

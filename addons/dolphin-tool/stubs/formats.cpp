@@ -8,11 +8,11 @@
 namespace IOS::ES {
 // These bodies ignore `this`, but Formats.h declares the members non-static.
 
-// Unreachable; returns false, as for an invalid ticket
+/** Unreachable; returns false, as for an invalid ticket */
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 bool TicketReader::IsValid() const { return false; }
 
-// Unreachable; returns an all-zero key
+/** Unreachable; returns an all-zero key */
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::array<u8, 16> TicketReader::GetTitleKey() const { return {}; }
 }  // namespace IOS::ES

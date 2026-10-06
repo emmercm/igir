@@ -6,6 +6,6 @@
 #include <string>
 
 namespace File {
-// Unreachable; returns false, as a failed delete would
+/** Unreachable; returns false, as a failed delete would */
 bool Delete(const std::string& /*filename*/, IfAbsentBehavior /*behavior*/) { return false; }
 }  // namespace File

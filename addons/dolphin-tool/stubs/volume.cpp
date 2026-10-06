@@ -10,6 +10,6 @@
 #include "DiscIO/VolumeDisc.h"
 
 namespace DiscIO {
-// Unreachable; returns nullptr, as for a file that isn't a disc image
+/** Unreachable; returns nullptr, as for a file that isn't a disc image */
 std::unique_ptr<VolumeDisc> CreateDisc(const std::string& /*path*/) { return nullptr; }
 }  // namespace DiscIO

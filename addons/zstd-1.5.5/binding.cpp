@@ -20,30 +20,37 @@
  *                       |_|
  */
 
-// getZstdVersion(): the linked zstd's version string
+/** getZstdVersion(): the linked zstd's version string */
 static Napi::String GetZstdVersion(const Napi::CallbackInfo& info) {
     return Napi::String::New(info.Env(), ZSTD_versionString());
 }
 
-// A std::allocator that default-initializes elements instead of value-initializing them, so that
-// sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
-// that is written before it is read.
+/**
+ * A std::allocator that default-initializes elements instead of value-initializing them, so that
+ * sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
+ * that is written before it is read.
+ */
 template <typename T>
 struct DefaultInitAllocator : std::allocator<T> {
+    /** Rebinds the allocator to another element type without adding state. */
     template <typename U>
     struct rebind {
         using other = DefaultInitAllocator<U>;
     };
 
+    /** Constructs a stateless allocator. */
     DefaultInitAllocator() = default;
+    /** Converts between stateless allocator specializations. */
     template <typename U>
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions): allocators must convert implicitly
     DefaultInitAllocator(const DefaultInitAllocator<U>& /*unused*/) noexcept {}
 
+    /** Default-initializes storage without zeroing trivial elements; callers must write before reading. */
     template <typename U>
     void construct(U* ptr) noexcept(std::is_nothrow_default_constructible_v<U>) {
         ::new (static_cast<void*>(ptr)) U;
     }
+    /** Constructs an element in place with the supplied arguments. */
     template <typename U, typename... Args>
     void construct(U* ptr, Args&&... args) {
         ::new (static_cast<void*>(ptr)) U(std::forward<Args>(args)...);
@@ -52,8 +59,10 @@ struct DefaultInitAllocator : std::allocator<T> {
 
 using UninitBytes = std::vector<uint8_t, DefaultInitAllocator<uint8_t>>;
 
-// One compressChunk() or end() call. `deferred` has no default member initializer because Deferred
-// has no default constructor, constructing one creating a promise; Enqueue() always sets it.
+/**
+ * One compressChunk() or end() call. `deferred` has no default member initializer because Deferred
+ * has no default constructor, constructing one creating a promise; Enqueue() always sets it.
+ */
 struct CompressOp {  // NOLINT(cppcoreguidelines-pro-type-member-init)
     Napi::Promise::Deferred deferred;
     std::vector<uint8_t> input;
@@ -64,9 +73,11 @@ struct CompressOp {  // NOLINT(cppcoreguidelines-pro-type-member-init)
     std::shared_ptr<ZSTD_CCtx> cctx;
 };
 
-// Run one ZSTD_compressStream2() call that writes straight onto the end of result. It is given
-// exactly ZSTD_CStreamOutSize() bytes of output space every time, which zstd's output can depend
-// on, so the frame is the same as one compressed through a fixed buffer of that size.
+/**
+ * Run one ZSTD_compressStream2() call that writes straight onto the end of result. It is given
+ * exactly ZSTD_CStreamOutSize() bytes of output space every time, which zstd's output can depend
+ * on, so the frame is the same as one compressed through a fixed buffer of that size.
+ */
 static size_t CompressInto(ZSTD_CCtx* cctx, ZSTD_inBuffer& inBuff, ZSTD_EndDirective op, UninitBytes& result) {
     size_t const start = result.size();
     result.resize(start + ZSTD_CStreamOutSize());
@@ -76,7 +87,7 @@ static size_t CompressInto(ZSTD_CCtx* cctx, ZSTD_inBuffer& inBuff, ZSTD_EndDirec
     return remaining;
 }
 
-// Compress input, then end the frame if end, returning an error message or an empty string
+/** Compress input, then end the frame if end, returning an error message or an empty string */
 static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, bool end, UninitBytes& result) {
     // Preallocate the result buffer to minimize reallocations during runtime. Each call needs a
     // full ZSTD_CStreamOutSize() of room past what it has written so far.
@@ -127,8 +138,10 @@ static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, 
     return {};
 }
 
-// Create and queue a worker, which deletes itself once OnOK() or OnError() has run. A worker that
-// cannot be created or queued throws a Napi::Error instead, having been freed.
+/**
+ * Create and queue a worker, which deletes itself once OnOK() or OnError() has run. A worker that
+ * cannot be created or queued throws a Napi::Error instead, having been freed.
+ */
 template <typename Worker, typename... Args>
 static void QueueWorker(Args&&... args) {
     auto* const worker = new Worker(std::forward<Args>(args)...);
@@ -142,13 +155,14 @@ static void QueueWorker(Args&&... args) {
 
 class ThreadedCompressor;
 
-// Runs one CompressOp on the thread pool, then tells the compressor the operation is done
+/** Runs one CompressOp on the thread pool, then tells the compressor the operation is done */
 class CompressWorker : public Napi::AsyncWorker {
    public:
+    /** Moves the queued operation into the worker while retaining its context and compressor notification state. */
     CompressWorker(Napi::Env env, std::shared_ptr<ThreadedCompressor*> compressor, CompressOp op)
         : Napi::AsyncWorker(env), compressor_(std::move(compressor)), op_(std::move(op)) {}
 
-    // Compress the operation's input. Runs on the worker thread.
+    /** Compress the operation's input. Runs on the worker thread. */
     void Execute() override {
         std::string const error = Compress(op_.cctx.get(), op_.input, op_.end, result_);
         if (!error.empty()) {
@@ -156,22 +170,24 @@ class CompressWorker : public Napi::AsyncWorker {
         }
     }
 
-    // Resolve with the compressed bytes
+    /** Resolve with the compressed bytes */
     void OnOK() override {
         op_.deferred.Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
         NotifyCompressor();
     }
 
-    // Reject with the error Execute() set
+    /** Reject with the error Execute() set */
     void OnError(const Napi::Error& e) override {
         op_.deferred.Reject(e.Value());
         NotifyCompressor();
     }
 
    private:
-    // Tell the compressor the operation is done, unless it was destroyed. The compressor holds a
-    // Ref() while operations run, so only an environment tearing down, such as a terminated
-    // Worker's, destroys it first.
+    /**
+     * Tell the compressor the operation is done, unless it was destroyed. The compressor holds a
+     * Ref() while operations run, so only an environment tearing down, such as a terminated
+     * Worker's, destroys it first.
+     */
     void NotifyCompressor();
 
     // Cleared by the compressor's destructor
@@ -181,20 +197,24 @@ class CompressWorker : public Napi::AsyncWorker {
     UninitBytes result_;
 };
 
-// A JavaScript streaming zstd compressor whose operations run on the thread pool. A streaming
-// context is stateful, so operations run one at a time, in the order they were called. Each
-// operation holds the context, so it is freed on the main thread only once neither the compressor
-// nor any operation does.
+/**
+ * A JavaScript streaming zstd compressor whose operations run on the thread pool. A streaming
+ * context is stateful, so operations run one at a time, in the order they were called. Each
+ * operation holds the context, so it is freed on the main thread only once neither the compressor
+ * nor any operation does.
+ */
 class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
    public:
-    // Define the JavaScript class and add it to exports
+    /** Define the JavaScript class and add it to exports */
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
 
-    // new ThreadedCompressor(level | {level, threads}): create the context, throwing to JavaScript
-    // for an invalid option or a context that can't be created or configured
+    /**
+     * new ThreadedCompressor(level | {level, threads}): create the context, throwing to JavaScript
+     * for an invalid option or a context that can't be created or configured
+     */
     explicit ThreadedCompressor(const Napi::CallbackInfo& info);
 
-    // Tell any worker still in flight that this compressor no longer exists
+    /** Tell any worker still in flight that this compressor no longer exists */
     ~ThreadedCompressor() override { *self_ = nullptr; }
 
     ThreadedCompressor(const ThreadedCompressor&) = delete;
@@ -202,8 +222,10 @@ class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
     ThreadedCompressor(ThreadedCompressor&&) = delete;
     ThreadedCompressor& operator=(ThreadedCompressor&&) = delete;
 
-    // Start the next pending operation, or release this object if there is none. Called on the
-    // main thread by the operation's worker after its promise is settled.
+    /**
+     * Start the next pending operation, or release this object if there is none. Called on the
+     * main thread by the operation's worker after its promise is settled.
+     */
     void FinishOp() {
         if (pending_.empty()) {
             running_ = false;
@@ -214,18 +236,22 @@ class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
     }
 
    private:
-    // compressChunk(chunk): resolve with the compressed bytes zstd produces for a copy of chunk
+    /** compressChunk(chunk): resolve with the compressed bytes zstd produces for a copy of chunk */
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
 
-    // end(): resolve with the frame's remaining compressed bytes, or an empty Buffer if end() was
-    // already called
+    /**
+     * end(): resolve with the frame's remaining compressed bytes, or an empty Buffer if end() was
+     * already called
+     */
     Napi::Value End(const Napi::CallbackInfo& info);
 
-    // Queue an operation on the context, to run once every operation before it is done. end()
-    // releases this compressor's hold on the context, so the operation holding it last frees it.
+    /**
+     * Queue an operation on the context, to run once every operation before it is done. end()
+     * releases this compressor's hold on the context, so the operation holding it last frees it.
+     */
     Napi::Value Enqueue(Napi::Env env, std::vector<uint8_t>&& input, bool end);
 
-    // Queue the oldest pending operation
+    /** Queue the oldest pending operation */
     void RunNext();
 
     // Empty after end(), and after a constructor that threw, whose object JavaScript never receives
@@ -297,7 +323,7 @@ ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info)
         }
     }
 
-    // Create the compression context
+    /** Create the compression context */
     std::shared_ptr<ZSTD_CCtx> cctx(ZSTD_createCCtx(), ZSTD_freeCCtx);
     if (!cctx) {
         Napi::Error::New(env, "Failed to create ZSTD_CCtx").ThrowAsJavaScriptException();
@@ -389,8 +415,10 @@ void ThreadedCompressor::RunNext() {
     }
 }
 
-// compressNonThreaded(input, compressionLevel): compress input into one frame, synchronously on
-// the main thread
+/**
+ * compressNonThreaded(input, compressionLevel): compress input into one frame, synchronously on
+ * the main thread
+ */
 static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
 
@@ -436,7 +464,7 @@ static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
  * |_____|_| |_|_|\__|
  */
 
-// Export the ThreadedCompressor class, compressNonThreaded(), and getZstdVersion()
+/** Export the ThreadedCompressor class, compressNonThreaded(), and getZstdVersion() */
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     ThreadedCompressor::Init(env, exports);
     exports.Set("compressNonThreaded", Napi::Function::New(env, CompressNonThreaded));

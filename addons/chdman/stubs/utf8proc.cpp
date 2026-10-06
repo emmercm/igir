@@ -13,13 +13,13 @@
 
 extern "C" {
 
-// Unreachable; returns the code point unchanged
+/** Unreachable; returns the code point unchanged */
 int32_t utf8proc_tolower(int32_t c) { return c; }
 
-// Unreachable; returns the code point unchanged
+/** Unreachable; returns the code point unchanged */
 int32_t utf8proc_toupper(int32_t c) { return c; }
 
-// Unreachable; returns -1, a utf8proc error, with no output string
+/** Unreachable; returns -1, a utf8proc error, with no output string */
 ptrdiff_t utf8proc_map(const uint8_t* str, ptrdiff_t strlen, uint8_t** dstptr, int options) {
     (void)str;
     (void)strlen;

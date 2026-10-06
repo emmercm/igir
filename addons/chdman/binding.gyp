@@ -266,7 +266,13 @@
 
     {
       "target_name": "chdman",
-      "sources": ["binding.cpp", "stubs/utf8proc.cpp", "stubs/win_utf8_io.cpp"],
+      "sources": [
+        "binding.cpp",
+        "src/tracks.cpp",
+        "src/info.cpp",
+        "stubs/utf8proc.cpp",
+        "stubs/win_utf8_io.cpp"
+      ],
       "dependencies": [
         "mame_utils", "mame_ocore",
         "zlib", "zstd", "flac", "lzma7z"

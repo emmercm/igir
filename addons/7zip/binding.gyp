@@ -311,6 +311,8 @@
         "src/errors.cpp",
         "src/jobRegistry.cpp",
         "src/lister.cpp",
+        "src/listEntry.cpp",
+        "src/extraction.cpp",
         "src/poolTask.cpp",
         "src/pump.cpp",
         "src/sevenZip.cpp",
