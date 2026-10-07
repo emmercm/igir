@@ -25,7 +25,11 @@ export default class ZipX extends SevenZipLib {
     return ['.zipx', '.zx01'];
   }
 
-  getExtension(): string {
+  getExtensions(): string[] {
+    return ZipX.getExtensions();
+  }
+
+  override getExtension(): string {
     for (const ext of ZipX.getExtensions()) {
       if (this.getFilePath().toLowerCase().endsWith(ext)) {
         return ext;

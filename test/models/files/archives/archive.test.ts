@@ -8,6 +8,9 @@ import Temp from '../../../../src/globals/temp.js';
 import type Archive from '../../../../src/models/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
 import Chd from '../../../../src/models/files/archives/chd/chd.js';
+import ChdBinCue from '../../../../src/models/files/archives/chd/chdBinCue.js';
+import ChdGdi from '../../../../src/models/files/archives/chd/chdGdi.js';
+import ChdRaw from '../../../../src/models/files/archives/chd/chdRaw.js';
 import Gcz from '../../../../src/models/files/archives/dolphin/gcz.js';
 import Rvz from '../../../../src/models/files/archives/dolphin/rvz.js';
 import Wia from '../../../../src/models/files/archives/dolphin/wia.js';
@@ -33,6 +36,49 @@ import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayUtil from '../../../../src/utils/arrayUtil.js';
 import FsUtil from '../../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
+
+const archivesWithStaticExtensions: [Archive, string[]][] = [
+  [new Zip('file'), Zip.getExtensions()],
+  [new Tar('file'), Tar.getExtensions()],
+  [new Rar('file'), Rar.getExtensions()],
+  // 7zip
+  [new Gzip('file'), Gzip.getExtensions()],
+  [new SevenZip('file'), SevenZip.getExtensions()],
+  [new Z('file'), Z.getExtensions()],
+  [new ZipSpanned('file'), ZipSpanned.getExtensions()],
+  [new ZipX('file'), ZipX.getExtensions()],
+  [new Bzip2('file'), Bzip2.getExtensions()],
+  [new Lzma('file'), Lzma.getExtensions()],
+  [new Lzma86('file'), Lzma86.getExtensions()],
+  [new Split('file'), Split.getExtensions()],
+  // Compressed images
+  [new Cso('file'), Cso.getExtensions()],
+  [new Dax('file'), Dax.getExtensions()],
+  [new Zso('file'), Zso.getExtensions()],
+  [new Gcz('file'), Gcz.getExtensions()],
+  [new Rvz('file'), Rvz.getExtensions()],
+  [new Wia('file'), Wia.getExtensions()],
+  [new ChdBinCue('file'), Chd.getExtensions()],
+  [new ChdGdi('file'), Chd.getExtensions()],
+  [new ChdRaw('file'), Chd.getExtensions()],
+  [new NkitIso('file'), NkitIso.getExtensions()],
+];
+const namedArchivesWithStaticExtensions = archivesWithStaticExtensions.map(
+  ([archive, staticExtensions]): [string, Archive, string[]] => [
+    archive.constructor.name,
+    archive,
+    staticExtensions,
+  ],
+);
+
+describe('getExtensions', () => {
+  test.each(namedArchivesWithStaticExtensions)(
+    "should return the class's static extensions: %s",
+    (_, archive, staticExtensions) => {
+      expect(archive.getExtensions()).toEqual(staticExtensions);
+    },
+  );
+});
 
 describe('getArchiveEntries', () => {
   test.each([

@@ -40,8 +40,8 @@ export default abstract class Chd extends Archive {
     return ['.chd'];
   }
 
-  getExtension(): string {
-    return Chd.getExtensions()[0];
+  getExtensions(): string[] {
+    return Chd.getExtensions();
   }
 
   /**

@@ -28,6 +28,8 @@ This correction behavior can be controlled with the following option:
 | `--fix-extension auto` (default) | Try to correct the filename extension when all of these are true:<ul><li>Not generating a [dir2dat](../dats/dir2dat.md) (it assumes the input files are trustworthy).</li><li>Not using DATs (no [<code>--dat &lt;path&vert;glob&gt;</code> option](../dats/scanning.md) was provided), or when a DAT doesn't specify the filename for a ROM.</li></ul> |
 | `--fix-extension never`          | Don't correct any ROM filename extensions. If a DAT doesn't provide a ROM filename, a default name of `<game name>.rom` will be used.                                                                                                                                                                                                                   |
 
+This correction also applies to archives that are copied or moved without being [extracted](writing-archives.md). If an archive's filename doesn't end in a valid extension for its type (e.g. a zip file named `game.bin`), then it will be written with its type's canonical extension (e.g. `game.zip`). Valid alternative extensions (e.g. `.apk` for zip files) are kept as-is.
+
 See the `igir --help` message for the list of all known file types.
 
 ## Deleting empty directories when moving

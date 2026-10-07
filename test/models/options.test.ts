@@ -209,3 +209,29 @@ describe('canRemoveHeader', () => {
     },
   );
 });
+
+describe('shouldFixExtension', () => {
+  test.each([
+    // "always" ignores everything else
+    ['always', ['copy'], [], true],
+    ['always', ['copy'], ['dats'], true],
+    ['always', ['dir2dat'], [], true],
+    // "auto" only fixes when there's nothing more trustworthy
+    ['auto', ['copy'], [], true],
+    ['auto', ['copy'], ['dats'], false],
+    ['auto', ['dir2dat'], [], false],
+    // "never" never fixes
+    ['never', ['copy'], [], false],
+    ['never', ['copy'], ['dats'], false],
+    ['never', ['dir2dat'], [], false],
+  ])(
+    'should respect "--fix-extension %s" with commands %s and DATs %s',
+    (fixExtension, commands, dat, expected) => {
+      expect(new Options({ fixExtension, commands, dat }).shouldFixExtension()).toEqual(expected);
+    },
+  );
+
+  it('should not fix when the option is not provided', () => {
+    expect(new Options({ commands: ['copy'] }).shouldFixExtension()).toEqual(false);
+  });
+});

@@ -25,8 +25,8 @@ export default class Lzma86 extends SevenZipLib {
     return ['.lzma86'];
   }
 
-  getExtension(): string {
-    return Lzma86.getExtensions()[0];
+  getExtensions(): string[] {
+    return Lzma86.getExtensions();
   }
 
   /**

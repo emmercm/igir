@@ -9,9 +9,19 @@ import LogiqxDAT from '../../../../src/models/dats/logiqx/logiqxDat.js';
 import MergedDiscGame from '../../../../src/models/dats/mergedDiscGame.js';
 import Release from '../../../../src/models/dats/release.js';
 import ROM from '../../../../src/models/dats/rom.js';
+import type Archive from '../../../../src/models/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../../../src/models/files/archives/archiveFile.js';
 import ChdBinCue from '../../../../src/models/files/archives/chd/chdBinCue.js';
-import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../../src/models/options.js';
+import NkitIso from '../../../../src/models/files/archives/nkitIso.js';
+import Tar from '../../../../src/models/files/archives/tar.js';
+import Zip from '../../../../src/models/files/archives/zip.js';
+import Options, {
+  FixExtension,
+  FixExtensionInverted,
+  GameSubdirMode,
+  GameSubdirModeInverted,
+} from '../../../../src/models/options.js';
 import outputTokensData from '../../../../src/modules/candidates/utils/consoleTokens.json' with { type: 'json' };
 import outputTokensSchema from '../../../../src/modules/candidates/utils/consoleTokens.schema.json' with { type: 'json' };
 import OutputFactory from '../../../../src/modules/candidates/utils/outputFactory.js';
@@ -1370,6 +1380,110 @@ describe('should respect "--merge-discs"', () => {
       }
     },
   );
+});
+
+describe('should respect "--fix-extension" when raw-copying archives', () => {
+  const rom = new ROM({ name: 'Game (USA).rom', size: 0, crc32: '' });
+  const game = new Game({ name: 'Game (USA)', roms: rom });
+
+  const getOutputPath = async (options: Options, archive: Archive): Promise<string> => {
+    const inputFile = new ArchiveFile(
+      await ArchiveEntry.entryOf({ archive, entryPath: rom.getName(), size: 0, crc32: '' }),
+    );
+    return OutputFactory.getPath(options, dummyDat, game, rom, inputFile).format();
+  };
+
+  test.each([
+    ['always', ['copy'], []],
+    ['auto', ['copy'], []],
+  ])(
+    'should replace an invalid archive extension: "--fix-extension %s" with commands %s and DATs %s',
+    async (fixExtension, commands, dat) => {
+      const options = new Options({ commands, output: os.devNull, fixExtension, dat });
+      await expect(getOutputPath(options, new Zip('game.bin'))).resolves.toEqual(
+        path.resolve(os.devNull, 'Game (USA).zip'),
+      );
+    },
+  );
+
+  test.each([
+    ['never', ['copy'], []],
+    ['auto', ['copy'], ['dats']],
+    ['auto', ['copy', 'dir2dat'], []],
+  ])(
+    'should keep an invalid archive extension: "--fix-extension %s" with commands %s and DATs %s',
+    async (fixExtension, commands, dat) => {
+      const options = new Options({ commands, output: os.devNull, fixExtension, dat });
+      await expect(getOutputPath(options, new Zip('game.bin'))).resolves.toEqual(
+        path.resolve(os.devNull, 'Game (USA).bin'),
+      );
+    },
+  );
+
+  test.each([
+    ['game.zip', Zip, 'Game (USA).zip'],
+    ['game.apk', Zip, 'Game (USA).apk'],
+    ['GAME.ZIP', Zip, 'Game (USA).ZIP'],
+    ['rom.nes.zip', Zip, 'Game (USA).nes.zip'],
+    ['game.tar.gz', Tar, 'Game (USA).tar.gz'],
+    ['game.nkit.iso', NkitIso, 'Game (USA).nkit.iso'],
+    ['game', Zip, 'Game (USA).zip'],
+  ])(
+    'should keep a valid archive extension: %s',
+    async (fileName, ArchiveClass, expectedBasename) => {
+      const options = new Options({
+        commands: ['copy'],
+        output: os.devNull,
+        fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
+      });
+      await expect(getOutputPath(options, new ArchiveClass(fileName))).resolves.toEqual(
+        path.resolve(os.devNull, expectedBasename),
+      );
+    },
+  );
+
+  test.each([
+    // Invalid extension that should be corrected
+    'bin',
+    // Valid extension that should be kept
+    'chd',
+  ])('should name merged discs by their sub-game: input extension .%s', async (inputExtension) => {
+    const options = new Options({
+      commands: ['copy'],
+      output: os.devNull,
+      fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
+    });
+
+    // Redump-style discs, whose ROMs are a .cue and a .bin, but whose input files are CHDs
+    const subGames = [1, 2].map(
+      (disc) =>
+        new Game({
+          name: `Game (USA) (Disc ${disc})`,
+          roms: [
+            new ROM({ name: `Game (USA) (Disc ${disc}).cue`, size: 0, crc32: '' }),
+            new ROM({ name: `Game (USA) (Disc ${disc}).bin`, size: 0, crc32: '' }),
+          ],
+        }),
+    );
+    const mergedGame = new MergedDiscGame({ name: 'Game (USA)', subGames });
+
+    for (const subGame of subGames) {
+      const inputFile = new ArchiveFile(
+        await ArchiveEntry.entryOf({
+          archive: new ChdBinCue(`${subGame.getName()}.${inputExtension}`),
+          entryPath: `${subGame.getName()}.cue`,
+          size: 0,
+          crc32: '',
+        }),
+      );
+      for (const rom of subGame.getRoms()) {
+        const outputPath = OutputFactory.getPath(options, dummyDat, mergedGame, rom, inputFile);
+        expect(outputPath.format()).toEqual(
+          path.resolve(os.devNull, 'Game (USA)', `${subGame.getName()}.chd`),
+        );
+      }
+    }
+  });
 });
 
 describe('outputTokens.json', () => {

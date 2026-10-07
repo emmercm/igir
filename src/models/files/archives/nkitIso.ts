@@ -22,8 +22,8 @@ export default class NkitIso extends Archive {
     return ['.nkit.iso'];
   }
 
-  getExtension(): string {
-    return NkitIso.getExtensions()[0];
+  getExtensions(): string[] {
+    return NkitIso.getExtensions();
   }
 
   /**

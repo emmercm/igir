@@ -16,7 +16,7 @@ export default class Zso extends Maxcso {
     return ['.zso'];
   }
 
-  getExtension(): string {
-    return Zso.getExtensions()[0];
+  getExtensions(): string[] {
+    return Zso.getExtensions();
   }
 }
