@@ -20,7 +20,7 @@ export default class Bzip2 extends SevenZipLib {
   }
 
   static getExtensions(): string[] {
-    return ['.bz2', '.bzip2'];
+    return ['.bz2', '.bzip2', '.tbz2', '.tbz'];
   }
 
   getExtensions(): string[] {

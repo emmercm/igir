@@ -20,7 +20,7 @@ export default class Z extends SevenZipLib {
   }
 
   static getExtensions(): string[] {
-    return ['.z'];
+    return ['.z', '.taz'];
   }
 
   getExtensions(): string[] {

@@ -25,7 +25,7 @@ export default class Tar extends Archive {
   }
 
   static getExtensions(): string[] {
-    return ['.tar', '.tar.gz', '.tgz'];
+    return ['.tar', '.tar.gz', '.tgz', '.tpz', '.ova'];
   }
 
   /**
