@@ -16,17 +16,60 @@ export const CHDType = {
 export type CHDType = (typeof CHDType)[keyof typeof CHDType];
 
 export interface CHDInfo {
+  /**
+   * The path of the CHD, exactly as it was passed in {@link InfoOptions.inputFilename}.
+   */
   inputFile: string;
+  /**
+   * The kind of media the CHD holds, determined by its metadata. A CHD with no recognized
+   * metadata is {@link CHDType.RAW}.
+   */
   type: CHDType;
+  /**
+   * The CHD format version from the header.
+   */
   fileVersion: number;
+  /**
+   * The length of the uncompressed media in bytes.
+   */
   logicalSize: number;
+  /**
+   * The length of a hunk in bytes. A hunk is the unit the CHD compresses and stores
+   * independently.
+   */
   hunkSize: number;
+  /**
+   * The number of hunks the media is split into.
+   */
   totalHunks: number;
+  /**
+   * The length of a unit in bytes. A unit is the media's own block size, e.g. 2448 for a CD
+   * frame and its subcode, or 512 for a hard disk sector.
+   */
   unitSize: number;
+  /**
+   * The number of units in the media.
+   */
   totalUnits: number;
+  /**
+   * The four-character names of the codecs the CHD may compress hunks with, in header order,
+   * e.g. `['cdlz', 'cdzl', 'cdfl']`. Empty when the CHD is uncompressed.
+   */
   compression: string[];
+  /**
+   * The length of the CHD file itself in bytes.
+   */
   chdSize: number;
+  /**
+   * The SHA-1 recorded in the header: of the media and its metadata combined for v4 and v5
+   * CHDs, or of the media alone for v3 CHDs. `undefined` when the header records none, as in
+   * an uncompressed CHD.
+   */
   sha1: string | undefined;
+  /**
+   * The SHA-1 of the uncompressed media alone, as recorded in the header. `undefined` for v3
+   * CHDs, which have no such field, and when the header records none.
+   */
   dataSha1: string | undefined;
 }
 

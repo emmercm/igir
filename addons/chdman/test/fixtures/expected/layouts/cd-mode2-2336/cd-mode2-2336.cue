@@ -1,0 +1,3 @@
+FILE "cd-mode2-2336 (Track 1).bin" BINARY
+  TRACK 01 MODE2/2336
+    INDEX 01 00:00:00
