@@ -212,8 +212,36 @@ export default class FileSignature {
 
     dax: new FileSignature('.dax', [{ value: Buffer.from('DAX') }]),
 
+    // @see https://wiki.osdev.org/ISO_9660#Volume_Descriptors
+    iso_9660: new FileSignature('.iso', [
+      { offset: 0x80_01, value: Buffer.from('CD001\u{1}') }, // identifier + version
+    ]),
+    // @see https://ecma-international.org/wp-content/uploads/ECMA-167_3rd_edition_june_1997.pdf
+    // Note: UDF images with an ISO-9660 bridge will match iso_9660 instead
+    iso_udf: new FileSignature('.iso', [
+      { offset: 0x80_00, value: Buffer.from('\u{0}BEA01\u{1}') }, // beginning extended area
+      { offset: 0x88_00, value: Buffer.from('\u{0}NSR0') }, // NSR02 (ECMA-167 2nd ed.) or NSR03 (3rd ed.)
+    ]),
+
+    // @see https://en.wikipedia.org/wiki/CD-ROM#Sector_structure
+    bin_mode1: new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 16 * 2352 + 0x10 + 1, value: Buffer.from('CD001\u{1}') }, // after 16 byte header
+    ]),
+    bin_mode2: new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 16 * 2352 + 0x18 + 1, value: Buffer.from('CD001\u{1}') }, // after 24 byte header
+    ]),
+    // @see https://github.com/file/file/blob/master/magic/Magdir/filesystems
+    bin_mode2_2336: new FileSignature('.bin', [
+      { offset: 16 * 2336 + 0x08 + 1, value: Buffer.from('CD001\u{1}') }, // after 8 byte subheader
+    ]),
+
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     isz: new FileSignature('.isz', [{ value: Buffer.from('IsZ!') }]),
+
+    // @see https://github.com/pspdev/psp-cfw-sdk/blob/main/include/ciso.h
+    jso: new FileSignature('.jso', [{ value: Buffer.from('JISO') }]),
 
     // @see https://docs.fileformat.com/disc-and-media/cso/
     zso: new FileSignature('.zso', [{ value: Buffer.from('ZISO') }]),
@@ -617,6 +645,17 @@ export default class FileSignature {
     // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25-L26
     wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\u{2E}\u{D0}\u{99}\u{10}') }]),
 
+    // Philips - CD-i
+    // @see https://www.icdia.co.uk/docs/GRNBK/BY_NUMBER/chap3
+    cdi_bin: new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 16 * 2352 + 0x18 + 1, value: Buffer.from('CD-I \u{1}') }, // disc label in Mode 2
+    ]),
+    // @see https://github.com/cdemu/cdemu/blob/master/libmirage/images/image-cue/parser.c
+    cdi_bin_2336: new FileSignature('.bin', [
+      { offset: 16 * 2336 + 0x08 + 1, value: Buffer.from('CD-I \u{1}') }, // after 8 byte subheader
+    ]),
+
     // Panasonic - 3DO
     // @see https://github.com/trapexit/portfolio_os/blob/bee7b0c8e4287083c73cb5497b658880c9e7af8e/src/dipir/cdipir.c#L1286-L1310
     '3do_iso': new FileSignature('.iso', [
@@ -633,6 +672,14 @@ export default class FileSignature {
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
     // @see https://plutiedev.com/rom-header
     '32x': new FileSignature('.32x', [{ offset: 0x1_00, value: Buffer.from('SEGA 32X') }]),
+
+    // Sega - Dreamcast
+    // @see https://github.com/file/file/blob/master/magic/Magdir/console
+    dreamcast_iso: new FileSignature('.iso', [{ value: Buffer.from('SEGA SEGAKATANA ') }]),
+    dreamcast_bin: new FileSignature('.bin', [
+      { value: Buffer.from('00FFFFFFFFFFFFFFFFFFFF00', 'hex') }, // sector sync
+      { offset: 0x10, value: Buffer.from('SEGA SEGAKATANA ') },
+    ]),
 
     // Sega - Game Gear
     // @see https://www.smspower.org/Development/ROMHeader
@@ -740,9 +787,64 @@ export default class FileSignature {
       { offset: 0x23, value: Buffer.from('10', 'hex') }, // compatible system: color
     ]),
 
+    // Sony - PlayStation 3
+    // @see https://github.com/Klairm/linux-ps3-iso-tools/blob/master/src/makeps3iso/makeps3iso.c
+    iso_ps3: new FileSignature('.iso', [
+      { offset: 0x8_00, value: Buffer.from('PlayStation3') }, // disc info sector
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+    ]),
+    // @see https://www.psdevwiki.com/ps3/PKG_files
+    pkg_ps3: new FileSignature('.pkg', [
+      { value: Buffer.from('\u{7F}PKG') },
+      { offset: 0x06, value: Buffer.from('0001', 'hex') }, // platform: PS3
+    ]),
+
+    // Sony - PlayStation 4
+    // @see https://www.psdevwiki.com/ps4/PKG_files
+    // Note: PS5 metadata containers also use this signature
+    pkg_ps4: new FileSignature('.pkg', [{ value: Buffer.from('\u{7F}CNT') }]),
+
+    // Sony - PlayStation 5
+    // @see https://github.com/SvenGDK/LibProsperoPKG/blob/main/docs/ps5-pkg-format.md
+    pkg_ps5: new FileSignature('.pkg', [{ value: Buffer.from('\u{7F}FIH') }]),
+
     // Sony - PlayStation Portable
+    // @see https://github.com/hrydgard/ppsspp/blob/master/Core/Loaders.cpp
+    iso_psp: new FileSignature('.iso', [
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+      { offset: 0x80_08, value: Buffer.from('PSP GAME') }, // system identifier
+    ]),
+    iso_psp_quoted: new FileSignature('.iso', [
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+      { offset: 0x80_08, value: Buffer.from('"PSP GAME"') }, // system identifier
+    ]),
+    iso_umd_video: new FileSignature('.iso', [
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+      { offset: 0x80_08, value: Buffer.from('UMD VIDEO') }, // system identifier
+    ]),
+    iso_umd_audio: new FileSignature('.iso', [
+      { offset: 0x80_01, value: Buffer.from('CD001') },
+      { offset: 0x80_08, value: Buffer.from('UMD AUDIO') }, // system identifier
+    ]),
     // @see https://www.psdevwiki.com/ps3/Eboot.PBP
     pbp: new FileSignature('.pbp', [{ value: Buffer.from('\u{0}PBP\u{0}\u{0}\u{1}\u{0}') }]),
+    // @see https://www.psdevwiki.com/ps3/PKG_files
+    pkg_psp_vita: new FileSignature('.pkg', [
+      { value: Buffer.from('\u{7F}PKG') },
+      { offset: 0x06, value: Buffer.from('0002', 'hex') }, // platform: PSP/PS Vita
+    ]),
+
+    // Sony - PlayStation Vita
+    // @see https://github.com/oestriot/GcToolKit/blob/main/app/vci.h
+    vci: new FileSignature('.vci', [
+      { value: Buffer.from('VCI\u{0}') },
+      { offset: 0x04, value: Buffer.from('0100', 'hex') }, // major version
+    ]),
+    // @see https://github.com/vitasdk/vita-toolchain/blob/master/src/vita-pack-vpk/vita-pack-vpk.c
+    vpk: new FileSignature('.vpk', [
+      { value: Buffer.from('PK\u{3}\u{4}') },
+      { offset: 0x1e, value: Buffer.from('sce_sys/param.sfo') }, // first local file name
+    ]),
   };
 
   static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).toSorted((a, b) => {
