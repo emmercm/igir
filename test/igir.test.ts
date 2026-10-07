@@ -756,6 +756,52 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should copy merged discs while fixing extensions', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const input = await Promise.all(
+        [
+          [path.join(inputTemp, 'roms', 'chd', 'CD-ROM.chd'), 'Optical Game (Disc 1).chd'],
+          [path.join(inputTemp, 'roms', 'chd', 'GD-ROM.chd'), 'Optical Game (Disc 2).chd'],
+        ].map(async ([inputFile, newBasename]) => {
+          const renamedFile = path.join(path.dirname(inputFile), newBasename);
+          await FsUtil.mv(inputFile, renamedFile);
+          return renamedFile;
+        }),
+      );
+
+      const result = await runIgir({
+        commands: ['copy'],
+        dat: [path.join(inputTemp, 'dats', 'one.dat')],
+        input,
+        inputChecksumArchives:
+          InputChecksumArchivesModeInverted[InputChecksumArchivesMode.NEVER].toLowerCase(),
+        output: outputTemp,
+        dirDatName: true,
+        fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
+        mergeDiscs: true,
+      });
+
+      const disc1 = path.join('One', 'Optical Game', 'Optical Game (Disc 1).chd');
+      const disc2 = path.join('One', 'Optical Game', 'Optical Game (Disc 2).chd');
+      expect(result.outputFilesAndCrcs).toEqual([
+        [path.join('One', 'Empty.rom'), '00000000'],
+        [`${disc1}|Optical Game (Disc 1)`, 'xxxxxxxx'],
+        [`${disc1}|Optical Game (Disc 1) (Track 1).bin`, '49ca35fb'],
+        [`${disc1}|Optical Game (Disc 1) (Track 2).bin`, '0316f720'],
+        [`${disc1}|Optical Game (Disc 1) (Track 3).bin`, 'a320af40'],
+        [`${disc1}|Optical Game (Disc 1).cue`, 'xxxxxxxx'],
+        [`${disc2}|Optical Game (Disc 2)`, 'xxxxxxxx'],
+        [`${disc2}|Optical Game (Disc 2).gdi`, 'f16f621c'],
+        [`${disc2}|track01.bin`, '9796ed9a'],
+        [`${disc2}|track02.raw`, 'abc178d5'],
+        [`${disc2}|track03.bin`, '61a363f1'],
+        [`${disc2}|track04.bin`, 'fc5ff5a0'],
+      ]);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should move zipped files, allowing excess sets', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({

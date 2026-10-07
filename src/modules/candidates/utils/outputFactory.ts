@@ -644,7 +644,7 @@ export default class OutputFactory {
     const archive = inputFile.getArchive();
     const hasValidExt = archive
       .getExtensions()
-      .some((ext) => inputFile.getFilePath().toLowerCase().endsWith(ext));
+      .some((ext) => inputFile.getFilePath().toLowerCase().endsWith(ext.toLowerCase()));
 
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());

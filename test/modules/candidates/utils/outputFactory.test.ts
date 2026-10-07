@@ -1442,15 +1442,19 @@ describe('should respect "--fix-extension" when raw-copying archives', () => {
     },
   );
 
-  it('should replace invalid archive extensions of merged discs', async () => {
+  test.each([
+    // Invalid extension that should be corrected
+    'bin',
+    // Valid extension that should be kept
+    'chd',
+  ])('should name merged discs by their sub-game: input extension .%s', async (inputExtension) => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,
       fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
     });
 
-    // Redump-style discs, whose ROMs are a .cue and a .bin, but whose input files are CHDs with
-    // an invalid extension
+    // Redump-style discs, whose ROMs are a .cue and a .bin, but whose input files are CHDs
     const subGames = [1, 2].map(
       (disc) =>
         new Game({
@@ -1466,7 +1470,7 @@ describe('should respect "--fix-extension" when raw-copying archives', () => {
     for (const subGame of subGames) {
       const inputFile = new ArchiveFile(
         await ArchiveEntry.entryOf({
-          archive: new ChdBinCue(`${subGame.getName()}.bin`),
+          archive: new ChdBinCue(`${subGame.getName()}.${inputExtension}`),
           entryPath: `${subGame.getName()}.cue`,
           size: 0,
           crc32: '',
