@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v5.4.0 (Node.js v26.4.0)
+     @@   @@        @@   @@   @@       @@    v5.7.1 (Node.js v26.10.0)
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -74,7 +74,8 @@ Commands (can specify multiple):
   igir extract   Extract ROM files in archives when copying or moving
   igir zip       Create zip archives of ROMs when copying or moving
   igir playlist  Create playlist files for multi-disc games
-  igir test      Test ROMs for accuracy after writing them to the output directory
+  igir test      Test ROMs for accuracy after writing them, or test input files if no write
+                 command is given
   igir dir2dat   Generate a DAT from all input files
   igir fixdat    Generate a fixdat of any missing games for every DAT processed (requires
                  --dat)

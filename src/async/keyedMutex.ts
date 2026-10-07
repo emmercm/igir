@@ -92,16 +92,18 @@ export default class KeyedMutex {
             }
             const lruEntry = this.keyMutexes.get(lruKey);
             if (
-              !uniqueKeySet.has(lruKey) &&
-              lruEntry !== undefined &&
-              !lruEntry.mutex.isLocked() &&
-              lruEntry.pendingLocks === 0
+              uniqueKeySet.has(lruKey) ||
+              lruEntry === undefined ||
+              lruEntry.mutex.isLocked() ||
+              lruEntry.pendingLocks !== 0
             ) {
-              lruEntry.mutex.release();
-              this.keyMutexes.delete(lruKey);
-              this.keyMutexesLru.delete(lruKey);
-              keysToEvict--;
+              continue;
             }
+
+            lruEntry.mutex.release();
+            this.keyMutexes.delete(lruKey);
+            this.keyMutexesLru.delete(lruKey);
+            keysToEvict--;
           }
         }
 

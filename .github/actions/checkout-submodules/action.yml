@@ -1,0 +1,24 @@
+name: 'Checkout Submodules'
+description: 'Shallowly check out the submodules, and only the nested submodules the native addons build'
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: |
+        set -euxo pipefail
+
+        # Check out every top-level submodule, without recursing into their nested submodules,
+        # fetching all of them in parallel
+        submodule_count=$(git config --file .gitmodules --get-regexp '\.path$' | wc -l | tr -d ' ')
+        git submodule update --init --depth 1 --jobs "${submodule_count}"
+
+        # Check out only the nested Dolphin submodules that addons/dolphin-tool/binding.gyp compiles,
+        # fetching all of them in parallel
+        dolphin_submodules=(
+          Externals/bzip2/bzip2
+          Externals/fmt/fmt
+          Externals/zlib-ng/zlib-ng
+          Externals/zstd/zstd
+        )
+        git -C addons/dolphin-tool/deps/dolphin submodule update --init --depth 1 \
+          --jobs "${#dolphin_submodules[@]}" -- "${dolphin_submodules[@]}"

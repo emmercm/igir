@@ -16,7 +16,7 @@ export default class Rvz extends Dolphin {
     return ['.rvz'];
   }
 
-  getExtension(): string {
-    return Rvz.getExtensions()[0];
+  getExtensions(): string[] {
+    return Rvz.getExtensions();
   }
 }

@@ -25,7 +25,14 @@ const __dirname = path.dirname(__filename);
 
 export default eslintConfig.defineConfig([
   {
-    ignores: ['.*/**', 'dist/**', 'packages/*/deps/**', 'site/**'],
+    ignores: [
+      '.*/**',
+      'addons/*/deps/**',
+      'addons/*/build/**',
+      'addons/*/addon-*/**',
+      'dist/**',
+      'site/**',
+    ],
   },
 
   // @typescript-eslint
@@ -191,6 +198,9 @@ export default eslintConfig.defineConfig([
       // ***** Operands *****
       eqeqeq: 'error',
 
+      // ***** Control Structures *****
+      curly: ['error', 'all'],
+
       // ***** Conditionals *****
 
       // ***** Loops *****
@@ -227,13 +237,16 @@ export default eslintConfig.defineConfig([
       'unicorn/no-await-expression-member': 'off',
       'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
       'unicorn/no-hex-escape': 'off',
+      'unicorn/no-immediate-mutation': 'off', // TODO(cemmer): checkConditionals:true with v76
       'unicorn/no-unreadable-new-expression': 'off',
       'unicorn/no-useless-undefined': 'off',
+      'unicorn/prefer-combined-guards': 'off',
       'unicorn/prefer-simple-condition-first': 'off',
       'unicorn/prefer-string-raw': 'off',
       'unicorn/prefer-switch': 'off',
       'unicorn/prefer-ternary': 'off',
       'unicorn/prefer-type-error': 'off',
+      'unicorn/single-line-block-comment-style': ['error', 'single-line'],
       // Overly broad rules with too many false positives 😡
       'unicorn/no-unsafe-string-replacement': 'off', // doesn't curly braces in regex search
       'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context
@@ -299,11 +312,11 @@ export default eslintConfig.defineConfig([
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          /*** @ESLint/js defaults ***/
+          // ***** @ESLint/js defaults *****
           vars: 'all',
           caughtErrors: 'all',
           reportUsedIgnorePattern: false,
-          /*** Overrides ***/
+          // ***** Overrides *****
           args: 'all',
           argsIgnorePattern: '^_',
           // Allow the use of destructuring to remove keys from an object
@@ -338,7 +351,7 @@ export default eslintConfig.defineConfig([
 
   // Ignore JSDoc requirements for some files
   {
-    files: ['test/**/*.ts', 'packages/*/test/**/*.ts'],
+    files: ['test/**/*.ts', '{addons,packages}/*/test/**/*.ts'],
     rules: {
       'jsdoc/require-jsdoc': 'off',
     },

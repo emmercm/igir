@@ -1,7 +1,7 @@
 import stream from 'node:stream';
 
-import type { ZstdThreadedCompressorInstance } from '../../zstd-1.5.5/index.js';
-import zstd from '../../zstd-1.5.5/index.js';
+import type { ZstdThreadedCompressorInstance } from '../../../addons/zstd-1.5.5/index.js';
+import zstd from '../../../addons/zstd-1.5.5/index.js';
 
 /**
  * A Transform stream that compresses data using zstd streaming/asynchronous compression.
@@ -28,12 +28,12 @@ export default class ZstdThreadedCompressTransform extends stream.Transform {
     // Set up cleanup handlers
     this.on('error', () => {
       this.cleanup(() => {
-        /* ignored */
+        // ignored
       });
     });
     this.on('close', () => {
       this.cleanup(() => {
-        /* ignored */
+        // ignored
       });
     });
   }

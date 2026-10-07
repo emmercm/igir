@@ -1,3 +1,4 @@
+import { SevenZipFormat } from '../../../../../addons/7zip/index.js';
 import SevenZipLib from './sevenZipLib.js';
 
 /**
@@ -11,12 +12,19 @@ export default class ZipSpanned extends SevenZipLib {
     return new ZipSpanned(filePath);
   }
 
+  /**
+   * Returns the 7-Zip handler that reads this format.
+   */
+  protected getSevenZipFormat(): SevenZipFormat {
+    return SevenZipFormat.ZIP;
+  }
+
   static getExtensions(): string[] {
     return ['.zip.001', '.z01'];
   }
 
-  getExtension(): string {
-    return ZipSpanned.getExtensions()[0];
+  getExtensions(): string[] {
+    return ZipSpanned.getExtensions();
   }
 
   /**

@@ -3,6 +3,9 @@ import os from 'node:os';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
+import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import Gzip from '../../../src/models/files/archives/gzip.js';
+import Bzip2 from '../../../src/models/files/archives/sevenZip/bzip2.js';
 import Options from '../../../src/models/options.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
@@ -47,6 +50,10 @@ test.each([
   [
     ['test/fixtures/roms/7z/*'],
     { '7z': ['fizzbuzz', 'foobar', 'invalid', 'loremipsum', 'onetwothree', 'unknown'] },
+  ],
+  [
+    ['test/fixtures/roms/bz2/*'],
+    { bz2: ['fizzbuzz', 'foobar', 'loremipsum', 'one', 'three', 'two', 'unknown'] },
   ],
   [['test/fixtures/roms/chd/*'], { chd: ['2048', '4096', 'CD-ROM', 'CD-ROM', 'GD-ROM', 'GD-ROM'] }],
   [['test/fixtures/roms/cso/*'], { cso: ['UMD'] }],
@@ -154,4 +161,33 @@ test.each([
     ]),
   );
   expect(datNameToGameNames).toEqual(expected);
+});
+
+it('should prefer a recorded ROM name over an invented one, whatever order the files arrive in', async () => {
+  const bzip2Entry = await ArchiveEntry.entryOf({
+    archive: new Bzip2('foobar.bz2'),
+    entryPath: 'foobar',
+    size: 7,
+    crc32: 'b22c9747',
+  });
+  const gzipEntry = await ArchiveEntry.entryOf({
+    archive: new Gzip('foobar.gz'),
+    entryPath: 'foobar.lnx',
+    size: 7,
+    crc32: 'b22c9747',
+  });
+
+  // Inferred both ways around, because the scanner returns files in a non-deterministic order
+  for (const romFiles of [
+    [bzip2Entry, gzipEntry],
+    [gzipEntry, bzip2Entry],
+  ]) {
+    const dats = await new DATGameInferrer(new Options(), new ProgressBarFake()).infer(romFiles);
+
+    const games = dats.flatMap((dat) => dat.getGames());
+    expect(games.map((game) => game.getName())).toEqual(['foobar']);
+    expect(games.flatMap((game) => game.getRoms().map((rom) => rom.getName()))).toEqual([
+      'foobar.lnx',
+    ]);
+  }
 });

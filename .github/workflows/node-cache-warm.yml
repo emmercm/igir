@@ -1,0 +1,58 @@
+# Pull request caches can only be restored by the same pull request, so this saves caches on
+#   the default branch where every pull request can restore them.
+# This workflow must never restore a cache, and publishing workflows must never restore one either.
+
+name: Node.js Cache Warm
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '.github/workflows/node-cache-warm.yml'
+      - 'package-lock.json'
+  # Caches not accessed in 7 days are evicted
+  schedule:
+    - cron: '30 1 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm-cache-warm:
+    permissions:
+      contents: read # actions/checkout
+    strategy:
+      fail-fast: false
+      matrix:
+        # Cache keys only use `runner.os`, so each OS's architectures share one cache
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
+      - id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
+      # Only check if the cache exists, don't download it
+      - id: npm-cache-lookup
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          lookup-only: true
+      # Build the cache from empty so it contains only what the lockfile needs
+      - if: ${{ steps.npm-cache-lookup.outputs.cache-hit != 'true' }}
+        run: |
+          npm cache clean --force
+          npm ci --ignore-scripts
+      - if: ${{ steps.npm-cache-lookup.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ steps.npm-cache-lookup.outputs.cache-primary-key }}

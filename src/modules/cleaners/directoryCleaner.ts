@@ -9,7 +9,6 @@ import MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
-import type File from '../../models/files/file.js';
 import type Options from '../../models/options.js';
 import ArrayUtil from '../../utils/arrayUtil.js';
 import FsUtil from '../../utils/fsUtil.js';
@@ -30,14 +29,14 @@ export default class DirectoryCleaner extends Module {
   /**
    * Clean some directories, excluding some files.
    */
-  async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
+  async clean(dirsToClean: string[], filePathsToExclude: string[]): Promise<string[]> {
     if (!this.options.shouldWrite()) {
       // We shouldn't cause any change to the output directory
       return [];
     }
 
     // If nothing was written, then don't clean anything
-    if (filesToExclude.length === 0) {
+    if (filePathsToExclude.length === 0) {
       this.prefixedLogger.trace('no files were written, not cleaning output');
       return [];
     }
@@ -49,7 +48,7 @@ export default class DirectoryCleaner extends Module {
     // If there is nothing to clean, then don't do anything
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
       dirsToClean,
-      filesToExclude,
+      filePathsToExclude,
       (increment) => {
         this.progressBar.incrementTotal(increment);
       },

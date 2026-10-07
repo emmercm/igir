@@ -83,7 +83,7 @@ export default class InputSubdirectoriesDeleter extends Module {
             return true;
           }
         } catch {
-          /* ignored */
+          // ignored
         }
         return false;
       },

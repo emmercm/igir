@@ -112,8 +112,9 @@ Heap.*.md
 # Custom
 dist/
 /package
-packages/*/build/**
-packages/*/package-lock.json
+addons/*/build/**
+addons/*/addon-*/build/**
+addons/*/package-lock.json
 ./prebuilds/
 site/
 *.bat
@@ -122,8 +123,8 @@ site/
 igir
 igir.exe
 !test/*.sh
+!addons/*/scripts/*.sh
 !packages/*
-!packages/*/scripts/*.sh
 
 # DATs
 *.dat
@@ -197,6 +198,7 @@ igir.exe
 *.sqlite
 *.torrent
 *.txt
+!requirements.txt
 *.wav
 *.xml
 
@@ -214,6 +216,6 @@ igir.exe
 !docs/*
 
 # Always commit fixtures
-!packages/*/test/fixtures/**
+!addons/*/test/fixtures/**
 !packages/zip/test/**/*.zip
 !test/fixtures/**

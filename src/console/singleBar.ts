@@ -8,6 +8,15 @@ import type MultiBar from './multiBar.js';
 import type { ColoredSymbol } from './progressBar.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 
+/**
+ * https://github.com/simple-statistics/simple-statistics/pull/807 converted the package to ESM but its type file gives
+ * TS2835 errors under "module":"nodenext".
+ */
+declare module 'simple-statistics' {
+  export function linearRegression(data: readonly number[][]): { m: number; b: number };
+  export function linearRegressionLine(mb: { b: number; m: number }): (x: number) => number;
+}
+
 export interface SingleBarOptions {
   displayDelay?: number;
   indentSize?: number;

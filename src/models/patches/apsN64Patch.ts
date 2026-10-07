@@ -127,10 +127,9 @@ export default class APSN64Patch extends Patch {
 
       await targetFile.writeAt(data, offset);
 
-      if (callback !== undefined) {
-        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-        callback(Math.floor(progressPercentage * targetFile.getSize()));
-      }
+      callback?.(
+        Math.floor((patchFile.getPosition() / patchFile.getSize()) * targetFile.getSize()),
+      );
     }
   }
 }

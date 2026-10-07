@@ -6,7 +6,9 @@ import { logger } from '../../../console/logger.js';
 import IgirException from '../../../exceptions/igirException.js';
 import IOFile from '../../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
+import StreamUtil from '../../../utils/streamUtil.js';
 import FileChecksums, { ChecksumBitmask, type ChecksumProps } from '../fileChecksums.js';
+import type { ArchiveEntryLocation } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 import Tar from './tar.js';
@@ -32,8 +34,8 @@ export default class Gzip extends Archive {
     return ['.gz', '.gzip'];
   }
 
-  getExtension(): string {
-    return Gzip.getExtensions()[0];
+  getExtensions(): string[] {
+    return Gzip.getExtensions();
   }
 
   /**
@@ -59,7 +61,7 @@ export default class Gzip extends Archive {
     try {
       return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
     } catch {
-      /* ignored */
+      // ignored
     }
 
     const gzipHeaderTrailer = await this.getHeaderTrailerInfo();
@@ -73,7 +75,7 @@ export default class Gzip extends Archive {
       checksumBitmask & ~ChecksumBitmask.CRC32 ||
       (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
     ) {
-      checksums = await this.extractEntryToStream('', async (readable) => {
+      checksums = await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
         return await FileChecksums.hashStream(readable, checksumBitmask, callback);
       });
     }
@@ -128,7 +130,7 @@ export default class Gzip extends Archive {
       }
 
       const trailer = await file.readAt(file.getSize() - 8, 8);
-      const crc32 = trailer.readUInt32LE().toString(16).toLowerCase();
+      const crc32 = trailer.readUInt32LE().toString(16).toLowerCase().padStart(8, '0');
       const size = trailer.readUInt32LE(4);
 
       return { fname, crc32, size };
@@ -140,7 +142,10 @@ export default class Gzip extends Archive {
   /**
    * Decompress the gzip file to the given path.
    */
-  async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    _location: ArchiveEntryLocation,
+    extractedFilePath: string,
+  ): Promise<void> {
     await stream.promises.pipeline(
       fs.createReadStream(this.getFilePath()),
       zlib.createGunzip(),
@@ -153,39 +158,13 @@ export default class Gzip extends Archive {
    * bytes.
    */
   override async extractEntryToStream<T>(
-    _entryPath: string,
+    _location: ArchiveEntryLocation,
     callback: (readable: stream.Readable) => Promise<T> | T,
   ): Promise<T> {
-    const source = fs.createReadStream(this.getFilePath());
-    const gunzip = zlib.createGunzip();
-    const pipelinePromise = stream.promises.pipeline(source, gunzip);
-
-    try {
-      const result = await callback(gunzip);
-
-      gunzip.destroy();
-      source.destroy();
-      try {
-        await pipelinePromise;
-      } catch (error) {
-        // The .destroy() calls above can cause ABORT_ERR on Node.js <24.15, or
-        // ERR_STREAM_PREMATURE_CLOSE on Node.js >=24.15
-        const code = (error as NodeJS.ErrnoException).code;
-        if (code !== 'ABORT_ERR' && code !== 'ERR_STREAM_PREMATURE_CLOSE') {
-          throw error;
-        }
-      }
-
-      return result;
-    } catch (error) {
-      gunzip.destroy();
-      source.destroy();
-      try {
-        await pipelinePromise;
-      } catch {
-        /* ignored */
-      }
-      throw error;
-    }
+    return await StreamUtil.pipelineSafe(
+      fs.createReadStream(this.getFilePath()),
+      zlib.createGunzip(),
+      callback,
+    );
   }
 }

@@ -114,7 +114,9 @@ export default class DATScanner extends Scanner {
             ChecksumBitmask.NONE,
           );
         } catch (error) {
-          throw new IgirException(`failed to download '${datFile.toString()}': ${error}`);
+          throw new IgirException(
+            `failed to download '${datFile.toString()}': ${error instanceof Error ? error.message : error}`,
+          );
         }
       })
     ).flat();

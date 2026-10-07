@@ -90,10 +90,11 @@ export default class NinjaPatch extends Patch {
       while (!patchFile.isEOF()) {
         await this.applyCommand(patchFile, targetFile);
 
-        if (callback !== undefined) {
-          const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-          callback(Math.floor(progressPercentage * targetFile.getSize()));
+        if (callback === undefined) {
+          continue;
         }
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
       }
     } finally {
       await targetFile.close();
@@ -144,21 +145,22 @@ export default class NinjaPatch extends Patch {
     patchFile.skipNext(16); // source MD5
     patchFile.skipNext(16); // modified MD5
 
-    if (sourceFileSize !== modifiedFileSize) {
-      patchFile.skipNext(1); // "M" or "A"
-      const overflowSizeLength = (await patchFile.readNext(1)).readUInt8();
-      const overflowSize =
-        overflowSizeLength > 0
-          ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
-          : 0;
-      const overflow =
-        overflowSize > 0 ? await patchFile.readNext(overflowSize) : Buffer.alloc(overflowSize);
-      for (let i = 0; i < overflow.length; i += 1) {
-        overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
-      }
-      if (modifiedFileSize > sourceFileSize) {
-        await targetFile.writeAt(overflow, targetFile.getSize());
-      }
+    if (sourceFileSize === modifiedFileSize) {
+      return;
+    }
+    patchFile.skipNext(1); // "M" or "A"
+    const overflowSizeLength = (await patchFile.readNext(1)).readUInt8();
+    const overflowSize =
+      overflowSizeLength > 0
+        ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
+        : 0;
+    const overflow =
+      overflowSize > 0 ? await patchFile.readNext(overflowSize) : Buffer.alloc(overflowSize);
+    for (let i = 0; i < overflow.length; i += 1) {
+      overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
+    }
+    if (modifiedFileSize > sourceFileSize) {
+      await targetFile.writeAt(overflow, targetFile.getSize());
     }
   }
 

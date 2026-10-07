@@ -508,6 +508,36 @@ describe('isHardlink', () => {
   });
 });
 
+describe('isPathTraversal', () => {
+  test.each([
+    'Tetris (World).gb',
+    'Nintendo - Game Boy/Tetris (World).gb',
+    './Tetris (World).gb',
+    // Only whole segments count, these are all legal filenames
+    'Final Fantasy VII..disc1.bin',
+    '..hidden.rom',
+    'Game.../rom.bin',
+  ])('should return false for a path that stays within its parent: %s', (filePath) => {
+    expect(FsUtil.isPathTraversal(filePath)).toEqual(false);
+  });
+
+  test.each([
+    '..',
+    '../evil.rom',
+    '../../../../tmp/evil.rom',
+    'roms/../../evil.rom',
+    'roms/..',
+    '..\\evil.rom',
+    'roms\\..\\..\\evil.rom',
+    '/etc/passwd',
+    '//server/share/evil.rom',
+    'C:\\Windows\\evil.rom',
+    'c:/windows/evil.rom',
+  ])('should return true for a path that escapes its parent: %s', (filePath) => {
+    expect(FsUtil.isPathTraversal(filePath)).toEqual(true);
+  });
+});
+
 describe('isSamba', () => {
   test.each(['.', os.devNull, 'test', path.resolve('test')])(
     'should return false: %s',
@@ -633,10 +663,15 @@ describe('makeLegal', () => {
       ['file.rom', 'file.rom'],
       ['roms/file.rom', 'roms/file.rom'],
       ['/roms/file.rom', '/roms/file.rom'],
-      // Test illegal names
-      ['Dwayne "The Rock" Jonson.rom', 'Dwayne _The Rock_ Jonson.rom'],
+      // Test characters that are only illegal on Windows
+      ['Dwayne "The Rock" Jonson.rom', 'Dwayne "The Rock" Jonson.rom'],
+      ['igir_2026-08-20T23:25:16.csv', 'igir_2026-08-20T23:25:16.csv'],
+      ['roms/Ys III: Wanderers from Ys.rom', 'roms/Ys III: Wanderers from Ys.rom'],
+      ['<>"|?*.rom', '<>"|?*.rom'],
+      // Test path separator normalization
+      ['roms\\file.rom', 'roms/file.rom'],
     ])('should make the file path legal: %s', (input, expected) => {
-      expect(FsUtil.makeLegal(input, '/')).toEqual(expected);
+      expect(FsUtil.makeLegal(input, 'linux')).toEqual(expected);
     });
   });
 
@@ -650,8 +685,10 @@ describe('makeLegal', () => {
       ['C:\\ro:ms\\fi:le.rom', 'C:\\ro;ms\\fi;le.rom'],
       // Test illegal names
       ['Dwayne "The Rock" Jonson.rom', 'Dwayne _The Rock_ Jonson.rom'],
+      ['igir_2026-08-20T23:25:16.csv', 'igir_2026-08-20T23;25;16.csv'],
+      ['<>"|?*.rom', '______.rom'],
     ])('should make the file path legal: %s', (input, expected) => {
-      expect(FsUtil.makeLegal(input, '\\')).toEqual(expected);
+      expect(FsUtil.makeLegal(input, 'win32')).toEqual(expected);
     });
   });
 });

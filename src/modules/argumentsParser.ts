@@ -116,7 +116,10 @@ export default class ArgumentsParser {
       ['extract', 'Extract ROM files in archives when copying or moving'],
       ['zip', 'Create zip archives of ROMs when copying or moving'],
       ['playlist', 'Create playlist files for multi-disc games'],
-      ['test', 'Test ROMs for accuracy after writing them to the output directory'],
+      [
+        'test',
+        'Test ROMs for accuracy after writing them, or test input files if no write command is given',
+      ],
       ['dir2dat', 'Generate a DAT from all input files'],
       ['fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)'],
       ['clean', 'Recycle unknown files in the output directory'],
@@ -431,9 +434,11 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .middleware((middlewareArgv) => {
-        if (
-          !(middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input)
-        ) {
+        if (!(
+          middlewareArgv.output &&
+          middlewareArgv._.includes('clean') &&
+          middlewareArgv.input
+        )) {
           return;
         }
         const outputResolved = path.resolve(middlewareArgv.output as string);

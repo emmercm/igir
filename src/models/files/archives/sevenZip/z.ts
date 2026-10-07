@@ -1,3 +1,4 @@
+import { SevenZipFormat } from '../../../../../addons/7zip/index.js';
 import SevenZipLib from './sevenZipLib.js';
 
 /**
@@ -11,18 +12,26 @@ export default class Z extends SevenZipLib {
     return new Z(filePath);
   }
 
-  static getExtensions(): string[] {
-    return ['.z'];
+  /**
+   * Returns the 7-Zip handler that reads this format.
+   */
+  protected getSevenZipFormat(): SevenZipFormat {
+    return SevenZipFormat.Z;
   }
 
-  getExtension(): string {
-    return Z.getExtensions()[0];
+  static getExtensions(): string[] {
+    return ['.z', '.taz'];
+  }
+
+  getExtensions(): string[] {
+    return Z.getExtensions();
   }
 
   /**
-   * Returns true: .Z archives store entry paths.
+   * Returns false: .Z wraps a single nameless stream, so the entry path is
+   * derived from the archive's own filename rather than read from the archive.
    */
   hasMeaningfulEntryPaths(): boolean {
-    return true;
+    return false;
   }
 }

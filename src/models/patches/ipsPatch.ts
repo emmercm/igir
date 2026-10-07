@@ -98,10 +98,11 @@ export default class IPSPatch extends Patch {
       }
       await targetFile.writeAt(data, offset);
 
-      if (callback !== undefined) {
-        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      if (callback === undefined) {
+        continue;
       }
+      const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+      callback(Math.floor(progressPercentage * targetFile.getSize()));
     }
   }
 }

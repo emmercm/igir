@@ -3,9 +3,18 @@ import path from 'node:path';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ChdRaw from '../../../src/models/files/archives/chd/chdRaw.js';
 import Rvz from '../../../src/models/files/archives/dolphin/rvz.js';
+import Gzip from '../../../src/models/files/archives/gzip.js';
 import Cso from '../../../src/models/files/archives/maxcso/cso.js';
+import NkitIso from '../../../src/models/files/archives/nkitIso.js';
 import Rar from '../../../src/models/files/archives/rar.js';
+import Bzip2 from '../../../src/models/files/archives/sevenZip/bzip2.js';
+import Lzma from '../../../src/models/files/archives/sevenZip/lzma.js';
+import Lzma86 from '../../../src/models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../../../src/models/files/archives/sevenZip/sevenZip.js';
+import Split from '../../../src/models/files/archives/sevenZip/split.js';
+import Z from '../../../src/models/files/archives/sevenZip/z.js';
+import ZipSpanned from '../../../src/models/files/archives/sevenZip/zipSpanned.js';
+import ZipX from '../../../src/models/files/archives/sevenZip/zipX.js';
 import Tar from '../../../src/models/files/archives/tar.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
@@ -170,6 +179,38 @@ describe('archiveEntryPriority (default sort)', () => {
     expect(sorted[5]).toBe(rvz);
     expect(sorted[6]).toBe(chd);
   });
+
+  it('should give every archive type a distinct priority', async () => {
+    const expected = [
+      new Zip('rom.zip'),
+      new Tar('rom.tar'),
+      new Rar('rom.rar'),
+      new Gzip('rom.gz'),
+      new SevenZip('rom.7z'),
+      new Z('rom.z'),
+      new ZipSpanned('rom.zip.001'),
+      new ZipX('rom.zipx'),
+      new Bzip2('rom.bz2'),
+      new Lzma86('rom.lzma86'),
+      new Lzma('rom.lzma'),
+      new Split('rom.001'),
+      new Cso('rom.cso'),
+      new Rvz('rom.rvz'),
+      new ChdRaw('rom.chd'),
+      new NkitIso('rom.nkit.iso'),
+    ];
+    const entries = await Promise.all(
+      expected.map(
+        async (archive) =>
+          await ArchiveEntry.entryOf({ archive, entryPath: 'rom.rom', size: SIZE, crc32: CRC }),
+      ),
+    );
+
+    // Index them in reverse, to prove the sort - not the input order - decides
+    const sorted = indexAndFind(entries.toReversed());
+
+    expect(sorted.map((file) => file.toString())).toEqual(entries.map((entry) => entry.toString()));
+  });
 });
 
 describe('preferFiletype', () => {
@@ -201,6 +242,37 @@ describe('preferFiletype', () => {
 
     expect(sorted[0]).toBeInstanceOf(ArchiveEntry);
     expect(sorted[1]).not.toBeInstanceOf(ArchiveEntry);
+  });
+
+  it('should prefer plain files by default, even over archives with invented entry paths', async () => {
+    const bzip2 = await ArchiveEntry.entryOf({
+      archive: new Bzip2('a.bz2'),
+      entryPath: 'a.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
+    expect(bzip2.getArchive().hasMeaningfulEntryPaths()).toEqual(false);
+    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
+
+    const sorted = indexAndFind([bzip2, plain]);
+
+    expect(sorted[0]).toBe(plain);
+    expect(sorted[1]).toBe(bzip2);
+  });
+
+  it('should prefer archives with invented entry paths when preferFiletype=archive', async () => {
+    const bzip2 = await ArchiveEntry.entryOf({
+      archive: new Bzip2('a.bz2'),
+      entryPath: 'b.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
+    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
+
+    const sorted = indexAndFind([plain, bzip2], { preferFiletype: 'archive' });
+
+    expect(sorted[0]).toBe(bzip2);
+    expect(sorted[1]).toBe(plain);
   });
 });
 

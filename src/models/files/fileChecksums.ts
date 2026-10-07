@@ -72,8 +72,8 @@ export default {
   ): Promise<ChecksumPropsWithSize> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
-      // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
-      // We can't call readable.destroy() here because 'unrar' will throw an error
+      // The readable is left un-drained and un-destroyed because destroying tar's minipass entry
+      // fails its parser on the next write, which Node.js then can't destroy, crashing the process.
       return {};
     }
 

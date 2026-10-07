@@ -45,7 +45,7 @@ interface CacheValue {
 
 const ValueType = {
   FILE_CHECKSUMS: 'F',
-  ARCHIVE_CHECKSUMS: 'A',
+  ARCHIVE_CHECKSUMS: 'A2',
   ROM_HEADER: 'H',
   FILE_SIGNATURE: 'S',
   ROM_PADDING: `P${ROMPadding.getKnownFillBytesCount()}`,
@@ -91,7 +91,7 @@ export default class FileCache {
     // Delete keys from old cache versions
     await this.cache.delete(
       new RegExp(
-        `^V(${[...Array.from({ length: FileCache.VERSION }).keys()].slice(1).join('|')})\\|`,
+        `^V(${Array.from({ length: FileCache.VERSION - 1 }, (_, idx) => idx + 1).join('|')})\\|`,
       ),
     );
     // Delete keys from old value types

@@ -92,14 +92,16 @@ export default abstract class DAT {
       }
 
       const cloneOf = game.getCloneOf();
-      if (cloneOf !== undefined) {
-        const parent = gameNamesToParents.get(cloneOf);
-        if (parent) {
-          parent.addChild(game);
-        } else {
-          // The DAT is bad, the game is referencing a parent that doesn't exist
-          gameNamesToParents.set(cloneOf, new Parent(game));
-        }
+      if (cloneOf === undefined) {
+        continue;
+      }
+
+      const parent = gameNamesToParents.get(cloneOf);
+      if (parent) {
+        parent.addChild(game);
+      } else {
+        // The DAT is bad, the game is referencing a parent that doesn't exist
+        gameNamesToParents.set(cloneOf, new Parent(game));
       }
     }
 

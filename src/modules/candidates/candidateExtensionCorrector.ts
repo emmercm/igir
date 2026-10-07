@@ -8,12 +8,12 @@ import FileFactory from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import type ROM from '../../models/dats/rom.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../models/files/archives/archiveFile.js';
 import Chd from '../../models/files/archives/chd/chd.js';
 import type File from '../../models/files/file.js';
 import type FileSignature from '../../models/files/fileSignature.js';
 import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
 import type Options from '../../models/options.js';
-import { FixExtension } from '../../models/options.js';
 import type ROMWithFiles from '../../models/romWithFiles.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
 import OutputFactory from '../../modules/candidates/utils/outputFactory.js';
@@ -73,7 +73,16 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
-    if (romWithFiles.getInputFile() instanceof ZeroSizeFile) {
+    const inputFile = romWithFiles.getInputFile();
+    if (inputFile instanceof ZeroSizeFile) {
+      return false;
+    }
+
+    if (inputFile instanceof ArchiveFile) {
+      // Whole archives are raw-copied, and OutputFactory takes their output extension from the
+      // archive (correcting it there if needed), so a corrected ROM name would never be used.
+      // Renaming the ROM anyway would break anything that matches ROMs by name, such as the
+      // sub-games of a MergedDiscGame.
       return false;
     }
 
@@ -81,18 +90,12 @@ export default class CandidateExtensionCorrector extends Module {
       return true;
     }
 
-    const inputFile = romWithFiles.getInputFile();
     if (inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof Chd) {
       // Files within CHDs never need extension correction
       return false;
     }
 
-    return (
-      this.options.getFixExtension() === FixExtension.ALWAYS ||
-      (this.options.getFixExtension() === FixExtension.AUTO &&
-        !this.options.shouldDir2Dat() &&
-        (!this.options.usingDats() || romWithFiles.getRom().getName().trim() === ''))
-    );
+    return this.options.shouldFixExtension();
   }
 
   private async correctExtensions(

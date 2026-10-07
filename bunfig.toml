@@ -2,4 +2,4 @@
 randomize = true
 
 # Only run the committed test files
-pathIgnorePatterns = [".*/**", "dist/**", "packages/*/deps/**"]
+pathIgnorePatterns = [".*/**", "addons/*/deps/**", "dist/**"]

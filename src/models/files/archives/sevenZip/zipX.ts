@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import { SevenZipFormat } from '../../../../../addons/7zip/index.js';
 import SevenZipLib from './sevenZipLib.js';
 
 /**
@@ -13,11 +14,22 @@ export default class ZipX extends SevenZipLib {
     return new ZipX(filePath);
   }
 
+  /**
+   * Returns the 7-Zip handler that reads this format.
+   */
+  protected getSevenZipFormat(): SevenZipFormat {
+    return SevenZipFormat.ZIP;
+  }
+
   static getExtensions(): string[] {
     return ['.zipx', '.zx01'];
   }
 
-  getExtension(): string {
+  getExtensions(): string[] {
+    return ZipX.getExtensions();
+  }
+
+  override getExtension(): string {
     for (const ext of ZipX.getExtensions()) {
       if (this.getFilePath().toLowerCase().endsWith(ext)) {
         return ext;

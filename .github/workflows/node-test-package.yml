@@ -26,30 +26,29 @@ jobs:
       source-changes: ${{ steps.filter.outputs.source-changes }}
       package-changes: ${{ steps.filter.outputs.package-changes }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - id: filter
-        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           filters: |
             source-changes:
               - '.github/workflows/node-test-package.yml'
+              - 'addons/**'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'src/**'
               - 'index.ts'
               - 'package*.json'
-              - 'postinstall.mjs'
               - 'tsconfig.json'
             package-changes:
               - '.github/workflows/node-test-package.yml'
-              - '.gitmodules'
+              - 'addons/**'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'index.ts'
               - 'package*.json'
-              - 'postinstall.mjs'
               - 'tsconfig.json'
 
   pkg-pr-new:
@@ -63,10 +62,9 @@ jobs:
       package_name: ${{ steps.pkg-pr-new.outputs.PACKAGE_NAME }}
       package_url: ${{ steps.pkg-pr-new.outputs.PACKAGE_URL }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - id: npm-cache-dir
         shell: bash
@@ -106,7 +104,7 @@ jobs:
           - windows-11-arm
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
@@ -134,7 +132,7 @@ jobs:
           - windows-11-arm
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
@@ -146,8 +144,8 @@ jobs:
           export PATH
           igir --help
 
-  test-postinstall:
-    name: test-postinstall (${{ matrix.os }})
+  test-wasm-fallback:
+    name: test-wasm-fallback (${{ matrix.os }})
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.package-changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
@@ -158,23 +156,30 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - ubuntu-24.04-arm
-          - macos-15-intel
           - macos-latest
           - windows-latest
-          - windows-11-arm
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
           node-version: 22
+      - id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          # Only the root lockfile, so hashFiles() doesn't walk the submodules
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
       - run: npm ci --ignore-scripts
-      - name: Pack and compile the native addons from the packed sources
+      - name: Pack and use the native addons' WebAssembly builds
         shell: bash
         run: |
           set -euxo pipefail
@@ -183,23 +188,38 @@ jobs:
           npm pack --script-shell bash
           tarball="$(pwd)/$(ls igir-*.tgz)"
 
-          # Install the tarball without running the postinstall
-          project="${RUNNER_TEMP}/from-source"
+          # Install the tarball
+          project="${RUNNER_TEMP}/wasm-fallback"
           mkdir -p "${project}"
           cd "${project}"
           npm init --yes
-          npm install --ignore-scripts "${tarball}"
+          npm install "${tarball}"
           cd node_modules/igir
 
-          # Delete the bundled prebuilds so node-gyp-build must compile the packed
-          # C++ sources. --throw-on-build-failure aborts on any compile/link error,
-          # which is what proves every necessary .cpp/.h was included in the pack.
-          find . -type d -name 'prebuilds' -prune -exec rm -rf {} +
-          node postinstall.mjs --throw-on-build-failure
-
-          # Runtime smoke test: executing the module runs its top-level require of
-          # the freshly compiled addon, which fails loudly if the .node didn't link.
-          node "$(find . -path '*/dolphin-tool/index.js')"
+          # Load every addon's WebAssembly builds, the same as each addon falls back to on a
+          # platform without prebuilds. The script is a file because Volta's Windows shim cuts a
+          # multi-line `--eval` argument off at its first newline, leaving an empty script.
+          script="${RUNNER_TEMP}/wasm-fallback.mjs"
+          cat > "${script}" <<'EOF'
+          import fs from 'node:fs';
+          import module from 'node:module';
+          import path from 'node:path';
+          const require = module.createRequire(path.join(process.cwd(), 'package.json'));
+          const { getDefaultContext } = require('@emnapi/runtime');
+          for (const addon of fs.readdirSync(path.join('dist', 'addons'))) {
+            const glues = fs
+              .readdirSync(path.join('dist', 'addons', addon), { recursive: true })
+              .filter((file) => path.basename(path.dirname(file)) === 'wasm' && file.endsWith('.cjs'));
+            if (glues.length === 0) {
+              throw new Error('no WebAssembly build for the ' + addon + ' addon');
+            }
+            for (const glue of glues) {
+              const binding = require(path.resolve('dist', 'addons', addon, glue)).emnapiInit({ context: getDefaultContext() });
+              console.log(addon, glue, Object.keys(binding));
+            }
+          }
+          EOF
+          node "${script}"
 
   # !!! This check should be required by GitHub !!!
   test-package-status-check:
@@ -207,15 +227,15 @@ jobs:
       - pkg-pr-new
       - test-npx
       - test-npm-install-global
-      - test-postinstall
+      - test-wasm-fallback
     if: always()
     permissions: {}
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
+      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: pkg-pr-new, test-npx, test-npm-install-global, test-postinstall
+          allowed-skips: pkg-pr-new, test-npx, test-npm-install-global, test-wasm-fallback
 
   npm-exec-branch-comment:
     needs:
@@ -248,7 +268,7 @@ jobs:
       pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0

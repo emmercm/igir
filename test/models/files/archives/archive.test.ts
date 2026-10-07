@@ -8,6 +8,9 @@ import Temp from '../../../../src/globals/temp.js';
 import type Archive from '../../../../src/models/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
 import Chd from '../../../../src/models/files/archives/chd/chd.js';
+import ChdBinCue from '../../../../src/models/files/archives/chd/chdBinCue.js';
+import ChdGdi from '../../../../src/models/files/archives/chd/chdGdi.js';
+import ChdRaw from '../../../../src/models/files/archives/chd/chdRaw.js';
 import Gcz from '../../../../src/models/files/archives/dolphin/gcz.js';
 import Rvz from '../../../../src/models/files/archives/dolphin/rvz.js';
 import Wia from '../../../../src/models/files/archives/dolphin/wia.js';
@@ -17,7 +20,11 @@ import Dax from '../../../../src/models/files/archives/maxcso/dax.js';
 import Zso from '../../../../src/models/files/archives/maxcso/zso.js';
 import NkitIso from '../../../../src/models/files/archives/nkitIso.js';
 import Rar from '../../../../src/models/files/archives/rar.js';
+import Bzip2 from '../../../../src/models/files/archives/sevenZip/bzip2.js';
+import Lzma from '../../../../src/models/files/archives/sevenZip/lzma.js';
+import Lzma86 from '../../../../src/models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../../../../src/models/files/archives/sevenZip/sevenZip.js';
+import Split from '../../../../src/models/files/archives/sevenZip/split.js';
 import Z from '../../../../src/models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../../../../src/models/files/archives/sevenZip/zipSpanned.js';
 import ZipX from '../../../../src/models/files/archives/sevenZip/zipX.js';
@@ -29,6 +36,49 @@ import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayUtil from '../../../../src/utils/arrayUtil.js';
 import FsUtil from '../../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
+
+const archivesWithStaticExtensions: [Archive, string[]][] = [
+  [new Zip('file'), Zip.getExtensions()],
+  [new Tar('file'), Tar.getExtensions()],
+  [new Rar('file'), Rar.getExtensions()],
+  // 7zip
+  [new Gzip('file'), Gzip.getExtensions()],
+  [new SevenZip('file'), SevenZip.getExtensions()],
+  [new Z('file'), Z.getExtensions()],
+  [new ZipSpanned('file'), ZipSpanned.getExtensions()],
+  [new ZipX('file'), ZipX.getExtensions()],
+  [new Bzip2('file'), Bzip2.getExtensions()],
+  [new Lzma('file'), Lzma.getExtensions()],
+  [new Lzma86('file'), Lzma86.getExtensions()],
+  [new Split('file'), Split.getExtensions()],
+  // Compressed images
+  [new Cso('file'), Cso.getExtensions()],
+  [new Dax('file'), Dax.getExtensions()],
+  [new Zso('file'), Zso.getExtensions()],
+  [new Gcz('file'), Gcz.getExtensions()],
+  [new Rvz('file'), Rvz.getExtensions()],
+  [new Wia('file'), Wia.getExtensions()],
+  [new ChdBinCue('file'), Chd.getExtensions()],
+  [new ChdGdi('file'), Chd.getExtensions()],
+  [new ChdRaw('file'), Chd.getExtensions()],
+  [new NkitIso('file'), NkitIso.getExtensions()],
+];
+const namedArchivesWithStaticExtensions = archivesWithStaticExtensions.map(
+  ([archive, staticExtensions]): [string, Archive, string[]] => [
+    archive.constructor.name,
+    archive,
+    staticExtensions,
+  ],
+);
+
+describe('getExtensions', () => {
+  test.each(namedArchivesWithStaticExtensions)(
+    "should return the class's static extensions: %s",
+    (_, archive, staticExtensions) => {
+      expect(archive.getExtensions()).toEqual(staticExtensions);
+    },
+  );
+});
 
 describe('getArchiveEntries', () => {
   test.each([
@@ -42,6 +92,10 @@ describe('getArchiveEntries', () => {
       ...Z.getExtensions(),
       ...ZipSpanned.getExtensions(),
       ...ZipX.getExtensions(),
+      ...Bzip2.getExtensions(),
+      ...Lzma.getExtensions(),
+      ...Lzma86.getExtensions(),
+      ...Split.getExtensions(),
       // Compressed images
       ...Cso.getExtensions(),
       ...Dax.getExtensions(),
@@ -60,24 +114,28 @@ describe('getArchiveEntries', () => {
   test.each([
     // fizzbuzz
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'fizzbuzz.nes', '370517b5'],
+    ['./test/fixtures/roms/bz2/fizzbuzz.bz2', 'fizzbuzz', '370517b5'],
     ['./test/fixtures/roms/gz/fizzbuzz.gz', 'fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', 'fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 'fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', 'fizzbuzz.nes', '370517b5'],
     // foobar
     ['./test/fixtures/roms/7z/foobar.7z', 'foobar.lnx', 'b22c9747'],
+    ['./test/fixtures/roms/bz2/foobar.bz2', 'foobar', 'b22c9747'],
     ['./test/fixtures/roms/gz/foobar.gz', 'foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'foobar.lnx', 'b22c9747'],
     // loremipsum
     ['./test/fixtures/roms/7z/loremipsum.7z', 'loremipsum.rom', '70856527'],
+    ['./test/fixtures/roms/bz2/loremipsum.bz2', 'loremipsum', '70856527'],
     ['./test/fixtures/roms/gz/loremipsum.gz', 'loremipsum.rom', '70856527'],
     ['./test/fixtures/roms/rar/loremipsum.rar', 'loremipsum.rom', '70856527'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 'loremipsum.rom', '70856527'],
     ['./test/fixtures/roms/zip/loremipsum.zip', 'loremipsum.rom', '70856527'],
     // unknown
     ['./test/fixtures/roms/7z/unknown.7z', 'unknown.rom', '377a7727'],
+    ['./test/fixtures/roms/bz2/unknown.bz2', 'unknown', '377a7727'],
     ['./test/fixtures/roms/gz/unknown.gz', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/rar/unknown.rar', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/tar/unknown.tar.gz', 'unknown.rom', '377a7727'],
@@ -192,7 +250,11 @@ describe('extractEntryToFile', () => {
     expect(archives).toHaveLength(16);
 
     for (const archive of archives) {
-      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
+      const extractedFilePath = path.join(Temp.getTempDir(), 'INVALID PATH');
+      await expect(
+        archive.extractEntryToFile({ entryPath: 'INVALID FILE' }, extractedFilePath),
+      ).rejects.toThrow();
+      await expect(FsUtil.exists(extractedFilePath)).resolves.toEqual(false);
     }
   });
 });

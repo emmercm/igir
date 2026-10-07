@@ -2,6 +2,13 @@ import fs from 'node:fs';
 
 import { configDefaults, defineConfig } from 'vitest/config';
 
+// https://github.com/sindresorhus/is-docker/blob/59379f14b6dda26a0167fce55d80bf546857f92d/index.js
+const isDocker =
+  process.platform === 'linux' &&
+  (fs.existsSync('/.dockerenv') ||
+    fs.readFileSync('/proc/self/cgroup', 'utf8').includes('docker') ||
+    fs.readFileSync('/proc/self/mountinfo', 'utf8').includes('/docker/containers/'));
+
 export default defineConfig({
   test: {
     globals: true,
@@ -19,24 +26,40 @@ export default defineConfig({
     testTimeout:
       60_000 *
       // macOS Apple Silicon is fast
-      (process.platform === 'darwin' && process.arch !== 'x64' ? 0.5 : 1) *
-      // Ubuntu ARM is slow
-      (process.platform === 'linux' && process.arch.startsWith('arm') ? 2 : 1) *
-      // QEMU (via Docker) is slow
-      // https://github.com/sindresorhus/is-docker/blob/59379f14b6dda26a0167fce55d80bf546857f92d/index.js
-      (process.platform === 'linux' &&
-      (fs.existsSync('/.dockerenv') ||
-        fs.readFileSync('/proc/self/cgroup', 'utf8').includes('docker') ||
-        fs.readFileSync('/proc/self/mountinfo', 'utf8').includes('/docker/containers/'))
-        ? 2
-        : 1),
+      (process.platform === 'darwin' && process.arch.startsWith('arm') ? 0.75 : 1) *
+      // macOS Intel is slow
+      (process.platform === 'darwin' && process.arch === 'x64' ? 3 : 1) *
+      // Windows has slow filesystem I/O
+      (process.platform === 'win32' ? 1.5 : 1) *
+      // QEMU (via Docker) is slow, doubly so when emulating ARM
+      (isDocker ? 2 * (process.arch.startsWith('arm') ? 2 : 1) : 1),
 
     // Only run the committed test files
-    exclude: [...configDefaults.exclude, '.*/**', 'dist/**', 'packages/*/deps/**'],
+    exclude: [...configDefaults.exclude, '.*/**', 'addons/*/deps/**', 'dist/**'],
+
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'native',
+          // Fail rather than fall back to the WebAssembly builds when a native build won't load
+          env: { IGIR_ADDONS: 'native' },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'wasm',
+          // Run every test again against the addons' WebAssembly builds that they fall back to,
+          // because tests everywhere use the addons
+          env: { IGIR_ADDONS: 'wasm' },
+        },
+      },
+    ],
 
     coverage: {
       provider: 'v8',
-      // include: ['{packages,src}/**/*.{js,cjs,mjs,ts}'],
+      // include: ['{addons,packages,src}/**/*.{js,cjs,mjs,ts}'],
       exclude: ['test/**'],
     },
   },

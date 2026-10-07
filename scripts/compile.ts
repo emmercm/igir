@@ -5,7 +5,6 @@ import fs from 'node:fs';
 import module from 'node:module';
 import path from 'node:path';
 
-import fg from 'fast-glob';
 import yargs from 'yargs';
 
 import Timer from '../src/async/timer.js';
@@ -41,12 +40,7 @@ if (await FsUtil.exists(output)) {
 
 logger.info("Bundling with 'bun build --compile' ...");
 const bunBuildConfig = {
-  entrypoints: [
-    'index.ts',
-    ...(await fg(
-      `node_modules/@emmercm/maxcso-${argv.platform}-${argv.arch}/dist/{maxcso*,*.dylib}`,
-    )),
-  ],
+  entrypoints: ['index.ts'],
   compile: {
     outfile: output,
     target:
@@ -101,6 +95,15 @@ const bunBuildConfig = {
                 .replace('${os.arch()}', argv.arch);
               return allocate(resolved, 'native');
             },
+          );
+
+          // Rewrite addons' WebAssembly `require('...cjs')` fallbacks into a throw so Bun
+          // doesn't bundle their Emscripten glue, which locates its `.wasm` relative to
+          // `__dirname`. The executable always embeds its target's prebuild instead.
+          source = source.replaceAll(
+            /require\(\s*[`'"]([^`'"]+[/\\]wasm[/\\][^`'"]+\.cjs)[`'"]\s*\)/g,
+            (_match, spec: string) =>
+              `(() => { throw new Error(${JSON.stringify(`the WebAssembly build '${spec}' isn't bundled`)}); })()`,
           );
 
           // Detect `const NAME = path.dirname(require.resolve('PKG/package.json'))`

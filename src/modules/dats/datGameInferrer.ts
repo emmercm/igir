@@ -110,6 +110,24 @@ export default class DATGameInferrer extends Module {
     }
 
     const games = gameNamesToRomFiles
+      // Sort games whose files come from archives that don't store entry filename metadata to be
+      // last, so that we prefer any duplicate archives that do have entry filename metadata;
+      // do this before the game deduplication below
+      .toSorted(
+        ([, aRomFiles], [, bRomFiles]) =>
+          (aRomFiles.every(
+            (file) =>
+              !(file instanceof ArchiveEntry) || file.getArchive().hasMeaningfulEntryPaths(),
+          )
+            ? 0
+            : 1) -
+          (bRomFiles.every(
+            (file) =>
+              !(file instanceof ArchiveEntry) || file.getArchive().hasMeaningfulEntryPaths(),
+          )
+            ? 0
+            : 1),
+      )
       .map(([gameName, gameRomFiles]) => {
         const roms = gameRomFiles
           .map((romFile) => {

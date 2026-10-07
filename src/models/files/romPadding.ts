@@ -1,6 +1,7 @@
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 
 import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
+import PadEndTransform from '../../streams/padEndTransform.js';
 import StreamUtil from '../../utils/streamUtil.js';
 import File from './file.js';
 import FileChecksums from './fileChecksums.js';
@@ -113,13 +114,22 @@ export default class ROMPadding implements ROMPaddingProps {
 
       const splitStreams = StreamUtil.split(readableWithCallback, this.POSSIBLE_FILL_BYTES.length);
 
-      return await Promise.all(
-        this.POSSIBLE_FILL_BYTES.map(async (fillByte, idx) => {
-          const paddedStream = StreamUtil.padEnd(splitStreams[idx], paddedSize, fillByte);
-          const checksums = await FileChecksums.hashStream(paddedStream, file.getChecksumBitmask());
-          return new ROMPadding({ paddedSize: paddedSize, fillByte, ...checksums });
-        }),
-      );
+      try {
+        return await Promise.all(
+          this.POSSIBLE_FILL_BYTES.map(async (fillByte, idx) => {
+            const checksums = await StreamUtil.pipelineSafe(
+              splitStreams[idx],
+              new PadEndTransform(paddedSize, fillByte),
+              async (padded) => await FileChecksums.hashStream(padded, file.getChecksumBitmask()),
+            );
+            return new ROMPadding({ paddedSize: paddedSize, fillByte, ...checksums });
+          }),
+        );
+      } finally {
+        for (const splitStream of splitStreams) {
+          splitStream.destroy();
+        }
+      }
     });
   }
 }

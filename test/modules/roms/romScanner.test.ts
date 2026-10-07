@@ -73,15 +73,16 @@ it('should not throw on bad archives', async () => {
 
 describe('multiple files', () => {
   test.each([
-    [['test/fixtures/roms'], 107],
-    [['test/fixtures/roms/**/*'], 107],
-    [['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}'], 107],
+    [['test/fixtures/roms'], 114],
+    [['test/fixtures/roms/**/*'], 114],
+    [['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}'], 114],
   ])('should scan multiple files with no exclusions: %s', async (input, expectedRomFiles) => {
     await expect(createRomScanner(input).scan()).resolves.toHaveLength(expectedRomFiles);
   });
 
   test.each([
-    [{ input: [path.join('test', 'fixtures', 'roms')] }, 153],
+    [{ input: [path.join('test', 'fixtures', 'roms')] }, 167],
+    [{ input: [path.join('test', 'fixtures', 'roms', 'bz2')] }, 14],
     [{ input: [path.join('test', 'fixtures', 'roms', '7z')] }, 13],
     [{ input: [path.join('test', 'fixtures', 'roms', 'gz')] }, 14],
     [{ input: [path.join('test', 'fixtures', 'roms', 'rar')] }, 13],
@@ -126,7 +127,16 @@ describe('multiple files', () => {
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted((a, b) => a.localeCompare(b));
-    expect(extensionsWithoutCrc32).toEqual(['.chd', '.gcz', '.rvz', '.tar.gz', '.wia']);
+    expect(extensionsWithoutCrc32).toEqual([
+      '.bz2',
+      '.chd',
+      '.cso',
+      '.gcz',
+      '.rvz',
+      '.tar.gz',
+      '.wia',
+      '.zso',
+    ]);
 
     const entriesWithMd5 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
@@ -150,19 +160,19 @@ describe('multiple files', () => {
   it('should scan multiple files with some file exclusions', async () => {
     await expect(
       createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan(),
-    ).resolves.toHaveLength(90);
+    ).resolves.toHaveLength(97);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom'],
       ).scan(),
-    ).resolves.toHaveLength(90);
+    ).resolves.toHaveLength(97);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip'],
       ).scan(),
-    ).resolves.toHaveLength(77);
+    ).resolves.toHaveLength(84);
   });
 
   it('should scan multiple files with every file excluded', async () => {
@@ -499,6 +509,42 @@ describe('output directory scanning', () => {
       }
     },
   );
+
+  it('should not scan the temp directory that non-writing commands default the output dir to', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      const inputDir = path.join(tempDir, 'input');
+      await FsUtil.mkdir(inputDir);
+
+      await FsUtil.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+        path.join(inputDir, 'fizzbuzz.nes'),
+      );
+      // A file igir itself put in the temp dir, such as a DAT downloaded from a URL
+      const downloadedDatPath = path.join(Temp.getTempDir(), 'downloaded.dat');
+      await FsUtil.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
+        downloadedDatPath,
+      );
+
+      try {
+        const files = await new ROMScanner(
+          // No output dir, so it defaults to the temp dir
+          new Options({ input: [inputDir], commands: ['report'] }),
+          new ProgressBarFake(),
+          new FileFactory(new FileCache()),
+          new MappableSemaphore(os.availableParallelism()),
+        ).scan();
+
+        expect(files.map((file) => file.getFilePath())).not.toContain(downloadedDatPath);
+        expect(files.every((file) => file.getCanBeCandidateInput())).toBe(true);
+      } finally {
+        await FsUtil.rm(downloadedDatPath, { force: true });
+      }
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true });
+    }
+  });
 
   it('should not add output files that are already in the input paths', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());

@@ -162,6 +162,20 @@ describe('getOutputDirRoot', () => {
   });
 });
 
+describe('hasOutput', () => {
+  it('should be true when an output dir is given', () => {
+    expect(new Options({ commands: ['report'], output: 'out' }).hasOutput()).toEqual(true);
+  });
+
+  it('should be true for writing commands', () => {
+    expect(new Options({ commands: ['copy'], output: 'out' }).hasOutput()).toEqual(true);
+  });
+
+  it('should be false when no output dir is given', () => {
+    expect(new Options({ commands: ['report'] }).hasOutput()).toEqual(false);
+  });
+});
+
 describe('canRemoveHeader', () => {
   test.each(['.a78', '.lnx', '.nes', '.fds', '.smc'])(
     'should not remove header when option not provided: %s',
@@ -194,4 +208,30 @@ describe('canRemoveHeader', () => {
       expect(options.canRemoveHeader(extension)).toEqual(false);
     },
   );
+});
+
+describe('shouldFixExtension', () => {
+  test.each([
+    // "always" ignores everything else
+    ['always', ['copy'], [], true],
+    ['always', ['copy'], ['dats'], true],
+    ['always', ['dir2dat'], [], true],
+    // "auto" only fixes when there's nothing more trustworthy
+    ['auto', ['copy'], [], true],
+    ['auto', ['copy'], ['dats'], false],
+    ['auto', ['dir2dat'], [], false],
+    // "never" never fixes
+    ['never', ['copy'], [], false],
+    ['never', ['copy'], ['dats'], false],
+    ['never', ['dir2dat'], [], false],
+  ])(
+    'should respect "--fix-extension %s" with commands %s and DATs %s',
+    (fixExtension, commands, dat, expected) => {
+      expect(new Options({ fixExtension, commands, dat }).shouldFixExtension()).toEqual(expected);
+    },
+  );
+
+  it('should not fix when the option is not provided', () => {
+    expect(new Options({ commands: ['copy'] }).shouldFixExtension()).toEqual(false);
+  });
 });
