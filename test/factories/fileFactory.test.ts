@@ -76,11 +76,13 @@ describe('filesFrom', () => {
   });
 
   test.each([
-    ...['.apk', '.ipa', '.jar', '.pk3', '.zip64'].map((extension): [string, string, ArchiveClass] => [
-      'test/fixtures/roms/zip/onetwothree.zip',
-      extension,
-      Zip,
-    ]),
+    ...['.apk', '.ipa', '.jar', '.pk3', '.zip64'].map(
+      (extension): [string, string, ArchiveClass] => [
+        'test/fixtures/roms/zip/onetwothree.zip',
+        extension,
+        Zip,
+      ],
+    ),
     ...['.ova', '.tgz', '.tpz'].map((extension): [string, string, ArchiveClass] => [
       'test/fixtures/roms/tar/onetwothree.tar.gz',
       extension,
@@ -105,6 +107,7 @@ describe('filesFrom', () => {
         for (const archiveEntry of archiveEntries) {
           expect(archiveEntry).toBeInstanceOf(ArchiveEntry);
           if (archiveEntry instanceof ArchiveEntry) {
+            // eslint-disable-next-line vitest/no-conditional-expect
             expect(archiveEntry.getArchive()).toBeInstanceOf(expectedArchiveClass);
           }
         }
