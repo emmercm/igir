@@ -31,7 +31,7 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 /**
- * A ZIP archive (including variants like .apk, .ipa, .jar, .pk3).
+ * A ZIP archive (including variants like .apk, .ipa, .jar, .pk3, .vpk).
  */
 export default class Zip extends Archive {
   private readonly zipReader: ZipReader;
@@ -49,7 +49,7 @@ export default class Zip extends Archive {
   }
 
   static getExtensions(): string[] {
-    return ['.zip', '.zip64', '.apk', '.ipa', '.jar', '.pk3'];
+    return ['.zip', '.zip64', '.apk', '.ipa', '.jar', '.pk3', '.vpk'];
   }
 
   getExtensions(): string[] {

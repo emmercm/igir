@@ -35,22 +35,20 @@ jobs:
           filters: |
             source-changes:
               - '.github/workflows/node-test-package.yml'
+              - 'addons/**'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'src/**'
               - 'index.ts'
               - 'package*.json'
-              - 'postinstall.mjs'
               - 'tsconfig.json'
             package-changes:
-              - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-test-package.yml'
-              - '.gitmodules'
+              - 'addons/**'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'index.ts'
               - 'package*.json'
-              - 'postinstall.mjs'
               - 'tsconfig.json'
 
   pkg-pr-new:
@@ -67,7 +65,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/checkout-submodules
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - id: npm-cache-dir
         shell: bash
@@ -147,8 +144,8 @@ jobs:
           export PATH
           igir --help
 
-  test-postinstall:
-    name: test-postinstall (${{ matrix.os }})
+  test-wasm-fallback:
+    name: test-wasm-fallback (${{ matrix.os }})
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.package-changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
@@ -159,20 +156,14 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - ubuntu-24.04-arm
-          - macos-15-intel
           - macos-latest
           - windows-latest
-          - windows-11-arm
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    env:
-      JOBS: max # node-gyp: compile using all available CPUs
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/checkout-submodules
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
           node-version: 22
@@ -188,7 +179,7 @@ jobs:
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
       - run: npm ci --ignore-scripts
-      - name: Pack and compile the native addons from the packed sources
+      - name: Pack and use the native addons' WebAssembly builds
         shell: bash
         run: |
           set -euxo pipefail
@@ -197,28 +188,38 @@ jobs:
           npm pack --script-shell bash
           tarball="$(pwd)/$(ls igir-*.tgz)"
 
-          # Install the tarball without running the postinstall
-          project="${RUNNER_TEMP}/from-source"
+          # Install the tarball
+          project="${RUNNER_TEMP}/wasm-fallback"
           mkdir -p "${project}"
           cd "${project}"
           npm init --yes
-          npm install --ignore-scripts "${tarball}"
+          npm install "${tarball}"
           cd node_modules/igir
 
-          # Delete the bundled prebuilds so node-gyp-build must compile the packed
-          # C++ sources. --throw-on-build-failure aborts on any compile/link error,
-          # which is what proves every necessary .cpp/.h was included in the pack.
-          find . -type d -name 'prebuilds' -prune -exec rm -rf {} +
-          node postinstall.mjs --throw-on-build-failure
-
-          # Runtime smoke test: executing the module runs its top-level require of
-          # the freshly compiled addon, which fails loudly if the .node didn't link.
-          node "$(find . -path '*/packages/7zip/index.js')"
-          node "$(find . -path '*/packages/chdman/index.js')"
-          node "$(find . -path '*/packages/dolphin-tool/index.js')"
-          node "$(find . -path '*/packages/maxcso/index.js')"
-          node "$(find . -path '*/packages/zlib*/index.js')"
-          node "$(find . -path '*/packages/zstd*/index.js')"
+          # Load every addon's WebAssembly builds, the same as each addon falls back to on a
+          # platform without prebuilds. The script is a file because Volta's Windows shim cuts a
+          # multi-line `--eval` argument off at its first newline, leaving an empty script.
+          script="${RUNNER_TEMP}/wasm-fallback.mjs"
+          cat > "${script}" <<'EOF'
+          import fs from 'node:fs';
+          import module from 'node:module';
+          import path from 'node:path';
+          const require = module.createRequire(path.join(process.cwd(), 'package.json'));
+          const { getDefaultContext } = require('@emnapi/runtime');
+          for (const addon of fs.readdirSync(path.join('dist', 'addons'))) {
+            const glues = fs
+              .readdirSync(path.join('dist', 'addons', addon), { recursive: true })
+              .filter((file) => path.basename(path.dirname(file)) === 'wasm' && file.endsWith('.cjs'));
+            if (glues.length === 0) {
+              throw new Error('no WebAssembly build for the ' + addon + ' addon');
+            }
+            for (const glue of glues) {
+              const binding = require(path.resolve('dist', 'addons', addon, glue)).emnapiInit({ context: getDefaultContext() });
+              console.log(addon, glue, Object.keys(binding));
+            }
+          }
+          EOF
+          node "${script}"
 
   # !!! This check should be required by GitHub !!!
   test-package-status-check:
@@ -226,7 +227,7 @@ jobs:
       - pkg-pr-new
       - test-npx
       - test-npm-install-global
-      - test-postinstall
+      - test-wasm-fallback
     if: always()
     permissions: {}
     runs-on: ubuntu-latest
@@ -234,7 +235,7 @@ jobs:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: pkg-pr-new, test-npx, test-npm-install-global, test-postinstall
+          allowed-skips: pkg-pr-new, test-npx, test-npm-install-global, test-wasm-fallback
 
   npm-exec-branch-comment:
     needs:

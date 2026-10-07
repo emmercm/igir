@@ -1,4 +1,4 @@
-import { SevenZipFormat } from '../../../../../packages/7zip/index.js';
+import { SevenZipFormat } from '../../../../../addons/7zip/index.js';
 import type Archive from '../archive.js';
 import SevenZipLib from './sevenZipLib.js';
 

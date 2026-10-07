@@ -5,7 +5,7 @@ import async from 'async';
 import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
-import { CHDType } from '../packages/chdman/index.js';
+import { CHDType } from '../addons/chdman/index.js';
 import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
 import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';

@@ -17,9 +17,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Every prebuild that a pull request adds or modifies must have been signed by the
-  #   node-addon-prebuild.yml workflow in this repository, built from the parent of the commit
+  # Every prebuild (native or WebAssembly) that a pull request adds or modifies must have been signed
+  #   by the node-addon-prebuild.yml workflow in this repository, built from the parent of the commit
   #   that last changed it. Prebuilds from forks, local builds, or other branches are rejected.
+  #   'pull_request' runs are signed for GitHub's temporary merge commit (refs/pull/N/merge), so
+  #   for those the parent must be the merge commit's second parent, the pull request's head.
   verify:
     permissions:
       contents: read # git fetch
@@ -47,7 +49,7 @@ jobs:
           # Every prebuild that changed, one per line. `-z` can't be used because variables can't
           #   hold NUL bytes; instead, git wraps any path with a newline or other unusual character
           #   in double quotes, which then fails as "not a blob" below.
-          paths="$(git -C "${repo_dir}" -c core.quotePath=true diff --no-renames --diff-filter=d --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'packages/*/addon-*/**')"
+          paths="$(git -C "${repo_dir}" -c core.quotePath=true diff --no-renames --diff-filter=d --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'addons/*/addon-*/**')"
           if [[ -z "${paths}" ]]; then
             echo "No prebuilds were added or modified"
             exit 0
@@ -100,6 +102,21 @@ jobs:
                 is_signed=true
                 break
               fi
+              if [[ "${trigger}" == "pull_request" ]]; then
+                # The merge commit is unreferenced once refs/pull/N/merge moves on, but GitHub still
+                #   serves it by SHA
+                if ! git -C "${repo_dir}" cat-file -e "${source_digest}^{commit}" 2> /dev/null \
+                  && ! git -C "${repo_dir}" fetch --quiet --no-tags --filter=blob:none origin "${source_digest}"; then
+                  printf '  merge commit %s is no longer available\n' "${source_digest}"
+                  continue
+                fi
+                # `cat-file` instead of `log --format=%P` so that parents are read from the commit itself
+                mapfile -t merge_parents < <(git -C "${repo_dir}" cat-file commit "${source_digest}" | sed -n 's/^parent //p')
+                if [[ "${#merge_parents[@]}" -eq 2 && "${merge_parents[1]}" == "${prebuild_parent}" ]]; then
+                  is_signed=true
+                  break
+                fi
+              fi
             done <<< "${attestations}"
 
             if [[ "${is_signed}" != "true" ]]; then
@@ -111,7 +128,7 @@ jobs:
             printf 'PASS %q\n' "${path}"
             printf '  file sha256:   %s\n' "$(sha256sum "${blob}" | cut -d ' ' -f1)"
             printf '  committed in:  %s\n' "${prebuild_commit}"
-            printf '  built from:    %s (its parent, on %s, triggered by %s)\n' "${prebuild_parent}" "${source_ref}" "${trigger}"
+            printf '  built from:    %s (its parent, on %s, triggered by %s, signed for %s)\n' "${prebuild_parent}" "${source_ref}" "${trigger}" "${source_digest}"
             printf '  workflow from: %s\n' "${signer_digest}"
             printf '  run:           %s\n' "${run_uri}"
             printf '  signed at:     %s\n' "${signed_at}"
@@ -123,10 +140,85 @@ jobs:
             exit 1
           fi
 
+  # node-addon-prebuild.yml can't sign or commit prebuilds for pull requests from forks, so a
+  #   maintainer has to supply them. Fail until they do, and explain how.
+  fork-prebuilds:
+    if: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+    permissions:
+      contents: read # git fetch
+      pull-requests: write # thollander/actions-comment-pull-request
+    runs-on: ubuntu-latest
+    steps:
+      - id: stale
+        env:
+          REPO: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          repo_dir="${RUNNER_TEMP}/repo.git"
+          git init --quiet --bare "${repo_dir}"
+          git -C "${repo_dir}" remote add origin "https://github.com/${REPO}.git"
+          git -C "${repo_dir}" fetch --quiet --no-tags --filter=blob:none origin "${BASE_SHA}" "${HEAD_SHA}"
+
+          # Keep in sync with node-addon-prebuild.yml's 'change-filter'
+          source_paths=(
+            ':(glob)addons/**'
+            ':(glob,exclude)addons/*/addon-*/**'
+            ':(glob).github/workflows/node-addon-prebuild.yml'
+            ':(glob).gitmodules'
+            ':(glob)package*.json'
+          )
+          prebuild_paths=':(glob)addons/*/addon-*/**'
+
+          # The prebuilds are stale if no commit changed them after the last source change
+          stale=false
+          last_source="$(git -C "${repo_dir}" log -1 --format=%H "${BASE_SHA}..${HEAD_SHA}" -- "${source_paths[@]}")"
+          if [[ -n "${last_source}" ]]; then
+            echo "Last native addon source change: ${last_source}"
+            if [[ -z "$(git -C "${repo_dir}" log -1 --format=%H "${last_source}..${HEAD_SHA}" -- "${prebuild_paths}")" ]]; then
+              stale=true
+            fi
+          fi
+          echo "Prebuilds are stale: ${stale}"
+          echo "stale=${stale}" >> "${GITHUB_OUTPUT}"
+      - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
+        with:
+          message: |
+            ## :hammer_and_wrench: Native addon prebuilds needed
+            This pull request changes native addon sources, so its prebuilds need to be rebuilt. Prebuilds must be built and signed by this repository's [`node-addon-prebuild.yml`](https://github.com/${{ github.repository }}/blob/${{ github.event.repository.default_branch }}/.github/workflows/node-addon-prebuild.yml) workflow, which can't do that for pull requests from forks. The addons are still built and tested for every platform by that workflow's `prebuild-status-check`.
+
+            **@${{ github.event.pull_request.user.login }}:** please don't commit prebuilds yourself, they will fail this check. Make sure "[allow edits by maintainers](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)" is enabled on this pull request, and a maintainer will add the prebuilds once the changes are ready.
+
+            **Maintainers:** first review any changes to `.github/`, running `node-addon-prebuild.yml` on this pull request's commits uses its versions of the workflows with this repository's secrets. Then build the prebuilds on a temporary branch, and push them back to this pull request:
+
+            ```shell
+            gh pr checkout ${{ github.event.pull_request.number }}
+            git push origin HEAD:refs/heads/pr-${{ github.event.pull_request.number }}-prebuilds
+            gh workflow run node-addon-prebuild.yml --ref pr-${{ github.event.pull_request.number }}-prebuilds
+            # Wait for node-addon-prebuild.yml to commit the prebuilds, then:
+            git pull --ff-only origin pr-${{ github.event.pull_request.number }}-prebuilds
+            git push
+            git push origin --delete pr-${{ github.event.pull_request.number }}-prebuilds
+            ```
+
+            Any new source change after that will need new prebuilds.
+
+            _Comment generated by the [${{ github.workflow }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}) workflow._
+          mode: ${{ steps.stale.outputs.stale == 'true' && 'upsert' || 'delete' }}
+          create-if-not-exists: ${{ steps.stale.outputs.stale == 'true' && 'true' || 'false' }}
+          comment-tag: fork-prebuilds
+      - if: ${{ steps.stale.outputs.stale == 'true' }}
+        run: |
+          echo "::error::This pull request's native addon prebuilds are stale, a maintainer needs to rebuild them; see the pull request comment."
+          exit 1
+
   # !!! This check should be required by GitHub !!!
   prebuild-provenance-status-check:
     needs:
       - verify
+      - fork-prebuilds
     if: always()
     permissions: {}
     runs-on: ubuntu-latest
@@ -134,3 +226,4 @@ jobs:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
+          allowed-skips: fork-prebuilds

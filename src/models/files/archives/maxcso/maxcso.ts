@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
 
-import maxcso from '../../../../../packages/maxcso/index.js';
+import maxcso from '../../../../../addons/maxcso/index.js';
 import Defaults from '../../../../globals/defaults.js';
 import FsReadTransform, { type FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';

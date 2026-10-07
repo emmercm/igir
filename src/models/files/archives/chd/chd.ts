@@ -3,8 +3,8 @@ import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
-import type { CHDInfo, TrackReaderModeValue } from '../../../../../packages/chdman/index.js';
-import chdman from '../../../../../packages/chdman/index.js';
+import type { CHDInfo, TrackReaderModeValue } from '../../../../../addons/chdman/index.js';
+import chdman from '../../../../../addons/chdman/index.js';
 import FsReadTransform, { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ArchiveEntryLocation } from '../archive.js';
 import Archive from '../archive.js';

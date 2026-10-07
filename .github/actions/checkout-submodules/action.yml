@@ -12,7 +12,7 @@ runs:
         submodule_count=$(git config --file .gitmodules --get-regexp '\.path$' | wc -l | tr -d ' ')
         git submodule update --init --depth 1 --jobs "${submodule_count}"
 
-        # Check out only the nested Dolphin submodules that packages/dolphin-tool/binding.gyp compiles,
+        # Check out only the nested Dolphin submodules that addons/dolphin-tool/binding.gyp compiles,
         # fetching all of them in parallel
         dolphin_submodules=(
           Externals/bzip2/bzip2
@@ -20,5 +20,5 @@ runs:
           Externals/zlib-ng/zlib-ng
           Externals/zstd/zstd
         )
-        git -C packages/dolphin-tool/deps/dolphin submodule update --init --depth 1 \
+        git -C addons/dolphin-tool/deps/dolphin submodule update --init --depth 1 \
           --jobs "${#dolphin_submodules[@]}" -- "${dolphin_submodules[@]}"

@@ -1,0 +1,20 @@
+config_version = "0"
+
+exclude_patterns = [
+  # CI-built native prebuilds and WebAssembly builds
+  "addons/*/addon-*/**",
+  # Vendored Git submodules
+  "addons/*/deps/**",
+  # Test fixtures (ROMs, archives, DATs, patches)
+  "**/fixtures/**",
+]
+
+test_patterns = [
+  "test/**",
+  "addons/*/test/**",
+  "packages/*/test/**",
+]
+
+[[source]]
+name = "default"
+default = true
