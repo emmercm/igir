@@ -179,7 +179,7 @@ export default class OutputFactory {
       output = path.join(output, mirroredDirPath);
     }
 
-    const datFilePath = dat.getFilePath();
+    const datFilePath = dat.getFile()?.getFilePath();
     if (
       options.getDirDatMirror() &&
       options.getDatPaths().length > 0 &&
@@ -281,11 +281,29 @@ export default class OutputFactory {
 
   private static replaceDatTokens(input: string, dat: DAT): string {
     let output = input;
+    const datFile = dat.getFile();
+    if (datFile) {
+      output = output.replace(
+        '{datFileName}',
+        path.parse(datFile.getExtractedFilePath()).name.replaceAll(/[\\/]/g, '_'),
+      );
+    }
+
     output = output.replace('{datName}', dat.getName().replaceAll(/[\\/]/g, '_'));
 
     const description = dat.getDescription();
     if (description) {
       output = output.replace('{datDescription}', description.replaceAll(/[\\/]/g, '_'));
+    }
+
+    const version = dat.getVersion();
+    if (version) {
+      output = output.replace('{datVersion}', version.replaceAll(/[\\/]/g, '_'));
+    }
+
+    const date = dat.getDate();
+    if (date) {
+      output = output.replace('{datDate}', date.replaceAll(/[\\/]/g, '_'));
     }
 
     return output;

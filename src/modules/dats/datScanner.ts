@@ -309,7 +309,7 @@ export default class DATScanner extends Scanner {
 
     if (datObject.datafile) {
       try {
-        return LogiqxDAT.fromObject(datObject.datafile, { filePath: datFile.getFilePath() });
+        return LogiqxDAT.fromObject(datObject.datafile, { file: datFile });
       } catch (error) {
         this.prefixedLogger.trace(`${datFile.toString()}: failed to parse DAT object: ${error}`);
         return undefined;
@@ -318,7 +318,7 @@ export default class DATScanner extends Scanner {
 
     if (datObject.mame) {
       try {
-        return MameDAT.fromObject(datObject.mame, { filePath: datFile.getFilePath() });
+        return MameDAT.fromObject(datObject.mame, { file: datFile });
       } catch (error) {
         this.prefixedLogger.trace(
           `${datFile.toString()}: failed to parse MAME DAT object: ${error}`,
@@ -330,7 +330,7 @@ export default class DATScanner extends Scanner {
     if (datObject.softwarelists) {
       try {
         return SoftwareListsDAT.fromObject(datObject.softwarelists, {
-          filePath: datFile.getFilePath(),
+          file: datFile,
         });
       } catch (error) {
         this.prefixedLogger.trace(
@@ -459,7 +459,7 @@ export default class DATScanner extends Scanner {
       });
     });
 
-    return new LogiqxDAT({ filePath: datFile.getFilePath(), header, games });
+    return new LogiqxDAT({ file: datFile, header, games });
   }
 
   /**
@@ -512,7 +512,7 @@ export default class DATScanner extends Scanner {
 
     const datName = path.parse(datFile.getExtractedFilePath()).name;
     return new LogiqxDAT({
-      filePath: datFile.getFilePath(),
+      file: datFile,
       header: new Header({
         name: datName,
         description: datName,

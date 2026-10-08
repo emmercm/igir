@@ -16,6 +16,7 @@ import ChdBinCue from '../../../../src/models/files/archives/chd/chdBinCue.js';
 import NkitIso from '../../../../src/models/files/archives/nkitIso.js';
 import Tar from '../../../../src/models/files/archives/tar.js';
 import Zip from '../../../../src/models/files/archives/zip.js';
+import File from '../../../../src/models/files/file.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,
@@ -84,6 +85,52 @@ test.each(['copy', 'move'])('should echo the option with no arguments: %s', asyn
 
 describe('token replacement', () => {
   test.each([
+    ['dats/mame2003-plus.xml', path.resolve('foo', 'mame2003-plus', 'bar', 'Dummy.rom')],
+    ['dats/No-Intro.dat', path.resolve('foo', 'No-Intro', 'bar', 'Dummy.rom')],
+    ['dats/no-extension', path.resolve('foo', 'no-extension', 'bar', 'Dummy.rom')],
+  ])('should replace {datFileName} for a raw DAT: %s', async (datPath, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'foo/{datFileName}/bar' });
+    const dat = new LogiqxDAT({
+      file: await File.fileOf({ filePath: datPath }),
+      header: new Header({ name: 'DAT Name' }),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      dummyGame,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
+    ['mame2003-plus.xml', path.resolve('foo', 'mame2003-plus', 'bar', 'Dummy.rom')],
+    ['subdir/No-Intro.dat', path.resolve('foo', 'No-Intro', 'bar', 'Dummy.rom')],
+  ])('should replace {datFileName} for an archived DAT: %s', async (entryPath, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'foo/{datFileName}/bar' });
+    const dat = new LogiqxDAT({
+      file: await ArchiveEntry.entryOf({
+        archive: new Zip('dats/pack.zip'),
+        entryPath,
+        size: 0,
+        crc32: '',
+      }),
+      header: new Header({ name: 'DAT Name' }),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      dummyGame,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
     ['foo/{datName}/bar', path.resolve('foo', 'DAT _ Name', 'bar', 'Dummy.rom')],
     ['foo/{datDescription}/bar', path.resolve('foo', 'DAT _ Description', 'bar', 'Dummy.rom')],
   ])('should replace {dat*}: %s', async (output, expectedPath) => {
@@ -101,6 +148,37 @@ describe('token replacement', () => {
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
+
+  test.each([
+    ['foo/{datVersion}/bar', path.resolve('foo', '1.2 _ 3', 'bar', 'Dummy.rom')],
+    ['foo/{datDate}/bar', path.resolve('foo', '2026_10_07', 'bar', 'Dummy.rom')],
+  ])('should replace {datVersion} and {datDate}: %s', async (output, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output });
+    const dat = new LogiqxDAT({
+      header: new Header({ version: '1.2 \\ 3', date: '2026/10/07' }),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      dummyGame,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each(['foo/{datFileName}/bar', 'foo/{datVersion}/bar', 'foo/{datDate}/bar'])(
+    'should throw when the DAT is missing the value: %s',
+    async (output) => {
+      const options = new Options({ commands: ['copy'], output });
+      const dummyFile = await dummyRom.toFile();
+
+      expect(() =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRom, dummyFile),
+      ).toThrow(/failed to replace/);
+    },
+  );
 
   test.each([
     ['root/{region}', 'USA', path.resolve('root', 'USA', 'Dummy.rom')],
@@ -859,7 +937,10 @@ describe('should respect "--dir-dat-mirror"', () => {
       output: os.devNull,
       dirDatMirror: true,
     });
-    const dat = new LogiqxDAT({ filePath: datPath, header: new Header() });
+    const dat = new LogiqxDAT({
+      file: await File.fileOf({ filePath: datPath }),
+      header: new Header(),
+    });
     const rom = new ROM({ name: 'file.rom', size: 0, crc32: '' });
 
     const outputPath = OutputFactory.getPath(options, dat, dummyGame, rom, await rom.toFile());
