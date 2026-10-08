@@ -1215,6 +1215,7 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', 'grow-aps-gba.rom'), '6ff2bf2a'],
         [path.join('Patchable', 'grow-aps-n64.rom'), '6ff2bf2a'],
         [path.join('Patchable', 'grow-bps.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-bsdiff.rom'), '6ff2bf2a'],
         [path.join('Patchable', 'grow-dps.rom'), '6ff2bf2a'],
         [path.join('Patchable', 'grow-ebp.rom'), '6ff2bf2a'],
         [path.join('Patchable', 'grow-ips.rom'), '6ff2bf2a'],
@@ -1227,6 +1228,7 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', 'large-aps-gba.rom'), '4429a239'],
         [path.join('Patchable', 'large-aps-n64.rom'), '4429a239'],
         [path.join('Patchable', 'large-bps.rom'), '4429a239'],
+        [path.join('Patchable', 'large-bsdiff.rom'), '4429a239'],
         [path.join('Patchable', 'large-dps.rom'), '4429a239'],
         [path.join('Patchable', 'large-ebp.rom'), '4429a239'],
         [path.join('Patchable', 'large-ips.rom'), '4429a239'],
@@ -1239,6 +1241,7 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', 'modify-aps-gba.rom'), '700a409c'],
         [path.join('Patchable', 'modify-aps-n64.rom'), '700a409c'],
         [path.join('Patchable', 'modify-bps.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-bsdiff.rom'), '700a409c'],
         [path.join('Patchable', 'modify-dps.rom'), '700a409c'],
         [path.join('Patchable', 'modify-ebp.rom'), '700a409c'],
         [path.join('Patchable', 'modify-ips.rom'), '700a409c'],
@@ -1251,6 +1254,7 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', 'shrink-aps-gba.rom'), 'c1f21914'],
         [path.join('Patchable', 'shrink-aps-n64.rom'), 'c1f21914'],
         [path.join('Patchable', 'shrink-bps.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-bsdiff.rom'), 'c1f21914'],
         [path.join('Patchable', 'shrink-dps.rom'), 'c1f21914'],
         [path.join('Patchable', 'shrink-ips.rom'), 'c1f21914'],
         [path.join('Patchable', 'shrink-ninja.rom'), 'c1f21914'],
@@ -1273,6 +1277,10 @@ describe('with explicit DATs', () => {
         ],
         [
           path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-bps.rom'),
+          '6ff2bf2a',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-bsdiff.rom'),
           '6ff2bf2a',
         ],
         [
@@ -1321,6 +1329,10 @@ describe('with explicit DATs', () => {
           '4429a239',
         ],
         [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-bsdiff.rom'),
+          '4429a239',
+        ],
+        [
           path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-dps.rom'),
           '4429a239',
         ],
@@ -1366,6 +1378,10 @@ describe('with explicit DATs', () => {
           '700a409c',
         ],
         [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-bsdiff.rom'),
+          '700a409c',
+        ],
+        [
           path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-dps.rom'),
           '700a409c',
         ],
@@ -1407,7 +1423,7 @@ describe('with explicit DATs', () => {
         ['shrink', 768],
       ]);
       for (const [romName, expectedSize] of expectedSizes) {
-        const expectedOutputs = romName === 'shrink' ? 8 : 11;
+        const expectedOutputs = romName === 'shrink' ? 9 : 12;
         const patchedOutputs = (
           await FsUtil.walk(path.join(outputTemp, 'Patchable'), WalkMode.FILES)
         ).filter((filePath) => path.basename(filePath).startsWith(`${romName}-`));

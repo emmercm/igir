@@ -8,25 +8,25 @@
     <author>emmercm</author>
   </header>
 
-  <!-- Patches: aps-gba, aps-n64, bps, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
+  <!-- Patches: aps-gba, aps-n64, bps, bsdiff, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
   <game name="grow">
     <description>grow</description>
     <rom name="grow.rom" size="1024" crc="1a4b9b3c" md5="e099959e41edb92d59a6d83b0c5bc71a" sha1="1b793a423853dcced7ea1fa394f3e687c3ef2bf6" status="verified"/>
     <!-- After: name="grow.rom" size="1536" crc="6ff2bf2a" -->
   </game>
-  <!-- Patches: aps-gba, aps-n64, bps, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
+  <!-- Patches: aps-gba, aps-n64, bps, bsdiff, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
   <game name="large">
     <description>large</description>
     <rom name="large.rom" size="262144" crc="58263663" md5="a47206a0a0bb0e19909af165c9340854" sha1="a46d163b75c90a26c86fd27b2d0785748af5eb71" status="verified"/>
     <!-- After: name="large.rom" size="262144" crc="4429a239" -->
   </game>
-  <!-- Patches: aps-gba, aps-n64, bps, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
+  <!-- Patches: aps-gba, aps-n64, bps, bsdiff, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
   <game name="modify">
     <description>modify</description>
     <rom name="modify.rom" size="1024" crc="aabfe90e" md5="e5a17b92dfbe7465830c39a2e1e7b5ee" sha1="a888192353ebdec9ad0cdb0c04fc37929343d221" status="verified"/>
     <!-- After: name="modify.rom" size="1024" crc="700a409c" -->
   </game>
-  <!-- Patches: aps-gba, aps-n64, bps, dps, ips, ninja, ups, vcdiff -->
+  <!-- Patches: aps-gba, aps-n64, bps, bsdiff, dps, ips, ninja, ups, vcdiff -->
   <game name="shrink">
     <description>shrink</description>
     <rom name="shrink.rom" size="1024" crc="52249184" md5="2a62599b525c333b7909893c8835dbb7" sha1="94c71ba85088715eb9bd82673f36f3c15b3a9219" status="verified"/>

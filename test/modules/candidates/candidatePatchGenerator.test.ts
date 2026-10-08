@@ -30,7 +30,7 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 // Every file in test/fixtures/patches matches exactly one ROM in test/fixtures/roms/patchable
-const patchFixtureCount = 41;
+const patchFixtureCount = 45;
 
 interface PatchedCandidate {
   gameName: string;
