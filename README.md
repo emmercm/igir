@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v5.7.1 (Node.js v26.10.0)
+     @@   @@        @@   @@   @@       @@    v5.7.2 (Node.js v26.10.0)
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -298,8 +298,11 @@ Help & debug options:
 Advanced usage:
 
   Tokens that are replaced when generating the output (--output) path of a ROM:
+    {datFileName}     The filename of the DAT that contains the ROM, without extension
     {datName}         The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
     {datDescription}  The description of the DAT that contains the ROM
+    {datVersion}      The version of the DAT that contains the ROM
+    {datDate}         The date of the DAT that contains the ROM
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
@@ -327,6 +330,8 @@ Advanced usage:
     "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g.
     "gb")
+    {retronas}  The ROM's system-specific /roms/* directory for RetroNAS (e.g.
+    "nintendo/gameboy")
     {rocknix}   The ROM's emulator-specific /roms/* directory for ROCKNIX (e.g. "gb")
     {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
     {spruce}    The ROM's emulator-specific /Roms/* directory for SpruceOS (e.g. "GB")
