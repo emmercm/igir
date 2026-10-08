@@ -1,95 +1,78 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
-import Temp from '../../../src/globals/temp.js';
-import File from '../../../src/models/files/file.js';
 import VcdiffPatch from '../../../src/models/patches/vcdiffPatch.js';
-import bufferUtil from '../../../src/utils/bufferUtil.js';
-import FsUtil from '../../../src/utils/fsUtil.js';
+import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
 
-async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
-  await FsUtil.mkdir(path.dirname(temp), { recursive: true });
-  await FsUtil.writeFile(temp, contents);
-  return await File.fileOf({ filePath: temp });
-}
+const patchFrom = VcdiffPatch.patchFrom.bind(VcdiffPatch);
+const FILE_NAME = 'patch 00000000.xdelta';
+const SWAP = '08090a0b0c0d0e0f0001020304050607';
 
-describe('constructor', () => {
-  test.each([
-    // Non-existent
-    'foo.xdelta',
-    'fizz/buzz.xdelta',
-    // Invalid
-    'ABCDEFGH Blazgo.xdelta',
-    'ABCD12345 Bangarang.xdelta',
-    'Bepzinky 1234567.xdelta',
-  ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf({ filePath, size: 0 });
-    expect(() => VcdiffPatch.patchFrom(file)).toThrow(/couldn't parse/i);
-  });
-
-  test.each([
-    // Beginning
-    ['ABCD1234-Foo.xdelta', 'abcd1234'],
-    ['Fizz/bcde2345_Buzz.xdelta', 'bcde2345'],
-    ['One/Two/cdef3456 Three.xdelta', 'cdef3456'],
-    // End
-    ['Lorem+9876FEDC.xdelta', '9876fedc'],
-    ['Ipsum#8765edcb.xdelta', '8765edcb'],
-    ['Dolor 7654dcba.xdelta', '7654dcba'],
-  ])('should find the CRC in the filename: %s', async (filePath, expectedCrc) => {
-    const file = await File.fileOf({ filePath, size: 0 });
-    const patch = VcdiffPatch.patchFrom(file);
-    expect(patch.getCrcBefore()).toEqual(expectedCrc);
+describe('patchFrom', () => {
+  it('should parse', async () => {
+    await expect(parsePatch(patchFrom, FILE_NAME, 'd6c3c40000')).resolves.toEqual({
+      crcBefore: '00000000',
+      crcAfter: undefined,
+      sizeAfter: undefined,
+    });
   });
 });
 
 describe('createPatchedFile', () => {
-  test('should throw on invalid patch header', async () => {
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('00000000 patch.xdelta', Buffer.alloc(10));
-
-    try {
-      const patch = VcdiffPatch.patchFrom(patchFile);
-      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+  test.each([
+    [
+      'add',
+      'd6c3c4000000161000100100a0a1a2a3a4a5a6a7a8a9aaabacadaeaf11',
+      'a0a1a2a3a4a5a6a7a8a9aaabacadaeaf',
+    ],
+    ['run', 'd6c3c400000110000a1000010301aa14000c00', `00010203${'aa'.repeat(12)}`],
+    ['copy self', 'd6c3c4000001100009100000020218180800', SWAP],
+    ['copy here', 'd6c3c4000001100009100000020228280818', SWAP],
+    [
+      'copy near and same',
+      'd6c3c400000110000d10000004041434447404040404',
+      '0405060708090a0b0c0d0e0f04050607',
+    ],
+    ['copy from target', 'd6c3c40000000a1000020201abcd031e00', 'abcd'.repeat(8)],
+    // Addresses past the source segment are this window's own output
+    [
+      'copy from target with a source',
+      'd6c3c400000110000b1000000402130813080810',
+      '08090a0b0c0d0e0f08090a0b0c0d0e0f',
+    ],
+    ['run after add', 'd6c3c40000000c0600030400aabbcc01020004', 'aabbcccccccc'],
+    ['grow', 'd6c3c400000110000e1400040401aabbccdd1310010400', `${INPUT16}aabbccdd`],
+    [
+      'vcd_target',
+      'd6c3c40000000e0800080100a0a1a2a3a4a5a6a7090208000708000001011800',
+      'a0a1a2a3a4a5a6a7a0a1a2a3a4a5a6a7',
+    ],
+    ['app header', 'd6c3c400040361626301100009100000020218180800', SWAP],
+    ['adler32', 'd6c3c400000510000d100000020204b8007918180800', SWAP],
+    ['empty code table', 'd6c3c40003000001100009100000020218180800', SWAP],
+    ['truncate', 'd6c3c400000110000708000001011800', '0001020304050607'],
+    [
+      'two windows truncate',
+      'd6c3c4000001040807040000010114000104000704000001011400',
+      '08090a0b00010203',
+    ],
+  ])('should apply: %s', async (_name, patchHex, expectedHex) => {
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(
+      Buffer.from(expectedHex, 'hex'),
+    );
   });
 
   test.each([
-    // Standard vcdiff with no secondary compression (xdelta3 -S -n -A ...)
-    ['AAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
-    ['AAAAAAAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
+    ['bad header', 'd6c3c50000', /Vcdiff patch header is invalid/],
+    ['secondary compression', 'd6c3c4000102', /unsupported Vcdiff secondary decompressor LZMA/],
     [
-      'AAAAAAAAAA',
-      Buffer.from('d6c3c4000000100a000a01004142434445464748494a0b', 'hex'),
-      'ABCDEFGHIJ',
+      'application-defined code table',
+      'd6c3c4000201',
+      /can't parse Vcdiff application-defined code table/,
     ],
-    [
-      'AAAAAAAAAAAAAAAAAAAA',
-      Buffer.from('d6c3c40000001414000b0400414243444546414545454507000a05', 'hex'),
-      'ABCDEFAAAAAAAAAAEEEE',
-    ],
-  ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('00000000 patch.xdelta', patchContents);
-
-    try {
-      const patch = VcdiffPatch.patchFrom(patchFile);
-      await patch.createPatchedFile(inputRom, outputRom);
-      const actualContents = (
-        await bufferUtil.fromReadable(fs.createReadStream(outputRom))
-      ).toString();
-      expect(actualContents).toEqual(expectedContents);
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom);
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+    ['DATACOMP', 'd6c3c4000000050101000000', /DATACOMP/],
+    ['INSTCOMP', 'd6c3c4000000050102000000', /INSTCOMP/],
+    ['ADDRCOMP', 'd6c3c4000000050104000000', /ADDRCOMP/],
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).rejects.toThrow(
+      expectedError,
+    );
   });
 });

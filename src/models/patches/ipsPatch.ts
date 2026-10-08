@@ -43,12 +43,18 @@ export default class IPSPatch extends Patch {
         eofString = 'EEOF';
       }
 
+      // EBP's trailing JSON metadata can't be confused with a truncation value
+      const isTruncatable =
+        header.toString() === 'PATCH' &&
+        !this.getFile().getExtractedFilePath().toLowerCase().endsWith('.ebp');
+
       await IPSPatch.writeOutputFile(
         inputRomFile,
         outputRomPath,
         patchFile,
         offsetSize,
         eofString,
+        isTruncatable,
         callback,
       );
     });
@@ -60,6 +66,7 @@ export default class IPSPatch extends Patch {
     patchFile: IOFile,
     offsetSize: number,
     eofString: string,
+    isTruncatable: boolean,
     callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
@@ -67,6 +74,17 @@ export default class IPSPatch extends Patch {
 
     try {
       await this.applyPatch(patchFile, targetFile, offsetSize, eofString, callback);
+      if (isTruncatable) {
+        // An optional 3-byte truncation size can follow "EOF"
+        patchFile.skipNext(eofString.length);
+        if (patchFile.getSize() - patchFile.getPosition() === 3) {
+          const truncateSize = (await patchFile.readNext(3)).readUIntBE(0, 3);
+          // The truncation size can only shrink the output, never extend it
+          if (truncateSize < targetFile.getSize()) {
+            await targetFile.truncate(truncateSize);
+          }
+        }
+      }
     } finally {
       await targetFile.close();
     }

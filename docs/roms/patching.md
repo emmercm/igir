@@ -8,6 +8,18 @@ Games and their ROMs are protected under copyrights, so patches are used to not 
 
 Patch files can be specified with the `--patch <path|glob>` option. See the [file scanning docs](../input/file-scanning.md) for more information.
 
+## Supported commands
+
+Patching can be used with any combination of the [`copy` or `move` commands](../commands.md#rom-writing), with or without the [`extract` or `zip` commands](../commands.md#rom-extracting-zipping). Patching can't be used with the [`link` command](../commands.md#link).
+
+Patches need to read the ROM's contents, so there are some limitations when ROMs are archived and those archives would be copied or moved as-is:
+
+| Commands                         | Patched un-archived ROMs | Patched archived ROMs                                                                                        |
+|----------------------------------|--------------------------|--------------------------------------------------------------------------------------------------------------|
+| `copy` or `move`                 | ✅                       | ❌ input archives will not be modified in any way                                                            |
+| `copy extract` or `move extract` | ✅                       | ✅                                                                                                           |
+| `copy zip` or `move zip`         | ✅                       | ⚠️ only ROMs that aren't [excluded from zipping](../output/writing-archives.md#excluding-files-from-zipping) |
+
 ## Patch types
 
 There are many, _many_ patch types that ROM hackers use to distribute their changes on the internet ([xkcd "Standards"](https://xkcd.com/927/)). Typically, a patch will only be distributed in one format, so gamers are entirely at the mercy of the ROM hacker's choice.
@@ -18,11 +30,11 @@ Not all patch types are created equal. Here are some tables of some existing for
 
 | Type                 | Supported                        | CRC32 in patch contents | Notes                                                                                                                                                                                                                                                                        |
 |----------------------|----------------------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `.bps`               | ✅                                | ✅                       |                                                                                                                                                                                                                                                                              |
-| `.ips`               | ✅ IPS, IPS32                     | ❌                       |                                                                                                                                                                                                                                                                              |
-| `.ppf`               | ✅ 2.0, 3.0                       | ❌                       |                                                                                                                                                                                                                                                                              |
-| `.ups`               | ✅                                | ✅                       | ⚠️ UPS patches read and write files byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`.                                                                        |
-| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                       | ⚠️ VCDIFF patches read and write files byte-by-byte during `COPY` instructions, usually making them slow and inefficient.<br>⚠️ [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, so many patches are likely to be unsupported. |
+| `.bps`               | ✅                               | ✅                      |                                                                                                                                                                                                                                                                              |
+| `.ips`               | ✅ IPS, IPS32                    | ❌                      |                                                                                                                                                                                                                                                                              |
+| `.ppf`               | ✅ 2.0, 3.0                      | ❌                      |                                                                                                                                                                                                                                                                              |
+| `.ups`               | ✅                               | ✅                      | ⚠️ UPS patches read and write files byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`.                                                                        |
+| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                      | ⚠️ VCDIFF patches read and write files byte-by-byte during `COPY` instructions, usually making them slow and inefficient.<br>⚠️ [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, so many patches are likely to be unsupported. |
 
 **Uncommon patch types:**
 

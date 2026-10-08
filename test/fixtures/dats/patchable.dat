@@ -8,64 +8,28 @@
     <author>emmercm</author>
   </header>
 
-  <!-- APS (GBA) -->
-  <game name="92C85C9">
-    <description>92C85C9</description>
-    <rom name="92C85C9.rom" size="65536" crc="06692159" md5="8e0caf88ba437cb7109c5642e06cfdb2" sha1="8335c4505380035c2fa94e2a1b9e69517e746905" status="verified"/>
-    <!-- After: name="04C896D-GBA.rom" size="65536" crc="b13eb478" -->
+  <!-- Patches: aps-gba, aps-n64, bps, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
+  <game name="grow">
+    <description>grow</description>
+    <rom name="grow.rom" size="1024" crc="1a4b9b3c" md5="e099959e41edb92d59a6d83b0c5bc71a" sha1="1b793a423853dcced7ea1fa394f3e687c3ef2bf6" status="verified"/>
+    <!-- After: name="grow.rom" size="1536" crc="6ff2bf2a" -->
   </game>
-  <!-- APS (N64 SIMPLE) -->
-  <game name="3708F2C">
-    <description>3708F2C</description>
-    <rom name="3708F2C.rom" size="1025" crc="20891c9f" md5="b191e2d913681475ef6a579d4b40bb1f" sha1="181e0713260060fa7d6c64292902023ca7c88a06" status="verified"/>
-    <!-- After: name="DFF7872-N64-SIMPLE.rom" size="1025" crc="caaaf550" -->
+  <!-- Patches: aps-gba, aps-n64, bps, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
+  <game name="large">
+    <description>large</description>
+    <rom name="large.rom" size="262144" crc="58263663" md5="a47206a0a0bb0e19909af165c9340854" sha1="a46d163b75c90a26c86fd27b2d0785748af5eb71" status="verified"/>
+    <!-- After: name="large.rom" size="262144" crc="4429a239" -->
   </game>
-
-  <!-- IPS -->
-  <game name="Before">
-    <description>Before</description>
-    <rom name="Before.rom" size="7" crc="0361b321" md5="ab8d71b3fdce92efd8bdf29cffd36116" sha1="7473def7220a59a6b4146e629064e1456542242d" status="verified"/>
-    <!-- After: name="After.rom" size="7" crc="4c8e44d4" -->
+  <!-- Patches: aps-gba, aps-n64, bps, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
+  <game name="modify">
+    <description>modify</description>
+    <rom name="modify.rom" size="1024" crc="aabfe90e" md5="e5a17b92dfbe7465830c39a2e1e7b5ee" sha1="a888192353ebdec9ad0cdb0c04fc37929343d221" status="verified"/>
+    <!-- After: name="modify.rom" size="1024" crc="700a409c" -->
   </game>
-  <!-- IPS32 -->
-  <game name="65D1206">
-    <description>65D1206</description>
-    <rom name="65D1206.rom" size="1025" crc="20323455" md5="5ab0c664d1ed83757fbe49e99c509cb0" sha1="31306e0f014d3ac2c24d2abede5f9a67c097c5e7" status="verified"/>
-    <!-- After: name="9E66269.rom" size=1025" crc="8bb5cc63" -->
-  </game>
-
-  <!-- BPS -->
-  <game name="Best">
-    <description>Best</description>
-    <rom name="Best.rom" size="25" crc="1e3d78cf" md5="5212c8404bf1de024f9fb62289b68474" sha1="727d8db3dbfb5960057cb62e8b47d0e2842a4d55" status="verified"/>
-    <!-- After: name="Worst.rom" size="26" crc="6ff9ef96" -->
-  </game>
-
-  <!-- NINJA2 -->
-  <game name="612644F">
-    <description>612644F</description>
-    <rom name="612644F.rom" size="1025" crc="f7591b29" md5="92c62becd006bac8175304bb80dfb3aa" sha1="2bcd0216e1de4ee670ee4945d600beaf6acf8feb" status="verified"/>
-    <!-- After: name="9A71FA5.rom" size="1025" crc="922f5181" -->
-  </game>
-
-  <!-- PPF -->
-  <game name="C01173E">
-    <description>C01173E</description>
-    <rom name="C01173E.rom" size="1025" crc="dfaebe28" md5="c9e35aafaec606fcb16763200ce35b0f" sha1="2f185826482db2878663c0cd393d62d0c10814ae" status="verified"/>
-    <!-- After: name="949F2B7.rom" size="1025" crc="95284ab4" -->
-  </game>
-
-  <!-- UPS -->
-  <game name="KDULVQN">
-    <description>KDULVQN</description>
-    <rom name="KDULVQN.rom" size="1025" crc="b1c303e4" md5="36109a5d2f9041b6ec00d7aea63379f3" sha1="6bc1e23ffaf5fafaf03fb10732b6be3b567b1417" status="verified"/>
-    <!-- After: name="DDSK3AN.rom" size="1025" crc="e02c6dbb" -->
-  </game>
-
-  <!-- vcdiff -->
-  <game name="0F09A40">
-    <description>0F09A40</description>
-    <rom name="0F09A40.rom" size="1025" crc="2f943e86" md5="02784c56583f4d82d11aec4c57f2859c" sha1="7b5b3998062b8338324b5f69ffcdcc22087ccbd5" status="verified"/>
-    <!-- After: name="4FE952A.rom" size="1025" crc="1fb4f81f" -->
+  <!-- Patches: aps-gba, aps-n64, bps, dps, ips, ninja, ups, vcdiff -->
+  <game name="shrink">
+    <description>shrink</description>
+    <rom name="shrink.rom" size="1024" crc="52249184" md5="2a62599b525c333b7909893c8835dbb7" sha1="94c71ba85088715eb9bd82673f36f3c15b3a9219" status="verified"/>
+    <!-- After: name="shrink.rom" size="768" crc="c1f21914" -->
   </game>
 </datafile>

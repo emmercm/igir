@@ -1,122 +1,66 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
-import Temp from '../../../src/globals/temp.js';
-import File from '../../../src/models/files/file.js';
 import UPSPatch from '../../../src/models/patches/upsPatch.js';
-import bufferUtil from '../../../src/utils/bufferUtil.js';
-import FsUtil from '../../../src/utils/fsUtil.js';
+import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
 
-async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
-  await FsUtil.mkdir(path.dirname(temp), { recursive: true });
-  await FsUtil.writeFile(temp, contents);
-  return await File.fileOf({ filePath: temp });
-}
+const patchFrom = UPSPatch.patchFrom.bind(UPSPatch);
 
-describe('constructor', () => {
-  test.each([Buffer.from(''), Buffer.from('  '), Buffer.from('foobar')])(
-    'should throw on bad patch: %s',
-    async (patchContents) => {
-      const patchFile = await writeTemp('patch.bps', patchContents);
-      await expect(UPSPatch.patchFrom(patchFile)).rejects.toThrow();
-    },
-  );
+describe('patchFrom', () => {
+  test.each([
+    [
+      'modify',
+      '55505331909082ffff0084a90088e2cecec2109b1e863d5c67',
+      { crcBefore: 'cecee288', crcAfter: '1e9b10c2', sizeAfter: 16 },
+    ],
+    [
+      'shrink',
+      '55505331908c80ff0088e2cece00b869a4ea59db36',
+      { crcBefore: 'cecee288', crcAfter: 'a469b800', sizeAfter: 12 },
+    ],
+  ])('should parse: %s', async (_name, patchHex, expected) => {
+    await expect(parsePatch(patchFrom, 'patch.ups', patchHex)).resolves.toEqual(expected);
+  });
 
   test.each([
-    [Buffer.from('55505331848480040e1d00a865327ee9b3a2041d35304d', 'hex'), '7e3265a8', '04a2b3e9'], // foo\n -> bar\n
     [
-      Buffer.from('55505331868680051f01100036133a6ac346dd7c01770b14', 'hex'),
-      '6a3a1336',
-      '7cdd46c3',
-    ], // lorem\n -> ipsum\n
-  ])(
-    'should find the CRC in the patch: %s',
-    async (patchContents, expectedCrcBefore, expectedCrcAfter) => {
-      const patchFile = await writeTemp('patch.bps', patchContents);
-      const patch = await UPSPatch.patchFrom(patchFile);
-      expect(patch.getCrcBefore()).toEqual(expectedCrcBefore);
-      expect(patch.getCrcAfter()).toEqual(expectedCrcAfter);
-    },
-  );
+      'contents crc mismatch',
+      '55505331909082ffff0084a90088e2cecec2109b1e863d5c66',
+      /UPS patch is invalid, CRC of contents \(675c3d86\) doesn't match expected \(665c3d86\)/,
+    ],
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(parsePatch(patchFrom, 'patch.ups', patchHex)).rejects.toThrow(expectedError);
+  });
 });
 
 describe('createPatchedFile', () => {
-  test('should throw on invalid patch header', async () => {
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch.ups', Buffer.from('not a valid ups patch'));
-
-    try {
-      await expect(
-        UPSPatch.patchFrom(patchFile).then(async (patch) => {
-          await patch.createPatchedFile(inputRom, outputRom);
-        }),
-      ).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
-  });
-
-  test('should throw on invalid ROM size', async () => {
-    // Valid UPS patch for 5-byte source ROM 'AAAAA' -> 'ABCDAAAAAA'
-    const validPatch = Buffer.from(
-      '55505331858a8103020500804141414141000951f819d0c41e6e6a87f622',
-      'hex',
+  test.each([
+    [
+      'modify',
+      '55505331909082ffff0084a90088e2cecec2109b1e863d5c67',
+      '0001fdfc0405060708a00a0b0c0d0e0f',
+    ],
+    ['grow', '55505331909490aabbccdd0088e2cececa8e9afe02c6e8d7', `${INPUT16}aabbccdd`],
+    ['grow with zeros', '55505331909488e2cece71506a8ac86c2ccb', `${INPUT16}00000000`],
+    ['shrink', '55505331908c80ff0088e2cece00b869a4ea59db36', 'ff0102030405060708090a0b'],
+  ])('should apply: %s', async (_name, patchHex, expectedHex) => {
+    await expect(applyPatch(patchFrom, 'patch.ups', patchHex, INPUT16)).resolves.toEqual(
+      Buffer.from(expectedHex, 'hex'),
     );
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA'); // 10 bytes, but patch expects 5
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch.ups', validPatch);
-
-    try {
-      const patch = await UPSPatch.patchFrom(patchFile);
-      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
   });
 
   test.each([
     [
-      'AAAAA',
-      Buffer.from('55505331858a8103020500804141414141000951f819d0c41e6e6a87f622', 'hex'),
-      'ABCDAAAAAA',
+      'no terminator',
+      '55505331909082ffff88e2cece88e2cecec7db0d2b',
+      /failed to read 0x00 block termination/,
     ],
     [
-      'AAAAAAAAAA',
-      Buffer.from('555053318a8a8103020500cfd08e47d0c41e6e697b65ac', 'hex'),
-      'ABCDAAAAAA',
+      'wrong size',
+      '55505331888880ff009f68aa88796ee1aec027ab49',
+      /UPS patch expected ROM size of 8B/,
     ],
-    [
-      'AAAAAAAAAA',
-      Buffer.from('555053318a8a8103020504070609080b00cfd08e47056d1e320b1badb2', 'hex'),
-      'ABCDEFGHIJ',
-    ],
-    [
-      'AAAAAAAAAAAAAAAAAAAA',
-      Buffer.from('55505331949481030205040700890404040400c518201d686456eb1cb4af39', 'hex'),
-      'ABCDEFAAAAAAAAAAEEEE',
-    ],
-  ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch.bps', patchContents);
-
-    try {
-      const patch = await UPSPatch.patchFrom(patchFile);
-      await patch.createPatchedFile(inputRom, outputRom);
-      const actualContents = (
-        await bufferUtil.fromReadable(fs.createReadStream(outputRom))
-      ).toString();
-      expect(actualContents).toEqual(expectedContents);
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom);
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+    ['bad header', '55505332909088e2cece88e2cecef2d44c89', /UPS patch header is invalid/],
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(applyPatch(patchFrom, 'patch.ups', patchHex, INPUT16)).rejects.toThrow(
+      expectedError,
+    );
   });
 });

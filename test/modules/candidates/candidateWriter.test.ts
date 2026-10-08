@@ -580,17 +580,34 @@ describe('zip', () => {
     ['raw/loremipsum.rom', [['loremipsum.zip|loremipsum.rom', '70856527']]],
     // Patchable files
     [
-      'patchable/before.rom',
+      'patchable/modify.rom',
       [
-        ['After.zip|After.rom', '4c8e44d4'],
-        ['before.zip|before.rom', '0361b321'],
+        ['modify-aps-gba.zip|modify-aps-gba.rom', '700a409c'],
+        ['modify-aps-n64.zip|modify-aps-n64.rom', '700a409c'],
+        ['modify-bps.zip|modify-bps.rom', '700a409c'],
+        ['modify-dps.zip|modify-dps.rom', '700a409c'],
+        ['modify-ebp.zip|modify-ebp.rom', '700a409c'],
+        ['modify-ips.zip|modify-ips.rom', '700a409c'],
+        ['modify-ips32.zip|modify-ips32.rom', '700a409c'],
+        ['modify-ninja.zip|modify-ninja.rom', '700a409c'],
+        ['modify-ppf.zip|modify-ppf.rom', '700a409c'],
+        ['modify-ups.zip|modify-ups.rom', '700a409c'],
+        ['modify-vcdiff.zip|modify-vcdiff.rom', '700a409c'],
+        ['modify.zip|modify.rom', 'aabfe90e'],
       ],
     ],
     [
-      'patchable/best.gz',
+      'patchable/shrink.gz',
       [
-        ['best.zip|best.rom', '1e3d78cf'],
-        ['Worst.zip|Worst.rom', '6ff9ef96'],
+        ['shrink-aps-gba.zip|shrink-aps-gba.rom', 'c1f21914'],
+        ['shrink-aps-n64.zip|shrink-aps-n64.rom', 'c1f21914'],
+        ['shrink-bps.zip|shrink-bps.rom', 'c1f21914'],
+        ['shrink-dps.zip|shrink-dps.rom', 'c1f21914'],
+        ['shrink-ips.zip|shrink-ips.rom', 'c1f21914'],
+        ['shrink-ninja.zip|shrink-ninja.rom', 'c1f21914'],
+        ['shrink-ups.zip|shrink-ups.rom', 'c1f21914'],
+        ['shrink-vcdiff.zip|shrink-vcdiff.rom', 'c1f21914'],
+        ['shrink.zip|shrink.rom', '52249184'],
       ],
     ],
   ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
@@ -625,7 +642,6 @@ describe('zip', () => {
       [
         path.join('2048', '2048.chd'), // <disk>
         path.join('4096', '4096.chd'), // <disk>
-        'best.zip',
         'CD-ROM.zip',
         path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
         'fizzbuzz.zip',
@@ -640,6 +656,7 @@ describe('zip', () => {
         'onetwothree.zip',
         'patchable.zip',
         'raw.zip',
+        'shrink.zip',
         'three.zip',
         'two.zip',
         'UMD.zip',
@@ -734,7 +751,6 @@ describe('zip', () => {
       [
         path.join('2048', '2048.chd'), // <disk>
         path.join('4096', '4096.chd'), // <disk>
-        'best.zip',
         'CD-ROM.zip',
         path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
         'fizzbuzz.zip',
@@ -749,6 +765,7 @@ describe('zip', () => {
         'onetwothree.zip',
         'patchable.zip',
         'raw.zip',
+        'shrink.zip',
         'three.zip',
         'two.zip',
         'UMD.zip',
@@ -875,7 +892,6 @@ describe('zip', () => {
     [
       '**/!(chd)/*',
       [
-        ['igir combined.zip|best.rom', '1e3d78cf'],
         ['igir combined.zip|CD-ROM/CD-ROM (Track 1).bin', '49ca35fb'],
         ['igir combined.zip|CD-ROM/CD-ROM (Track 2).bin', '0316f720'],
         ['igir combined.zip|CD-ROM/CD-ROM (Track 3).bin', 'a320af40'],
@@ -905,14 +921,9 @@ describe('zip', () => {
         ['igir combined.zip|onetwothree/1/one.rom', 'f817a89f'],
         ['igir combined.zip|onetwothree/2/two.rom', '96170874'],
         ['igir combined.zip|onetwothree/3/three.rom', 'ff46c5d8'],
-        ['igir combined.zip|patchable/0F09A40.rom', '2f943e86'],
-        ['igir combined.zip|patchable/3708F2C.rom', '20891c9f'],
-        ['igir combined.zip|patchable/612644F.rom', 'f7591b29'],
-        ['igir combined.zip|patchable/65D1206.rom', '20323455'],
-        ['igir combined.zip|patchable/92C85C9.rom', '06692159'],
-        ['igir combined.zip|patchable/before.rom', '0361b321'],
-        ['igir combined.zip|patchable/C01173E.rom', 'dfaebe28'],
-        ['igir combined.zip|patchable/KDULVQN.rom', 'b1c303e4'],
+        ['igir combined.zip|patchable/grow.rom', '1a4b9b3c'],
+        ['igir combined.zip|patchable/large.rom', '58263663'],
+        ['igir combined.zip|patchable/modify.rom', 'aabfe90e'],
         ['igir combined.zip|raw/empty.rom', '00000000'],
         ['igir combined.zip|raw/five.rom', '3e5daf67'],
         ['igir combined.zip|raw/fizzbuzz.nes', '370517b5'],
@@ -924,6 +935,7 @@ describe('zip', () => {
         ['igir combined.zip|raw/trimmed.3ds', 'e964a5b3'],
         ['igir combined.zip|raw/two.rom', '96170874'],
         ['igir combined.zip|raw/unknown.rom', '377a7727'],
+        ['igir combined.zip|shrink.rom', '52249184'],
         ['igir combined.zip|speed_test_v51.sfc', '8beffd94'],
         ['igir combined.zip|three.rom', 'ff46c5d8'],
         ['igir combined.zip|two.rom', '96170874'],
@@ -1045,17 +1057,34 @@ describe('extract', () => {
     ['raw/loremipsum.rom', [['loremipsum.rom', '70856527']]],
     // Patchable files
     [
-      'patchable/before.rom',
+      'patchable/modify.rom',
       [
-        ['After.rom', '4c8e44d4'],
-        ['before.rom', '0361b321'],
+        ['modify-aps-gba.rom', '700a409c'],
+        ['modify-aps-n64.rom', '700a409c'],
+        ['modify-bps.rom', '700a409c'],
+        ['modify-dps.rom', '700a409c'],
+        ['modify-ebp.rom', '700a409c'],
+        ['modify-ips.rom', '700a409c'],
+        ['modify-ips32.rom', '700a409c'],
+        ['modify-ninja.rom', '700a409c'],
+        ['modify-ppf.rom', '700a409c'],
+        ['modify-ups.rom', '700a409c'],
+        ['modify-vcdiff.rom', '700a409c'],
+        ['modify.rom', 'aabfe90e'],
       ],
     ],
     [
-      'patchable/best.gz',
+      'patchable/shrink.gz',
       [
-        ['best.rom', '1e3d78cf'],
-        ['Worst.rom', '6ff9ef96'],
+        ['shrink-aps-gba.rom', 'c1f21914'],
+        ['shrink-aps-n64.rom', 'c1f21914'],
+        ['shrink-bps.rom', 'c1f21914'],
+        ['shrink-dps.rom', 'c1f21914'],
+        ['shrink-ips.rom', 'c1f21914'],
+        ['shrink-ninja.rom', 'c1f21914'],
+        ['shrink-ups.rom', 'c1f21914'],
+        ['shrink-vcdiff.rom', 'c1f21914'],
+        ['shrink.rom', '52249184'],
       ],
     ],
   ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
@@ -1131,7 +1160,6 @@ describe('extract', () => {
       [
         '2048.chd', // <disk>
         '4096.chd', // <disk>
-        'best.rom',
         'CD-ROM.chd', // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
@@ -1157,14 +1185,9 @@ describe('extract', () => {
         path.join('onetwothree', '1', 'one.rom'),
         path.join('onetwothree', '2', 'two.rom'),
         path.join('onetwothree', '3', 'three.rom'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'before.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1176,6 +1199,7 @@ describe('extract', () => {
         path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
+        'shrink.rom',
         'three.rom',
         'two.rom',
         'UMD.iso',
@@ -1281,7 +1305,6 @@ describe('extract', () => {
       [
         '2048.chd', // <disk>
         '4096.chd', // <disk>
-        'best.rom',
         'CD-ROM.chd', // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
@@ -1307,14 +1330,9 @@ describe('extract', () => {
         path.join('onetwothree', '1', 'one.rom'),
         path.join('onetwothree', '2', 'two.rom'),
         path.join('onetwothree', '3', 'three.rom'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'before.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1326,6 +1344,7 @@ describe('extract', () => {
         path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
+        'shrink.rom',
         'three.rom',
         'two.rom',
         'UMD.iso',
@@ -1347,14 +1366,9 @@ describe('extract', () => {
         path.join('discs', 'track02.raw'),
         path.join('discs', 'track03.bin'),
         path.join('discs', 'track04.bin'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1562,13 +1576,23 @@ describe('raw', () => {
     ['raw/loremipsum.rom', [['loremipsum.rom', '70856527']]],
     // Patchable files
     [
-      'patchable/before.rom',
+      'patchable/modify.rom',
       [
-        ['After.rom', '4c8e44d4'],
-        ['before.rom', '0361b321'],
+        ['modify-aps-gba.rom', '700a409c'],
+        ['modify-aps-n64.rom', '700a409c'],
+        ['modify-bps.rom', '700a409c'],
+        ['modify-dps.rom', '700a409c'],
+        ['modify-ebp.rom', '700a409c'],
+        ['modify-ips.rom', '700a409c'],
+        ['modify-ips32.rom', '700a409c'],
+        ['modify-ninja.rom', '700a409c'],
+        ['modify-ppf.rom', '700a409c'],
+        ['modify-ups.rom', '700a409c'],
+        ['modify-vcdiff.rom', '700a409c'],
+        ['modify.rom', 'aabfe90e'],
       ],
     ],
-    // Note: best.gz|best.rom can't be patched because we're raw copying
+    // Note: shrink.gz|shrink.rom can't be patched because we're raw copying
   ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({
@@ -1601,7 +1625,6 @@ describe('raw', () => {
       [
         '2048.chd', // <disk> raw
         '4096.chd', // <disk> raw
-        'best.gz',
         'CD-ROM.chd', // <disk> raw
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'),
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'),
@@ -1627,14 +1650,9 @@ describe('raw', () => {
         path.join('onetwothree', '1', 'one.rom'),
         path.join('onetwothree', '2', 'two.rom'),
         path.join('onetwothree', '3', 'three.rom'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'before.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1646,6 +1664,7 @@ describe('raw', () => {
         path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
+        'shrink.gz',
         'three.rom',
         'two.rom',
         'UMD.iso',
@@ -1733,7 +1752,6 @@ describe('raw', () => {
       [
         '2048.chd', // <disk> raw
         '4096.chd', // <disk> raw
-        'best.gz',
         'CD-ROM.chd', // <disk> raw
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'),
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'),
@@ -1759,14 +1777,9 @@ describe('raw', () => {
         path.join('onetwothree', '1', 'one.rom'),
         path.join('onetwothree', '2', 'two.rom'),
         path.join('onetwothree', '3', 'three.rom'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'before.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1778,6 +1791,7 @@ describe('raw', () => {
         path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
+        'shrink.gz',
         'three.rom',
         'two.rom',
         'UMD.iso',
@@ -1800,15 +1814,10 @@ describe('raw', () => {
         path.join('discs', 'track04.bin'),
         path.join('discs', 'UMD.iso'),
         path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
-        path.join('patchable', 'best.gz'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
+        path.join('patchable', 'shrink.gz'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),

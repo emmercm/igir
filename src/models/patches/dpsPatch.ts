@@ -6,6 +6,14 @@ import type File from '../files/file.js';
 import Patch from './patch.js';
 
 /**
+ * A record that copies {@link length} bytes from the original ROM (mode 0), or from data enclosed
+ * in the patch (mode 1), to {@link outputOffset}.
+ */
+type DPSRecord =
+  | { outputOffset: number; length: number; inputOffset: number }
+  | { outputOffset: number; length: number; dataPosition: number };
+
+/**
  * @see http://deufeufeu.free.fr/wiki/index.php?title=DPS (original, dead)
  * @see https://github.com/btimofeev/UniPatcher/wiki/DPS
  */
@@ -54,17 +62,33 @@ export default class DPSPatch extends Patch {
   ): Promise<void> {
     await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
-
-      await FsUtil.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
-
       try {
-        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+        // The output only contains what the records write, so size it to the furthest record's end
+        const recordsPosition = patchFile.getPosition();
+        const outputSize = await this.calculateOutputSize(patchFile);
+        patchFile.seek(recordsPosition);
+        const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', outputSize);
+
+        try {
+          await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+          // Zero-fill any gap the records left at the end
+          await targetFile.truncate(outputSize);
+        } finally {
+          await targetFile.close();
+        }
       } finally {
-        await targetFile.close();
         await sourceFile.close();
       }
     });
+  }
+
+  private static async calculateOutputSize(patchFile: IOFile): Promise<number> {
+    let outputSize = 0;
+    while (patchFile.getPosition() < patchFile.getSize()) {
+      const record = await this.readRecord(patchFile);
+      outputSize = Math.max(outputSize, record.outputOffset + record.length);
+    }
+    return outputSize;
   }
 
   private static async applyPatch(
@@ -74,30 +98,41 @@ export default class DPSPatch extends Patch {
     callback?: FsReadCallback,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
-      const mode = (await patchFile.readNext(1)).readUInt8();
-      const outputOffset = (await patchFile.readNext(4)).readUInt32LE();
-
-      let data: Buffer;
-      if (mode === 0) {
-        const inputOffset = (await patchFile.readNext(4)).readUInt32LE();
-        const inputLength = (await patchFile.readNext(4)).readUInt32LE();
-        data = await sourceFile.readAt(inputOffset, inputLength);
-      } else if (mode === 1) {
-        const dataLength = (await patchFile.readNext(4)).readUInt32LE();
-        data = await patchFile.readNext(dataLength);
-      } else {
-        throw new IgirException(
-          `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike().toString()}`,
-        );
-      }
-
-      await targetFile.writeAt(data, outputOffset);
+      const record = await this.readRecord(patchFile);
+      const data =
+        'inputOffset' in record
+          ? await sourceFile.readAt(record.inputOffset, record.length)
+          : await patchFile.readAt(record.dataPosition, record.length);
+      await targetFile.writeAt(data, record.outputOffset);
 
       if (callback === undefined) {
         continue;
       }
       const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-      callback(Math.floor(progressPercentage * targetFile.getSize()));
+      callback(Math.floor(progressPercentage * sourceFile.getSize()));
     }
+  }
+
+  /**
+   * Read the next record, leaving the patch file positioned at the record after it.
+   */
+  private static async readRecord(patchFile: IOFile): Promise<DPSRecord> {
+    const mode = (await patchFile.readNext(1)).readUInt8();
+    const outputOffset = (await patchFile.readNext(4)).readUInt32LE();
+
+    if (mode === 0) {
+      const inputOffset = (await patchFile.readNext(4)).readUInt32LE();
+      const length = (await patchFile.readNext(4)).readUInt32LE();
+      return { outputOffset, length, inputOffset };
+    }
+    if (mode === 1) {
+      const length = (await patchFile.readNext(4)).readUInt32LE();
+      const dataPosition = patchFile.getPosition();
+      patchFile.skipNext(length);
+      return { outputOffset, length, dataPosition };
+    }
+    throw new IgirException(
+      `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike().toString()}`,
+    );
   }
 }
