@@ -38,10 +38,11 @@ describe('createPatchedFile', () => {
       '0001fdfc0405060708a00a0b0c0d0e0f',
     ],
     ['grow', '55505331909490aabbccdd0088e2cececa8e9afe02c6e8d7', `${INPUT16}aabbccdd`],
+    ['grow with zeros', '55505331909488e2cece71506a8ac86c2ccb', `${INPUT16}00000000`],
     ['shrink', '55505331908c80ff0088e2cece00b869a4ea59db36', 'ff0102030405060708090a0b'],
   ])('should apply: %s', async (_name, patchHex, expectedHex) => {
     await expect(applyPatch(patchFrom, 'patch.ups', patchHex, INPUT16)).resolves.toEqual(
-      expectedHex,
+      Buffer.from(expectedHex, 'hex'),
     );
   });
 

@@ -7,6 +7,7 @@ import type File from '../models/files/file.js';
 import { ChecksumBitmask } from '../models/files/fileChecksums.js';
 import type Options from '../models/options.js';
 import type Patch from '../models/patches/patch.js';
+import ArrayUtil from '../utils/arrayUtil.js';
 import FsUtil from '../utils/fsUtil.js';
 import IntlUtil from '../utils/intlUtil.js';
 import Scanner from './scanner.js';
@@ -42,12 +43,14 @@ export default class PatchScanner extends Scanner {
 
     // BPS and UPS patches end with a little-endian CRC32 of all their preceding bytes. Because of
     // how CRC32 works, the CRC32 of any data followed by its own CRC32 is always the constant
-    // 0x2144df1c, so every BPS and UPS patch has the same whole-file CRC32. SHA1 is used instead
-    // to keep different patches of the same size from being deduplicated as the same file.
-    const patchFiles = await this.getUniqueFilesFromPaths(patchFilePaths, ChecksumBitmask.SHA1);
+    // 0x2144df1c, so every BPS and UPS patch has the same whole-file CRC32. Patches are
+    // deduplicated after parsing instead, using what they target as well as their file.
+    const patchFiles = await this.getFilesFromPaths(patchFilePaths, ChecksumBitmask.CRC32);
     this.progressBar.resetProgress(patchFiles.length);
 
-    const patches = await this.parsePatchFiles(patchFiles);
+    const patches = (await this.parsePatchFiles(patchFiles)).filter(
+      ArrayUtil.filterUniqueMapped((patch) => patch.hashCode()),
+    );
     for (const patch of patches) {
       if (patch.getCrcBefore() === '00000000') {
         this.prefixedLogger.warn(`${patch.toString()}: couldn't parse base file CRC`);

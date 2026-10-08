@@ -73,20 +73,14 @@ export default class IPSPatch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      const patchedSize = await this.applyPatch(
-        patchFile,
-        targetFile,
-        offsetSize,
-        eofString,
-        callback,
-      );
+      await this.applyPatch(patchFile, targetFile, offsetSize, eofString, callback);
       if (isTruncatable) {
         // An optional 3-byte truncation size can follow "EOF"
         patchFile.skipNext(eofString.length);
         if (patchFile.getSize() - patchFile.getPosition() === 3) {
           const truncateSize = (await patchFile.readNext(3)).readUIntBE(0, 3);
           // The truncation size can only shrink the output, never extend it
-          if (truncateSize < patchedSize) {
+          if (truncateSize < targetFile.getSize()) {
             await targetFile.truncate(truncateSize);
           }
         }
@@ -102,8 +96,7 @@ export default class IPSPatch extends Patch {
     offsetSize: number,
     eofString: string,
     callback?: FsReadCallback,
-  ): Promise<number> {
-    let patchedSize = targetFile.getSize();
+  ): Promise<void> {
     while (!patchFile.isEOF()) {
       const offsetPeek = await patchFile.peekNext(eofString.length);
       if (offsetPeek.length === 0 || offsetPeek.toString() === eofString) {
@@ -122,7 +115,6 @@ export default class IPSPatch extends Patch {
         data = await patchFile.readNext(size);
       }
       await targetFile.writeAt(data, offset);
-      patchedSize = Math.max(patchedSize, offset + data.length);
 
       if (callback === undefined) {
         continue;
@@ -130,6 +122,5 @@ export default class IPSPatch extends Patch {
       const progressPercentage = patchFile.getPosition() / patchFile.getSize();
       callback(Math.floor(progressPercentage * targetFile.getSize()));
     }
-    return patchedSize;
   }
 }

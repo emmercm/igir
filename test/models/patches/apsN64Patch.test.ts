@@ -34,9 +34,12 @@ describe('createPatchedFile', () => {
     ['simple', `${SIMPLE}10000000${RECORDS}`, '0001aabb04050607cccccccc0c0d0e0f'],
     ['n64', `${N64}10000000${RECORDS}`, '0001aabb04050607cccccccc0c0d0e0f'],
     ['grow', `${SIMPLE}140000001000000004aabbccdd`, `${INPUT16}aabbccdd`],
+    ['grow with zeros', `${SIMPLE}14000000`, `${INPUT16}00000000`],
     ['shrink', `${SIMPLE}0c0000000000000001ff`, 'ff0102030405060708090a0b'],
   ])('should apply: %s', async (_name, patchHex, expectedHex) => {
-    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(expectedHex);
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(
+      Buffer.from(expectedHex, 'hex'),
+    );
   });
 
   test.each([

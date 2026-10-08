@@ -10,9 +10,13 @@ import PatchScanner from '../../src/modules/patchScanner.js';
 import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-function createPatchScanner(patch: string[], patchExclude: string[] = []): PatchScanner {
+function createPatchScanner(
+  patch: string[],
+  patchExclude: string[] = [],
+  isInputChecksumQuick = false,
+): PatchScanner {
   return new PatchScanner(
-    new Options({ patch, patchExclude }),
+    new Options({ patch, patchExclude, inputChecksumQuick: isInputChecksumQuick }),
     new ProgressBarFake(),
     new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
@@ -70,9 +74,27 @@ describe('multiple files', () => {
     ).resolves.toHaveLength(expectedPatchFiles);
   });
 
-  it('should scan patches in an archive', async () => {
+  test.each([false, true])(
+    'should scan patches in an archive, quick checksums: %s',
+    async (isInputChecksumQuick) => {
+      // Quick checksums only have the CRC32s stored in the archive, which are the same for every
+      // BPS and UPS patch
+      await expect(
+        createPatchScanner(
+          ['test/fixtures/patches-zipped/patches.zip'],
+          [],
+          isInputChecksumQuick,
+        ).scan(),
+      ).resolves.toHaveLength(41);
+    },
+  );
+
+  it('should deduplicate the same patches found in different places', async () => {
     await expect(
-      createPatchScanner(['test/fixtures/patches-zipped/patches.zip']).scan(),
+      createPatchScanner([
+        'test/fixtures/patches/*/*',
+        'test/fixtures/patches-zipped/patches.zip',
+      ]).scan(),
     ).resolves.toHaveLength(41);
   });
 

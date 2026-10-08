@@ -59,10 +59,12 @@ export default class DPSPatch extends Patch {
       const recordsPosition = patchFile.getPosition();
       const outputSize = await this.calculateOutputSize(patchFile);
       patchFile.seek(recordsPosition);
-      const targetFile = await IOFile.fileOfSize(outputRomPath, 'r+', outputSize);
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', outputSize);
 
       try {
         await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+        // Zero-fill any gap the records left at the end
+        await targetFile.truncate(outputSize);
       } finally {
         await targetFile.close();
         await sourceFile.close();
@@ -109,13 +111,10 @@ export default class DPSPatch extends Patch {
         const inputOffset = (await patchFile.readNext(4)).readUInt32LE();
         const inputLength = (await patchFile.readNext(4)).readUInt32LE();
         data = await sourceFile.readAt(inputOffset, inputLength);
-      } else if (mode === 1) {
+      } else {
+        // Mode 1, calculateOutputSize() already rejected every other mode
         const dataLength = (await patchFile.readNext(4)).readUInt32LE();
         data = await patchFile.readNext(dataLength);
-      } else {
-        throw new IgirException(
-          `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike().toString()}`,
-        );
       }
 
       await targetFile.writeAt(data, outputOffset);

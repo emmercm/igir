@@ -43,7 +43,7 @@ describe('createPatchedFile', () => {
     ['metadata', '42505331909083616263bc88e2cece88e2cece3485242e', INPUT16],
   ])('should apply: %s', async (_name, patchHex, expectedHex) => {
     await expect(applyPatch(patchFrom, 'patch.bps', patchHex, INPUT16)).resolves.toEqual(
-      expectedHex,
+      Buffer.from(expectedHex, 'hex'),
     );
   });
 

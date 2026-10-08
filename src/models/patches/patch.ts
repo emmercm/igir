@@ -66,6 +66,19 @@ export default abstract class Patch {
     return `${this.getFile().toString()} (${this.crcBefore} → ${this.crcAfter ?? '????????'}${this.sizeAfter !== undefined && this.sizeAfter > 0 ? `, ${FsUtil.sizeReadable(this.sizeAfter)}` : ''})`;
   }
 
+  /**
+   * A string hash code to uniquely identify this {@link Patch}.
+   */
+  hashCode(): string {
+    return [
+      this.constructor.name,
+      this.getFile().hashCode(),
+      this.crcBefore,
+      this.crcAfter,
+      this.sizeAfter,
+    ].join('|');
+  }
+
   abstract createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

@@ -51,7 +51,9 @@ describe('createPatchedFile', () => {
       '000102030405060708090a0b0c0d0e0f0102',
     ],
   ])('should apply: %s', async (_name, patchHex, expectedHex) => {
-    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(expectedHex);
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(
+      Buffer.from(expectedHex, 'hex'),
+    );
   });
 
   test.each([

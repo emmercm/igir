@@ -75,21 +75,15 @@ export default class APSN64Patch extends Patch {
         throw new IgirException(`APS (N64) patch header is invalid: ${this.getFile().toString()}`);
       }
 
-      if (this.patchType === APSN64PatchType.SIMPLE) {
-        patchFile.seek(61);
-      } else if (this.patchType === APSN64PatchType.N64) {
-        patchFile.seek(78);
-      } else {
-        throw new IgirException(
-          `APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike().toString()}`,
-        );
-      }
+      // patchFrom() already rejected unsupported patch types
+      patchFile.seek(this.patchType === APSN64PatchType.SIMPLE ? 57 : 74);
+      const targetSize = (await patchFile.readNext(4)).readUInt32LE();
 
       await APSN64Patch.writeOutputFile(
         inputRomFile,
         outputRomPath,
         patchFile,
-        this.getSizeAfter() ?? inputRomFile.getSize(),
+        targetSize,
         callback,
       );
     });

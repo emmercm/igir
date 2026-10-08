@@ -173,6 +173,22 @@ describe('readAt', () => {
       await FsUtil.rm(tempFile);
     }
   });
+
+  it('should not read past the end of a memory buffer allocated past the end of the file', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    try {
+      const ioFile = await IOFile.fileOfSize(tempFile, 'r+', 16);
+      // Writing past the end allocates more of the memory buffer than was written
+      await ioFile.writeAt(Buffer.from('ff', 'hex'), 16);
+      await expect(ioFile.readAt(0, 64)).resolves.toEqual(
+        Buffer.from(`${'00'.repeat(16)}ff`, 'hex'),
+      );
+      await expect(ioFile.readAt(20, 4)).resolves.toEqual(Buffer.alloc(0));
+      await ioFile.close();
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
 });
 
 describe('write', () => {
@@ -301,6 +317,29 @@ describe('writeAt', () => {
       await FsUtil.rm(tempFile, { force: true });
     }
   });
+
+  it('should grow a file too large to buffer in memory', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    try {
+      await FsUtil.writeFile(tempFile, Buffer.from('00010203', 'hex'));
+      const ioFile = await IOFile.fileFrom(tempFile, 'r+', Defaults.MAX_MEMORY_FILE_SIZE + 1);
+      await ioFile.writeAt(Buffer.from('ff', 'hex'), Defaults.MAX_MEMORY_FILE_SIZE + 1);
+      expect(ioFile.getSize()).toEqual(Defaults.MAX_MEMORY_FILE_SIZE + 2);
+      await ioFile.close();
+
+      await expect(FsUtil.size(tempFile)).resolves.toEqual(Defaults.MAX_MEMORY_FILE_SIZE + 2);
+      const readFile = await IOFile.fileFrom(tempFile, 'r');
+      try {
+        await expect(readFile.readAt(Defaults.MAX_MEMORY_FILE_SIZE - 1, 16)).resolves.toEqual(
+          Buffer.from('0000ff', 'hex'),
+        );
+      } finally {
+        await readFile.close();
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
 });
 
 describe('truncate', () => {
@@ -362,18 +401,25 @@ describe('truncate', () => {
     }
   });
 
-  it('should truncate a file too large to buffer in memory', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      await FsUtil.writeFile(tempFile, Buffer.from('00010203040506070809', 'hex'));
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+', Defaults.MAX_MEMORY_FILE_SIZE + 1);
-      await ioFile.truncate(4);
-      expect(ioFile.getSize()).toEqual(4);
-      await ioFile.close();
+  test.each([
+    // [name, initial hex, truncate size, expected hex]
+    ['shrink', '00010203040506070809', 4, '00010203'],
+    ['zero-extend', '00010203', 8, '0001020300000000'],
+  ])(
+    'should %s a file too large to buffer in memory',
+    async (_name, initialHex, truncateSize, expectedHex) => {
+      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+      try {
+        await FsUtil.writeFile(tempFile, Buffer.from(initialHex, 'hex'));
+        const ioFile = await IOFile.fileFrom(tempFile, 'r+', Defaults.MAX_MEMORY_FILE_SIZE + 1);
+        await ioFile.truncate(truncateSize);
+        expect(ioFile.getSize()).toEqual(truncateSize);
+        await ioFile.close();
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('00010203', 'hex'));
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
-  });
+        await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from(expectedHex, 'hex'));
+      } finally {
+        await FsUtil.rm(tempFile, { force: true });
+      }
+    },
+  );
 });

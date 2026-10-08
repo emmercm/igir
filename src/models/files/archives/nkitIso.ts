@@ -52,9 +52,11 @@ export default class NkitIso extends Archive {
     const file = await fs.promises.open(this.getFilePath(), 'r');
     try {
       // The original disc's CRC32 is at 0x208, and its size is at 0x210
-      const buffer = Buffer.alloc(0xc);
-      const { bytesRead } = await file.read(buffer, 0, buffer.length, 0x2_08);
-      const header = buffer.subarray(0, bytesRead);
+      const header = Buffer.alloc(0xc);
+      const { bytesRead } = await file.read(header, 0, header.length, 0x2_08);
+      if (bytesRead < header.length) {
+        throw new IgirException(`NKit ISO header is truncated: ${this.getFilePath()}`);
+      }
       const crc32 = header.subarray(0, 0x4).toString('hex');
       const size = header.readUInt32BE(0x8);
 

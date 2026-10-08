@@ -49,13 +49,13 @@ export default class APSGBAPatch extends Patch {
         );
       }
 
-      patchFile.skipNext(4); // patched size
+      const targetSize = (await patchFile.readNext(4)).readUInt32LE();
 
       await APSGBAPatch.writeOutputFile(
         inputRomFile,
         outputRomPath,
         patchFile,
-        this.getSizeAfter() ?? inputRomFile.getSize(),
+        targetSize,
         callback,
       );
     });

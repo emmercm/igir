@@ -54,20 +54,20 @@ export async function parsePatch(
 }
 
 /**
- * Parse a patch from hex, apply it to {@link inputHex}, and return the output as hex.
+ * Parse a patch from hex, apply it to {@link inputHex}, and return the output.
  */
 export async function applyPatch(
   patchFrom: PatchFrom,
   fileName: string,
   patchHex: string,
   inputHex: string,
-): Promise<string> {
+): Promise<Buffer> {
   return await withPatchFile(fileName, patchHex, async (file, tempDir) => {
     const patch = await patchFrom(file);
     const inputPath = path.join(tempDir, 'input.rom');
     await FsUtil.writeFile(inputPath, Buffer.from(inputHex, 'hex'));
     const outputPath = path.join(tempDir, 'output.rom');
     await patch.createPatchedFile(await File.fileOf({ filePath: inputPath }), outputPath);
-    return (await FsUtil.readFile(outputPath)).toString('hex');
+    return await FsUtil.readFile(outputPath);
   });
 }

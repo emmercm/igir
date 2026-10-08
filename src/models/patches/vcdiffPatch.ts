@@ -1,7 +1,6 @@
 import IgirException from '../../exceptions/igirException.js';
 import IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
-import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -567,8 +566,9 @@ export default class VcdiffPatch extends Patch {
     await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await FsUtil.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
+      // The target windows write every output byte, so the output starts empty. The source's
+      // size is only a hint for whether to build the output in memory or on disk.
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', sourceFile.getSize());
 
       try {
         await this.applyPatch(patchFile, sourceFile, targetFile, header, copyCache, callback);
@@ -619,7 +619,7 @@ export default class VcdiffPatch extends Patch {
       targetWindowPosition += window.deltaEncodingTargetWindowSize;
     }
 
-    // The output is exactly as long as every target window combined
+    // The output is exactly as long as every target window combined, not the source-size hint
     await targetFile.truncate(targetWindowPosition);
   }
 

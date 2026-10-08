@@ -49,6 +49,12 @@ describe('createPatchedFile', () => {
       `${PATTERN.repeat(8192)}${'aa'.repeat(0x1_00_00)}`,
     ],
     [
+      'grow with zeros',
+      '415053310000010000000200',
+      PATTERN.repeat(8192),
+      `${PATTERN.repeat(8192)}${'00'.repeat(0x1_00_00)}`,
+    ],
+    [
       'shrink',
       `415053310000020000000100${BLOCK_0}${XOR_FIRST_BYTE}`,
       PATTERN.repeat(16_384),
@@ -56,7 +62,7 @@ describe('createPatchedFile', () => {
     ],
   ])('should apply: %s', async (_name, patchHex, inputHex, expectedHex) => {
     await expect(applyPatch(patchFrom, FILE_NAME, patchHex, inputHex)).resolves.toEqual(
-      expectedHex,
+      Buffer.from(expectedHex, 'hex'),
     );
   });
 
