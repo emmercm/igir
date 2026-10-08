@@ -10,7 +10,7 @@ Igir supports most common archive formats:
 |------------------------------------------------------------------------------------------------------------------------------------|----------------------|-------------------------------------------|
 | `.7z`, `.7z.001` (Brotli, BZip2, copy, DEFLATE, DEFLATE64, Lizard, LZ4, LZ5, LZMA, LZMA2, PPMD, and Zstd) + (BCJ, BCJ2, and Delta) | ✅                   | ✅                                        |
 | `.bz2`/`.bzip2`                                                                                                                    | ❌                   | ✅                                        |
-| `.chd` (v1-5)                                                                                                                      | ❌ SHA1              | ✅                                        |
+| `.chd` (v3-5)                                                                                                                      | ❌ SHA1              | ✅                                        |
 | `.cso` (v1, v2), `.zso`, `.dax`                                                                                                    | ❌                   | ✅                                        |
 | `.gcz` ([GameCube docs](../usage/console/gamecube.md))                                                                             | ❌                   | ✅                                        |
 | `.gz`/`.gzip`                                                                                                                      | ✅                   | ✅                                        |
@@ -18,12 +18,13 @@ Igir supports most common archive formats:
 | `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit))                                                                   | ✅                   | ✅                                        |
 | `.rar`                                                                                                                             | ✅                   | ❌                                        |
 | `.rvz` (GameCube, Wii)                                                                                                             | ❌                   | ✅                                        |
-| `.tar`                                                                                                                             | ❌                   | ✅                                        |
-| `.tar.gz`/`.tgz`                                                                                                                   | ❌                   | ✅                                        |
+| `.tar`, `.ova`                                                                                                                     | ❌                   | ✅                                        |
+| `.tar.gz`/`.tgz`/`.tpz`                                                                                                            | ❌                   | ✅                                        |
+| `.tbz2`/`.tbz`                                                                                                                     | ❌                   | ✅                                        |
 | `.wia` (Wii)                                                                                                                       | ❌                   | ✅                                        |
 | `.zip`, `.zip.001`, `.z01`, `.zip64` (DEFLATE, store, and Zstd)                                                                    | ✅                   | ✅                                        |
 | `.zipx`, `.zx01`                                                                                                                   | ✅                   | ✅                                        |
-| `.Z`                                                                                                                               | ❌                   | ✅                                        |
+| `.Z`, `.taz`                                                                                                                       | ❌                   | ✅                                        |
 
 !!! success
 
