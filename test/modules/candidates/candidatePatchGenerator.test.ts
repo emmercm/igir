@@ -116,8 +116,8 @@ describe('with inferred DATs', () => {
     // When
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
-    // Then candidates have doubled
-    expect(candidates).toHaveLength(romFiles.length * 2);
+    // Then candidates have doubled, plus one for KDULVQN.rom's second patch
+    expect(candidates).toHaveLength(romFiles.length * 2 + 1);
     expect(
       candidates.some((candidate) =>
         candidate
@@ -151,8 +151,9 @@ describe('with inferred DATs', () => {
     // When
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
-    // Then - patched candidates should exist (patches matched against raw file inputs)
-    expect(candidates).toHaveLength(romFiles.length * 2);
+    // Then - patched candidates should exist (patches matched against raw file inputs), plus one
+    // for KDULVQN.rom's second patch
+    expect(candidates).toHaveLength(romFiles.length * 2 + 1);
     const patchedCandidates = candidates.filter((candidate) =>
       candidate
         .getRomsWithFiles()
@@ -194,8 +195,8 @@ describe('with inferred DATs', () => {
     // When
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
-    // Then candidate count has remained the same
-    expect(candidates).toHaveLength(romFiles.length);
+    // Then candidate count has remained the same, plus one for KDULVQN.rom's second patch
+    expect(candidates).toHaveLength(romFiles.length + 1);
     expect(
       candidates.every((candidate) =>
         candidate

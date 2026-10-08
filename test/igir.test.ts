@@ -1287,6 +1287,7 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', 'After.rom'), '4c8e44d4'],
         [path.join('Patchable', 'Before.rom'), '0361b321'],
         [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
+        [path.join('Patchable', 'BSDiffed.rom'), 'b8dcf2b0'],
         [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('Patchable', 'DDSK3AN.rom'), 'e02c6dbb'],
         [path.join('Patchable', 'DFF7872-N64-SIMPLE.rom'), 'caaaf550'],

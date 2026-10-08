@@ -54,7 +54,7 @@ it('should scan single files', async () => {
 
 describe('multiple files', () => {
   it('should scan multiple files with no exclusions', async () => {
-    const expectedPatchFiles = 9;
+    const expectedPatchFiles = 10;
     await expect(createPatchScanner(['test/fixtures/patches/*']).scan()).resolves.toHaveLength(
       expectedPatchFiles,
     );
@@ -63,7 +63,7 @@ describe('multiple files', () => {
     );
     await expect(
       createPatchScanner([
-        'test/fixtures/*/*.{aps,bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}',
+        'test/fixtures/*/*.{aps,bdf,bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}',
       ]).scan(),
     ).resolves.toHaveLength(expectedPatchFiles);
   });
@@ -71,13 +71,13 @@ describe('multiple files', () => {
   it('should scan multiple files with some exclusions', async () => {
     await expect(
       createPatchScanner(['test/fixtures/patches/*'], ['test/fixtures/patches/**/*.ips*']).scan(),
-    ).resolves.toHaveLength(7);
+    ).resolves.toHaveLength(8);
     await expect(
       createPatchScanner(
         ['test/fixtures/patches/*'],
         ['test/fixtures/patches/**/*.ips*', 'test/fixtures/patches/**/*.ips*'],
       ).scan(),
-    ).resolves.toHaveLength(7);
+    ).resolves.toHaveLength(8);
   });
 
   it('should scan multiple files with every file excluded', async () => {

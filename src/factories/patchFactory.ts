@@ -3,6 +3,7 @@ import type { Readable } from 'node:stream';
 import type File from '../models/files/file.js';
 import APSPatch from '../models/patches/apsPatch.js';
 import BPSPatch from '../models/patches/bpsPatch.js';
+import BSDiffPatch from '../models/patches/bsdiffPatch.js';
 import DPSPatch from '../models/patches/dpsPatch.js';
 import IPSPatch from '../models/patches/ipsPatch.js';
 import NinjaPatch from '../models/patches/ninjaPatch.js';
@@ -32,6 +33,11 @@ export default class PatchFactory {
       extensions: BPSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [BPSPatch.FILE_SIGNATURE],
       factory: BPSPatch.patchFrom.bind(BPSPatch),
+    },
+    {
+      extensions: BSDiffPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [BSDiffPatch.FILE_SIGNATURE],
+      factory: BSDiffPatch.patchFrom.bind(BSDiffPatch),
     },
     {
       extensions: DPSPatch.SUPPORTED_EXTENSIONS,

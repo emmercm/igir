@@ -77,6 +77,7 @@
     "@fast-csv/format": "5.0.7",
     "@fast-csv/parse": "5.0.7",
     "@gplane/cue": "0.2.0",
+    "@openpgp/unbzip2-stream": "2.1.0",
     "async": "3.2.6",
     "async-mutex": "0.5.0",
     "chalk": "6.0.0",
