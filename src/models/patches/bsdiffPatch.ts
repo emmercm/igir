@@ -116,9 +116,9 @@ export default class BSDiffPatch extends Patch {
       throw new IgirException(`BSDiff patch header is invalid: ${file.toString()}`);
     }
 
-    const controlLength = this.readOfftin(header, 8);
-    const diffLength = this.readOfftin(header, 16);
-    const newSize = this.readOfftin(header, 24);
+    const controlLength = this.readBsdiffInt(header, 8);
+    const diffLength = this.readBsdiffInt(header, 16);
+    const newSize = this.readBsdiffInt(header, 24);
     if (
       [controlLength, diffLength, newSize].some(
         (value) => !Number.isSafeInteger(value) || value < 0,
@@ -129,15 +129,6 @@ export default class BSDiffPatch extends Patch {
     }
 
     return { controlLength, diffLength, newSize };
-  }
-
-  /**
-   * Read a 64-bit sign-magnitude little-endian integer.
-   */
-  private static readOfftin(buffer: Buffer, offset: number): number {
-    const magnitude =
-      buffer.readUInt32LE(offset) + (buffer.readUInt32LE(offset + 4) & 0x7f_ff_ff_ff) * 2 ** 32;
-    return buffer.readUInt8(offset + 7) & 0x80 ? -magnitude : magnitude;
   }
 
   /**
@@ -197,9 +188,9 @@ export default class BSDiffPatch extends Patch {
         if (control.length < BSDiffPatch.CONTROL_SIZE) {
           throw this.corruptException();
         }
-        const diffLength = BSDiffPatch.readOfftin(control, 0);
-        const extraLength = BSDiffPatch.readOfftin(control, 8);
-        const seekLength = BSDiffPatch.readOfftin(control, 16);
+        const diffLength = BSDiffPatch.readBsdiffInt(control, 0);
+        const extraLength = BSDiffPatch.readBsdiffInt(control, 8);
+        const seekLength = BSDiffPatch.readBsdiffInt(control, 16);
         if (
           !Number.isSafeInteger(diffLength) ||
           diffLength < 0 ||

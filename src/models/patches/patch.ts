@@ -86,6 +86,17 @@ export default abstract class Patch {
   ): Promise<void>;
 
   /**
+   * Read a BSDiff-style 64-bit little-endian sign-magnitude integer from a buffer at the given
+   * offset, where the most significant bit is the sign and the remaining 63 bits are the
+   * magnitude.
+   */
+  protected static readBsdiffInt(buffer: Buffer, offset: number): number {
+    const magnitude =
+      buffer.readUInt32LE(offset) + (buffer.readUInt32LE(offset + 4) & 0x7f_ff_ff_ff) * 2 ** 32;
+    return buffer.readUInt8(offset + 7) & 0x80 ? -magnitude : magnitude;
+  }
+
+  /**
    * Read a UPS-style variable-length unsigned integer from the given file handle, advancing the
    * read position past the encoded value.
    */

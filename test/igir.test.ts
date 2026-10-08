@@ -1423,7 +1423,7 @@ describe('with explicit DATs', () => {
         ['shrink', 768],
       ]);
       for (const [romName, expectedSize] of expectedSizes) {
-        const expectedOutputs = romName === 'shrink' ? 8 : 11;
+        const expectedOutputs = romName === 'shrink' ? 9 : 12;
         const patchedOutputs = (
           await FsUtil.walk(path.join(outputTemp, 'Patchable'), WalkMode.FILES)
         ).filter((filePath) => path.basename(filePath).startsWith(`${romName}-`));
