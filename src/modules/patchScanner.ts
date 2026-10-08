@@ -40,7 +40,11 @@ export default class PatchScanner extends Scanner {
     );
     this.progressBar.resetProgress(patchFilePaths.length);
 
-    const patchFiles = await this.getUniqueFilesFromPaths(patchFilePaths, ChecksumBitmask.CRC32);
+    // BPS and UPS patches end with a little-endian CRC32 of all their preceding bytes. Because of
+    // how CRC32 works, the CRC32 of any data followed by its own CRC32 is always the constant
+    // 0x2144df1c, so every BPS and UPS patch has the same whole-file CRC32. SHA1 is used instead
+    // to keep different patches of the same size from being deduplicated as the same file.
+    const patchFiles = await this.getUniqueFilesFromPaths(patchFilePaths, ChecksumBitmask.SHA1);
     this.progressBar.resetProgress(patchFiles.length);
 
     const patches = await this.parsePatchFiles(patchFiles);

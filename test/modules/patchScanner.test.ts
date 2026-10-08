@@ -47,15 +47,17 @@ it('should return empty list on non-patches', async () => {
 
 it('should scan single files', async () => {
   await expect(
-    createPatchScanner(['test/fixtures/patches/After*.ips']).scan(),
+    createPatchScanner(['test/fixtures/patches/modify/modify-ips *.ips']).scan(),
   ).resolves.toHaveLength(1);
-  await expect(createPatchScanner(['test/fixtures/*/After*.ips']).scan()).resolves.toHaveLength(1);
+  await expect(
+    createPatchScanner(['test/fixtures/*/*/modify-ips *.ips']).scan(),
+  ).resolves.toHaveLength(1);
 });
 
 describe('multiple files', () => {
   it('should scan multiple files with no exclusions', async () => {
-    const expectedPatchFiles = 9;
-    await expect(createPatchScanner(['test/fixtures/patches/*']).scan()).resolves.toHaveLength(
+    const expectedPatchFiles = 41;
+    await expect(createPatchScanner(['test/fixtures/patches/*/*']).scan()).resolves.toHaveLength(
       expectedPatchFiles,
     );
     await expect(createPatchScanner(['test/fixtures/patches/**/*']).scan()).resolves.toHaveLength(
@@ -63,39 +65,58 @@ describe('multiple files', () => {
     );
     await expect(
       createPatchScanner([
-        'test/fixtures/*/*.{aps,bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}',
+        'test/fixtures/*/*/*.{aps,bps,dps,ebp,ips,ips32,ppf,rup,ups,vcdiff,xdelta}',
       ]).scan(),
     ).resolves.toHaveLength(expectedPatchFiles);
   });
 
+  it('should scan patches in an archive', async () => {
+    await expect(
+      createPatchScanner(['test/fixtures/patches-zipped/patches.zip']).scan(),
+    ).resolves.toHaveLength(41);
+  });
+
+  it('should keep different patches with the same CRC32 and size', async () => {
+    // Both patches are 545 bytes, and BPS and UPS patches always have the same whole-file CRC32
+    await expect(
+      createPatchScanner([
+        'test/fixtures/patches/grow/grow-bps.bps',
+        'test/fixtures/patches/grow/grow-ups.ups',
+      ]).scan(),
+    ).resolves.toHaveLength(2);
+  });
+
   it('should scan multiple files with some exclusions', async () => {
     await expect(
-      createPatchScanner(['test/fixtures/patches/*'], ['test/fixtures/patches/**/*.ips*']).scan(),
-    ).resolves.toHaveLength(7);
+      createPatchScanner(['test/fixtures/patches/*/*'], ['test/fixtures/patches/**/*.ips*']).scan(),
+    ).resolves.toHaveLength(34);
     await expect(
       createPatchScanner(
-        ['test/fixtures/patches/*'],
+        ['test/fixtures/patches/*/*'],
         ['test/fixtures/patches/**/*.ips*', 'test/fixtures/patches/**/*.ips*'],
       ).scan(),
-    ).resolves.toHaveLength(7);
+    ).resolves.toHaveLength(34);
   });
 
   it('should scan multiple files with every file excluded', async () => {
     await expect(
-      createPatchScanner(['test/fixtures/patches/*'], ['test/fixtures/patches/*']).scan(),
+      createPatchScanner(['test/fixtures/patches/*/*'], ['test/fixtures/patches/*/*']).scan(),
     ).resolves.toHaveLength(0);
     await expect(
       createPatchScanner(
-        ['test/fixtures/patches/*'],
-        ['test/fixtures/patches/*', 'test/fixtures/patches/*'],
+        ['test/fixtures/patches/*/*'],
+        ['test/fixtures/patches/*/*', 'test/fixtures/patches/*/*'],
       ).scan(),
     ).resolves.toHaveLength(0);
   });
 
   it('should scan multiple files of incorrect extensions', async () => {
     const patchFiles = (
-      await new Options({ patch: ['test/fixtures/patches/*'] }).scanPatchFilesWithoutExclusions()
-    ).filter((filePath) => !FileFactory.isExtensionArchive(filePath));
+      await new Options({ patch: ['test/fixtures/patches/*/*'] }).scanPatchFilesWithoutExclusions()
+    )
+      .filter((filePath) => !FileFactory.isExtensionArchive(filePath))
+      // DPS patches have no file signature, so they can only be found by their extension
+      .filter((filePath) => path.extname(filePath) !== '.dps');
 
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {

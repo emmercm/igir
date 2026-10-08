@@ -78,9 +78,9 @@ export default class UPSPatch extends Patch {
           `UPS patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
-      await Patch.readUpsUint(patchFile); // target size
+      const targetSize = await Patch.readUpsUint(patchFile);
 
-      await UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, targetSize, callback);
     });
   }
 
@@ -88,6 +88,7 @@ export default class UPSPatch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    targetSize: number,
     callback?: FsReadCallback,
   ): Promise<void> {
     // TODO(cemmer): we don't actually need a temp file, we're not modifying the input
@@ -99,6 +100,7 @@ export default class UPSPatch extends Patch {
 
       try {
         await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+        await targetFile.truncate(targetSize);
       } finally {
         await targetFile.close();
         await sourceFile.close();

@@ -85,7 +85,13 @@ export default class APSN64Patch extends Patch {
         );
       }
 
-      await APSN64Patch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await APSN64Patch.writeOutputFile(
+        inputRomFile,
+        outputRomPath,
+        patchFile,
+        this.getSizeAfter() ?? inputRomFile.getSize(),
+        callback,
+      );
     });
   }
 
@@ -93,6 +99,7 @@ export default class APSN64Patch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    targetSize: number,
     callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
@@ -100,6 +107,7 @@ export default class APSN64Patch extends Patch {
 
     try {
       await this.applyPatch(patchFile, targetFile, callback);
+      await targetFile.truncate(targetSize);
     } finally {
       await targetFile.close();
     }

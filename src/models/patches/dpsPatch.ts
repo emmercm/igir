@@ -55,8 +55,11 @@ export default class DPSPatch extends Patch {
     await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await FsUtil.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
+      // The output only contains what the records write, so size it to the furthest record's end
+      const recordsPosition = patchFile.getPosition();
+      const outputSize = await this.calculateOutputSize(patchFile);
+      patchFile.seek(recordsPosition);
+      const targetFile = await IOFile.fileOfSize(outputRomPath, 'r+', outputSize);
 
       try {
         await this.applyPatch(patchFile, sourceFile, targetFile, callback);
@@ -65,6 +68,30 @@ export default class DPSPatch extends Patch {
         await sourceFile.close();
       }
     });
+  }
+
+  private static async calculateOutputSize(patchFile: IOFile): Promise<number> {
+    let outputSize = 0;
+    while (patchFile.getPosition() < patchFile.getSize()) {
+      const mode = (await patchFile.readNext(1)).readUInt8();
+      const outputOffset = (await patchFile.readNext(4)).readUInt32LE();
+
+      let length: number;
+      if (mode === 0) {
+        patchFile.skipNext(4); // input offset
+        length = (await patchFile.readNext(4)).readUInt32LE();
+      } else if (mode === 1) {
+        length = (await patchFile.readNext(4)).readUInt32LE();
+        patchFile.skipNext(length);
+      } else {
+        throw new IgirException(
+          `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike().toString()}`,
+        );
+      }
+
+      outputSize = Math.max(outputSize, outputOffset + length);
+    }
+    return outputSize;
   }
 
   private static async applyPatch(
@@ -97,7 +124,7 @@ export default class DPSPatch extends Patch {
         continue;
       }
       const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-      callback(Math.floor(progressPercentage * targetFile.getSize()));
+      callback(Math.floor(progressPercentage * sourceFile.getSize()));
     }
   }
 }

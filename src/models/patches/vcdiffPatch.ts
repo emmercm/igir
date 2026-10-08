@@ -374,7 +374,7 @@ class VcdiffWindow {
     // Read
     const data = Buffer.from(
       this.addsAndRunsData
-        .subarray(this.targetWindowOffset, this.targetWindowOffset + 1)
+        .subarray(this.addsAndRunsOffset, this.addsAndRunsOffset + 1)
         .toString('hex')
         .repeat(size),
       'hex',
@@ -400,7 +400,7 @@ class VcdiffWindow {
     const [addr, copyAddressesOffset] = copyCache.decode(
       this.copyAddressesData,
       this.copyAddressesOffset,
-      this.targetWindowOffset,
+      this.sourceSegmentSize + this.targetWindowOffset,
       mode,
     );
     this.copyAddressesOffset = copyAddressesOffset;
@@ -618,6 +618,9 @@ export default class VcdiffPatch extends Patch {
 
       targetWindowPosition += window.deltaEncodingTargetWindowSize;
     }
+
+    // The output is exactly as long as every target window combined
+    await targetFile.truncate(targetWindowPosition);
   }
 
   private static async applyPatchWindow(

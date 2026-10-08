@@ -1,151 +1,49 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
-import Temp from '../../../src/globals/temp.js';
-import File from '../../../src/models/files/file.js';
 import APSN64Patch from '../../../src/models/patches/apsN64Patch.js';
-import APSPatch from '../../../src/models/patches/apsPatch.js';
-import bufferUtil from '../../../src/utils/bufferUtil.js';
-import FsUtil from '../../../src/utils/fsUtil.js';
+import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
 
-async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
-  await FsUtil.mkdir(path.dirname(temp), { recursive: true });
-  await FsUtil.writeFile(temp, contents);
-  return await File.fileOf({ filePath: temp });
-}
+const patchFrom = APSN64Patch.patchFrom.bind(APSN64Patch);
+const FILE_NAME = 'patch 00000000.aps';
+// "APS10", type 0 (simple), encoding 0, 50-byte description; a 4-byte LE size follows
+const SIMPLE = `415053313000${'00'.repeat(51)}`;
+// "APS10", type 1 (N64), encoding 0, description, format, cart ID, country, CRC, padding
+const N64 = `415053313001${'00'.repeat(68)}`;
+// Record at 0x02: 2 bytes aabb; RLE record at 0x08: 4 × cc
+const RECORDS = '0200000002aabb0800000000cc04';
 
-describe('constructor', () => {
+describe('patchFrom', () => {
   test.each([
-    // Non-existent
-    'foo.aps',
-    'fizz/buzz.aps',
-    // Invalid
-    'ABCDEFGH Blazgo.aps',
-    'ABCD12345 Bangarang.aps',
-    'Bepzinky 1234567.aps',
-  ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf({ filePath });
-    await expect(APSN64Patch.patchFrom(file)).rejects.toThrow(/couldn't parse/i);
+    ['simple', `${SIMPLE}10000000`, { crcBefore: '00000000', crcAfter: undefined, sizeAfter: 16 }],
+    ['n64', `${N64}14000000`, { crcBefore: '00000000', crcAfter: undefined, sizeAfter: 20 }],
+  ])('should parse: %s', async (_name, patchHex, expected) => {
+    await expect(parsePatch(patchFrom, FILE_NAME, patchHex)).resolves.toEqual(expected);
   });
 
   test.each([
-    // APSN64PatchType.SIMPLE
     [
-      // foo\n -> bar\n
-      Buffer.from(
-        '415053313000006e6f206465736372697074696f6e000000000000000000000000000000000000000000000000000000000000000000000000040000000000000003626172',
-        'hex',
-      ),
-      '7e3265a8',
-      '04a2b3e9',
+      'unsupported type',
+      `415053313002${'00'.repeat(51)}10000000`,
+      /APS \(N64\) patch type 2 isn't supported/,
     ],
-    [
-      // lorem\n -> ipsum\n
-      Buffer.from(
-        '415053313000006e6f206465736372697074696f6e00000000000000000000000000000000000000000000000000000000000000000000000006000000000000000469707375',
-        'hex',
-      ),
-      '6a3a1336',
-      '7cdd46c3',
-    ],
-    // APSN64PatchType.N64
-    [
-      // foo\n -> bar\n
-      Buffer.from(
-        '415053313001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000',
-        'hex',
-      ),
-      '7e3265a8',
-      '04a2b3e9',
-    ], // N64 type patch: CRC parsed from filename
-  ])('should find the CRC in the patch: %s', async (patchContents, expectedCrcBefore) => {
-    const patchFile = await writeTemp(`patch ${expectedCrcBefore}.aps`, patchContents);
-    const patch = await APSPatch.patchFrom(patchFile);
-    expect(patch.getCrcBefore()).toEqual(expectedCrcBefore);
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(parsePatch(patchFrom, FILE_NAME, patchHex)).rejects.toThrow(expectedError);
   });
 });
 
 describe('createPatchedFile', () => {
-  test('should throw on invalid patch header', async () => {
-    // Bytes 0-3: invalid (not "APS1"), byte 4: 0x30 ('0') to trigger APSN64Patch dispatch
-    // The first 5 bytes won't equal "APS10", so createPatchedFile throws
-    const patchContents = Buffer.alloc(100);
-    patchContents.writeUInt8(0x30, 4); // byte 4 = '0' -> APSPatch dispatches to APSN64Patch
-
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch 00000000.aps', patchContents);
-
-    try {
-      const patch = await APSPatch.patchFrom(patchFile);
-      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+  test.each([
+    ['simple', `${SIMPLE}10000000${RECORDS}`, '0001aabb04050607cccccccc0c0d0e0f'],
+    ['n64', `${N64}10000000${RECORDS}`, '0001aabb04050607cccccccc0c0d0e0f'],
+    ['grow', `${SIMPLE}140000001000000004aabbccdd`, `${INPUT16}aabbccdd`],
+    ['shrink', `${SIMPLE}0c0000000000000001ff`, 'ff0102030405060708090a0b'],
+  ])('should apply: %s', async (_name, patchHex, expectedHex) => {
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(expectedHex);
   });
 
   test.each([
-    // APSN64PatchType.SIMPLE
-    [
-      'AAAAA',
-      Buffer.from(
-        '415053313000006e6f206465736372697074696f6e0000000000000000000000000000000000000000000000000000000000000000000000000a000000010000000342434405000000004105',
-        'hex',
-      ),
-      'ABCDAAAAAA',
-    ],
-    [
-      'AAAAAAAAAA',
-      Buffer.from(
-        '415053313000006e6f206465736372697074696f6e0000000000000000000000000000000000000000000000000000000000000000000000000a0000000100000003424344',
-        'hex',
-      ),
-      'ABCDAAAAAA',
-    ],
-    [
-      'AAAAAAAAAA',
-      Buffer.from(
-        '415053313000006e6f206465736372697074696f6e0000000000000000000000000000000000000000000000000000000000000000000000000a000000010000000942434445464748494a',
-        'hex',
-      ),
-      'ABCDEFGHIJ',
-    ],
-    [
-      'AAAAAAAAAAAAAAAAAAAA',
-      Buffer.from(
-        '415053313000006e6f206465736372697074696f6e000000000000000000000000000000000000000000000000000000000000000000000000140000000100000005424344454610000000004504',
-        'hex',
-      ),
-      'ABCDEFAAAAAAAAAAEEEE',
-    ],
-    // APSN64PatchType.N64
-    [
-      'AAAAAAAAAA',
-      Buffer.from(
-        '41505331300100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a0000000100000003424344',
-        'hex',
-      ),
-      'ABCDAAAAAA',
-    ],
-  ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch 00000000.aps', patchContents);
-
-    try {
-      const patch = await APSPatch.patchFrom(patchFile);
-      await patch.createPatchedFile(inputRom, outputRom);
-      const actualContents = (
-        await bufferUtil.fromReadable(fs.createReadStream(outputRom))
-      ).toString();
-      expect(actualContents).toEqual(expectedContents);
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom);
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+    ['bad header', `4150533131${'00'.repeat(52)}10000000`, /APS \(N64\) patch header is invalid/],
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).rejects.toThrow(
+      expectedError,
+    );
   });
 });

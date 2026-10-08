@@ -28,6 +28,9 @@ import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+// Every file in test/fixtures/patches matches exactly one ROM in test/fixtures/roms/patchable
+const patchFixtureCount = 41;
+
 // Run DATGameInferrer, but condense all DATs down to one
 async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT> {
   const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
@@ -116,8 +119,8 @@ describe('with inferred DATs', () => {
     // When
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
-    // Then candidates have doubled
-    expect(candidates).toHaveLength(romFiles.length * 2);
+    // Then patched candidates were added
+    expect(candidates).toHaveLength(romFiles.length + patchFixtureCount);
     expect(
       candidates.some((candidate) =>
         candidate
@@ -152,7 +155,7 @@ describe('with inferred DATs', () => {
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
     // Then - patched candidates should exist (patches matched against raw file inputs)
-    expect(candidates).toHaveLength(romFiles.length * 2);
+    expect(candidates).toHaveLength(romFiles.length + patchFixtureCount);
     const patchedCandidates = candidates.filter((candidate) =>
       candidate
         .getRomsWithFiles()
@@ -194,8 +197,8 @@ describe('with inferred DATs', () => {
     // When
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
-    // Then candidate count has remained the same
-    expect(candidates).toHaveLength(romFiles.length);
+    // Then only the patched candidates remain
+    expect(candidates).toHaveLength(patchFixtureCount);
     expect(
       candidates.every((candidate) =>
         candidate
@@ -207,16 +210,16 @@ describe('with inferred DATs', () => {
 });
 
 describe('with archive file inputs', () => {
-  // ROM and DAT both use CRC 0361b321, matching the "After 0361b321.ips" patch fixture
-  const romCrc = '0361b321';
-  const rom = new ROM({ name: 'before.rom', size: 7, crc32: romCrc });
+  // ROM and DAT both use CRC aabfe90e, matching the "modify-ips aabfe90e.ips" patch fixture
+  const romCrc = 'aabfe90e';
+  const rom = new ROM({ name: 'modify.rom', size: 1024, crc32: romCrc });
   const dat = new LogiqxDAT({
     header: new Header(),
-    games: [new Game({ name: 'before', roms: [rom] })],
+    games: [new Game({ name: 'modify', roms: [rom] })],
   });
 
   const patch = File.fileOf({
-    filePath: path.join('test', 'fixtures', 'patches', 'After 0361b321.ips'),
+    filePath: path.join('test', 'fixtures', 'patches', 'modify', 'modify-ips aabfe90e.ips'),
   }).then((file) => IPSPatch.patchFrom(file));
 
   it('should not create patch candidates for archive inputs when not zipping', async () => {
@@ -225,18 +228,18 @@ describe('with archive file inputs', () => {
     const options = new Options({ commands: ['copy'] });
     const archiveEntry = await ArchiveEntry.entryOf({
       archive: new Zip('input.zip'),
-      entryPath: 'before.rom',
-      size: 7,
+      entryPath: 'modify.rom',
+      size: 1024,
       crc32: romCrc,
     });
-    const candidate = new WriteCandidate(new Game({ name: 'before', roms: [rom] }), [
+    const candidate = new WriteCandidate(new Game({ name: 'modify', roms: [rom] }), [
       new ROMWithFiles(
         rom,
         new ArchiveFile(archiveEntry, { size: 100 }),
         await ArchiveEntry.entryOf({
           archive: new Zip('output.zip'),
-          entryPath: 'before.rom',
-          size: 7,
+          entryPath: 'modify.rom',
+          size: 1024,
           crc32: romCrc,
         }),
       ),
@@ -265,18 +268,18 @@ describe('with archive file inputs', () => {
     const options = new Options({ commands: ['zip'] });
     const archiveEntry = await ArchiveEntry.entryOf({
       archive: new Zip('input.zip'),
-      entryPath: 'before.rom',
-      size: 7,
+      entryPath: 'modify.rom',
+      size: 1024,
       crc32: romCrc,
     });
-    const candidate = new WriteCandidate(new Game({ name: 'before', roms: [rom] }), [
+    const candidate = new WriteCandidate(new Game({ name: 'modify', roms: [rom] }), [
       new ROMWithFiles(
         rom,
         new ArchiveFile(archiveEntry, { size: 100 }),
         await ArchiveEntry.entryOf({
           archive: new Zip('output.zip'),
-          entryPath: 'before.rom',
-          size: 7,
+          entryPath: 'modify.rom',
+          size: 1024,
           crc32: romCrc,
         }),
       ),

@@ -1,126 +1,56 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
-import Temp from '../../../src/globals/temp.js';
-import File from '../../../src/models/files/file.js';
 import PPFPatch from '../../../src/models/patches/ppfPatch.js';
-import bufferUtil from '../../../src/utils/bufferUtil.js';
-import FsUtil from '../../../src/utils/fsUtil.js';
+import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
 
-async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
-  await FsUtil.mkdir(path.dirname(temp), { recursive: true });
-  await FsUtil.writeFile(temp, contents);
-  return await File.fileOf({ filePath: temp });
-}
+const patchFrom = PPFPatch.patchFrom.bind(PPFPatch);
+const FILE_NAME = 'patch 00000000.ppf';
+// "PPF20", encoding 1, 50-byte description; then a 4-byte LE size and a 1024-byte block check
+const V2 = `505046323001${'00'.repeat(50)}`;
+// "PPF30", encoding 2, 50-byte description, image type 0; block check, undo, and dummy bytes follow
+const V3 = `505046333002${'00'.repeat(50)}00`;
+const OUTPUT = '0001aabb0405060708090a0b0c0d0e0f';
 
-describe('constructor', () => {
-  test.each([
-    // Non-existent
-    'foo.ppf',
-    'fizz/buzz.ppf',
-    // Invalid
-    'ABCDEFGH Blazgo.ppf',
-    'ABCD12345 Bangarang.ppf',
-    'Bepzinky 1234567.ppf',
-  ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf({ filePath, size: 0 });
-    expect(() => PPFPatch.patchFrom(file)).toThrow(/couldn't parse/i);
-  });
-
-  test.each([
-    // Beginning
-    ['ABCD1234-Foo.ppf', 'abcd1234'],
-    ['Fizz/bcde2345_Buzz.ppf', 'bcde2345'],
-    ['One/Two/cdef3456 Three.ppf', 'cdef3456'],
-    // End
-    ['Lorem+9876FEDC.ppf', '9876fedc'],
-    ['Ipsum#8765edcb.ppf', '8765edcb'],
-    ['Dolor 7654dcba.ppf', '7654dcba'],
-  ])('should find the CRC in the filename: %s', async (filePath, expectedCrc) => {
-    const file = await File.fileOf({ filePath, size: 0 });
-    const patch = PPFPatch.patchFrom(file);
-    expect(patch.getCrcBefore()).toEqual(expectedCrc);
+describe('patchFrom', () => {
+  it('should parse', async () => {
+    await expect(parsePatch(patchFrom, FILE_NAME, `${V3}000000`)).resolves.toEqual({
+      crcBefore: '00000000',
+      crcAfter: undefined,
+      sizeAfter: undefined,
+    });
   });
 });
 
 describe('createPatchedFile', () => {
-  test('should throw on invalid patch header', async () => {
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('00000000 patch.ppf', Buffer.alloc(100));
-
-    try {
-      const patch = PPFPatch.patchFrom(patchFile);
-      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
-  });
-
-  test('should throw on invalid ROM size', async () => {
-    const patchBuffer = Buffer.alloc(5 + 1 + 50 + 4 + 1024);
-    patchBuffer.write('PPF20', 0, 'ascii');
-    patchBuffer.writeUInt8(0x01, 5);
-    patchBuffer.writeUInt32LE(5, 56); // sourceSize = 5, but ROM is 10 bytes
-
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA'); // 10 bytes
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('00000000 patch.ppf', patchBuffer);
-
-    try {
-      const patch = PPFPatch.patchFrom(patchFile);
-      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+  test.each([
+    ['v2', `${V2}10000000${'00'.repeat(1024)}0200000002aabb`, OUTPUT],
+    ['v3', `${V3}000000020000000000000002aabb`, OUTPUT],
+    ['v3 block check', `${V3}010000${'00'.repeat(1024)}020000000000000002aabb`, OUTPUT],
+    [
+      'v3 undo',
+      `${V3}000100020000000000000002aabb0203080000000000000001cc08`,
+      '0001aabb04050607cc090a0b0c0d0e0f',
+    ],
+    ['v3 grow', `${V3}000000100000000000000002eeff`, `${INPUT16}eeff`],
+    [
+      'v3 file_id.diz',
+      `${V3}000000020000000000000002aabb40424547494e5f46494c455f49442e44495a686940454e445f46494c455f49442e44495a0200`,
+      OUTPUT,
+    ],
+  ])('should apply: %s', async (_name, patchHex, expectedHex) => {
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(expectedHex);
   });
 
   test.each([
+    ['bad header', '58595a333002', /PPF patch header is invalid/],
+    ['version mismatch', '505046333001', /PPF patch header has an invalid version/],
+    ['v1', `5050463130${'00'.repeat(51)}`, /PPF v1 isn't supported/],
     [
-      'AAAAAAAAAA',
-      Buffer.from(
-        '5050463330025061746368206465736372697074696f6e00000000000000000000000000000000000000000000000000000000000000000000000000010000000000000003424344',
-        'hex',
-      ),
-      'ABCDAAAAAA',
+      'v2 wrong size',
+      `${V2}08000000${'00'.repeat(1024)}0200000002aabb`,
+      /PPF patch expected ROM size of 8B/,
     ],
-    [
-      'AAAAAAAAAA',
-      Buffer.from(
-        '5050463330025061746368206465736372697074696f6e0000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000942434445464748494a',
-        'hex',
-      ),
-      'ABCDEFGHIJ',
-    ],
-    [
-      'AAAAAAAAAAAAAAAAAAAA',
-      Buffer.from(
-        '5050463330025061746368206465736372697074696f6e00000000000000000000000000000000000000000000000000000000000000000000000000010000000000000005424344454610000000000000000445454545',
-        'hex',
-      ),
-      'ABCDEFAAAAAAAAAAEEEE',
-    ],
-  ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('00000000 patch.ppf', patchContents);
-
-    try {
-      const patch = PPFPatch.patchFrom(patchFile);
-      await patch.createPatchedFile(inputRom, outputRom);
-      const actualContents = (
-        await bufferUtil.fromReadable(fs.createReadStream(outputRom))
-      ).toString();
-      expect(actualContents).toEqual(expectedContents);
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom);
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).rejects.toThrow(
+      expectedError,
+    );
   });
 });
