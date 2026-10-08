@@ -152,6 +152,35 @@ describe('multiple files', () => {
 
 describe('single files', () => {
   test.each([
+    [path.join('test', 'fixtures', 'dats', 'one.dat'), 'one.dat'],
+    [path.join('test', 'fixtures', 'dats', 'smdb.zip'), 'smdb.txt'],
+    [
+      path.join(
+        'test',
+        'fixtures',
+        'dats',
+        'mame',
+        'mame2003-plus-libretro-145a8ef32144289d17471c3ef1d064e7a044e2b7.zip',
+      ),
+      'mame2003-plus-libretro-145a8ef32144289d17471c3ef1d064e7a044e2b7.xml',
+    ],
+  ])(
+    'should remember the file the DAT was parsed from: %s',
+    async (datPath, expectedExtractedFilePath) => {
+      const dats = await new DATScanner(
+        new Options({ dat: [datPath] }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache()),
+        new MappableSemaphore(os.availableParallelism()),
+      ).scan();
+      expect(dats).toHaveLength(1);
+      const datFile = dats[0].getFile();
+      expect(datFile?.getFilePath()).toEqual(path.resolve(datPath));
+      expect(datFile?.getExtractedFilePath()).toEqual(expectedExtractedFilePath);
+    },
+  );
+
+  test.each([
     path.join(process.cwd(), 'test', 'fixtures', 'dats', 'one.*'),
     'test/fixtures/dats/one.*',
     'test/fixtures/*/one.dat',

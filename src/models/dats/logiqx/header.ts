@@ -123,6 +123,10 @@ export default class Header implements HeaderOptions {
     return this.version;
   }
 
+  getDate(): string | undefined {
+    return this.date;
+  }
+
   getComment(): string | undefined {
     return this.comment;
   }

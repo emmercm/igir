@@ -1239,8 +1239,11 @@ export default class ArgumentsParser {
 Advanced usage:
 
   Tokens that are replaced when generating the output (--output) path of a ROM:
+    {datFileName}     The filename of the DAT that contains the ROM, without extension
     {datName}         The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
     {datDescription}  The description of the DAT that contains the ROM
+    {datVersion}      The version of the DAT that contains the ROM
+    {datDate}         The date of the DAT that contains the ROM
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")

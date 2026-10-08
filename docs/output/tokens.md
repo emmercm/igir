@@ -58,8 +58,11 @@ ROMs-Sorted/
 
 When using [DATs](../dats/introduction.md), you can make use of console & game information contained in them:
 
+- `{datFileName}` the matching DAT's filename without its extension (e.g. `mame2003-plus` for `mame2003-plus.xml`), including when the DAT is inside an archive
 - `{datName}` the matching DAT's name, similar to how the [`--dir-dat-name` option](path-options.md) works
 - `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](path-options.md) works
+- `{datVersion}` the matching DAT's version, exactly as written in its header (most DATs provide this, MAME DATs don't)
+- `{datDate}` the matching DAT's date, exactly as written in its header (only some DATs provide this, MAME DATs don't)
 - `{region}` each of the game's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 - `{language}` each of the game's language(s) (e.g. `EN`, `ES`, `JA`)
 - `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Cracked`, `Debug`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Program`, `Prototype`, `Retail` (most games will be this), `Sample`, `Trained`, `Translated`, `Unlicensed`
