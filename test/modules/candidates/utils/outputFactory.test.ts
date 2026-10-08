@@ -289,6 +289,7 @@ describe('token replacement', () => {
         // MAME DATs are named three different ways in the wild, and all three have to resolve:
         // MAME's own ListXML falls back to the literal "MAME", the -listxml build attribute
         // looks like "0.278 (mame0278)", and Pleasuredome names its DATs after the version.
+        ['MAME', '{adam}', 'ARCADE'],
         ['MAME', '{batocera}', 'mame'],
         ['0.278 (mame0278)', '{batocera}', 'mame'],
         ['MAME 0.287 ROMs (merged)', '{batocera}', 'mame'],
@@ -296,13 +297,15 @@ describe('token replacement', () => {
         ['MAME', '{es}', 'mame'],
         ['MAME', '{mister}', 'mame'],
         ['MAME', '{miyoocfw}', 'MAME'],
+        ['MAME', '{onion}', 'ARCADE'],
         ['MAME', '{retrodeck}', 'mame'],
         ['MAME', '{rocknix}', 'mame'],
         // FinalBurn Alpha is a separate, older emulator with separate frontend folders, so it
-        // must not be conflated with FinalBurn Neo. Only two frontends ship an FBA folder.
+        // must not be conflated with FinalBurn Neo
         ['FB Alpha v0.2.97.44', '{adam}', 'FBA'],
         ['FinalBurn Alpha - Arcade Games', '{adam}', 'FBA'],
-        ['FinalBurn Alpha - Arcade Games', '{onion}', 'FBA2012'],
+        ['FinalBurn Alpha - Arcade Games', '{es}', 'fba'],
+        ['FinalBurn Alpha - Arcade Games', '{retrodeck}', 'fba'],
       ])(
         'should replace %s for the arcade DAT name: %s',
         async (datName, outputToken, expectedDirName) => {
@@ -735,14 +738,14 @@ describe('token replacement', () => {
         ['MAME', '{romm}'],
         // MiSTer has a MAME folder but no concept of FBNeo
         ['FinalBurn Neo - Arcade Games', '{mister}'],
-        // These frontends only ship version-pinned MAME folders (MAME2000, MAME2003PLUS, …), so
-        // there's no folder a generic MAME DAT can be sorted into
-        ['MAME', '{adam}'],
-        ['MAME', '{onion}'],
+        // SpruceOS's only MAME folder is named for a specific version (MAME2003PLUS), so a
+        // generic MAME DAT can't be sorted into it
         ['MAME', '{spruce}'],
-        // Only Adam and Onion ship a FinalBurn Alpha folder; everyone else moved to FBNeo
+        // Onion's only FBA folder is named for a specific version (FBA2012), so a generic FBA DAT
+        // can't be sorted into it
+        ['FB Alpha v0.2.97.44', '{onion}'],
+        // Batocera has no FBA folder, only FBNeo
         ['FB Alpha v0.2.97.44', '{batocera}'],
-        ['FB Alpha v0.2.97.44', '{es}'],
       ])('should throw on %s for a console with no folder: %s', async (datName, outputToken) => {
         await expect(getConsolePath(outputToken, datName, 'Dummy.rom')).rejects.toThrow(
           /failed to replace/,

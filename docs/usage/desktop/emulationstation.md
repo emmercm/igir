@@ -36,3 +36,7 @@ EmulationStation uses its own proprietary ROM folder structure, so Igir has a re
       --output "/userdata/roms/{es}" \
       --no-bios
     ```
+
+!!! warning
+
+    MAME, FinalBurn Neo, and FinalBurn Alpha DATs will sort into their respective directories, but each arcade emulator only supports a specific ROM set version. Check the [ES-DE user guide](https://gitlab.com/es-de/emulationstation-de/-/blob/master/USERGUIDE.md#arcade-and-neo-geo) for which DATs to use, otherwise games may not run. See the [Arcade docs](../arcade.md) for help with building a ROM set for a specific emulator version.

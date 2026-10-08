@@ -6,11 +6,13 @@
       "datNameRegex": "/\\bMAME\\b|\\bmame\\d/i",
       "extensions": [],
       "tokens": {
+        "adam": "ARCADE",
         "batocera": "mame",
         "crossmix": "MAME",
         "es": "mame",
         "mister": "mame",
         "miyoocfw": "MAME",
+        "onion": "ARCADE",
         "retrodeck": "mame",
         "rocknix": "mame"
       }
@@ -20,7 +22,8 @@
       "extensions": [],
       "tokens": {
         "adam": "FBA",
-        "onion": "FBA2012"
+        "es": "fba",
+        "retrodeck": "fba"
       }
     },
     {
