@@ -19,7 +19,7 @@
 // is unneeded, so these four are ported individually rather than compiling the upstream
 // .cpp. Names are fixed by VolumeWii.h, so they aren't `port_`-prefixed.
 
-// ===== BEGIN ported from Source/Core/DiscIO/VolumeWii.cpp, Dolphin submodule tag 2609 =====
+// ===== BEGIN ported from Source/Core/DiscIO/VolumeWii.cpp, Dolphin submodule tag 2609a =====
 // Re-port when bumping the submodule: diff each function against its cited line range.
 // clang-format off
 // NOLINTBEGIN
