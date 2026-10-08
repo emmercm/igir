@@ -92,6 +92,10 @@
           "type": "string",
           "description": "RetroDECK ROM subdirectory /roms/{retrodeck}"
         },
+        "retronas": {
+          "type": "string",
+          "description": "RetroNAS ROM subdirectory /data/retronas/roms/{retronas}, as defined by https://github.com/retronas/retronas/blob/main/ansible/retronas_systems.yml"
+        },
         "rocknix": {
           "type": "string",
           "description": "ROCKNIX ROM subdirectory /roms/{rocknix}"

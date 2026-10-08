@@ -14,6 +14,7 @@
         "miyoocfw": "MAME",
         "onion": "ARCADE",
         "retrodeck": "mame",
+        "retronas": "mame/mame",
         "rocknix": "mame"
       }
     },
@@ -23,7 +24,8 @@
       "tokens": {
         "adam": "FBA",
         "es": "fba",
-        "retrodeck": "fba"
+        "retrodeck": "fba",
+        "retronas": "finalburn/fba"
       }
     },
     {
@@ -35,6 +37,7 @@
         "es": "fbneo",
         "onion": "FBNEO",
         "retrodeck": "fbneo",
+        "retronas": "finalburn/fbneo",
         "rocknix": "fbneo",
         "spruce": "FBNEO"
       }
@@ -45,6 +48,7 @@
       "tokens": {
         "es": "archimedes",
         "mister": "ARCHIE",
+        "retronas": "acorn/archimedes",
         "romm": "acorn-archimedes"
       }
     },
@@ -54,6 +58,7 @@
       "tokens": {
         "batocera": "atom",
         "mister": "AcornAtom",
+        "retronas": "acorn/atom",
         "romm": "atom"
       }
     },
@@ -69,6 +74,7 @@
         "mister": "Amstrad",
         "onion": "CPC",
         "retrodeck": "amstradcpc",
+        "retronas": "amstrad/cpc",
         "romm": "acpc",
         "spruce": "CPC",
         "twmenu": "cpc"
@@ -80,14 +86,16 @@
       "tokens": {
         "batocera": "pcw",
         "mister": "AmstradPCW",
+        "retronas": "amstrad/pcw",
         "romm": "amstrad-pcw"
       }
     },
     {
-      "datNameRegex": "/Apple.*I/i",
+      "datNameRegex": "/\\bApple[ -]*(I|1)\\b/i",
       "extensions": [],
       "tokens": {
         "mister": "Apple-I",
+        "retronas": "apple/applei",
         "romm": "apple"
       }
     },
@@ -99,6 +107,7 @@
         "es": "apple2",
         "mister": "Apple-II",
         "retrodeck": "apple2",
+        "retronas": "apple/appleii",
         "romm": "appleii"
       }
     },
@@ -109,6 +118,7 @@
         "batocera": "apple2gs",
         "es": "apple2gs",
         "retrodeck": "apple2gs",
+        "retronas": "apple/appleiigs",
         "romm": "apple-iigs"
       }
     },
@@ -124,6 +134,7 @@
         "onion": "ARDUBOY",
         "pocket": "arduboy",
         "retrodeck": "arduboy",
+        "retronas": "other/arduboy",
         "romm": "arduboy",
         "spruce": "ARDUBOY"
       }
@@ -139,6 +150,7 @@
         "mister": "Atari800",
         "onion": "EIGHTHUNDRED",
         "retrodeck": "atari800",
+        "retronas": "atari/800",
         "romm": "atari8bit",
         "spruce": "EIGHTHUNDRED"
       }
@@ -171,6 +183,7 @@
         "onion": "ATARI",
         "pocket": "2600",
         "retrodeck": "atari2600",
+        "retronas": "atari/2600",
         "romm": "atari2600",
         "spruce": "ATARI",
         "twmenu": "a26"
@@ -188,6 +201,7 @@
         "mister": "Atari5200",
         "onion": "FIFTYTWOHUNDRED",
         "retrodeck": "atari5200",
+        "retronas": "atari/5200",
         "romm": "atari5200",
         "spruce": "FIFTYTWOHUNDRED",
         "twmenu": "a52"
@@ -206,6 +220,7 @@
         "onion": "SEVENTYEIGHTHUNDRED",
         "pocket": "7800",
         "retrodeck": "atari7800",
+        "retronas": "atari/7800",
         "romm": "atari7800",
         "spruce": "SEVENTYEIGHTHUNDRED",
         "twmenu": "a78"
@@ -220,6 +235,7 @@
         "rocknix": "atarijaguar",
         "onion": "JAGUAR",
         "retrodeck": "atarijaguar",
+        "retronas": "atari/jaguar",
         "romm": "jaguar"
       }
     },
@@ -231,6 +247,7 @@
         "es": "atarijaguarcd",
         "rocknix": "atarijaguar",
         "retrodeck": "atarijaguarcd",
+        "retronas": "atari/jaguar/cd",
         "romm": "atari-jaguar-cd"
       }
     },
@@ -249,6 +266,7 @@
         "onion": "LYNX",
         "pocket": "lynx",
         "retrodeck": "atarilynx",
+        "retronas": "atari/lynx",
         "romm": "lynx",
         "spruce": "LYNX"
       }
@@ -264,6 +282,7 @@
         "mister": "AtariST",
         "onion": "ATARIST",
         "retrodeck": "atarist",
+        "retronas": "atari/st",
         "romm": "atari-st",
         "spruce": "ATARIST"
       }
@@ -276,6 +295,7 @@
         "es": "astrocde",
         "mister": "Astrocade",
         "retrodeck": "astrocde",
+        "retronas": "bally/astrocade",
         "romm": "astrocade"
       }
     },
@@ -285,6 +305,7 @@
       "tokens": {
         "batocera": "sv8000",
         "mister": "Supervision8000",
+        "retronas": "bandai/supervision8000",
         "romm": "super-vision-8000"
       }
     },
@@ -293,7 +314,8 @@
       "extensions": [],
       "tokens": {
         "batocera": "rx78",
-        "mister": "RX78"
+        "mister": "RX78",
+        "retronas": "bandai/rx78"
       }
     },
     {
@@ -311,6 +333,7 @@
         "onion": "WS",
         "pocket": "wonderswan",
         "retrodeck": "wonderswan",
+        "retronas": "bandai/wonderswan",
         "romm": "wonderswan",
         "spruce": "WS",
         "twmenu": "ws"
@@ -331,6 +354,7 @@
         "onion": "WS",
         "pocket": "wonderswan",
         "retrodeck": "wonderswancolor",
+        "retronas": "bandai/wonderswancolor",
         "romm": "wonderswan-color",
         "spruce": "WSC",
         "twmenu": "ws"
@@ -344,6 +368,7 @@
         "es": "gamate",
         "mister": "Gamate",
         "pocket": "gamate",
+        "retronas": "bitcorporation/gamate",
         "romm": "gamate"
       }
     },
@@ -355,6 +380,7 @@
         "es": "pv1000",
         "mister": "Casio_PV-1000",
         "retrodeck": "pv1000",
+        "retronas": "casio/pv1000",
         "romm": "casio-pv-1000"
       }
     },
@@ -364,6 +390,7 @@
       "tokens": {
         "batocera": "pv2000",
         "mister": "Casio_PV-2000",
+        "retronas": "casio/pv2000",
         "romm": "casio-pv-2000"
       }
     },
@@ -379,6 +406,7 @@
         "onion": "AMIGA",
         "pocket": "amiga",
         "retrodeck": "amiga",
+        "retronas": "commodore/amiga",
         "romm": "amiga",
         "spruce": "AMIGA"
       }
@@ -394,6 +422,7 @@
         "mister": "Amiga",
         "onion": "AMIGACD",
         "retrodeck": "amigacd32",
+        "retronas": "commodore/amigacd32",
         "romm": "amiga-cd32"
       }
     },
@@ -405,6 +434,7 @@
         "crossmix": "AMIGACDTV",
         "es": "cdtv",
         "retrodeck": "cdtv",
+        "retronas": "commodore/amigacdtv",
         "romm": "commodore-cdtv"
       }
     },
@@ -412,6 +442,7 @@
       "datNameRegex": "/Commodore C?16\\b/i",
       "extensions": [],
       "tokens": {
+        "retronas": "commodore/commodore16",
         "rocknix": "c16",
         "mister": "C16",
         "romm": "c16"
@@ -430,6 +461,7 @@
         "onion": "COMMODORE",
         "pocket": "c64",
         "retrodeck": "c64",
+        "retronas": "commodore/commodore64",
         "romm": "c64",
         "spruce": "COMMODORE"
       }
@@ -439,6 +471,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "c128",
+        "retronas": "commodore/commodore128",
         "rocknix": "c128",
         "mister": "C128",
         "romm": "c128"
@@ -452,6 +485,7 @@
         "crossmix": "CPLUS4",
         "es": "plus4",
         "retrodeck": "plus4",
+        "retronas": "commodore/commodoreplus4",
         "romm": "c-plus-4"
       }
     },
@@ -466,6 +500,7 @@
         "mister": "VIC20",
         "onion": "VIC20",
         "retrodeck": "vic20",
+        "retronas": "commodore/vic20",
         "romm": "vic-20",
         "spruce": "VIC20"
       }
@@ -483,6 +518,7 @@
         "onion": "COLECO",
         "pocket": "coleco",
         "retrodeck": "colecovision",
+        "retronas": "coleco/colecovision",
         "romm": "colecovision",
         "spruce": "COLECO",
         "twmenu": "col"
@@ -497,6 +533,7 @@
         "mister": "Arcadia",
         "pocket": "arcadia",
         "retrodeck": "arcadia",
+        "retronas": "emerson/arcadia2001",
         "romm": "arcadia-2001"
       }
     },
@@ -507,6 +544,7 @@
         "batocera": "advision",
         "mister": "AVision",
         "pocket": "avision",
+        "retronas": "entex/adventurevision",
         "romm": "adventure-vision"
       }
     },
@@ -518,6 +556,7 @@
         "es": "scv",
         "rocknix": "svc",
         "retrodeck": "scv",
+        "retronas": "epoch_co/scv",
         "romm": "epoch-super-cassette-vision"
       }
     },
@@ -533,6 +572,7 @@
         "onion": "FAIRCHILD",
         "pocket": "channel_f",
         "retrodeck": "channelf",
+        "retronas": "fairchild/channelf",
         "romm": "fairchild-channel-f",
         "spruce": "FAIRCHILD"
       }
@@ -543,6 +583,7 @@
       "tokens": {
         "batocera": "supracan",
         "es": "supracan",
+        "retronas": "funtech/superacan",
         "romm": "super-acan"
       }
     },
@@ -550,6 +591,7 @@
       "datNameRegex": "/\\bGP2X\\b/i",
       "extensions": [],
       "tokens": {
+        "retronas": "gamepark/gp2x",
         "romm": "gp2x"
       }
     },
@@ -558,6 +600,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "gp32",
+        "retronas": "gamepark/gp32",
         "romm": "gp32"
       }
     },
@@ -574,6 +617,7 @@
         "onion": "VECTREX",
         "pocket": "vectrex",
         "retrodeck": "vectrex",
+        "retronas": "vectrex",
         "romm": "vectrex",
         "spruce": "VECTREX"
       }
@@ -585,6 +629,7 @@
         "batocera": "gmaster",
         "es": "gmaster",
         "retrodeck": "gmaster",
+        "retronas": "hartung/gamemaster",
         "romm": "hartung"
       }
     },
@@ -594,6 +639,7 @@
       "tokens": {
         "batocera": "vc4000",
         "mister": "VC4000",
+        "retronas": "interton/vc4000",
         "romm": "vc-4000"
       }
     },
@@ -608,6 +654,7 @@
         "onion": "ODYSSEY",
         "pocket": "odyssey2",
         "retrodeck": "odyssey2",
+        "retronas": "magnavox/odyssey2",
         "romm": "odyssey-2",
         "spruce": "ODYSSEY"
       }
@@ -625,6 +672,7 @@
         "onion": "INTELLIVISION",
         "pocket": "intv",
         "retrodeck": "intellivision",
+        "retronas": "mattel/intellivision",
         "romm": "intellivision",
         "spruce": "INTELLIVISION"
       }
@@ -642,6 +690,7 @@
         "onion": "MSX",
         "pocket": "msx",
         "retrodeck": "msx",
+        "retronas": "microsoft/msx",
         "romm": "msx",
         "spruce": "MSX"
       }
@@ -658,6 +707,7 @@
         "mister": "MSX",
         "onion": "MSX",
         "retrodeck": "msx2",
+        "retronas": "microsoft/msx2",
         "romm": "msx2",
         "spruce": "MSX"
       }
@@ -672,6 +722,7 @@
         "mister": "MSX",
         "onion": "MSX",
         "retrodeck": "msx2",
+        "retronas": "microsoft/msxplus",
         "romm": "msx2plus",
         "spruce": "MSX"
       }
@@ -686,6 +737,7 @@
         "mister": "MSX",
         "onion": "MSX",
         "retrodeck": "msxturbor",
+        "retronas": "microsoft/msxturbor",
         "romm": "msx-turbo",
         "spruce": "MSX"
       }
@@ -698,6 +750,7 @@
         "es": "xbox",
         "rocknix": "xbox",
         "retrodeck": "xbox",
+        "retronas": "microsoft/xbox",
         "romm": "xbox"
       }
     },
@@ -707,6 +760,7 @@
       "tokens": {
         "batocera": "xbox360",
         "es": "xbox360",
+        "retronas": "microsoft/xbox360",
         "romm": "xbox360"
       }
     },
@@ -717,6 +771,7 @@
         "es": "j2me",
         "rocknix": "j2me",
         "retrodeck": "j2me",
+        "retronas": "platform/java",
         "romm": "j2me"
       }
     },
@@ -729,6 +784,7 @@
         "rocknix": "palm",
         "onion": "PALM",
         "retrodeck": "palm",
+        "retronas": "palm/palmos",
         "romm": "palm-os"
       }
     },
@@ -738,6 +794,7 @@
       "tokens": {
         "es": "symbian",
         "retrodeck": "symbian",
+        "retronas": "symbian/symbianos",
         "romm": "symbian"
       }
     },
@@ -745,7 +802,8 @@
       "datNameRegex": "/My Vision/i",
       "extensions": [],
       "tokens": {
-        "mister": "MyVision"
+        "mister": "MyVision",
+        "retronas": "nichibutsu/myvision"
       }
     },
     {
@@ -764,6 +822,7 @@
         "onion": "PCE",
         "pocket": "pce",
         "retrodeck": "pcengine",
+        "retronas": "nec/pcengine",
         "romm": "tg16",
         "spruce": "PCE",
         "twmenu": "tg16"
@@ -785,6 +844,7 @@
         "onion": "PCE",
         "pocket": "pce",
         "retrodeck": "pcengine",
+        "retronas": "nec/pcengine",
         "romm": "tg16",
         "spruce": "PCE",
         "twmenu": "tg16"
@@ -805,6 +865,7 @@
         "onion": "PCECD",
         "pocket": "pcecd",
         "retrodeck": "pcenginecd",
+        "retronas": "nec/pcenginecd",
         "romm": "turbografx-cd",
         "spruce": "PCECD"
       }
@@ -824,6 +885,7 @@
         "onion": "PCECD",
         "pocket": "pcecd",
         "retrodeck": "pcenginecd",
+        "retronas": "nec/pcenginecd",
         "romm": "turbografx-cd",
         "spruce": "PCECD"
       }
@@ -840,6 +902,7 @@
         "onion": "SGFX",
         "pocket": "pce",
         "retrodeck": "supergrafx",
+        "retronas": "nec/pcengine/supergrafx",
         "romm": "supergrafx",
         "spruce": "SGFX"
       }
@@ -855,6 +918,7 @@
         "mister": "PC8801",
         "onion": "PCEIGHTYEIGHT",
         "retrodeck": "pc88",
+        "retronas": "nec/pc88",
         "romm": "pc-8800-series"
       }
     },
@@ -868,6 +932,7 @@
         "rocknix": "pc98",
         "onion": "PCNINETYEIGHT",
         "retrodeck": "pc98",
+        "retronas": "nec/pc98",
         "romm": "pc-9800-series",
         "spruce": "PC98"
       }
@@ -881,6 +946,7 @@
         "rocknix": "pcfx",
         "onion": "PCFX",
         "retrodeck": "pcfx",
+        "retronas": "nec/pcfx",
         "romm": "pc-fx"
       }
     },
@@ -894,6 +960,7 @@
         "rocknix": "tic-80",
         "onion": "TIC",
         "retrodeck": "tic80",
+        "retronas": "fantasyconsole/tic80",
         "spruce": "TIC"
       }
     },
@@ -913,6 +980,7 @@
         "onion": "FDS",
         "pocket": "nes",
         "retrodeck": "fds",
+        "retronas": "nintendo/famicom/disk",
         "romm": "fds",
         "spruce": "FDS"
       }
@@ -930,6 +998,7 @@
         "onion": "GW",
         "pocket": "gameandwatch",
         "retrodeck": "gameandwatch",
+        "retronas": "nintendo/gameandwatch",
         "romm": "g-and-w",
         "spruce": "GW"
       }
@@ -942,6 +1011,7 @@
         "es": "gc",
         "rocknix": "gamecube",
         "retrodeck": "gc",
+        "retronas": "nintendo/gamecube/iso",
         "romm": "ngc"
       }
     },
@@ -961,6 +1031,7 @@
         "onion": "GB",
         "pocket": "gb",
         "retrodeck": "gb",
+        "retronas": "nintendo/gameboy",
         "romm": "gb",
         "spruce": "GB",
         "twmenu": "gb"
@@ -982,6 +1053,7 @@
         "onion": "GBA",
         "pocket": "gba",
         "retrodeck": "gba",
+        "retronas": "nintendo/gameboyadvance",
         "romm": "gba",
         "spruce": "GBA",
         "twmenu": "gba"
@@ -1003,6 +1075,7 @@
         "onion": "GBC",
         "pocket": "gbc",
         "retrodeck": "gbc",
+        "retronas": "nintendo/gameboycolor",
         "romm": "gbc",
         "spruce": "GBC",
         "twmenu": "gb"
@@ -1018,6 +1091,7 @@
         "rocknix": "n64",
         "mister": "N64",
         "retrodeck": "n64",
+        "retronas": "nintendo/nintendo64",
         "romm": "n64",
         "spruce": "N64"
       }
@@ -1030,6 +1104,7 @@
         "crossmix": "N64DD",
         "es": "n64dd",
         "retrodeck": "n64dd",
+        "retronas": "nintendo/nintendo64dd",
         "romm": "64dd"
       }
     },
@@ -1041,6 +1116,7 @@
         "es": "n3ds",
         "rocknix": "3ds",
         "retrodeck": "n3ds",
+        "retronas": "nintendo/3ds",
         "romm": "3ds"
       }
     },
@@ -1054,6 +1130,7 @@
         "rocknix": "nds",
         "onion": "NDS",
         "retrodeck": "nds",
+        "retronas": "nintendo/ds",
         "romm": "nds",
         "spruce": "NDS",
         "twmenu": "nds"
@@ -1065,6 +1142,7 @@
       "tokens": {
         "es": "nds",
         "retrodeck": "nds",
+        "retronas": "nintendo/dsi",
         "romm": "nintendo-dsi",
         "twmenu": "dsiware"
       }
@@ -1085,6 +1163,7 @@
         "onion": "FC",
         "pocket": "nes",
         "retrodeck": "nes",
+        "retronas": "nintendo/famicom",
         "romm": "famicom",
         "spruce": "FC",
         "twmenu": "nes"
@@ -1106,6 +1185,7 @@
         "onion": "FC",
         "pocket": "nes",
         "retrodeck": "nes",
+        "retronas": "nintendo/famicom",
         "romm": "nes",
         "spruce": "FC",
         "twmenu": "nes"
@@ -1127,6 +1207,7 @@
         "onion": "POKE",
         "pocket": "poke_mini",
         "retrodeck": "pokemini",
+        "retronas": "nintendo/pokemini",
         "romm": "pokemon-mini",
         "spruce": "POKE"
       }
@@ -1143,6 +1224,7 @@
         "onion": "SATELLAVIEW",
         "pocket": "snes",
         "retrodeck": "satellaview",
+        "retronas": "nintendo/satellaview",
         "romm": "satellaview",
         "spruce": "SATELLAVIEW"
       }
@@ -1157,6 +1239,7 @@
         "rocknix": "sufami",
         "onion": "SUFAMI",
         "retrodeck": "sufami",
+        "retronas": "nintendo/superfamicom/sufami",
         "romm": "sufami-turbo",
         "spruce": "SUFAMI"
       }
@@ -1177,6 +1260,7 @@
         "onion": "SFC",
         "pocket": "snes",
         "retrodeck": "snes",
+        "retronas": "nintendo/superfamicom",
         "romm": "sfam",
         "spruce": "SFC",
         "twmenu": "snes"
@@ -1198,6 +1282,7 @@
         "onion": "SFC",
         "pocket": "snes",
         "retrodeck": "snes",
+        "retronas": "nintendo/superfamicom",
         "romm": "snes",
         "spruce": "SFC",
         "twmenu": "snes"
@@ -1225,6 +1310,7 @@
         "minui": "Virtual Boy (VB)",
         "onion": "VB",
         "retrodeck": "virtualboy",
+        "retronas": "nintendo/virtualboy",
         "romm": "virtualboy",
         "spruce": "VB"
       }
@@ -1237,6 +1323,7 @@
         "es": "wii",
         "rocknix": "wii",
         "retrodeck": "wii",
+        "retronas": "nintendo/wii",
         "romm": "wii"
       }
     },
@@ -1248,6 +1335,7 @@
         "es": "wiiu",
         "rocknix": "wiiu",
         "retrodeck": "wiiu",
+        "retronas": "nintendo/wiiu",
         "romm": "wiiu"
       }
     },
@@ -1261,6 +1349,7 @@
         "rocknix": "3do",
         "onion": "PANASONIC",
         "retrodeck": "3do",
+        "retronas": "panasonic/3do",
         "romm": "3do"
       }
     },
@@ -1272,6 +1361,7 @@
         "es": "cdimono1",
         "rocknix": "cdi",
         "retrodeck": "cdimono1",
+        "retronas": "philips/cdi",
         "romm": "philips-cd-i"
       }
     },
@@ -1286,6 +1376,7 @@
         "mister": "Odyssey2",
         "onion": "VIDEOPAC",
         "retrodeck": "videopac",
+        "retronas": "philips/videopacplus",
         "romm": "videopac-g7400",
         "spruce": "VIDEOPAC"
       }
@@ -1295,6 +1386,7 @@
       "extensions": [],
       "tokens": {
         "pocket": "studio2",
+        "retronas": "rca/studioii",
         "romm": "rca-studio-ii"
       }
     },
@@ -1311,6 +1403,7 @@
         "mister": "S32X",
         "onion": "THIRTYTWOX",
         "retrodeck": "sega32x",
+        "retronas": "sega/32x",
         "romm": "sega32",
         "spruce": "THIRTYTWOX"
       }
@@ -1328,6 +1421,7 @@
         "mister": "S32X",
         "onion": "THIRTYTWOX",
         "retrodeck": "sega32x",
+        "retronas": "sega/32x",
         "romm": "sega32",
         "spruce": "THIRTYTWOX"
       }
@@ -1341,6 +1435,7 @@
         "es": "dreamcast",
         "rocknix": "dreamcast",
         "retrodeck": "dreamcast",
+        "retronas": "sega/dreamcast",
         "romm": "dc",
         "spruce": "DC"
       }
@@ -1361,6 +1456,7 @@
         "onion": "GG",
         "pocket": "gg",
         "retrodeck": "gamegear",
+        "retronas": "sega/gamegear",
         "romm": "gamegear",
         "spruce": "GG",
         "twmenu": "gg"
@@ -1382,6 +1478,7 @@
         "onion": "MS",
         "pocket": "sms",
         "retrodeck": "mastersystem",
+        "retronas": "sega/mastersystem",
         "romm": "sms",
         "spruce": "MS",
         "twmenu": "sms"
@@ -1401,6 +1498,7 @@
         "miyoocfw": "SMD",
         "onion": "SEGACD",
         "retrodeck": "segacd",
+        "retronas": "sega/megacd",
         "romm": "segacd",
         "spruce": "SEGACD"
       }
@@ -1419,6 +1517,7 @@
         "miyoocfw": "SMD",
         "onion": "SEGACD",
         "retrodeck": "segacd",
+        "retronas": "sega/megacd",
         "romm": "segacd",
         "spruce": "SEGACD"
       }
@@ -1439,6 +1538,7 @@
         "onion": "MD",
         "pocket": "genesis",
         "retrodeck": "megadrive",
+        "retronas": "sega/megadrive",
         "romm": "genesis",
         "spruce": "MD",
         "twmenu": "gen"
@@ -1460,6 +1560,7 @@
         "onion": "MD",
         "pocket": "genesis",
         "retrodeck": "megadrive",
+        "retronas": "sega/megadrive",
         "romm": "genesis",
         "spruce": "MD",
         "twmenu": "gen"
@@ -1475,6 +1576,7 @@
         "rocknix": "saturn",
         "mister": "Saturn",
         "retrodeck": "saturn",
+        "retronas": "sega/saturn",
         "romm": "saturn",
         "spruce": "SATURN"
       }
@@ -1492,6 +1594,7 @@
         "onion": "SEGASGONE",
         "pocket": "sg1000",
         "retrodeck": "sg-1000",
+        "retronas": "sega/sg1000",
         "romm": "sg1000",
         "spruce": "SEGASGONE",
         "twmenu": "sg"
@@ -1502,6 +1605,7 @@
       "extensions": [],
       "tokens": {
         "mister": "SharpMZ",
+        "retronas": "sharp/mz",
         "romm": "sharp-mz-2200"
       }
     },
@@ -1515,6 +1619,7 @@
         "rocknix": "x1",
         "onion": "XONE",
         "retrodeck": "x1",
+        "retronas": "sharp/x1",
         "romm": "x1"
       }
     },
@@ -1529,6 +1634,7 @@
         "mister": "X68000",
         "onion": "X68000",
         "retrodeck": "x68000",
+        "retronas": "sharp/x68000",
         "romm": "sharp-x68000",
         "spruce": "X68000"
       }
@@ -1540,6 +1646,7 @@
         "mister": "ZX81",
         "onion": "ZXEIGHTYONE",
         "retrodeck": "zx81",
+        "retronas": "sinclair/zx80",
         "romm": "zx80"
       }
     },
@@ -1553,6 +1660,7 @@
         "mister": "ZX81",
         "onion": "ZXEIGHTYONE",
         "retrodeck": "zx81",
+        "retronas": "sinclair/zx81",
         "romm": "zx81"
       }
     },
@@ -1568,6 +1676,7 @@
         "mister": "Spectrum",
         "onion": "ZXS",
         "retrodeck": "zxspectrum",
+        "retronas": "sinclair/zxspectrum",
         "romm": "zxs",
         "spruce": "ZXS"
       }
@@ -1586,6 +1695,7 @@
         "onion": "NEOGEO",
         "pocket": "ng",
         "retrodeck": "neogeo",
+        "retronas": "snk/neogeo",
         "romm": "neogeomvs",
         "spruce": "NEOGEO"
       }
@@ -1601,6 +1711,7 @@
         "mister": "NeoGeo-CD",
         "onion": "NEOCD",
         "retrodeck": "neogeocd",
+        "retronas": "snk/neogeocd",
         "romm": "neo-geo-cd",
         "spruce": "NEOCD"
       }
@@ -1618,6 +1729,7 @@
         "minui": "Neo Geo Pocket (NGPC)",
         "onion": "NGP",
         "retrodeck": "ngp",
+        "retronas": "snk/neogeopocket",
         "romm": "neo-geo-pocket",
         "spruce": "NGP",
         "twmenu": "ngp"
@@ -1636,6 +1748,7 @@
         "minui": "Neo Geo Pocket Color (NGPC)",
         "onion": "NGP",
         "retrodeck": "ngpc",
+        "retronas": "snk/neogeopocketcolor",
         "romm": "neo-geo-pocket-color",
         "spruce": "NGPC",
         "twmenu": "ngp"
@@ -1656,6 +1769,7 @@
         "miyoocfw": "PS1",
         "onion": "PS",
         "retrodeck": "psx",
+        "retronas": "sony/playstation1",
         "romm": "psx",
         "spruce": "PS"
       }
@@ -1668,6 +1782,7 @@
         "es": "ps2",
         "rocknix": "ps2",
         "retrodeck": "ps2",
+        "retronas": "sony/playstation2",
         "romm": "ps2"
       }
     },
@@ -1679,6 +1794,7 @@
         "es": "ps3",
         "rocknix": "ps3",
         "retrodeck": "ps3",
+        "retronas": "sony/playstation3",
         "romm": "ps3"
       }
     },
@@ -1691,6 +1807,7 @@
         "es": "psp",
         "rocknix": "psp",
         "retrodeck": "psp",
+        "retronas": "sony/playstationportable",
         "romm": "psp",
         "spruce": "PSP"
       }
@@ -1703,6 +1820,7 @@
         "es": "psvita",
         "rocknix": "launcher",
         "retrodeck": "psvita",
+        "retronas": "sony/playstationvita",
         "romm": "psvita"
       }
     },
@@ -1716,6 +1834,7 @@
       "extensions": [],
       "tokens": {
         "mister": "Sord M5",
+        "retronas": "sord/m5",
         "romm": "sord-m5",
         "twmenu": "m5"
       }
@@ -1728,6 +1847,7 @@
         "es": "ti99",
         "mister": "TI-99_4A",
         "retrodeck": "ti99",
+        "retronas": "texas_instruments/ti99",
         "romm": "ti-99"
       }
     },
@@ -1738,6 +1858,7 @@
         "batocera": "gamecom",
         "es": "gamecom",
         "retrodeck": "gamecom",
+        "retronas": "tiger/gamecom",
         "romm": "game-dot-com"
       }
     },
@@ -1745,13 +1866,15 @@
       "datNameRegex": "/GameKing/i",
       "extensions": [],
       "tokens": {
-        "pocket": "game_king"
+        "pocket": "game_king",
+        "retronas": "timetop/gameking"
       }
     },
     {
       "datNameRegex": "/\\bNUON\\b/i",
       "extensions": [],
       "tokens": {
+        "retronas": "vmlabs/nuon",
         "romm": "nuon"
       }
     },
@@ -1764,6 +1887,7 @@
         "mister": "CreatiVision",
         "pocket": "creativision",
         "retrodeck": "crvision",
+        "retronas": "videotechnology/creativision",
         "romm": "creativision"
       }
     },
@@ -1774,6 +1898,7 @@
         "batocera": "vsmile",
         "es": "vsmile",
         "retrodeck": "vsmile",
+        "retronas": "videotechnology/vsmile",
         "romm": "vsmile"
       }
     },
@@ -1790,6 +1915,7 @@
         "onion": "SUPERVISION",
         "pocket": "supervision",
         "retrodeck": "supervision",
+        "retronas": "watara/supervision",
         "romm": "supervision",
         "spruce": "SUPERVISION"
       }
@@ -1805,6 +1931,7 @@
         "onion": "MEGADUCK",
         "pocket": "mega_duck",
         "retrodeck": "megaduck",
+        "retronas": "creatronic/megaduck",
         "romm": "mega-duck-slash-cougar-boy",
         "spruce": "MEGADUCK"
       }

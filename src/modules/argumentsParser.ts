@@ -1263,6 +1263,7 @@ Advanced usage:
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "gb")
+    {retronas}  The ROM's system-specific /roms/* directory for RetroNAS (e.g. "nintendo/gameboy")
     {rocknix}   The ROM's emulator-specific /roms/* directory for ROCKNIX (e.g. "gb")
     {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
     {spruce}    The ROM's emulator-specific /Roms/* directory for SpruceOS (e.g. "GB")

@@ -315,6 +315,39 @@ describe('token replacement', () => {
         },
       );
 
+      // RetroNAS is the only frontend whose paths contain a separator
+      test.each([
+        ['Nintendo - Game Boy', ['nintendo', 'gameboy']],
+        // RetroNAS stores NES, SNES, TurboGrafx, Sega CD, and Genesis ROMs in their Japanese
+        // counterpart's folder, and symlinks the western folder name to it
+        [
+          'Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)',
+          ['nintendo', 'famicom'],
+        ],
+        [
+          'Nintendo - Super Nintendo Entertainment System (Parent-Clone)',
+          ['nintendo', 'superfamicom'],
+        ],
+        ['NEC - TurboGrafx-16', ['nec', 'pcengine']],
+        ['Sega - Mega CD & Sega CD', ['sega', 'megacd']],
+        ['Sega - Mega Drive - Genesis', ['sega', 'megadrive']],
+        // Some RetroNAS systems are nested one level deeper still
+        ['Atari - Jaguar CD', ['atari', 'jaguar', 'cd']],
+        [
+          'Nintendo - Family Computer Disk System (FDS) (Parent-Clone)',
+          ['nintendo', 'famicom', 'disk'],
+        ],
+        ['NEC - PC Engine SuperGrafx', ['nec', 'pcengine', 'supergrafx']],
+        // Arcade DATs
+        ['MAME', ['mame', 'mame']],
+        ['FinalBurn Neo - Arcade Games', ['finalburn', 'fbneo']],
+        ['FinalBurn Alpha - Arcade Games', ['finalburn', 'fba']],
+      ])('should replace {retronas} for the DAT name: %s', async (datName, expectedDirNames) => {
+        await expect(getConsolePath('{retronas}', datName, 'Dummy.rom')).resolves.toEqual(
+          path.resolve(...expectedDirNames, 'Dummy.rom'),
+        );
+      });
+
       // Word boundaries were added to many regexes to stop short tokens such as "GB", "ST", and
       // "2600" from matching inside unrelated words. These cases guard the opposite failure
       // mode: a boundary that is *too* strict and stops matching a real DAT name. No-Intro
@@ -486,6 +519,21 @@ describe('token replacement', () => {
         },
       );
 
+      // {retronas} values contain a path separator, so they're asserted separately from the
+      // single-folder tokens above, with the expected paths built from individual segments
+      test.each([
+        ['game.a78', ['atari', '7800']],
+        ['game.gb', ['nintendo', 'gameboy']],
+        ['game.nes', ['nintendo', 'famicom']],
+      ])(
+        'should replace {retronas} for the file extension: %s',
+        async (romFilename, expectedDirNames) => {
+          await expect(getConsolePath('{retronas}', '', romFilename)).resolves.toEqual(
+            path.resolve(...expectedDirNames, romFilename),
+          );
+        },
+      );
+
       // An unrecognized DAT name must not short-circuit extension matching. This is the common
       // case for the many DATs that aren't named after a single console.
       test.each([
@@ -531,74 +579,76 @@ describe('token replacement', () => {
       // the broader entry also matches, and the broader entry must lose.
       test.each([
         // "Game Boy" is a prefix of both successors
-        ['Nintendo - Game Boy', 'gb'],
-        ['Nintendo - Game Boy Color', 'gbc'],
-        ['Nintendo - Game Boy Advance', 'gba'],
+        ['{es}', 'Nintendo - Game Boy', 'gb'],
+        ['{es}', 'Nintendo - Game Boy Color', 'gbc'],
+        ['{es}', 'Nintendo - Game Boy Advance', 'gba'],
         // "Famicom" appears inside the Famicom Disk System's full name, and "Nintendo
         // Entertainment System" inside the Super Nintendo's. These are the real No-Intro DAT
         // names, parenthetical suffixes and all, since those suffixes are what regexes trip on.
-        ['Nintendo - Famicom [T-En] Collection', 'famicom'],
-        ['Nintendo - Family Computer Disk System (FDS) (Parent-Clone)', 'fds'],
-        ['Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)', 'nes'],
-        ['Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)', 'nes'],
-        ['Nintendo - Super Famicom [T-En] Collection', 'sfc'],
-        ['Nintendo - Super Nintendo Entertainment System (Parent-Clone)', 'snes'],
+        ['{es}', 'Nintendo - Famicom [T-En] Collection', 'famicom'],
+        ['{es}', 'Nintendo - Family Computer Disk System (FDS) (Parent-Clone)', 'fds'],
+        ['{es}', 'Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)', 'nes'],
+        ['{es}', 'Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)', 'nes'],
+        ['{es}', 'Nintendo - Super Famicom [T-En] Collection', 'sfc'],
+        ['{es}', 'Nintendo - Super Nintendo Entertainment System (Parent-Clone)', 'snes'],
         // "Neo Geo" is a prefix of three unrelated hardware families
-        ['SNK - Neo Geo', 'neogeo'],
-        ['SNK - Neo Geo CD', 'neogeocd'],
-        ['SNK - Neo Geo Pocket', 'ngp'],
-        ['SNK - Neo Geo Pocket Color', 'ngpc'],
+        ['{es}', 'SNK - Neo Geo', 'neogeo'],
+        ['{es}', 'SNK - Neo Geo CD', 'neogeocd'],
+        ['{es}', 'SNK - Neo Geo Pocket', 'ngp'],
+        ['{es}', 'SNK - Neo Geo Pocket Color', 'ngpc'],
         // MSX generations nest inside each other, and the "+" in MSX2+ has to stay escaped:
         // an unescaped "+" makes /MSX2+/ match plain "MSX2" and hijack it via findLast().
-        ['Microsoft - MSX', 'msx'],
-        ['Microsoft - MSX2', 'msx2'],
-        ['Microsoft - MSX TurboR', 'msxturbor'],
+        ['{es}', 'Microsoft - MSX', 'msx'],
+        ['{es}', 'Microsoft - MSX2', 'msx2'],
+        ['{es}', 'Microsoft - MSX TurboR', 'msxturbor'],
         // PlayStation numbering, where the bare name matches every successor
-        ['Sony - PlayStation', 'psx'],
-        ['Sony - PlayStation 2', 'ps2'],
-        ['Sony - PlayStation 3', 'ps3'],
-        ['Sony - PlayStation Portable', 'psp'],
-        ['Sony - PlayStation Vita', 'psvita'],
+        ['{es}', 'Sony - PlayStation', 'psx'],
+        ['{es}', 'Sony - PlayStation 2', 'ps2'],
+        ['{es}', 'Sony - PlayStation 3', 'ps3'],
+        ['{es}', 'Sony - PlayStation Portable', 'psp'],
+        ['{es}', 'Sony - PlayStation Vita', 'psvita'],
         // Single-letter suffixes are easy to lose to a greedy earlier entry
-        ['Nintendo - Wii', 'wii'],
-        ['Nintendo - Wii U', 'wiiu'],
-        ['Microsoft - Xbox', 'xbox'],
-        ['Microsoft - Xbox 360', 'xbox360'],
-        ['Nintendo - Nintendo 64', 'n64'],
-        ['Nintendo - Nintendo 64DD', 'n64dd'],
+        ['{es}', 'Nintendo - Wii', 'wii'],
+        ['{es}', 'Nintendo - Wii U', 'wiiu'],
+        ['{es}', 'Microsoft - Xbox', 'xbox'],
+        ['{es}', 'Microsoft - Xbox 360', 'xbox360'],
+        ['{es}', 'Nintendo - Nintendo 64', 'n64'],
+        ['{es}', 'Nintendo - Nintendo 64DD', 'n64dd'],
         // NEC's naming is the messiest: SuperGrafx and the CD add-ons all contain "PC Engine"
         // or "TurboGrafx", and FBNeo spells SuperGrafx "SuprGrafx"
-        ['NEC - PC Engine', 'pcengine'],
-        ['NEC - PC Engine CD', 'pcenginecd'],
-        ['NEC - PC Engine SuperGrafx', 'supergrafx'],
-        ['NEC - TurboGrafx-16', 'tg16'],
-        ['NEC - TurboGrafx CD', 'tg-cd'],
+        ['{es}', 'NEC - PC Engine', 'pcengine'],
+        ['{es}', 'NEC - PC Engine CD', 'pcenginecd'],
+        ['{es}', 'NEC - PC Engine SuperGrafx', 'supergrafx'],
+        ['{es}', 'NEC - TurboGrafx-16', 'tg16'],
+        ['{es}', 'NEC - TurboGrafx CD', 'tg-cd'],
         // Amiga's CD-based variants
-        ['Commodore - Amiga', 'amiga'],
-        ['Commodore - Amiga CD32', 'amigacd32'],
-        ['Commodore - Amiga CDTV', 'cdtv'],
+        ['{es}', 'Commodore - Amiga', 'amiga'],
+        ['{es}', 'Commodore - Amiga CD32', 'amigacd32'],
+        ['{es}', 'Commodore - Amiga CDTV', 'cdtv'],
         // Atari's CD add-on
-        ['Atari - Jaguar', 'atarijaguar'],
-        ['Atari - Jaguar CD', 'atarijaguarcd'],
+        ['{es}', 'Atari - Jaguar', 'atarijaguar'],
+        ['{es}', 'Atari - Jaguar CD', 'atarijaguarcd'],
+        // MSX2 vs. MSX2+
+        ['{batocera}', 'Microsoft - MSX2', 'msx2'],
+        ['{batocera}', 'Microsoft - MSX2+', 'msx2+'],
+        // "Apple I" is a prefix of every later Apple computer's name
+        ['{mister}', 'Apple I', 'Apple-I'],
+        ['{mister}', 'Apple 1', 'Apple-I'],
+        ['{mister}', 'Apple - I', 'Apple-I'],
+        ['{mister}', 'Apple1', 'Apple-I'],
+        ['{mister}', 'Apple II', 'Apple-II'],
+        ['{es}', 'Apple II', 'apple2'],
+        ['{es}', 'Apple - II', 'apple2'],
+        ['{es}', 'Apple IIe', 'apple2'],
+        ['{es}', 'Apple IIGS', 'apple2gs'],
       ])(
-        'should prefer the more specific console for the DAT name: %s',
-        async (datName, expectedDirName) => {
-          await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
+        'should prefer the more specific console for %s and the DAT name: %s',
+        async (outputToken, datName, expectedDirName) => {
+          await expect(getConsolePath(outputToken, datName, 'Dummy.rom')).resolves.toEqual(
             path.resolve(expectedDirName, 'Dummy.rom'),
           );
         },
       );
-
-      // The MSX2+ folder differs from MSX2 only for some frontends; Batocera is one of them, so
-      // it's the token that can actually prove the escaped "+" is doing its job.
-      test.each([
-        ['Microsoft - MSX2', 'msx2'],
-        ['Microsoft - MSX2+', 'msx2+'],
-      ])('should distinguish {batocera} MSX2 from MSX2+: %s', async (datName, expectedDirName) => {
-        await expect(getConsolePath('{batocera}', datName, 'Dummy.rom')).resolves.toEqual(
-          path.resolve(expectedDirName, 'Dummy.rom'),
-        );
-      });
 
       // The arcade entries are deliberately placed *first* in consoleTokens.json. Their regexes
       // are broad ("FinalBurn Neo" matches every FBNeo DAT), so being first means findLast()
@@ -701,6 +751,8 @@ describe('token replacement', () => {
         ['{pocket}', 'game.ngp'],
         ['{retrodeck}', 'game.bin'],
         ['{retrodeck}', 'game.rom'],
+        ['{retronas}', 'game.bin'],
+        ['{retronas}', 'game.rom'],
         ['{rocknix}', 'game.bin'],
         ['{rocknix}', 'game.rom'],
         ['{romm}', 'game.bin'],
@@ -754,14 +806,18 @@ describe('token replacement', () => {
 
       // Consoles with no entry in consoleTokens.json at all. Nothing in the DAT name or the
       // file extension can resolve these, so they're a standing to-do rather than a bug.
-      test.each([['Nokia - N-Gage'], ['Some Unknown Console']])(
-        'should throw when no console is known for the DAT name: %s',
-        async (datName) => {
-          await expect(getConsolePath('{es}', datName, 'Dummy.rom')).rejects.toThrow(
-            /failed to replace/,
-          );
-        },
-      );
+      test.each([
+        ['Nokia - N-Gage'],
+        ['Some Unknown Console'],
+        // These used to be mis-sorted as the Apple I
+        ['Apple - Macintosh'],
+        ['Apple Lisa'],
+        ['Apple III'],
+      ])('should throw when no console is known for the DAT name: %s', async (datName) => {
+        await expect(getConsolePath('{es}', datName, 'Dummy.rom')).rejects.toThrow(
+          /failed to replace/,
+        );
+      });
 
       // Issue #2405 was filed because this failure was invisible: the message named only the
       // token, at a log level users don't see. The DAT name and a pointer to the escape hatch
