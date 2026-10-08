@@ -45,8 +45,13 @@ describe('patchFromFileContents', () => {
     const inputPatchFilePaths = await new Options({
       patch: ['./test/fixtures/patches'],
     }).scanPatchFilesWithoutExclusions();
+    expect(inputPatchFilePaths).toHaveLength(45);
 
     for (const inputPatchFilePath of inputPatchFilePaths) {
+      // DPS has no file signature, so it can't be detected from its contents
+      if (inputPatchFilePath.toLowerCase().endsWith('.dps')) {
+        continue;
+      }
       const inputPatchFile = await File.fileOf({ filePath: inputPatchFilePath });
       const patch = await PatchFactory.patchFromFileContents(inputPatchFile);
       expect(patch).toBeDefined();

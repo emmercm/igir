@@ -256,32 +256,19 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Three Four Five', 'Three Four Five.m3u'), '8b42a921'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
         [`${path.join('One', 'UMD.cso')}|UMD.iso`, 'e90f7cf5'],
-        [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
-        [path.join('Patchable', '3708F2C.rom'), '20891c9f'],
-        [path.join('Patchable', '612644F.rom'), 'f7591b29'],
-        [path.join('Patchable', '65D1206.rom'), '20323455'],
-        [path.join('Patchable', '92C85C9.rom'), '06692159'],
-        [path.join('Patchable', 'Before.rom'), '0361b321'],
-        [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
-        [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('Patchable', 'grow.rom'), '1a4b9b3c'],
+        [path.join('Patchable', 'large.rom'), '58263663'],
+        [path.join('Patchable', 'modify.rom'), 'aabfe90e'],
+        [`${path.join('Patchable', 'shrink.gz')}|shrink.rom`, '52249184'],
         [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
         [
           path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'),
           '70856527',
         ],
-        [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'),
-          '20891c9f',
-        ],
-        [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'),
-          '20323455',
-        ],
-        [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'),
-          'dfaebe28',
-        ],
+        [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow.rom'), '1a4b9b3c'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large.rom'), '58263663'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify.rom'), 'aabfe90e'],
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -401,6 +388,7 @@ describe('with explicit DATs', () => {
           `${path.join('gz', 'Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`,
           '8beffd94',
         ],
+        [`${path.join('gz', 'Patchable', 'shrink.gz')}|shrink.rom`, '52249184'],
         [path.join('iso', 'One', 'UMD.iso'), 'e90f7cf5'],
         [path.join('lnx', 'One', 'Foobar.lnx'), 'b22c9747'],
         [
@@ -426,29 +414,24 @@ describe('with explicit DATs', () => {
         [path.join('rom', 'One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('rom', 'One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('rom', 'One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
-        [path.join('rom', 'Patchable', '0F09A40.rom'), '2f943e86'],
-        [path.join('rom', 'Patchable', '3708F2C.rom'), '20891c9f'],
-        [path.join('rom', 'Patchable', '612644F.rom'), 'f7591b29'],
-        [path.join('rom', 'Patchable', '65D1206.rom'), '20323455'],
-        [path.join('rom', 'Patchable', '92C85C9.rom'), '06692159'],
-        [path.join('rom', 'Patchable', 'Before.rom'), '0361b321'],
-        [path.join('rom', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
-        [path.join('rom', 'Patchable', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('rom', 'Patchable', 'grow.rom'), '1a4b9b3c'],
+        [path.join('rom', 'Patchable', 'large.rom'), '58263663'],
+        [path.join('rom', 'Patchable', 'modify.rom'), 'aabfe90e'],
         [
           path.join('rom', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'),
           '70856527',
         ],
         [
-          path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'),
-          '20891c9f',
+          path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', 'grow.rom'),
+          '1a4b9b3c',
         ],
         [
-          path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'),
-          '20323455',
+          path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', 'large.rom'),
+          '58263663',
         ],
         [
-          path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'),
-          'dfaebe28',
+          path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', 'modify.rom'),
+          'aabfe90e',
         ],
         [path.join('smc', 'Headered', 'speed_test_v51.smc'), '9adca6cc'],
         [path.join('wud', 'four.wud'), '00000000'], // explicitly not deleted, there were no input files with the extension "wud"
@@ -572,15 +555,7 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [path.join('igir combined', '#', '0F09A40.rom'), '2f943e86'],
-        [path.join('igir combined', '#', '3708F2C.rom'), '20891c9f'],
-        [path.join('igir combined', '#', '612644F.rom'), 'f7591b29'],
-        [path.join('igir combined', '#', '65D1206.rom'), '20323455'],
-        [path.join('igir combined', '#', '92C85C9.rom'), '06692159'],
         [path.join('igir combined', 'A', 'allpads.nes'), '9180a163'],
-        [path.join('igir combined', 'B', 'Before.rom'), '0361b321'],
-        [path.join('igir combined', 'B', 'Best.rom'), '1e3d78cf'],
-        [path.join('igir combined', 'C', 'C01173E.rom'), 'dfaebe28'],
         [path.join('igir combined', 'C', 'color_test.nes'), 'c9c1b7aa'],
         [path.join('igir combined', 'D', 'diagnostic_test_cartridge.a78'), 'f6cc9b1c'],
         [path.join('igir combined', 'E', 'Empty.rom'), '00000000'],
@@ -588,6 +563,7 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'F', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('igir combined', 'F', 'Foobar.lnx'), 'b22c9747'],
         [path.join('igir combined', 'G', 'GameCube-240pSuite-1.19.iso'), '5eb3d183'],
+        [path.join('igir combined', 'G', 'grow.rom'), '1a4b9b3c'],
         [
           path.join('igir combined', 'H', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'),
           '370517b5',
@@ -607,14 +583,8 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
         [
-          path.join(
-            'igir combined',
-            'H',
-            'Hardware Target Game Database',
-            'Patchable',
-            '3708F2C.rom',
-          ),
-          '20891c9f',
+          path.join('igir combined', 'H', 'Hardware Target Game Database', 'Patchable', 'grow.rom'),
+          '1a4b9b3c',
         ],
         [
           path.join(
@@ -622,9 +592,9 @@ describe('with explicit DATs', () => {
             'H',
             'Hardware Target Game Database',
             'Patchable',
-            '65D1206.rom',
+            'large.rom',
           ),
-          '20323455',
+          '58263663',
         ],
         [
           path.join(
@@ -632,13 +602,14 @@ describe('with explicit DATs', () => {
             'H',
             'Hardware Target Game Database',
             'Patchable',
-            'C01173E.rom',
+            'modify.rom',
           ),
-          'dfaebe28',
+          'aabfe90e',
         ],
-        [path.join('igir combined', 'K', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('igir combined', 'L', 'large.rom'), '58263663'],
         [path.join('igir combined', 'L', 'LCDTestROM.lnx'), '2d251538'],
         [`${path.join('igir combined', 'L', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+        [path.join('igir combined', 'M', 'modify.rom'), 'aabfe90e'],
         [path.join('igir combined', 'O', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('igir combined', 'O', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [
@@ -651,6 +622,7 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
         [path.join('igir combined', 'P', 'Padded 0x00.3ds'), 'e964a5b3'],
         [path.join('igir combined', 'P', 'Padded 0xFF.3ds'), 'e964a5b3'],
+        [path.join('igir combined', 'S', 'shrink.rom'), '52249184'],
         [path.join('igir combined', 'S', 'speed_test_v51.smc'), '9adca6cc'],
         [`${path.join('igir combined', 'T', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
         [`${path.join('igir combined', 'T', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
@@ -689,15 +661,10 @@ describe('with explicit DATs', () => {
         path.join('headered', 'speed_test_v51.smc'),
         'loremipsum.7z',
         path.join('nkit', 'GameCube-240pSuite-1.19.nkit.iso'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'before.rom'),
-        path.join('patchable', 'best.gz'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
+        path.join('patchable', 'shrink.gz'),
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
         path.join('rar', 'loremipsum.rar'),
@@ -889,15 +856,10 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
         [`${path.join('One', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
         [`${path.join('One', 'UMD.zip')}|UMD.iso`, 'e90f7cf5'],
-        [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
-        [`${path.join('Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
-        [`${path.join('Patchable', '612644F.zip')}|612644F.rom`, 'f7591b29'],
-        [`${path.join('Patchable', '65D1206.zip')}|65D1206.rom`, '20323455'],
-        [`${path.join('Patchable', '92C85C9.zip')}|92C85C9.rom`, '06692159'],
-        [`${path.join('Patchable', 'Before.zip')}|Before.rom`, '0361b321'],
-        [`${path.join('Patchable', 'Best.zip')}|Best.rom`, '1e3d78cf'],
-        [`${path.join('Patchable', 'C01173E.zip')}|C01173E.rom`, 'dfaebe28'],
-        [`${path.join('Patchable', 'KDULVQN.zip')}|KDULVQN.rom`, 'b1c303e4'],
+        [`${path.join('Patchable', 'grow.zip')}|grow.rom`, '1a4b9b3c'],
+        [`${path.join('Patchable', 'large.zip')}|large.rom`, '58263663'],
+        [`${path.join('Patchable', 'modify.zip')}|modify.rom`, 'aabfe90e'],
+        [`${path.join('Patchable', 'shrink.zip')}|shrink.rom`, '52249184'],
         [
           `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.zip')}|Fizzbuzz.nes`,
           '370517b5',
@@ -911,16 +873,16 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
         [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.zip')}|3708F2C.rom`,
-          '20891c9f',
+          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow.zip')}|grow.rom`,
+          '1a4b9b3c',
         ],
         [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.zip')}|65D1206.rom`,
-          '20323455',
+          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large.zip')}|large.rom`,
+          '58263663',
         ],
         [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.zip')}|C01173E.rom`,
-          'dfaebe28',
+          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify.zip')}|modify.rom`,
+          'aabfe90e',
         ],
       ]);
       expect(result.movedFiles).toHaveLength(0);
@@ -942,18 +904,6 @@ describe('with explicit DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         [
-          `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|3708F2C.rom`,
-          '20891c9f',
-        ],
-        [
-          `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|65D1206.rom`,
-          '20323455',
-        ],
-        [
-          `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|C01173E.rom`,
-          'dfaebe28',
-        ],
-        [
           `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Fizzbuzz.nes`,
           '370517b5',
         ],
@@ -961,9 +911,18 @@ describe('with explicit DATs', () => {
           `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Foobar.lnx`,
           'b22c9747',
         ],
+        [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|grow.rom`, '1a4b9b3c'],
+        [
+          `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|large.rom`,
+          '58263663',
+        ],
         [
           `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Lorem Ipsum.rom`,
           '70856527',
+        ],
+        [
+          `${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|modify.rom`,
+          'aabfe90e',
         ],
         ['Headered.zip|allpads.nes', '9180a163'],
         ['Headered.zip|color_test.nes', 'c9c1b7aa'],
@@ -999,15 +958,10 @@ describe('with explicit DATs', () => {
         ['One.zip|Three Four Five/Four.rom', '1cf3ca74'],
         ['One.zip|Three Four Five/Three.rom', 'ff46c5d8'],
         ['One.zip|UMD.iso', 'e90f7cf5'],
-        ['Patchable.zip|0F09A40.rom', '2f943e86'],
-        ['Patchable.zip|3708F2C.rom', '20891c9f'],
-        ['Patchable.zip|612644F.rom', 'f7591b29'],
-        ['Patchable.zip|65D1206.rom', '20323455'],
-        ['Patchable.zip|92C85C9.rom', '06692159'],
-        ['Patchable.zip|Before.rom', '0361b321'],
-        ['Patchable.zip|Best.rom', '1e3d78cf'],
-        ['Patchable.zip|C01173E.rom', 'dfaebe28'],
-        ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
+        ['Patchable.zip|grow.rom', '1a4b9b3c'],
+        ['Patchable.zip|large.rom', '58263663'],
+        ['Patchable.zip|modify.rom', 'aabfe90e'],
+        ['Patchable.zip|shrink.rom', '52249184'],
         [`${path.join('Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
         [`${path.join('Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
       ]);
@@ -1154,36 +1108,20 @@ describe('with explicit DATs', () => {
           'e90f7cf5',
         ],
         [
-          `${path.join('Patchable', '0F09A40.rom')} -> ${path.join('<input>', 'patchable', '0F09A40.rom')}`,
-          '2f943e86',
+          `${path.join('Patchable', 'grow.rom')} -> ${path.join('<input>', 'patchable', 'grow.rom')}`,
+          '1a4b9b3c',
         ],
         [
-          `${path.join('Patchable', '3708F2C.rom')} -> ${path.join('<input>', 'patchable', '3708F2C.rom')}`,
-          '20891c9f',
+          `${path.join('Patchable', 'large.rom')} -> ${path.join('<input>', 'patchable', 'large.rom')}`,
+          '58263663',
         ],
         [
-          `${path.join('Patchable', '612644F.rom')} -> ${path.join('<input>', 'patchable', '612644F.rom')}`,
-          'f7591b29',
+          `${path.join('Patchable', 'modify.rom')} -> ${path.join('<input>', 'patchable', 'modify.rom')}`,
+          'aabfe90e',
         ],
         [
-          `${path.join('Patchable', '65D1206.rom')} -> ${path.join('<input>', 'patchable', '65D1206.rom')}`,
-          '20323455',
-        ],
-        [
-          `${path.join('Patchable', '92C85C9.rom')} -> ${path.join('<input>', 'patchable', '92C85C9.rom')}`,
-          '06692159',
-        ],
-        [
-          `${path.join('Patchable', 'Before.rom')} -> ${path.join('<input>', 'patchable', 'before.rom')}`,
-          '0361b321',
-        ],
-        [
-          `${path.join('Patchable', 'C01173E.rom')} -> ${path.join('<input>', 'patchable', 'C01173E.rom')}`,
-          'dfaebe28',
-        ],
-        [
-          `${path.join('Patchable', 'KDULVQN.rom')} -> ${path.join('<input>', 'patchable', 'KDULVQN.rom')}`,
-          'b1c303e4',
+          `${path.join('Patchable', 'shrink.gz')}|shrink.rom -> ${path.join('<input>', 'patchable', 'shrink.gz')}|shrink.rom`,
+          '52249184',
         ],
         [
           `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'raw', 'fizzbuzz.nes')}`,
@@ -1198,16 +1136,16 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
         [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom')} -> ${path.join('<input>', 'patchable', '3708F2C.rom')}`,
-          '20891c9f',
+          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow.rom')} -> ${path.join('<input>', 'patchable', 'grow.rom')}`,
+          '1a4b9b3c',
         ],
         [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom')} -> ${path.join('<input>', 'patchable', '65D1206.rom')}`,
-          '20323455',
+          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large.rom')} -> ${path.join('<input>', 'patchable', 'large.rom')}`,
+          '58263663',
         ],
         [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom')} -> ${path.join('<input>', 'patchable', 'C01173E.rom')}`,
-          'dfaebe28',
+          `${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify.rom')} -> ${path.join('<input>', 'patchable', 'modify.rom')}`,
+          'aabfe90e',
         ],
       ]);
       expect(result.movedFiles).toHaveLength(0);
@@ -1274,25 +1212,55 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
         [path.join('One', 'UMD.iso'), 'e90f7cf5'],
-        [path.join('Patchable', '04C896D-GBA.rom'), 'b13eb478'],
-        [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
-        [path.join('Patchable', '3708F2C.rom'), '20891c9f'],
-        [path.join('Patchable', '4FE952A.rom'), '1fb4f81f'],
-        [path.join('Patchable', '612644F.rom'), 'f7591b29'],
-        [path.join('Patchable', '65D1206.rom'), '20323455'],
-        [path.join('Patchable', '92C85C9.rom'), '06692159'],
-        [path.join('Patchable', '949F2B7.rom'), '95284ab4'],
-        [path.join('Patchable', '9A71FA5.rom'), '922f5181'],
-        [path.join('Patchable', '9E66269.rom'), '8bb5cc63'],
-        [path.join('Patchable', 'After.rom'), '4c8e44d4'],
-        [path.join('Patchable', 'Before.rom'), '0361b321'],
-        [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
-        [path.join('Patchable', 'BSDiffed.rom'), 'b8dcf2b0'],
-        [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
-        [path.join('Patchable', 'DDSK3AN.rom'), 'e02c6dbb'],
-        [path.join('Patchable', 'DFF7872-N64-SIMPLE.rom'), 'caaaf550'],
-        [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
-        [path.join('Patchable', 'Worst.rom'), '6ff9ef96'],
+        [path.join('Patchable', 'grow-aps-gba.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-aps-n64.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-bps.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-bsdiff.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-dps.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-ebp.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-ips.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-ips32.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-ninja.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-ppf.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-ups.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow-vcdiff.rom'), '6ff2bf2a'],
+        [path.join('Patchable', 'grow.rom'), '1a4b9b3c'],
+        [path.join('Patchable', 'large-aps-gba.rom'), '4429a239'],
+        [path.join('Patchable', 'large-aps-n64.rom'), '4429a239'],
+        [path.join('Patchable', 'large-bps.rom'), '4429a239'],
+        [path.join('Patchable', 'large-bsdiff.rom'), '4429a239'],
+        [path.join('Patchable', 'large-dps.rom'), '4429a239'],
+        [path.join('Patchable', 'large-ebp.rom'), '4429a239'],
+        [path.join('Patchable', 'large-ips.rom'), '4429a239'],
+        [path.join('Patchable', 'large-ips32.rom'), '4429a239'],
+        [path.join('Patchable', 'large-ninja.rom'), '4429a239'],
+        [path.join('Patchable', 'large-ppf.rom'), '4429a239'],
+        [path.join('Patchable', 'large-ups.rom'), '4429a239'],
+        [path.join('Patchable', 'large-vcdiff.rom'), '4429a239'],
+        [path.join('Patchable', 'large.rom'), '58263663'],
+        [path.join('Patchable', 'modify-aps-gba.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-aps-n64.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-bps.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-bsdiff.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-dps.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-ebp.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-ips.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-ips32.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-ninja.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-ppf.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-ups.rom'), '700a409c'],
+        [path.join('Patchable', 'modify-vcdiff.rom'), '700a409c'],
+        [path.join('Patchable', 'modify.rom'), 'aabfe90e'],
+        [path.join('Patchable', 'shrink-aps-gba.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-aps-n64.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-bps.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-bsdiff.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-dps.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-ips.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-ninja.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-ups.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink-vcdiff.rom'), 'c1f21914'],
+        [path.join('Patchable', 'shrink.rom'), '52249184'],
         [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
         [
@@ -1300,30 +1268,170 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
         [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'),
-          '20891c9f',
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-aps-gba.rom'),
+          '6ff2bf2a',
         ],
         [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'),
-          '20323455',
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-aps-n64.rom'),
+          '6ff2bf2a',
         ],
         [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', '949F2B7.rom'),
-          '95284ab4',
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-bps.rom'),
+          '6ff2bf2a',
         ],
         [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', '9E66269.rom'),
-          '8bb5cc63',
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-bsdiff.rom'),
+          '6ff2bf2a',
         ],
         [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'),
-          'dfaebe28',
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-dps.rom'),
+          '6ff2bf2a',
         ],
         [
-          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'DFF7872-N64-SIMPLE.rom'),
-          'caaaf550',
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-ebp.rom'),
+          '6ff2bf2a',
         ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-ips.rom'),
+          '6ff2bf2a',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-ips32.rom'),
+          '6ff2bf2a',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-ninja.rom'),
+          '6ff2bf2a',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-ppf.rom'),
+          '6ff2bf2a',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-ups.rom'),
+          '6ff2bf2a',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow-vcdiff.rom'),
+          '6ff2bf2a',
+        ],
+        [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'grow.rom'), '1a4b9b3c'],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-aps-gba.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-aps-n64.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-bps.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-bsdiff.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-dps.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-ebp.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-ips.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-ips32.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-ninja.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-ppf.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-ups.rom'),
+          '4429a239',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large-vcdiff.rom'),
+          '4429a239',
+        ],
+        [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'large.rom'), '58263663'],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-aps-gba.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-aps-n64.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-bps.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-bsdiff.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-dps.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-ebp.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-ips.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-ips32.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-ninja.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-ppf.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-ups.rom'),
+          '700a409c',
+        ],
+        [
+          path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify-vcdiff.rom'),
+          '700a409c',
+        ],
+        [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'modify.rom'), 'aabfe90e'],
       ]);
+
+      const expectedSizes = new Map([
+        ['grow', 1536],
+        ['large', 262_144],
+        ['modify', 1024],
+        ['shrink', 768],
+      ]);
+      for (const [romName, expectedSize] of expectedSizes) {
+        const expectedOutputs = romName === 'shrink' ? 8 : 11;
+        const patchedOutputs = (
+          await FsUtil.walk(path.join(outputTemp, 'Patchable'), WalkMode.FILES)
+        ).filter((filePath) => path.basename(filePath).startsWith(`${romName}-`));
+        expect(patchedOutputs).toHaveLength(expectedOutputs);
+        for (const patchedOutput of patchedOutputs) {
+          await expect(FsUtil.size(patchedOutput)).resolves.toEqual(expectedSize);
+        }
+      }
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1381,7 +1489,8 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      expect(writtenFixdats).toHaveLength(3);
+      // The "Patchable" DAT has no fixdat, because every one of its ROMs exists
+      expect(writtenFixdats).toHaveLength(2);
 
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:
       //  diagnostic_test_cartridge.a78
@@ -1402,10 +1511,6 @@ describe('with explicit DATs', () => {
       //  UMD
       //  GameCube-240pSuite-1.19
       expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
-
-      // The "Patchable" DAT should have missing ROMs because some ROMs are only found in archives:
-      //  Best.rom
-      expect(writtenFixdats[2]).toMatch(/^Patchable fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1530,15 +1635,10 @@ describe('with explicit DATs', () => {
         [path.join('OnePlatform', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('OnePlatform', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
         [path.join('OnePlatform', 'UMD.iso'), 'e90f7cf5'],
-        [path.join('PatchPlatform', '0F09A40.rom'), '2f943e86'],
-        [path.join('PatchPlatform', '3708F2C.rom'), '20891c9f'],
-        [path.join('PatchPlatform', '612644F.rom'), 'f7591b29'],
-        [path.join('PatchPlatform', '65D1206.rom'), '20323455'],
-        [path.join('PatchPlatform', '92C85C9.rom'), '06692159'],
-        [path.join('PatchPlatform', 'Before.rom'), '0361b321'],
-        [path.join('PatchPlatform', 'Best.rom'), '1e3d78cf'],
-        [path.join('PatchPlatform', 'C01173E.rom'), 'dfaebe28'],
-        [path.join('PatchPlatform', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('PatchPlatform', 'grow.rom'), '1a4b9b3c'],
+        [path.join('PatchPlatform', 'large.rom'), '58263663'],
+        [path.join('PatchPlatform', 'modify.rom'), 'aabfe90e'],
+        [path.join('PatchPlatform', 'shrink.rom'), '52249184'],
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1657,7 +1757,6 @@ describe('with inferred DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         [`${path.join('#', '2048', '2048.chd')}|2048`, 'd774f042'], // raw
         [`${path.join('#', '4096', '4096.chd')}|4096`, '2e19ca09'], // raw
-        [`${path.join('B', 'best.gz')}|best.rom`, '1e3d78cf'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM`, 'xxxxxxxx'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'],
@@ -1703,14 +1802,9 @@ describe('with inferred DATs', () => {
         [path.join('O', 'onetwothree', '1', 'one.rom'), 'f817a89f'],
         [path.join('O', 'onetwothree', '2', 'two.rom'), '96170874'],
         [path.join('O', 'onetwothree', '3', 'three.rom'), 'ff46c5d8'],
-        [path.join('P', 'patchable', '0F09A40.rom'), '2f943e86'],
-        [path.join('P', 'patchable', '3708F2C.rom'), '20891c9f'],
-        [path.join('P', 'patchable', '612644F.rom'), 'f7591b29'],
-        [path.join('P', 'patchable', '65D1206.rom'), '20323455'],
-        [path.join('P', 'patchable', '92C85C9.rom'), '06692159'],
-        [path.join('P', 'patchable', 'before.rom'), '0361b321'],
-        [path.join('P', 'patchable', 'C01173E.rom'), 'dfaebe28'],
-        [path.join('P', 'patchable', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('P', 'patchable', 'grow.rom'), '1a4b9b3c'],
+        [path.join('P', 'patchable', 'large.rom'), '58263663'],
+        [path.join('P', 'patchable', 'modify.rom'), 'aabfe90e'],
         [path.join('R', 'raw', 'empty.rom'), '00000000'],
         [path.join('R', 'raw', 'five.rom'), '3e5daf67'],
         [path.join('R', 'raw', 'fizzbuzz.nes'), '370517b5'],
@@ -1722,6 +1816,7 @@ describe('with inferred DATs', () => {
         [path.join('R', 'raw', 'trimmed.3ds'), 'e964a5b3'],
         [path.join('R', 'raw', 'two.rom'), '96170874'],
         [path.join('R', 'raw', 'unknown.rom'), '377a7727'],
+        [`${path.join('S', 'shrink.gz')}|shrink.rom`, '52249184'],
         [`${path.join('S', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
         [path.join('T', 'three.rom'), 'ff46c5d8'],
         [path.join('T', 'two.rom'), '96170874'],
@@ -1771,7 +1866,6 @@ describe('with inferred DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         [`${path.join('2048', '2048.chd')}|2048`, 'd774f042'], // <disk> raw
         [`${path.join('4096', '4096.chd')}|4096`, '2e19ca09'], // <disk> raw
-        ['best.rom', '1e3d78cf'],
         [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM`, 'xxxxxxxx'], // <disk> raw
         [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'], // <disk> CD-ROM
         [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'], // <disk> CD-ROM
@@ -1806,14 +1900,9 @@ describe('with inferred DATs', () => {
         [path.join('onetwothree', '1', 'one.rom'), 'f817a89f'],
         [path.join('onetwothree', '2', 'two.rom'), '96170874'],
         [path.join('onetwothree', '3', 'three.rom'), 'ff46c5d8'],
-        [path.join('patchable', '0F09A40.rom'), '2f943e86'],
-        [path.join('patchable', '3708F2C.rom'), '20891c9f'],
-        [path.join('patchable', '612644F.rom'), 'f7591b29'],
-        [path.join('patchable', '65D1206.rom'), '20323455'],
-        [path.join('patchable', '92C85C9.rom'), '06692159'],
-        [path.join('patchable', 'before.rom'), '0361b321'],
-        [path.join('patchable', 'C01173E.rom'), 'dfaebe28'],
-        [path.join('patchable', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('patchable', 'grow.rom'), '1a4b9b3c'],
+        [path.join('patchable', 'large.rom'), '58263663'],
+        [path.join('patchable', 'modify.rom'), 'aabfe90e'],
         [path.join('raw', 'empty.rom'), '00000000'],
         [path.join('raw', 'five.rom'), '3e5daf67'],
         [path.join('raw', 'fizzbuzz.nes'), '370517b5'],
@@ -1825,6 +1914,7 @@ describe('with inferred DATs', () => {
         [path.join('raw', 'trimmed.3ds'), 'e964a5b3'],
         [path.join('raw', 'two.rom'), '96170874'],
         [path.join('raw', 'unknown.rom'), '377a7727'],
+        ['shrink.rom', '52249184'],
         ['speed_test_v51.sfc', '8beffd94'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
@@ -1875,15 +1965,10 @@ describe('with inferred DATs', () => {
         'invalid.zip',
         'loremipsum.7z',
         path.join('nkit', 'GameCube-240pSuite-1.19.nkit.iso'),
-        path.join('patchable', '0F09A40.rom'),
-        path.join('patchable', '3708F2C.rom'),
-        path.join('patchable', '612644F.rom'),
-        path.join('patchable', '65D1206.rom'),
-        path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'before.rom'),
-        path.join('patchable', 'best.gz'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
+        path.join('patchable', 'grow.rom'),
+        path.join('patchable', 'large.rom'),
+        path.join('patchable', 'modify.rom'),
+        path.join('patchable', 'shrink.gz'),
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
         path.join('rar', 'invalid.rar'),
@@ -1938,7 +2023,6 @@ describe('with inferred DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         [`${path.join('2048', '2048.chd')}|2048`, 'd774f042'], // <disk> raw
         [`${path.join('4096', '4096.chd')}|4096`, '2e19ca09'], // <disk> raw
-        ['best.zip|best.rom', '1e3d78cf'],
         ['CD-ROM.zip|CD-ROM (Track 1).bin', '49ca35fb'],
         ['CD-ROM.zip|CD-ROM (Track 2).bin', '0316f720'],
         ['CD-ROM.zip|CD-ROM (Track 3).bin', 'a320af40'],
@@ -1980,14 +2064,9 @@ describe('with inferred DATs', () => {
         ['onetwothree.zip|1/one.rom', 'f817a89f'],
         ['onetwothree.zip|2/two.rom', '96170874'],
         ['onetwothree.zip|3/three.rom', 'ff46c5d8'],
-        ['patchable.zip|0F09A40.rom', '2f943e86'],
-        ['patchable.zip|3708F2C.rom', '20891c9f'],
-        ['patchable.zip|612644F.rom', 'f7591b29'],
-        ['patchable.zip|65D1206.rom', '20323455'],
-        ['patchable.zip|92C85C9.rom', '06692159'],
-        ['patchable.zip|before.rom', '0361b321'],
-        ['patchable.zip|C01173E.rom', 'dfaebe28'],
-        ['patchable.zip|KDULVQN.rom', 'b1c303e4'],
+        ['patchable.zip|grow.rom', '1a4b9b3c'],
+        ['patchable.zip|large.rom', '58263663'],
+        ['patchable.zip|modify.rom', 'aabfe90e'],
         ['raw.zip|empty.rom', '00000000'],
         ['raw.zip|five.rom', '3e5daf67'],
         ['raw.zip|fizzbuzz.nes', '370517b5'],
@@ -1999,6 +2078,7 @@ describe('with inferred DATs', () => {
         ['raw.zip|trimmed.3ds', 'e964a5b3'],
         ['raw.zip|two.rom', '96170874'],
         ['raw.zip|unknown.rom', '377a7727'],
+        ['shrink.zip|shrink.rom', '52249184'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],
         ['UMD.zip|UMD.iso', 'e90f7cf5'],
@@ -2032,10 +2112,6 @@ describe('with inferred DATs', () => {
           `${path.join('4096', '4096.chd')}|4096 -> ${path.join('..', '..', 'input', 'roms', 'chd', '4096.chd')}|4096`,
           '2e19ca09',
         ], // raw
-        [
-          `best.gz|best.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'best.gz')}|best.rom`,
-          '1e3d78cf',
-        ],
         [
           `CD-ROM.chd|CD-ROM -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM`,
           'xxxxxxxx',
@@ -2182,36 +2258,16 @@ describe('with inferred DATs', () => {
           'ff46c5d8',
         ],
         [
-          `${path.join('patchable', '0F09A40.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', '0F09A40.rom')}`,
-          '2f943e86',
+          `${path.join('patchable', 'grow.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', 'grow.rom')}`,
+          '1a4b9b3c',
         ],
         [
-          `${path.join('patchable', '3708F2C.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', '3708F2C.rom')}`,
-          '20891c9f',
+          `${path.join('patchable', 'large.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', 'large.rom')}`,
+          '58263663',
         ],
         [
-          `${path.join('patchable', '612644F.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', '612644F.rom')}`,
-          'f7591b29',
-        ],
-        [
-          `${path.join('patchable', '65D1206.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', '65D1206.rom')}`,
-          '20323455',
-        ],
-        [
-          `${path.join('patchable', '92C85C9.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', '92C85C9.rom')}`,
-          '06692159',
-        ],
-        [
-          `${path.join('patchable', 'before.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', 'before.rom')}`,
-          '0361b321',
-        ],
-        [
-          `${path.join('patchable', 'C01173E.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', 'C01173E.rom')}`,
-          'dfaebe28',
-        ],
-        [
-          `${path.join('patchable', 'KDULVQN.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', 'KDULVQN.rom')}`,
-          'b1c303e4',
+          `${path.join('patchable', 'modify.rom')} -> ${path.join('..', '..', 'input', 'roms', 'patchable', 'modify.rom')}`,
+          'aabfe90e',
         ],
         [
           `${path.join('raw', 'empty.rom')} -> ${path.join('..', '..', 'input', 'roms', 'empty.rom')}`,
@@ -2256,6 +2312,10 @@ describe('with inferred DATs', () => {
         [
           `${path.join('raw', 'unknown.rom')} -> ${path.join('..', '..', 'input', 'roms', 'raw', 'unknown.rom')}`,
           '377a7727',
+        ],
+        [
+          `shrink.gz|shrink.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'shrink.gz')}|shrink.rom`,
+          '52249184',
         ],
         [
           `speed_test_v51.sfc.gz|speed_test_v51.sfc -> ${path.join('..', 'input', 'roms', 'headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`,
@@ -2368,7 +2428,6 @@ describe('with inferred DATs', () => {
       expect(roms).toEqual([
         ['2048', []],
         ['4096', []],
-        ['best', ['best.rom']],
         ['CD-ROM', []],
         [
           'CD-ROM',
@@ -2392,19 +2451,7 @@ describe('with inferred DATs', () => {
         ['loremipsum', ['loremipsum.rom']],
         ['one', ['one.rom']],
         ['onetwothree', ['1/one.rom', '2/two.rom', '3/three.rom']],
-        [
-          'patchable',
-          [
-            '0F09A40.rom',
-            '3708F2C.rom',
-            '612644F.rom',
-            '65D1206.rom',
-            '92C85C9.rom',
-            'before.rom',
-            'C01173E.rom',
-            'KDULVQN.rom',
-          ],
-        ],
+        ['patchable', ['grow.rom', 'large.rom', 'modify.rom']],
         [
           'raw',
           [
@@ -2421,6 +2468,7 @@ describe('with inferred DATs', () => {
             'unknown.rom',
           ],
         ],
+        ['shrink', ['shrink.rom']],
         ['speed_test_v51.sfc', ['speed_test_v51.sfc']],
         ['three', ['three.rom']],
         ['two', ['two.rom']],

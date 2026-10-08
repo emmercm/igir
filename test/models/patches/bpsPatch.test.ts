@@ -1,141 +1,58 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
-import Temp from '../../../src/globals/temp.js';
-import File from '../../../src/models/files/file.js';
 import BPSPatch from '../../../src/models/patches/bpsPatch.js';
-import bufferUtil from '../../../src/utils/bufferUtil.js';
-import FsUtil from '../../../src/utils/fsUtil.js';
+import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
 
-async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
-  await FsUtil.mkdir(path.dirname(temp), { recursive: true });
-  await FsUtil.writeFile(temp, contents);
-  return await File.fileOf({ filePath: temp });
-}
+const patchFrom = BPSPatch.patchFrom.bind(BPSPatch);
 
-describe('constructor', () => {
-  test.each([Buffer.from(''), Buffer.from('  '), Buffer.from('foobar')])(
-    'should throw on bad patch: %s',
-    async (patchContents) => {
-      const patchFile = await writeTemp('patch.bps', patchContents);
-      await expect(BPSPatch.patchFrom(patchFile)).rejects.toThrow();
-    },
-  );
+describe('patchFrom', () => {
+  test.each([
+    [
+      'target copy',
+      '42505331908a8085abcd9780878988e2cecea1f53268f3729e39',
+      { crcBefore: 'cecee288', crcAfter: '6832f5a1', sizeAfter: 10 },
+    ],
+    [
+      'read/copy',
+      '425053319090808c8daabbccdd8e988ea188e2cece000e9b445fbf2429',
+      { crcBefore: 'cecee288', crcAfter: '449b0e00', sizeAfter: 16 },
+    ],
+  ])('should parse: %s', async (_name, patchHex, expected) => {
+    await expect(parsePatch(patchFrom, 'patch.bps', patchHex)).resolves.toEqual(expected);
+  });
 
   test.each([
     [
-      Buffer.from('425053318484808962617280a865327ee9b3a2042222711f', 'hex'),
-      '7e3265a8',
-      '04a2b3e9',
-    ], // foo\n -> bar\n
-    [
-      Buffer.from('425053318686808d697073758436133a6ac346dd7cfacd6672', 'hex'),
-      '6a3a1336',
-      '7cdd46c3',
-    ], // lorem\n -> ipsum\n
-  ])(
-    'should find the CRC in the patch: %s',
-    async (patchContents, expectedCrcBefore, expectedCrcAfter) => {
-      const patchFile = await writeTemp('patch.bps', patchContents);
-      const patch = await BPSPatch.patchFrom(patchFile);
-      expect(patch.getCrcBefore()).toEqual(expectedCrcBefore);
-      expect(patch.getCrcAfter()).toEqual(expectedCrcAfter);
-    },
-  );
+      'contents crc mismatch',
+      '42505331908a8085abcd9780878988e2cecea1f53268f3729e38',
+      /BPS patch is invalid, CRC of contents \(399e72f3\) doesn't match expected \(389e72f3\)/,
+    ],
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(parsePatch(patchFrom, 'patch.bps', patchHex)).rejects.toThrow(expectedError);
+  });
 });
 
 describe('createPatchedFile', () => {
-  test('should throw on invalid patch contents CRC32', async () => {
-    // Valid BPS patch with the last byte (stored CRC) corrupted so the CRC check in patchFrom fails
-    const validPatch = Buffer.from('425053318484808962617280a865327ee9b3a2042222711f', 'hex');
-    const corruptedPatch = Buffer.from(validPatch);
-    corruptedPatch[corruptedPatch.length - 1] ^= 0xff;
-
-    const patchFile = await writeTemp('patch.bps', corruptedPatch);
-
-    try {
-      await expect(BPSPatch.patchFrom(patchFile)).rejects.toThrow(/CRC/i);
-    } finally {
-      await FsUtil.rm(patchFile.getFilePath());
-    }
-  });
-
-  test('should throw on invalid patch header', async () => {
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch.bps', Buffer.from('not a valid bps patch'));
-
-    try {
-      await expect(
-        BPSPatch.patchFrom(patchFile).then(async (patch) => {
-          await patch.createPatchedFile(inputRom, outputRom);
-        }),
-      ).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
-  });
-
-  test('should throw on invalid ROM size', async () => {
-    // Valid BPS patch for 5-byte source ROM 'AAAAA' -> 'ABCDAAAAAA'
-    const validPatch = Buffer.from(
-      '42505331858a808d41424344928081410951f819d0c41e6e3b7546b5',
-      'hex',
+  test.each([
+    // SOURCE_READ, TARGET_READ, and SOURCE_COPY with a negative relative offset
+    [
+      'read/copy',
+      '425053319090808c8daabbccdd8e988ea188e2cece000e9b445fbf2429',
+      '00010203aabbccdd0c0d0e0f00010203',
+    ],
+    // TARGET_COPY overlapping its own output
+    ['target copy', '42505331908a8085abcd9780878988e2cecea1f53268f3729e39', 'abcd'.repeat(5)],
+    ['metadata', '42505331909083616263bc88e2cece88e2cece3485242e', INPUT16],
+  ])('should apply: %s', async (_name, patchHex, expectedHex) => {
+    await expect(applyPatch(patchFrom, 'patch.bps', patchHex, INPUT16)).resolves.toEqual(
+      Buffer.from(expectedHex, 'hex'),
     );
-    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA'); // 10 bytes, but patch expects 5
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch.bps', validPatch);
-
-    try {
-      const patch = await BPSPatch.patchFrom(patchFile);
-      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom, { force: true });
-      await FsUtil.rm(patchFile.getFilePath());
-    }
   });
 
   test.each([
-    [
-      'AAAAA',
-      Buffer.from('42505331858a808d41424344928081410951f819d0c41e6e3b7546b5', 'hex'),
-      'ABCDAAAAAA',
-    ],
-    [
-      'AAAAAAAAAA',
-      Buffer.from('425053318a8a808d4142434494cfd08e47d0c41e6ef0540044', 'hex'),
-      'ABCDAAAAAA',
-    ],
-    [
-      'AAAAAAAAAA',
-      Buffer.from('425053318a8a80a54142434445464748494acfd08e47056d1e3225e07029', 'hex'),
-      'ABCDEFGHIJ',
-    ],
-    [
-      'AAAAAAAAAAAAAAAAAAAA',
-      Buffer.from('4250533194948095414243444546a48d45454545c518201d686456eb69a20342', 'hex'),
-      'ABCDEFAAAAAAAAAAEEEE',
-    ],
-  ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await FsUtil.mktemp('ROM');
-    const patchFile = await writeTemp('patch.bps', patchContents);
-
-    try {
-      const patch = await BPSPatch.patchFrom(patchFile);
-      await patch.createPatchedFile(inputRom, outputRom);
-      const actualContents = (
-        await bufferUtil.fromReadable(fs.createReadStream(outputRom))
-      ).toString();
-      expect(actualContents).toEqual(expectedContents);
-    } finally {
-      await FsUtil.rm(inputRom.getFilePath());
-      await FsUtil.rm(outputRom);
-      await FsUtil.rm(patchFile.getFilePath());
-    }
+    ['wrong size', '425053318888809c9f68aa889f68aa88e28ab048', /BPS patch expected ROM size of 8B/],
+    ['bad header', '42505332909080bc88e2cece88e2cece5e0c26c8', /BPS patch header is invalid/],
+  ])('should throw on %s', async (_name, patchHex, expectedError) => {
+    await expect(applyPatch(patchFrom, 'patch.bps', patchHex, INPUT16)).rejects.toThrow(
+      expectedError,
+    );
   });
 });

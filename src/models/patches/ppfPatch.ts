@@ -132,7 +132,8 @@ export default class PPFPatch extends Patch {
       return;
     }
     if (peek === '@BEGIN_FILE_ID.DIZ') {
-      // TODO(cemmer): handle?
+      // FILE_ID.DIZ is always last; skip it
+      patchFile.seek(patchFile.getSize());
       return;
     }
 

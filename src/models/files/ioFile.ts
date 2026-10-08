@@ -14,7 +14,7 @@ export default class IOFile {
 
   private readonly fileMode: fs.Mode;
 
-  private readonly size: number;
+  private size: number;
 
   private tempBuffer?: Buffer;
 
@@ -133,6 +133,11 @@ export default class IOFile {
     return result;
   }
 
+  private async loadFileBuffer(): Promise<Buffer> {
+    this.fileBuffer ??= await this.fileHandle.readFile();
+    return this.fileBuffer;
+  }
+
   /**
    * @returns bytes of size {@link size} at the seek position {@link offset}
    */
@@ -140,10 +145,12 @@ export default class IOFile {
     // If the file is small, read the entire file to memory and "read" from there
     if (this.fileBuffer !== undefined || this.size <= Defaults.MAX_MEMORY_FILE_SIZE) {
       // Read into the file buffer (if we haven't already)
-      this.fileBuffer ??= await this.fileHandle.readFile();
+      const fileBuffer = await this.loadFileBuffer();
 
-      // Read from the file buffer
-      return Buffer.from(this.fileBuffer.subarray(position, position + size));
+      // Read from the file buffer, which may have been allocated past the end of the file
+      return Buffer.from(
+        fileBuffer.subarray(position, Math.max(position, Math.min(position + size, this.size))),
+      );
     }
 
     if (this.tempBuffer === undefined || size > this.tempBuffer.length) {
@@ -182,7 +189,7 @@ export default class IOFile {
       /w|a|r\+/.test(this.fileMode.toString())
     ) {
       // Read into the file buffer (if we haven't already)
-      this.fileBuffer ??= await this.fileHandle.readFile();
+      this.fileBuffer = await this.loadFileBuffer();
 
       // Expand the file buffer if we're writing past its size
       if (position + buffer.length > this.fileBuffer.length) {
@@ -202,6 +209,7 @@ export default class IOFile {
 
       // Write to the file buffer
       const bytesWritten = buffer.copy(this.fileBuffer, position);
+      this.size = Math.max(this.size, position + bytesWritten);
       this.wroteToMemory = true;
 
       // Yield to the event loop so progress bars can redraw
@@ -213,7 +221,27 @@ export default class IOFile {
     }
 
     const { bytesWritten } = await this.fileHandle.write(buffer, 0, buffer.length, position);
+    this.size = Math.max(this.size, position + bytesWritten);
     return bytesWritten;
+  }
+
+  /**
+   * Truncate or zero-extend the file to {@link size} bytes.
+   */
+  async truncate(size: number): Promise<void> {
+    if (this.fileBuffer !== undefined) {
+      if (size > this.fileBuffer.length) {
+        this.fileBuffer = Buffer.concat([
+          this.fileBuffer,
+          Buffer.alloc(size - this.fileBuffer.length),
+        ]);
+      } else {
+        // Drop the bytes past the new end, so growing the file later can't expose them
+        this.fileBuffer = this.fileBuffer.subarray(0, size);
+      }
+    }
+    await this.fileHandle.truncate(size);
+    this.size = size;
   }
 
   /**
@@ -222,7 +250,7 @@ export default class IOFile {
   async close(): Promise<void> {
     if (this.fileBuffer !== undefined && this.wroteToMemory) {
       // We staged writes in memory, we need to rewrite the entire file
-      await this.fileHandle.write(this.fileBuffer, 0, this.fileBuffer.length, 0);
+      await this.fileHandle.write(this.fileBuffer, 0, this.size, 0);
     }
 
     await this.fileHandle.close();

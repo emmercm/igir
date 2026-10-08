@@ -161,6 +161,8 @@ export default class NinjaPatch extends Patch {
     }
     if (modifiedFileSize > sourceFileSize) {
       await targetFile.writeAt(overflow, targetFile.getSize());
+    } else {
+      await targetFile.truncate(modifiedFileSize);
     }
   }
 

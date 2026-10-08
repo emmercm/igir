@@ -1,7 +1,7 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import IgirException from '../../../exceptions/igirException.js';
-import IOFile from '../../../models/files/ioFile.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -49,10 +49,16 @@ export default class NkitIso extends Archive {
   }
 
   async getArchiveEntries(): Promise<ArchiveEntry<this>[]> {
-    const file = await IOFile.fileFrom(this.getFilePath(), 'r');
+    const file = await fs.promises.open(this.getFilePath(), 'r');
     try {
-      const crc32 = (await file.readAt(0x2_08, 0x4)).toString('hex');
-      const size = (await file.readAt(0x2_10, 0x4)).readUInt32BE();
+      // The original disc's CRC32 is at 0x208, and its size is at 0x210
+      const header = Buffer.alloc(0xc);
+      const { bytesRead } = await file.read(header, 0, header.length, 0x2_08);
+      if (bytesRead < header.length) {
+        throw new IgirException(`NKit ISO header is truncated: ${this.getFilePath()}`);
+      }
+      const crc32 = header.subarray(0, 0x4).toString('hex');
+      const size = header.readUInt32BE(0x8);
 
       const archiveEntry = await ArchiveEntry.entryOf({
         archive: this,
