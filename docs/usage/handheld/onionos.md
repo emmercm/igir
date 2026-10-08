@@ -85,3 +85,7 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
       --dir-letter \
       --no-bios
     ```
+
+!!! warning
+
+    MAME and FinalBurn Neo DATs will sort into their respective directories, but OnionOS's arcade emulators only support specific ROM set versions. Check the [OnionOS arcade docs](https://onionui.github.io/docs/emulators/arcade) for which DATs to use, otherwise games may not run. See the [Arcade docs](../arcade.md) for help with building a ROM set for a specific emulator version.

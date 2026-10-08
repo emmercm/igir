@@ -3,6 +3,43 @@
   "version": 1,
   "consoles": [
     {
+      "datNameRegex": "/\\bMAME\\b|\\bmame\\d/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "ARCADE",
+        "batocera": "mame",
+        "crossmix": "MAME",
+        "es": "mame",
+        "mister": "mame",
+        "miyoocfw": "MAME",
+        "onion": "ARCADE",
+        "retrodeck": "mame",
+        "rocknix": "mame"
+      }
+    },
+    {
+      "datNameRegex": "/FinalBurn ?Alpha|FB ?Alpha|\\bFBA\\b/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "FBA",
+        "es": "fba",
+        "retrodeck": "fba"
+      }
+    },
+    {
+      "datNameRegex": "/FinalBurn ?Neo|FB ?Neo|\\bFBNeo\\b/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "fbneo",
+        "crossmix": "FBNEO",
+        "es": "fbneo",
+        "onion": "FBNEO",
+        "retrodeck": "fbneo",
+        "rocknix": "fbneo",
+        "spruce": "FBNEO"
+      }
+    },
+    {
       "datNameRegex": "/Archimedes/i",
       "extensions": [],
       "tokens": {
@@ -12,7 +49,7 @@
       }
     },
     {
-      "datNameRegex": "/Atom/i",
+      "datNameRegex": "/\\bAtom\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "atom",
@@ -21,7 +58,7 @@
       }
     },
     {
-      "datNameRegex": "/CPC/i",
+      "datNameRegex": "/\\bCPC\\b/i",
       "extensions": [],
       "tokens": {
         "adam": "AMSTRAD",
@@ -38,7 +75,7 @@
       }
     },
     {
-      "datNameRegex": "/PCW/i",
+      "datNameRegex": "/\\bPCW\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "pcw",
@@ -55,7 +92,7 @@
       }
     },
     {
-      "datNameRegex": "/Apple.*IIe?/i",
+      "datNameRegex": "/Apple.*\\bIIe?\\b/i",
       "extensions": [".do", ".nib", ".po"],
       "tokens": {
         "batocera": "apple2",
@@ -66,7 +103,7 @@
       }
     },
     {
-      "datNameRegex": "/Apple.*IIGS/i",
+      "datNameRegex": "/Apple.*\\bIIGS\\b/i",
       "extensions": [".2mg"],
       "tokens": {
         "batocera": "apple2gs",
@@ -92,7 +129,7 @@
       }
     },
     {
-      "datNameRegex": "/800|8-bit Family/",
+      "datNameRegex": "/\\b800\\b|\\b8-bit Family\\b/",
       "extensions": [".atr", ".atx"],
       "tokens": {
         "batocera": "atari800",
@@ -107,7 +144,7 @@
       }
     },
     {
-      "datNameRegex": "/2600/",
+      "datNameRegex": "/\\b2600\\b/",
       "extensions": [
         ".a26",
         ".act",
@@ -140,7 +177,7 @@
       }
     },
     {
-      "datNameRegex": "/5200/",
+      "datNameRegex": "/\\b5200\\b/",
       "extensions": [".a52"],
       "tokens": {
         "adam": "A5200",
@@ -157,7 +194,7 @@
       }
     },
     {
-      "datNameRegex": "/7800/",
+      "datNameRegex": "/\\b7800\\b/",
       "extensions": [".a78"],
       "tokens": {
         "adam": "A7800",
@@ -187,7 +224,7 @@
       }
     },
     {
-      "datNameRegex": "/Jaguar CD/i",
+      "datNameRegex": "/Jaguar CD\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "jaguarcd",
@@ -217,7 +254,7 @@
       }
     },
     {
-      "datNameRegex": "/Atari.*\\bST/i",
+      "datNameRegex": "/Atari.*\\bST\\b/i",
       "extensions": [".msa", ".st", ".stx"],
       "tokens": {
         "batocera": "atarist",
@@ -243,7 +280,7 @@
       }
     },
     {
-      "datNameRegex": "/Super ?Vision 8000/i",
+      "datNameRegex": "/\\bSuper ?Vision 8000\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "sv8000",
@@ -252,7 +289,7 @@
       }
     },
     {
-      "datNameRegex": "/RX[ -]?78/i",
+      "datNameRegex": "/\\bRX[ -]?78\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "rx78",
@@ -311,7 +348,7 @@
       }
     },
     {
-      "datNameRegex": "/PV[ -]?1000/i",
+      "datNameRegex": "/\\bPV[ -]?1000\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "pv1000",
@@ -322,7 +359,7 @@
       }
     },
     {
-      "datNameRegex": "/PV[ -]?2000/i",
+      "datNameRegex": "/\\bPV[ -]?2000\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "pv2000",
@@ -372,7 +409,7 @@
       }
     },
     {
-      "datNameRegex": "/Commodore C?16/i",
+      "datNameRegex": "/Commodore C?16\\b/i",
       "extensions": [],
       "tokens": {
         "rocknix": "c16",
@@ -381,7 +418,7 @@
       }
     },
     {
-      "datNameRegex": "/Commodore C?64/i",
+      "datNameRegex": "/Commodore C?64\\b/i",
       "extensions": [".crt", ".d64", ".t64"],
       "tokens": {
         "adam": "C64",
@@ -398,7 +435,7 @@
       }
     },
     {
-      "datNameRegex": "/Commodore C?128/i",
+      "datNameRegex": "/Commodore C?128\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "c128",
@@ -408,7 +445,7 @@
       }
     },
     {
-      "datNameRegex": "/Plus.*4/i",
+      "datNameRegex": "/Plus.*\\b4\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "cplus4",
@@ -419,7 +456,7 @@
       }
     },
     {
-      "datNameRegex": "/VIC[ -]?20/i",
+      "datNameRegex": "/\\bVIC[ -]?20\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "c20",
@@ -510,14 +547,14 @@
       }
     },
     {
-      "datNameRegex": "/GP2X/i",
+      "datNameRegex": "/\\bGP2X\\b/i",
       "extensions": [],
       "tokens": {
         "romm": "gp2x"
       }
     },
     {
-      "datNameRegex": "/GP32/i",
+      "datNameRegex": "/\\bGP32\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "gp32",
@@ -552,7 +589,7 @@
       }
     },
     {
-      "datNameRegex": "/VC ?4000/i",
+      "datNameRegex": "/\\bVC ?4000\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "vc4000",
@@ -561,7 +598,7 @@
       }
     },
     {
-      "datNameRegex": "/Odyssey 2/i",
+      "datNameRegex": "/Odyssey 2\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "o2em",
@@ -593,7 +630,7 @@
       }
     },
     {
-      "datNameRegex": "/MSX/i",
+      "datNameRegex": "/\\bMSX\\b/i",
       "extensions": [".mx1"],
       "tokens": {
         "adam": "MSX",
@@ -610,7 +647,7 @@
       }
     },
     {
-      "datNameRegex": "/MSX2/i",
+      "datNameRegex": "/\\bMSX2\\b/i",
       "extensions": [".mx2"],
       "tokens": {
         "adam": "MSX",
@@ -626,7 +663,7 @@
       }
     },
     {
-      "datNameRegex": "/MSX2+/i",
+      "datNameRegex": "/\\bMSX2\\+/i",
       "extensions": [],
       "tokens": {
         "adam": "MSX",
@@ -640,7 +677,7 @@
       }
     },
     {
-      "datNameRegex": "/MSX TurboR/i",
+      "datNameRegex": "/\\bMSX TurboR\\b/i",
       "extensions": [],
       "tokens": {
         "adam": "MSX",
@@ -654,7 +691,7 @@
       }
     },
     {
-      "datNameRegex": "/Xbox/i",
+      "datNameRegex": "/\\bXbox\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "xbox",
@@ -665,7 +702,7 @@
       }
     },
     {
-      "datNameRegex": "/Xbox 360/i",
+      "datNameRegex": "/\\bXbox 360\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "xbox360",
@@ -674,7 +711,7 @@
       }
     },
     {
-      "datNameRegex": "/J2ME/i",
+      "datNameRegex": "/\\bJ2ME\\b/i",
       "extensions": [".jar"],
       "tokens": {
         "es": "j2me",
@@ -712,7 +749,7 @@
       }
     },
     {
-      "datNameRegex": "/PC Engine/i",
+      "datNameRegex": "/PC[ -]?Engine/i",
       "extensions": [".pce"],
       "tokens": {
         "adam": "PCE",
@@ -754,7 +791,7 @@
       }
     },
     {
-      "datNameRegex": "/PC Engine CD/i",
+      "datNameRegex": "/PC[ -]?Engine CD/i",
       "extensions": [],
       "tokens": {
         "adam": "PCECD",
@@ -792,7 +829,7 @@
       }
     },
     {
-      "datNameRegex": "/SuperGrafx/i",
+      "datNameRegex": "/Sup(er|r)?Grafx/i",
       "extensions": [".sgx"],
       "tokens": {
         "batocera": "supergrafx",
@@ -808,7 +845,7 @@
       }
     },
     {
-      "datNameRegex": "/PC[ -]?88(01)?/i",
+      "datNameRegex": "/\\bPC[ -]?88(01)?\\b/i",
       "extensions": [".d88"],
       "tokens": {
         "batocera": "pc88",
@@ -822,7 +859,7 @@
       }
     },
     {
-      "datNameRegex": "/PC-98/i",
+      "datNameRegex": "/\\bPC-98\\b/i",
       "extensions": [".d98"],
       "tokens": {
         "batocera": "pc98",
@@ -836,7 +873,7 @@
       }
     },
     {
-      "datNameRegex": "/PC-FX/i",
+      "datNameRegex": "/\\bPC-FX\\b/i",
       "extensions": [],
       "tokens": {
         "crossmix": "PCFX",
@@ -848,7 +885,7 @@
       }
     },
     {
-      "datNameRegex": "/TIC-80/i",
+      "datNameRegex": "/\\bTIC-80\\b/i",
       "extensions": [".tic"],
       "tokens": {
         "adam": "TIC80",
@@ -861,7 +898,7 @@
       }
     },
     {
-      "datNameRegex": "/FDS|(Famicom|Family) Computer Disk System/i",
+      "datNameRegex": "/\\bFDS\\b|(Famicom|Family) Computer Disk System/i",
       "extensions": [".fds"],
       "tokens": {
         "adam": "FDS",
@@ -909,7 +946,7 @@
       }
     },
     {
-      "datNameRegex": "/GB|Game ?Boy/i",
+      "datNameRegex": "/\\bGB\\b|Game ?Boy/i",
       "extensions": [".gb", ".sgb"],
       "tokens": {
         "adam": "GB",
@@ -930,7 +967,7 @@
       }
     },
     {
-      "datNameRegex": "/GBA|Game ?Boy Advance/i",
+      "datNameRegex": "/\\bGBA\\b|Game ?Boy Advance/i",
       "extensions": [".gba"],
       "tokens": {
         "adam": "GBA",
@@ -951,7 +988,7 @@
       }
     },
     {
-      "datNameRegex": "/GBC|Game ?Boy Color/i",
+      "datNameRegex": "/\\bGBC\\b|Game ?Boy Color/i",
       "extensions": [".gbc"],
       "tokens": {
         "adam": "GBC",
@@ -972,7 +1009,7 @@
       }
     },
     {
-      "datNameRegex": "/Nintendo 64|N64/i",
+      "datNameRegex": "/Nintendo 64\\b|\\bN64\\b/i",
       "extensions": [".d64", ".n64", ".v64", ".z64"],
       "tokens": {
         "batocera": "n64",
@@ -986,7 +1023,7 @@
       }
     },
     {
-      "datNameRegex": "/Nintendo 64DD|N64DD/i",
+      "datNameRegex": "/Nintendo 64DD\\b|\\bN64DD\\b/i",
       "extensions": [".ndd"],
       "tokens": {
         "batocera": "n64dd",
@@ -1193,7 +1230,7 @@
       }
     },
     {
-      "datNameRegex": "/Wii/i",
+      "datNameRegex": "/\\bWii/i",
       "extensions": [],
       "tokens": {
         "batocera": "wii",
@@ -1204,7 +1241,7 @@
       }
     },
     {
-      "datNameRegex": "/Wii ?U/i",
+      "datNameRegex": "/\\bWii ?U\\b/i",
       "extensions": [".rpx", ".wua", ".wud", ".wup", ".wux"],
       "tokens": {
         "batocera": "wiiu",
@@ -1215,7 +1252,7 @@
       }
     },
     {
-      "datNameRegex": "/3DO/i",
+      "datNameRegex": "/\\b3DO\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "3do",
@@ -1228,7 +1265,7 @@
       }
     },
     {
-      "datNameRegex": "/CD[ -]?i\\b/i",
+      "datNameRegex": "/\\bCD[ -]?i\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "cdi",
@@ -1254,7 +1291,7 @@
       }
     },
     {
-      "datNameRegex": "/Studio (2|II)/i",
+      "datNameRegex": "/Studio (2|II)\\b/i",
       "extensions": [],
       "tokens": {
         "pocket": "studio2",
@@ -1262,7 +1299,7 @@
       }
     },
     {
-      "datNameRegex": "/32X/i",
+      "datNameRegex": "/\\b32X\\b/i",
       "extensions": [".32x"],
       "tokens": {
         "adam": "32X",
@@ -1279,7 +1316,7 @@
       }
     },
     {
-      "datNameRegex": "/(Super|Mega Drive) 32X/i",
+      "datNameRegex": "/(Super|Mega ?Drive) 32X\\b/i",
       "extensions": [],
       "tokens": {
         "adam": "32X",
@@ -1387,7 +1424,7 @@
       }
     },
     {
-      "datNameRegex": "/Mega Drive/i",
+      "datNameRegex": "/Mega ?Drive/i",
       "extensions": [],
       "tokens": {
         "adam": "MD",
@@ -1443,7 +1480,7 @@
       }
     },
     {
-      "datNameRegex": "/SG[ -]?1000/i",
+      "datNameRegex": "/\\bSG[ -]?1000\\b/i",
       "extensions": [".sc", ".sg"],
       "tokens": {
         "adam": "SG1000",
@@ -1461,7 +1498,7 @@
       }
     },
     {
-      "datNameRegex": "/MZ/i",
+      "datNameRegex": "/\\bMZ\\b/i",
       "extensions": [],
       "tokens": {
         "mister": "SharpMZ",
@@ -1469,7 +1506,7 @@
       }
     },
     {
-      "datNameRegex": "/X1/i",
+      "datNameRegex": "/\\bX1\\b/i",
       "extensions": [".2d", ".2hd", ".dx1", ".tfd"],
       "tokens": {
         "batocera": "x1",
@@ -1482,7 +1519,7 @@
       }
     },
     {
-      "datNameRegex": "/X68000/i",
+      "datNameRegex": "/\\bX68000\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "x68000",
@@ -1497,7 +1534,7 @@
       }
     },
     {
-      "datNameRegex": "/ZX[ -]?80/i",
+      "datNameRegex": "/\\bZX[ -]?80\\b/i",
       "extensions": [],
       "tokens": {
         "mister": "ZX81",
@@ -1507,7 +1544,7 @@
       }
     },
     {
-      "datNameRegex": "/ZX[ -]?81/i",
+      "datNameRegex": "/\\bZX[ -]?81\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "zx81",
@@ -1520,7 +1557,7 @@
       }
     },
     {
-      "datNameRegex": "/ZX[ -]?Spectrum/i",
+      "datNameRegex": "/\\bZX[ -]?Spectrum\\b/i",
       "extensions": [".scl", ".szx", ".z80"],
       "tokens": {
         "adam": "ZX",
@@ -1605,7 +1642,7 @@
       }
     },
     {
-      "datNameRegex": "/PlayStation|psx/i",
+      "datNameRegex": "/PlayStation\\b|\\bpsx\\b/i",
       "extensions": [".minipsf", ".pbp", ".psexe", ".psf"],
       "tokens": {
         "adam": "PS",
@@ -1624,7 +1661,7 @@
       }
     },
     {
-      "datNameRegex": "/PlayStation 2|ps2/i",
+      "datNameRegex": "/PlayStation 2\\b|\\bps2\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "ps2",
@@ -1635,7 +1672,7 @@
       }
     },
     {
-      "datNameRegex": "/PlayStation 3|ps3/i",
+      "datNameRegex": "/PlayStation 3\\b|\\bps3\\b/i",
       "extensions": [".ps3", ".ps3dir"],
       "tokens": {
         "batocera": "ps3",
@@ -1646,7 +1683,7 @@
       }
     },
     {
-      "datNameRegex": "/PlayStation ?Portable|psp/i",
+      "datNameRegex": "/PlayStation ?Portable\\b|\\bpsp\\b/i",
       "extensions": [".cso"],
       "tokens": {
         "batocera": "psp",
@@ -1659,7 +1696,7 @@
       }
     },
     {
-      "datNameRegex": "/PlayStation ?Vita|psvita/i",
+      "datNameRegex": "/PlayStation ?Vita\\b|\\bpsvita\\b/i",
       "extensions": [".psvita"],
       "tokens": {
         "batocera": "psvita",
@@ -1670,12 +1707,12 @@
       }
     },
     {
-      "datNameRegex": "/PlayStation [4-9]|ps[4-9]/i",
+      "datNameRegex": "/PlayStation [4-9]\\b|\\bps[4-9]\\b/i",
       "extensions": [],
       "tokens": {}
     },
     {
-      "datNameRegex": "/Sord[ -]M(5|five)/i",
+      "datNameRegex": "/\\bSord[ -]+M(5|five)\\b/i",
       "extensions": [],
       "tokens": {
         "mister": "Sord M5",
@@ -1684,7 +1721,7 @@
       }
     },
     {
-      "datNameRegex": "/TI[ -]?99[ -]?4A/i",
+      "datNameRegex": "/\\bTI[ -]?99[ -]?4A\\b/i",
       "extensions": [".rpk"],
       "tokens": {
         "batocera": "ti99",
@@ -1695,7 +1732,7 @@
       }
     },
     {
-      "datNameRegex": "/Game.?com/i",
+      "datNameRegex": "/\\bGame.?com\\b/i",
       "extensions": [".tgc"],
       "tokens": {
         "batocera": "gamecom",
@@ -1712,7 +1749,7 @@
       }
     },
     {
-      "datNameRegex": "/NUON/i",
+      "datNameRegex": "/\\bNUON\\b/i",
       "extensions": [],
       "tokens": {
         "romm": "nuon"
@@ -1731,7 +1768,7 @@
       }
     },
     {
-      "datNameRegex": "/V\\.Smile/i",
+      "datNameRegex": "/\\bV\\.Smile\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "vsmile",
@@ -1741,7 +1778,7 @@
       }
     },
     {
-      "datNameRegex": "/Supervision/i",
+      "datNameRegex": "/\\bSupervision\\b/i",
       "extensions": [".sv"],
       "tokens": {
         "adam": "SUPERVISION",

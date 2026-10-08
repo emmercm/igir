@@ -55,10 +55,6 @@ The Adam image does not come with BIOS files. Where you have to put which of you
 
 Adam supports many different ROM formats in subfolders of `ROMS` on the second SD card (TF2). An exhaustive list can be found in [their wiki](https://github.com/eduardofilo/RG350_adam_image/tree/master/data/local/home/.simplemenu/section_groups), where you can also find information about which ROMS are supported in compressed form. Most supported systems and their ROMS can be automatically sorted by Igir using the `{adam}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-!!! tip
-
-      Please note that sorting the supported Arcade machine releases (MAME, CPS, FBA) in a single pass is not supported by Igir at this time. Try the [Arcade docs](../arcade.md) docs for help with this.
-
 === ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
@@ -97,3 +93,9 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
       --dir-letter \
       --no-bios
     ```
+
+!!! warning
+
+    MAME and FinealBurn Alpha DATs will sort into their respective directories, but Adam's arcade emulators only support specific ROM set versions. Check [Adam's wiki](https://github.com/eduardofilo/RG350_adam_image/wiki/En:-3.-Content-installation#mame) for which DATs to use, otherwise games may not run. See the [Arcade docs](../arcade.md) for help with building a ROM set for a specific emulator version.
+
+    CPS releases are not sorted into `ROMS/CPS` by Igir at this time.

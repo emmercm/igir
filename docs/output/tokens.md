@@ -143,6 +143,12 @@ ROMs-Sorted/
     └── Mario Paint (Japan, USA) (En).sfc
 ```
 
+!!! warning
+
+    Arcade emulators such as MAME, FinalBurn Neo, and FinalBurn Alpha each require ROM sets that exactly match their version (see the [arcade docs](../usage/arcade.md)). Igir will sort arcade DATs into a frontend's generically named folder (e.g. `mame`, `fbneo`, `fba`), but it can't know which emulator version that frontend uses. You are responsible for sourcing the DAT that matches your frontend's emulator version.
+
+    Igir will not sort arcade DATs into folders named for a specific emulator version (e.g. `MAME2003PLUS`, `FBA2012`).
+
 !!! note
 
     It is difficult to keep up with new popular frontends as they are created, and it is difficult to keep up with frontends that change their file structure often. If you notice that a value is wrong, please submit a [pull request](https://github.com/emmercm/igir/pulls)!
