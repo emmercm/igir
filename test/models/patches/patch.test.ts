@@ -1,3 +1,7 @@
+import path from 'node:path';
+
+import File from '../../../src/models/files/file.js';
+import BPSPatch from '../../../src/models/patches/bpsPatch.js';
 import IPSPatch from '../../../src/models/patches/ipsPatch.js';
 import UPSPatch from '../../../src/models/patches/upsPatch.js';
 import { withPatchFile } from './patchTestUtil.js';
@@ -57,5 +61,39 @@ describe('toString', () => {
         );
       },
     );
+  });
+});
+
+describe('hashCode', () => {
+  it('should include the type, the file, and what the patch targets', async () => {
+    await withPatchFile(
+      'patch.ups',
+      '55505331909082ffff0084a90088e2cecec2109b1e863d5c67',
+      async (file) => {
+        expect((await UPSPatch.patchFrom(file)).hashCode()).toEqual(
+          `UPSPatch|${file.hashCode()}|cecee288|1e9b10c2|16`,
+        );
+      },
+    );
+  });
+
+  it('should tell apart patches whose files only have the same CRC32 and size', async () => {
+    // BPS and UPS patches always have the same whole-file CRC32, and these are both 545 bytes
+    const growDir = path.join('test', 'fixtures', 'patches', 'grow');
+    const bpsFile = await File.fileOf({
+      filePath: path.join(growDir, 'grow-bps.bps'),
+      size: 545,
+      crc32: '2144df1c',
+    });
+    const upsFile = await File.fileOf({
+      filePath: path.join(growDir, 'grow-ups.ups'),
+      size: 545,
+      crc32: '2144df1c',
+    });
+    expect(bpsFile.hashCode()).toEqual(upsFile.hashCode());
+
+    const bpsPatch = await BPSPatch.patchFrom(bpsFile);
+    const upsPatch = await UPSPatch.patchFrom(upsFile);
+    expect(bpsPatch.hashCode()).not.toEqual(upsPatch.hashCode());
   });
 });

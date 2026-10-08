@@ -31,6 +31,14 @@ describe('createPatchedFile', () => {
       '0405060708090a0b0c0d0e0f04050607',
     ],
     ['copy from target', 'd6c3c40000000a1000020201abcd031e00', 'abcd'.repeat(8)],
+    // Addresses past the source segment are this window's own output
+    [
+      'copy from target with a source',
+      'd6c3c400000110000b1000000402130813080810',
+      '08090a0b0c0d0e0f08090a0b0c0d0e0f',
+    ],
+    ['run after add', 'd6c3c40000000c0600030400aabbcc01020004', 'aabbcccccccc'],
+    ['grow', 'd6c3c400000110000e1400040401aabbccdd1310010400', `${INPUT16}aabbccdd`],
     [
       'vcd_target',
       'd6c3c40000000e0800080100a0a1a2a3a4a5a6a7090208000708000001011800',

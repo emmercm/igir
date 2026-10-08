@@ -46,6 +46,20 @@ describe('createPatchedFile', () => {
     ],
     // Like Flips, a truncation size past the end doesn't extend the output
     ['truncate past the end', 'patch 00000000.ips', '5041544348454f46000014', INPUT16],
+    ['truncate to the same size', 'patch 00000000.ips', '5041544348454f46000010', INPUT16],
+    // Only exactly 3 bytes after "EOF" are a truncation size
+    [
+      '2 bytes after eof',
+      'patch 00000000.ips',
+      '50415443480000020002aabb454f460008',
+      '0001aabb0405060708090a0b0c0d0e0f',
+    ],
+    [
+      '4 bytes after eof',
+      'patch 00000000.ips',
+      '50415443480000020002aabb454f460000000c',
+      '0001aabb0405060708090a0b0c0d0e0f',
+    ],
     [
       'truncate a grown file',
       'patch 00000000.ips',
@@ -64,6 +78,13 @@ describe('createPatchedFile', () => {
       '4950533332000000020002aabb45454f46',
       '0001aabb0405060708090a0b0c0d0e0f',
     ],
+    // IPS32 has no truncation extension
+    [
+      'ips32 3 bytes after eof',
+      'patch 00000000.ips32',
+      '4950533332000000020002aabb45454f4600000c',
+      '0001aabb0405060708090a0b0c0d0e0f',
+    ],
     [
       'ips32 rle',
       'patch 00000000.ips32',
@@ -79,6 +100,12 @@ describe('createPatchedFile', () => {
     [
       'ebp 3-byte json',
       'patch 00000000.ebp',
+      '50415443480000020002aabb454f46226122',
+      '0001aabb0405060708090a0b0c0d0e0f',
+    ],
+    [
+      'ebp uppercase extension',
+      'patch 00000000.EBP',
       '50415443480000020002aabb454f46226122',
       '0001aabb0405060708090a0b0c0d0e0f',
     ],
