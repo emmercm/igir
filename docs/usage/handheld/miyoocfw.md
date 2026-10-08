@@ -65,3 +65,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
       --dir-letter \
       --no-bios
     ```
+
+!!! warning
+
+    MAME DATs will sort into `roms/MAME`, but MiyooCFW's MAME4All emulator only supports a specific MAME ROM set version. Check the [MiyooCFW wiki](https://github.com/TriForceX/MiyooCFW/wiki/MAME4All) for which DAT to use, otherwise games may not run. See the [Arcade docs](../arcade.md) for help with building a ROM set for a specific MAME version.
