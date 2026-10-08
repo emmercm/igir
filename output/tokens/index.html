@@ -981,6 +981,8 @@
       
         
       
+        
+      
     
     
     
@@ -1461,6 +1463,34 @@
     
   
     RetroDECK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/desktop/retronas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RetroNAS
   
 
     
@@ -3837,8 +3867,11 @@
 <h2 id="dat-information">DAT information</h2>
 <p>When using <a href="../../dats/introduction/">DATs</a>, you can make use of console &amp; game information contained in them:</p>
 <ul>
+<li><code>{datFileName}</code> the matching DAT's filename without its extension (e.g. <code>mame2003-plus</code> for <code>mame2003-plus.xml</code>), including when the DAT is inside an archive</li>
 <li><code>{datName}</code> the matching DAT's name, similar to how the <a href="../path-options/"><code>--dir-dat-name</code> option</a> works</li>
 <li><code>{datDescription}</code> the matching DAT's description, similar to how the <a href="../path-options/"><code>--dir-dat-description</code> option</a> works</li>
+<li><code>{datVersion}</code> the matching DAT's version, exactly as written in its header (most DATs provide this, MAME DATs don't)</li>
+<li><code>{datDate}</code> the matching DAT's date, exactly as written in its header (only some DATs provide this, MAME DATs don't)</li>
 <li><code>{region}</code> each of the game's region(s) (e.g. <code>USA</code>, <code>EUR</code>, <code>JPN</code>, <code>WORLD</code>)</li>
 <li><code>{language}</code> each of the game's language(s) (e.g. <code>EN</code>, <code>ES</code>, <code>JA</code>)</li>
 <li><code>{type}</code> the game's "type," one of: <code>Aftermarket</code>, <code>Alpha</code>, <code>Bad</code>, <code>Beta</code>, <code>BIOS</code>, <code>Cracked</code>, <code>Debug</code>, <code>Demo</code>, <code>Device</code>, <code>Fixed</code>, <code>Hacked</code>, <code>Homebrew</code>, <code>Overdump</code>, <code>Pending Dump</code>, <code>Pirated</code>, <code>Program</code>, <code>Prototype</code>, <code>Retail</code> (most games will be this), <code>Sample</code>, <code>Trained</code>, <code>Translated</code>, <code>Unlicensed</code></li>
@@ -3871,6 +3904,7 @@
 <li><code>{onion}</code> the <a href="../../usage/handheld/onionos/">OnionOS / GarlicOS</a> emulator's directory for the ROM</li>
 <li><code>{pocket}</code> the <a href="../../usage/hardware/analogue-pocket/">Analogue Pocket</a> core's directory for the ROM</li>
 <li><code>{retrodeck}</code> the <a href="../../usage/desktop/retrodeck/">RetroDECK</a> emulator's directory for the ROM</li>
+<li><code>{retronas}</code> the <a href="../../usage/desktop/retronas/">RetroNAS</a> system directory for the ROM</li>
 <li><code>{rocknix}</code> the <a href="../../usage/handheld/rocknix/">ROCKNIX</a> emulator's directory for the ROM</li>
 <li><code>{romm}</code> the <a href="../../usage/desktop/romm/">RomM</a> manager directory for the ROM</li>
 <li><code>{spruce}</code> the <a href="../../usage/handheld/spruceos/">SpruceOS</a> emulator's directory for the ROM</li>
@@ -3914,6 +3948,11 @@
 </span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    ├── F-Zero (USA).sfc
 </span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    └── Mario Paint (Japan, USA) (En).sfc
 </span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Arcade emulators such as MAME, FinalBurn Neo, and FinalBurn Alpha each require ROM sets that exactly match their version (see the <a href="../../usage/arcade/">arcade docs</a>). Igir will sort arcade DATs into a frontend's generically named folder (e.g. <code>mame</code>, <code>fbneo</code>, <code>fba</code>), but it can't know which emulator version that frontend uses. You are responsible for sourcing the DAT that matches your frontend's emulator version.</p>
+<p>Igir will not sort arcade DATs into folders named for a specific emulator version (e.g. <code>MAME2003PLUS</code>, <code>FBA2012</code>).</p>
+</div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>It is difficult to keep up with new popular frontends as they are created, and it is difficult to keep up with frontends that change their file structure often. If you notice that a value is wrong, please submit a <a href="https://github.com/emmercm/igir/pulls">pull request</a>!</p>
@@ -3968,7 +4007,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 03:15:00 UTC">May 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 8, 2026 01:13:19 UTC">October 8, 2026</span>
   </span>
 
     
