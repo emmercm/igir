@@ -94,15 +94,17 @@ export default class UPSPatch extends Patch {
     // TODO(cemmer): we don't actually need a temp file, we're not modifying the input
     await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
-
-      await FsUtil.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
-
       try {
-        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
-        await targetFile.truncate(targetSize);
+        await FsUtil.copyFile(tempRomFile, outputRomPath);
+        const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
+
+        try {
+          await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+          await targetFile.truncate(targetSize);
+        } finally {
+          await targetFile.close();
+        }
       } finally {
-        await targetFile.close();
         await sourceFile.close();
       }
     });

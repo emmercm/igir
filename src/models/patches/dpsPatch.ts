@@ -62,19 +62,21 @@ export default class DPSPatch extends Patch {
   ): Promise<void> {
     await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
-
-      // The output only contains what the records write, so size it to the furthest record's end
-      const recordsPosition = patchFile.getPosition();
-      const outputSize = await this.calculateOutputSize(patchFile);
-      patchFile.seek(recordsPosition);
-      const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', outputSize);
-
       try {
-        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
-        // Zero-fill any gap the records left at the end
-        await targetFile.truncate(outputSize);
+        // The output only contains what the records write, so size it to the furthest record's end
+        const recordsPosition = patchFile.getPosition();
+        const outputSize = await this.calculateOutputSize(patchFile);
+        patchFile.seek(recordsPosition);
+        const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', outputSize);
+
+        try {
+          await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+          // Zero-fill any gap the records left at the end
+          await targetFile.truncate(outputSize);
+        } finally {
+          await targetFile.close();
+        }
       } finally {
-        await targetFile.close();
         await sourceFile.close();
       }
     });
