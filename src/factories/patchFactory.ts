@@ -8,6 +8,7 @@ import DPSPatch from '../models/patches/dpsPatch.js';
 import IPSPatch from '../models/patches/ipsPatch.js';
 import NinjaPatch from '../models/patches/ninjaPatch.js';
 import type Patch from '../models/patches/patch.js';
+import PMSRPatch from '../models/patches/pmsrPatch.js';
 import PPFPatch from '../models/patches/ppfPatch.js';
 import UPSPatch from '../models/patches/upsPatch.js';
 import VcdiffPatch from '../models/patches/vcdiffPatch.js';
@@ -53,6 +54,11 @@ export default class PatchFactory {
       extensions: NinjaPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [NinjaPatch.FILE_SIGNATURE],
       factory: NinjaPatch.patchFrom.bind(NinjaPatch),
+    },
+    {
+      extensions: PMSRPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [PMSRPatch.FILE_SIGNATURE],
+      factory: PMSRPatch.patchFrom.bind(PMSRPatch),
     },
     {
       extensions: PPFPatch.SUPPORTED_EXTENSIONS,

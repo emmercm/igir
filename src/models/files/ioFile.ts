@@ -71,13 +71,16 @@ export default class IOFile {
     }
 
     const write = await this.fileFrom(pathLike, 'wx+', size);
-    let written = 0;
-    const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
-    while (written < size) {
-      const sizeToWrite = Math.min(size - written, buffer.length);
-      written += await write.write(buffer.subarray(0, sizeToWrite));
+    try {
+      let written = 0;
+      const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
+      while (written < size) {
+        const sizeToWrite = Math.min(size - written, buffer.length);
+        written += await write.write(buffer.subarray(0, sizeToWrite));
+      }
+    } finally {
+      await write.close();
     }
-    await write.close();
 
     return await this.fileFrom(pathLike, flags);
   }
@@ -248,11 +251,14 @@ export default class IOFile {
    * Close the underlying file handle
    */
   async close(): Promise<void> {
-    if (this.fileBuffer !== undefined && this.wroteToMemory) {
-      // We staged writes in memory, we need to rewrite the entire file
-      await this.fileHandle.write(this.fileBuffer, 0, this.size, 0);
+    try {
+      if (this.fileBuffer !== undefined && this.wroteToMemory) {
+        // We staged writes in memory, we need to rewrite the entire file
+        await this.fileHandle.write(this.fileBuffer, 0, this.size, 0);
+      }
+    } finally {
+      // Close the handle even if flushing the staged writes failed
+      await this.fileHandle.close();
     }
-
-    await this.fileHandle.close();
   }
 }

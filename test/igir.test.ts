@@ -259,6 +259,7 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', 'grow.rom'), '1a4b9b3c'],
         [path.join('Patchable', 'large.rom'), '58263663'],
         [path.join('Patchable', 'modify.rom'), 'aabfe90e'],
+        [`${path.join('Patchable', 'pmsr.zip')}|pmsr.rom`, 'a7f5cd7e'],
         [`${path.join('Patchable', 'shrink.gz')}|shrink.rom`, '52249184'],
         [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
@@ -440,6 +441,7 @@ describe('with explicit DATs', () => {
           '1e58456d',
         ],
         [`${path.join('zip', 'One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+        [`${path.join('zip', 'Patchable', 'pmsr.zip')}|pmsr.rom`, 'a7f5cd7e'],
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toEqual([
@@ -622,6 +624,7 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
         [path.join('igir combined', 'P', 'Padded 0x00.3ds'), 'e964a5b3'],
         [path.join('igir combined', 'P', 'Padded 0xFF.3ds'), 'e964a5b3'],
+        [path.join('igir combined', 'P', 'pmsr.rom'), 'a7f5cd7e'],
         [path.join('igir combined', 'S', 'shrink.rom'), '52249184'],
         [path.join('igir combined', 'S', 'speed_test_v51.smc'), '9adca6cc'],
         [`${path.join('igir combined', 'T', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
@@ -664,6 +667,7 @@ describe('with explicit DATs', () => {
         path.join('patchable', 'grow.rom'),
         path.join('patchable', 'large.rom'),
         path.join('patchable', 'modify.rom'),
+        path.join('patchable', 'pmsr.zip'),
         path.join('patchable', 'shrink.gz'),
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
@@ -859,6 +863,7 @@ describe('with explicit DATs', () => {
         [`${path.join('Patchable', 'grow.zip')}|grow.rom`, '1a4b9b3c'],
         [`${path.join('Patchable', 'large.zip')}|large.rom`, '58263663'],
         [`${path.join('Patchable', 'modify.zip')}|modify.rom`, 'aabfe90e'],
+        [`${path.join('Patchable', 'pmsr.zip')}|pmsr.rom`, 'a7f5cd7e'],
         [`${path.join('Patchable', 'shrink.zip')}|shrink.rom`, '52249184'],
         [
           `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.zip')}|Fizzbuzz.nes`,
@@ -961,6 +966,7 @@ describe('with explicit DATs', () => {
         ['Patchable.zip|grow.rom', '1a4b9b3c'],
         ['Patchable.zip|large.rom', '58263663'],
         ['Patchable.zip|modify.rom', 'aabfe90e'],
+        ['Patchable.zip|pmsr.rom', 'a7f5cd7e'],
         ['Patchable.zip|shrink.rom', '52249184'],
         [`${path.join('Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
         [`${path.join('Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
@@ -1120,6 +1126,10 @@ describe('with explicit DATs', () => {
           'aabfe90e',
         ],
         [
+          `${path.join('Patchable', 'pmsr.zip')}|pmsr.rom -> ${path.join('<input>', 'patchable', 'pmsr.zip')}|pmsr.rom`,
+          'a7f5cd7e',
+        ],
+        [
           `${path.join('Patchable', 'shrink.gz')}|shrink.rom -> ${path.join('<input>', 'patchable', 'shrink.gz')}|shrink.rom`,
           '52249184',
         ],
@@ -1251,6 +1261,9 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', 'modify-ups.rom'), '700a409c'],
         [path.join('Patchable', 'modify-vcdiff.rom'), '700a409c'],
         [path.join('Patchable', 'modify.rom'), 'aabfe90e'],
+        [path.join('Patchable', 'pmsr-pmsr-yay0.rom'), 'e849c9c6'],
+        [path.join('Patchable', 'pmsr-pmsr.rom'), 'e849c9c6'],
+        [path.join('Patchable', 'pmsr.rom'), 'a7f5cd7e'],
         [path.join('Patchable', 'shrink-aps-gba.rom'), 'c1f21914'],
         [path.join('Patchable', 'shrink-aps-n64.rom'), 'c1f21914'],
         [path.join('Patchable', 'shrink-bps.rom'), 'c1f21914'],
@@ -1638,6 +1651,7 @@ describe('with explicit DATs', () => {
         [path.join('PatchPlatform', 'grow.rom'), '1a4b9b3c'],
         [path.join('PatchPlatform', 'large.rom'), '58263663'],
         [path.join('PatchPlatform', 'modify.rom'), 'aabfe90e'],
+        [path.join('PatchPlatform', 'pmsr.rom'), 'a7f5cd7e'],
         [path.join('PatchPlatform', 'shrink.rom'), '52249184'],
       ]);
       expect(result.movedFiles).toHaveLength(0);
@@ -1805,6 +1819,7 @@ describe('with inferred DATs', () => {
         [path.join('P', 'patchable', 'grow.rom'), '1a4b9b3c'],
         [path.join('P', 'patchable', 'large.rom'), '58263663'],
         [path.join('P', 'patchable', 'modify.rom'), 'aabfe90e'],
+        [`${path.join('P', 'pmsr.zip')}|pmsr.rom`, 'a7f5cd7e'],
         [path.join('R', 'raw', 'empty.rom'), '00000000'],
         [path.join('R', 'raw', 'five.rom'), '3e5daf67'],
         [path.join('R', 'raw', 'fizzbuzz.nes'), '370517b5'],
@@ -1903,6 +1918,7 @@ describe('with inferred DATs', () => {
         [path.join('patchable', 'grow.rom'), '1a4b9b3c'],
         [path.join('patchable', 'large.rom'), '58263663'],
         [path.join('patchable', 'modify.rom'), 'aabfe90e'],
+        ['pmsr.rom', 'a7f5cd7e'],
         [path.join('raw', 'empty.rom'), '00000000'],
         [path.join('raw', 'five.rom'), '3e5daf67'],
         [path.join('raw', 'fizzbuzz.nes'), '370517b5'],
@@ -1968,6 +1984,7 @@ describe('with inferred DATs', () => {
         path.join('patchable', 'grow.rom'),
         path.join('patchable', 'large.rom'),
         path.join('patchable', 'modify.rom'),
+        path.join('patchable', 'pmsr.zip'),
         path.join('patchable', 'shrink.gz'),
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
@@ -2067,6 +2084,7 @@ describe('with inferred DATs', () => {
         ['patchable.zip|grow.rom', '1a4b9b3c'],
         ['patchable.zip|large.rom', '58263663'],
         ['patchable.zip|modify.rom', 'aabfe90e'],
+        ['pmsr.zip|pmsr.rom', 'a7f5cd7e'],
         ['raw.zip|empty.rom', '00000000'],
         ['raw.zip|five.rom', '3e5daf67'],
         ['raw.zip|fizzbuzz.nes', '370517b5'],
@@ -2270,6 +2288,10 @@ describe('with inferred DATs', () => {
           'aabfe90e',
         ],
         [
+          `pmsr.zip|pmsr.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'pmsr.zip')}|pmsr.rom`,
+          'a7f5cd7e',
+        ],
+        [
           `${path.join('raw', 'empty.rom')} -> ${path.join('..', '..', 'input', 'roms', 'empty.rom')}`,
           '00000000',
         ],
@@ -2452,6 +2474,7 @@ describe('with inferred DATs', () => {
         ['one', ['one.rom']],
         ['onetwothree', ['1/one.rom', '2/two.rom', '3/three.rom']],
         ['patchable', ['grow.rom', 'large.rom', 'modify.rom']],
+        ['pmsr', ['pmsr.rom']],
         [
           'raw',
           [
