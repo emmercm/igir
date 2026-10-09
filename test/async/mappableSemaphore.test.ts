@@ -6,6 +6,32 @@ describe('map', () => {
     expect(result).toEqual([2, 4, 6, 8, 10]);
   });
 
+  it('should return mapped results in order across chunks', async () => {
+    const values = Array.from({ length: 10 }, (_, idx) => idx);
+    const result = await new MappableSemaphore(2, 3).map(values, async (value) => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, (10 - value) % 3);
+      });
+      return value * 2;
+    });
+    expect(result).toEqual(values.map((value) => value * 2));
+  });
+
+  it('should not start later chunks after an error', async () => {
+    const callbackValues: number[] = [];
+    await expect(
+      new MappableSemaphore(2, 3).map([1, 2, 3, 4, 5, 6, 7, 8, 9], (value) => {
+        callbackValues.push(value);
+        if (value === 2) {
+          throw new Error(`error ${value}`);
+        }
+        return value;
+      }),
+    ).rejects.toThrow('error 2');
+    expect(callbackValues).not.toContain(4);
+    expect(callbackValues).not.toContain(7);
+  });
+
   it('should handle thrown errors', async () => {
     await expect(
       new MappableSemaphore(1).map(['file'], () => {
