@@ -50,8 +50,9 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'wasm',
-          // Run every test again against the addons' WebAssembly builds that they fall back to,
-          // because tests everywhere use the addons
+          // Run the addons' own tests and the end-to-end tests again against the addons'
+          // WebAssembly builds that they fall back to
+          include: ['addons/**/*.test.ts', 'test/igir.test.ts'],
           env: { IGIR_ADDONS: 'wasm' },
         },
       },
