@@ -1,5 +1,7 @@
+import os from 'node:os';
 import path from 'node:path';
 
+import CandidateWriterSemaphore from '../../src/async/candidateWriterSemaphore.js';
 import Temp from '../../src/globals/temp.js';
 import type DAT from '../../src/models/dats/dat.js';
 import Game from '../../src/models/dats/game.js';
@@ -267,10 +269,11 @@ async function playlistCreator(
   dat: DAT,
   candidates: WriteCandidate[],
 ): Promise<[string, string[]][]> {
-  const writtenFiles = await new PlaylistCreator(options, new ProgressBarFake()).write(
-    dat,
-    candidates,
-  );
+  const writtenFiles = await new PlaylistCreator(
+    options,
+    new ProgressBarFake(),
+    new CandidateWriterSemaphore(os.availableParallelism()),
+  ).write(dat, candidates);
 
   return await Promise.all(
     writtenFiles

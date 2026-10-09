@@ -1,5 +1,6 @@
 import os from 'node:os';
 
+import CandidateWriterSemaphore from '../../src/async/candidateWriterSemaphore.js';
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import FileCache from '../../src/cache/fileCache.js';
 import FileFactory from '../../src/factories/fileFactory.js';
@@ -61,6 +62,7 @@ async function runFixdatCreator(
   const fixdatPath = await new FixdatCreator(
     new Options(optionsProps),
     new ProgressBarFake(),
+    new CandidateWriterSemaphore(os.availableParallelism()),
   ).create(dat, candidates);
   if (!fixdatPath) {
     return undefined;

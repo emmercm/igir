@@ -3,31 +3,19 @@ import KeyedMutex from './keyedMutex.js';
 import MappableSemaphore from './mappableSemaphore.js';
 
 /**
- * A wrapper for an `async-mutex` {@link Semaphore} that limits how many writes can be in progress
- * at once. To be used by {@link CandidateWriter}.
+ * A {@link MappableSemaphore} that limits how many writes can be in progress at once. To be used
+ * by every module that writes files, such as {@link CandidateWriter}.
  */
-export default class CandidateWriterSemaphore {
-  private readonly mappableSemaphore: MappableSemaphore;
-
+export default class CandidateWriterSemaphore extends MappableSemaphore {
   private readonly outputPathsMutex = new KeyedMutex(1000);
 
-  constructor(threads: number) {
-    this.mappableSemaphore = new MappableSemaphore(threads);
-  }
-
   /**
-   * Return the number of currently active candidate write operations.
+   * Run some {@link callback}. for every {@link candidates}, preventing concurrent writes to the
+   * same output paths.
    */
-  openLocks(): number {
-    return this.mappableSemaphore.openLocks();
-  }
-
-  /**
-   * Run some {@link callback}. for every {@link candidates}.
-   */
-  async map<T>(
+  async mapCandidates<T>(
     candidates: WriteCandidate[],
-    callback: (candidate: WriteCandidate) => Promise<T>,
+    callback: (candidate: WriteCandidate) => T | Promise<T>,
   ): Promise<T[]> {
     const candidatesSorted = candidates.toSorted((a, b) => {
       // First, prefer candidates with fewer files
@@ -39,7 +27,7 @@ export default class CandidateWriterSemaphore {
     });
 
     // First, limit writes by the global max number of threads allowed
-    return await this.mappableSemaphore.map(candidatesSorted, async (candidate: WriteCandidate) => {
+    return await this.map(candidatesSorted, async (candidate: WriteCandidate) => {
       // Then, restrict concurrent writes to the same output paths
       const outputFilePaths = candidate
         .getRomsWithFiles()

@@ -155,7 +155,9 @@ export default class Igir {
       progressBarSizeMultiplier: 2,
     });
     if (dats.length === 0) {
-      dats = await new DATGameInferrer(this.options, datProcessProgressBar).infer(roms);
+      dats = await new DATGameInferrer(this.options, datProcessProgressBar, readerSemaphore).infer(
+        roms,
+      );
       datProcessProgressBar.setTotal(dats.length);
     }
     if (dats.length <= 1) {
@@ -225,25 +227,27 @@ export default class Igir {
       }
 
       // Write playlists
-      const playlistPaths = await new PlaylistCreator(this.options, progressBar).write(
-        processedDat,
-        candidates,
-      );
+      const playlistPaths = await new PlaylistCreator(
+        this.options,
+        progressBar,
+        writerSemaphore,
+      ).write(processedDat, candidates);
       for (const playlistPath of playlistPaths) {
         filePathsToExcludeFromCleaning.add(path.resolve(playlistPath));
       }
 
       // Write a dir2dat
-      const dir2DatPath = await new Dir2DatCreator(this.options, progressBar).create(
-        processedDat,
-        candidates,
-      );
+      const dir2DatPath = await new Dir2DatCreator(
+        this.options,
+        progressBar,
+        writerSemaphore,
+      ).create(processedDat, candidates);
       if (dir2DatPath) {
         filePathsToExcludeFromCleaning.add(path.resolve(dir2DatPath));
       }
 
       // Write a fixdat
-      const fixdatPath = await new FixdatCreator(this.options, progressBar).create(
+      const fixdatPath = await new FixdatCreator(this.options, progressBar, writerSemaphore).create(
         processedDat,
         candidates,
       );
@@ -299,7 +303,7 @@ export default class Igir {
     );
 
     // Generate the report
-    await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
+    await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses, writerSemaphore);
 
     Timer.cancelAll();
   }
@@ -550,9 +554,10 @@ export default class Igir {
         .filter((file) => file instanceof ArchiveEntry)
         .map((file) => file.getArchive())
         .filter((file) => file instanceof Chd);
-      const chdToType = await Promise.all(
-        chds.map(async (chd): Promise<[Chd, CHDType]> => [chd, (await chd.getInfo()).type]),
-      );
+      const chdToType = await readerSemaphore.map(chds, async (chd): Promise<[Chd, CHDType]> => [
+        chd,
+        (await chd.getInfo()).type,
+      ]);
       const cdRom = chdToType.find(([, type]) => type === CHDType.CD_ROM);
       if (cdRom !== undefined) {
         logger.warn(
@@ -784,6 +789,7 @@ export default class Igir {
     scannedRomFiles: File[],
     cleanedOutputFiles: string[],
     datsStatuses: DATStatus[],
+    writerSemaphore: CandidateWriterSemaphore,
   ): Promise<void> {
     if (!this.options.shouldReport()) {
       return;
@@ -793,7 +799,7 @@ export default class Igir {
       name: 'Generating report',
       symbol: ProgressBarSymbol.WRITING,
     });
-    await new ReportGenerator(this.options, reportProgressBar).generate(
+    await new ReportGenerator(this.options, reportProgressBar, writerSemaphore).generate(
       scannedRomFiles,
       cleanedOutputFiles,
       datsStatuses,

@@ -105,7 +105,11 @@ async function getExpectedPatchedCandidates(): Promise<PatchedCandidate[]> {
 
 // Run DATGameInferrer, but condense all DATs down to one
 async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT> {
-  const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+  const dats = await new DATGameInferrer(
+    options,
+    new ProgressBarFake(),
+    new MappableSemaphore(os.availableParallelism()),
+  ).infer(romFiles);
   return new DATCombiner(new ProgressBarFake()).combine(dats);
 }
 

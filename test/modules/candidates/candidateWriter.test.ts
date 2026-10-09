@@ -150,7 +150,11 @@ async function candidateWriter(
     ).scan();
     dat = new DATCombiner(new ProgressBarFake()).combine(scannedDats);
   } else {
-    const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+    const dats = await new DATGameInferrer(
+      options,
+      new ProgressBarFake(),
+      new MappableSemaphore(os.availableParallelism()),
+    ).infer(romFiles);
     dat = new DATCombiner(new ProgressBarFake()).combine(dats);
   }
 

@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import type CandidateWriterSemaphore from '../async/candidateWriterSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import DATStatus, { GameStatus } from '../models/datStatus.js';
 import type File from '../models/files/file.js';
@@ -14,10 +15,16 @@ import Module from './module.js';
  */
 export default class ReportGenerator extends Module {
   private readonly options: Options;
+  private readonly writerSemaphore: CandidateWriterSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    writerSemaphore: CandidateWriterSemaphore,
+  ) {
     super(progressBar, ReportGenerator.name);
     this.options = options;
+    this.writerSemaphore = writerSemaphore;
   }
 
   /**
@@ -83,15 +90,17 @@ export default class ReportGenerator extends Module {
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
 
-    this.prefixedLogger.info(`writing report '${reportPath}'`);
-    const reportPathDir = path.dirname(reportPath);
-    if (!(await FsUtil.exists(reportPathDir))) {
-      await FsUtil.mkdir(reportPathDir, { recursive: true });
-    }
     const rows = [...matchedFileCsvs, duplicateCsv, unusedCsv, cleanedCsv].filter(
       (csv) => csv.length > 0,
     );
-    await FsUtil.writeFile(reportPath, rows.join('\n'));
+    await this.writerSemaphore.runExclusive(async () => {
+      this.prefixedLogger.info(`writing report '${reportPath}'`);
+      const reportPathDir = path.dirname(reportPath);
+      if (!(await FsUtil.exists(reportPathDir))) {
+        await FsUtil.mkdir(reportPathDir, { recursive: true });
+      }
+      await FsUtil.writeFile(reportPath, rows.join('\n'));
+    });
     this.prefixedLogger.trace(
       `wrote ${IntlUtil.toLocaleString(datStatuses.length)} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
     );
