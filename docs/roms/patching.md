@@ -38,23 +38,27 @@ Not all patch types are created equal. Here are some tables of some existing for
 
 **Uncommon patch types:**
 
-| Type                            | Supported                                              | CRC32 in patch contents | Notes                                                                                                              |
-|---------------------------------|--------------------------------------------------------|-------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `.aps` (GBA)                    | ✅                                                     | ❌                      |                                                                                                                    |
-| `.aps` (N64)                    | ✅ simple & N64                                        | ❌                      |                                                                                                                    |
-| `.bdf`, `.bsdiff` (BSDiff)      | ✅ v4                                                  | ❌                      |                                                                                                                    |
-| `.bsp` (Binary Script Patching) | ❌                                                     | ❌                      | BSP will probably never be supported, the implementation is [non-trivial](https://github.com/aaaaaa123456789/bsp). |
-| `.dldi` (NDS libfat)            | ❌                                                     | ❌                      | No file specification exists.                                                                                      |
-| `.dps` (Deufeufeu)              | ✅                                                     | ❌                      |                                                                                                                    |
-| `.ebp` (EarthBound)             | ✅                                                     | ❌                      | EBP is just IPS with some JSON after the `EOF` string.                                                             |
-| `.gdiff`                        | ❌                                                     | ❓                      |                                                                                                                    |
-| `.mod` (Star Rod)               | ❌                                                     | ❓                      | No file specification exists anymore.                                                                              |
-| `.ffp`, `.pat` (FireFlower)     | ❌                                                     | ❓                      | No file specification exists anymore.                                                                              |
-| `.pds` (Sephiroth87's NDS)      | ❌                                                     | ❓                      | No file specification exists.                                                                                      |
-| `.rup` (NINJA 2.0)              | ⚠️ only single file patches, only raw/binary file type | ❌ uses MD5             |                                                                                                                    |
-| `.rxl` (ROM eXtension Library)  | ❌                                                     | ❌                      | RXL will probably never be supported, it is used to inject files at manually specified locations into ROMs.        |
+| Type                            | Supported                                              | CRC32 in patch contents | Notes                                                                                                                    |
+|---------------------------------|--------------------------------------------------------|-------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `.aps` (GBA)                    | ✅                                                     | ❌                      |                                                                                                                          |
+| `.aps` (N64)                    | ✅ simple & N64                                        | ❌                      |                                                                                                                          |
+| `.bdf`, `.bsdiff` (BSDiff)      | ✅ v4                                                  | ❌                      |                                                                                                                          |
+| `.bsp` (Binary Script Patching) | ❌                                                     | ❌                      | BSP will probably never be supported, the implementation is [non-trivial](https://github.com/aaaaaa123456789/bsp).       |
+| `.dldi` (NDS libfat)            | ❌                                                     | ❌                      | No file specification exists.                                                                                            |
+| `.dps` (Deufeufeu)              | ✅                                                     | ❌                      |                                                                                                                          |
+| `.ebp` (EarthBound)             | ✅                                                     | ❌                      | EBP is just IPS with some JSON after the `EOF` string.                                                                   |
+| `.gdiff`                        | ❌                                                     | ❓                      |                                                                                                                          |
+| `.mod` (Paper Mario Star Rod)   | ✅ PMSR, Yay0-compressed PMSR                          | ❌                      | The source file has to be `Paper Mario (USA).z64` (CRC32 `A7F5CD7E`), so you don't need to put it in the patch filename. |
+| `.ffp`, `.pat` (FireFlower)     | ❌                                                     | ❓                      | No file specification exists anymore.                                                                                    |
+| `.pds` (Sephiroth87's NDS)      | ❌                                                     | ❓                      | No file specification exists.                                                                                            |
+| `.rup` (NINJA 2.0)              | ⚠️ only single file patches, only raw/binary file type | ❌ uses MD5             |                                                                                                                          |
+| `.rxl` (ROM eXtension Library)  | ❌                                                     | ❌                      | RXL will probably never be supported, it is used to inject files at manually specified locations into ROMs.              |
 
 If you have a choice in patch format, choose one that contains CRC32 checksums in the patch file contents (e.g. choose `.bps` over `.ips` if possible).
+
+!!! note
+
+    Igir can read patch files inside any supported [archive format](../input/reading-archives.md) (just like DATs and ROMs), but most patch types will have to be fully extracted to a [temporary file](https://igir.io/advanced/temp-dir/) before they can be applied.
 
 ## ROM checksums
 

@@ -61,7 +61,7 @@ describe('scan', () => {
 
   describe('multiple files', () => {
     it('should scan multiple files with no exclusions', async () => {
-      const expectedPatchFiles = 45;
+      const expectedPatchFiles = 47;
       await expect(createPatchScanner(['test/fixtures/patches/*/*']).scan()).resolves.toHaveLength(
         expectedPatchFiles,
       );
@@ -70,7 +70,7 @@ describe('scan', () => {
       );
       await expect(
         createPatchScanner([
-          'test/fixtures/*/*/*.{aps,bdf,bps,dps,ebp,ips,ips32,ppf,rup,ups,vcdiff,xdelta}',
+          'test/fixtures/*/*/*.{aps,bdf,bps,dps,ebp,ips,ips32,mod,ppf,rup,ups,vcdiff,xdelta}',
         ]).scan(),
       ).resolves.toHaveLength(expectedPatchFiles);
     });
@@ -86,7 +86,7 @@ describe('scan', () => {
             [],
             isInputChecksumQuick,
           ).scan(),
-        ).resolves.toHaveLength(45);
+        ).resolves.toHaveLength(47);
       },
     );
 
@@ -96,7 +96,7 @@ describe('scan', () => {
           'test/fixtures/patches/*/*',
           'test/fixtures/patches-zipped/patches.zip',
         ]).scan(),
-      ).resolves.toHaveLength(45);
+      ).resolves.toHaveLength(47);
     });
 
     it('should keep different patches with the same CRC32 and size', async () => {
@@ -115,13 +115,13 @@ describe('scan', () => {
           ['test/fixtures/patches/*/*'],
           ['test/fixtures/patches/**/*.ips*'],
         ).scan(),
-      ).resolves.toHaveLength(38);
+      ).resolves.toHaveLength(40);
       await expect(
         createPatchScanner(
           ['test/fixtures/patches/*/*'],
           ['test/fixtures/patches/**/*.ips*', 'test/fixtures/patches/**/*.ips*'],
         ).scan(),
-      ).resolves.toHaveLength(38);
+      ).resolves.toHaveLength(40);
     });
 
     it('should scan multiple files with every file excluded', async () => {
@@ -144,7 +144,9 @@ describe('scan', () => {
       )
         .filter((filePath) => !FileFactory.isExtensionArchive(filePath))
         // DPS patches have no file signature, so they can only be found by their extension
-        .filter((filePath) => path.extname(filePath) !== '.dps');
+        .filter((filePath) => path.extname(filePath) !== '.dps')
+        // Yay0-compressed PMSR patches can only be found by their extension
+        .filter((filePath) => path.basename(filePath) !== 'pmsr-pmsr-yay0.mod');
 
       const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {

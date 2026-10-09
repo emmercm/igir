@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../../src/cache/fileCache.js';
@@ -853,6 +854,28 @@ describe('copyToTempFile', () => {
       }
     } finally {
       await FsUtil.rm(tempDir, { recursive: true });
+    }
+  });
+});
+
+describe('extractToIOFile', () => {
+  it('should read archived files from a temp file and remove it after', async () => {
+    const archivePath = path.join('test', 'fixtures', 'roms', 'zip', 'fourfive.zip');
+    const archiveEntries = await new Zip(archivePath).getArchiveEntries(ChecksumBitmask.CRC32);
+    expect(archiveEntries.length).toBeGreaterThan(0);
+
+    for (const archiveEntry of archiveEntries) {
+      const result = await archiveEntry.extractToIOFile(async (ioFile) => ({
+        pathLike: ioFile.getPathLike().toString(),
+        crc32: zlib
+          .crc32(await ioFile.readAt(0, ioFile.getSize()))
+          .toString(16)
+          .padStart(8, '0'),
+      }));
+
+      expect(result.crc32).toEqual(archiveEntry.getCrc32());
+      expect(result.pathLike).not.toEqual(archivePath);
+      await expect(FsUtil.exists(result.pathLike)).resolves.toEqual(false);
     }
   });
 });

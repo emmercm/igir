@@ -1,8 +1,3 @@
-import events from 'node:events';
-import type { PathLike } from 'node:fs';
-import fs from 'node:fs';
-import stream from 'node:stream';
-
 import unbzip2Stream from '@openpgp/unbzip2-stream';
 
 import IgirException from '../../exceptions/igirException.js';
@@ -22,63 +17,57 @@ interface BSDiffHeader {
  * Reads exact byte counts from one bzip2-compressed block of a BSDiff patch.
  */
 class BSDiffBlockReader {
-  private readonly fileStream: stream.Readable;
-
   private readonly reader: ReadableStreamDefaultReader<Uint8Array>;
+  private readonly corruptException: () => IgirException;
 
   private pending: Buffer = Buffer.alloc(0);
 
-  constructor(filePath: PathLike, start: number, end: number, maxDecompressedBytes?: number) {
-    this.fileStream =
-      start < end
-        ? fs.createReadStream(filePath, { start, end: end - 1 })
-        : stream.Readable.from([]);
-    this.reader = unbzip2Stream(
-      stream.Readable.toWeb(this.fileStream),
-      maxDecompressedBytes,
-    ).getReader();
+  constructor(
+    patchFile: IOFile,
+    start: number,
+    end: number,
+    corruptException: () => IgirException,
+    maxDecompressedBytes?: number,
+  ) {
+    let position = start;
+    const compressed = new ReadableStream<Uint8Array>({
+      pull: async (controller): Promise<void> => {
+        const chunk = await patchFile.readAt(
+          position,
+          Math.min(end - position, Defaults.FILE_READING_CHUNK_SIZE),
+        );
+        if (chunk.length === 0) {
+          controller.close();
+          return;
+        }
+        position += chunk.length;
+        controller.enqueue(chunk);
+      },
+    });
+    this.reader = unbzip2Stream(compressed, maxDecompressedBytes).getReader();
+    this.corruptException = corruptException;
   }
 
   /**
-   * Read the next {@link size} decompressed bytes, or fewer if the block ends first.
+   * Read the next {@link size} decompressed bytes into a new buffer, throwing if the block ends
+   * first.
    */
   async read(size: number): Promise<Buffer> {
-    if (this.pending.length >= size) {
-      const result = this.pending.subarray(0, size);
-      this.pending = this.pending.subarray(size);
-      return result;
-    }
-
-    const chunks: Buffer[] = [this.pending];
-    let length = this.pending.length;
+    const result = Buffer.allocUnsafe(size);
+    let length = 0;
     while (length < size) {
-      const { done, value } = await this.reader.read();
-      if (done) {
-        break;
+      if (this.pending.length === 0) {
+        const { done, value } = await this.reader.read();
+        if (done) {
+          throw this.corruptException();
+        }
+        this.pending = Buffer.from(value.buffer, value.byteOffset, value.byteLength);
       }
-      chunks.push(Buffer.from(value.buffer, value.byteOffset, value.byteLength));
-      length += value.byteLength;
+      const copied = this.pending.copy(result, length, 0, size - length);
+      this.pending = this.pending.subarray(copied);
+      length += copied;
     }
-
-    const buffer = Buffer.concat(chunks, length);
-    this.pending = buffer.subarray(size);
-    return buffer.subarray(0, size);
-  }
-
-  /**
-   * Close the underlying file stream.
-   */
-  async close(): Promise<void> {
-    this.reader.releaseLock();
-
-    // NOTE(cemmer): @openpgp/unbzip2-stream@2.1.0's cancel() calls a nonexistent
-    //  `inputReader.abort()`, so destroy the file stream directly instead of cancelling.
-    if (this.fileStream.closed) {
-      return;
-    }
-    const closed = events.once(this.fileStream, 'close');
-    this.fileStream.destroy();
-    await closed;
+    return result;
   }
 }
 
@@ -100,8 +89,7 @@ export default class BSDiffPatch extends Patch {
    */
   static async patchFrom(file: File): Promise<BSDiffPatch> {
     const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
-    const header = await file.extractToTempIOFile(
-      'r',
+    const header = await file.extractToIOFile(
       async (patchFile) => await this.readHeader(patchFile, file),
     );
     return new BSDiffPatch(file, crcBefore, undefined, header.newSize);
@@ -120,9 +108,7 @@ export default class BSDiffPatch extends Patch {
     const diffLength = this.readBsdiffInt(header, 16);
     const newSize = this.readBsdiffInt(header, 24);
     if (
-      [controlLength, diffLength, newSize].some(
-        (value) => !Number.isSafeInteger(value) || value < 0,
-      ) ||
+      [controlLength, diffLength, newSize].some((value) => !this.isLength(value)) ||
       this.HEADER_SIZE + controlLength + diffLength > patchFile.getSize()
     ) {
       throw new IgirException(`BSDiff patch header is invalid: ${file.toString()}`);
@@ -139,10 +125,10 @@ export default class BSDiffPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const header = await BSDiffPatch.readHeader(patchFile, this.getFile());
 
-      await inputRomFile.extractToTempIOFile('r', async (sourceFile) => {
+      await inputRomFile.extractToIOFile(async (sourceFile) => {
         const targetFile = await IOFile.fileOfSize(outputRomPath, 'r+', header.newSize);
         try {
           await this.applyPatch(patchFile, header, sourceFile, targetFile, callback);
@@ -162,83 +148,72 @@ export default class BSDiffPatch extends Patch {
   ): Promise<void> {
     const diffStart = BSDiffPatch.HEADER_SIZE + header.controlLength;
     const extraStart = diffStart + header.diffLength;
+    const corruptException = (): IgirException => this.corruptException();
     const controlBlock = new BSDiffBlockReader(
-      patchFile.getPathLike(),
+      patchFile,
       BSDiffPatch.HEADER_SIZE,
       diffStart,
+      corruptException,
     );
     const diffBlock = new BSDiffBlockReader(
-      patchFile.getPathLike(),
+      patchFile,
       diffStart,
       extraStart,
+      corruptException,
       header.newSize,
     );
     const extraBlock = new BSDiffBlockReader(
-      patchFile.getPathLike(),
+      patchFile,
       extraStart,
       patchFile.getSize(),
+      corruptException,
       header.newSize,
     );
 
-    try {
-      let oldPosition = 0;
-      let newPosition = 0;
-      while (newPosition < header.newSize) {
-        const control = await controlBlock.read(BSDiffPatch.CONTROL_SIZE);
-        if (control.length < BSDiffPatch.CONTROL_SIZE) {
-          throw this.corruptException();
-        }
-        const diffLength = BSDiffPatch.readBsdiffInt(control, 0);
-        const extraLength = BSDiffPatch.readBsdiffInt(control, 8);
-        const seekLength = BSDiffPatch.readBsdiffInt(control, 16);
-        if (
-          !Number.isSafeInteger(diffLength) ||
-          diffLength < 0 ||
-          !Number.isSafeInteger(extraLength) ||
-          extraLength < 0 ||
-          !Number.isSafeInteger(seekLength) ||
-          newPosition + diffLength + extraLength > header.newSize
-        ) {
-          throw this.corruptException();
-        }
-
-        // Add the old file's bytes to the diff block's bytes
-        for (let written = 0; written < diffLength;) {
-          const size = Math.min(diffLength - written, Defaults.FILE_READING_CHUNK_SIZE);
-          const diff = await diffBlock.read(size);
-          if (diff.length < size) {
-            throw this.corruptException();
-          }
-          const old = await BSDiffPatch.readOld(sourceFile, oldPosition + written, size);
-          for (let i = 0; i < size; i += 1) {
-            diff[i] = (diff[i] + old[i]) & 0xff;
-          }
-          await targetFile.write(diff);
-          written += size;
-        }
-        oldPosition += diffLength;
-        newPosition += diffLength;
-
-        // Copy the extra block's bytes
-        for (let written = 0; written < extraLength;) {
-          const size = Math.min(extraLength - written, Defaults.FILE_READING_CHUNK_SIZE);
-          const extra = await extraBlock.read(size);
-          if (extra.length < size) {
-            throw this.corruptException();
-          }
-          await targetFile.write(extra);
-          written += size;
-        }
-        newPosition += extraLength;
-
-        oldPosition += seekLength;
-
-        if (callback !== undefined) {
-          callback(newPosition);
-        }
+    let oldPosition = 0;
+    let newPosition = 0;
+    while (newPosition < header.newSize) {
+      const control = await controlBlock.read(BSDiffPatch.CONTROL_SIZE);
+      const diffLength = BSDiffPatch.readBsdiffInt(control, 0);
+      const extraLength = BSDiffPatch.readBsdiffInt(control, 8);
+      const seekLength = BSDiffPatch.readBsdiffInt(control, 16);
+      if (
+        !BSDiffPatch.isLength(diffLength) ||
+        !BSDiffPatch.isLength(extraLength) ||
+        !Number.isSafeInteger(seekLength) ||
+        newPosition + diffLength + extraLength > header.newSize
+      ) {
+        throw this.corruptException();
       }
-    } finally {
-      await Promise.all([controlBlock.close(), diffBlock.close(), extraBlock.close()]);
+
+      // Add the old file's bytes to the diff block's bytes
+      for (let offset = 0; offset < diffLength; offset += Defaults.FILE_READING_CHUNK_SIZE) {
+        const diff = await diffBlock.read(
+          Math.min(diffLength - offset, Defaults.FILE_READING_CHUNK_SIZE),
+        );
+        const old = await BSDiffPatch.readOld(sourceFile, oldPosition + offset, diff.length);
+        for (let i = 0; i < diff.length; i += 1) {
+          // Buffers wrap values mod 256 on assignment
+          diff[i] += old[i];
+        }
+        await targetFile.write(diff);
+      }
+      oldPosition += diffLength;
+      newPosition += diffLength;
+
+      // Copy the extra block's bytes
+      for (let offset = 0; offset < extraLength; offset += Defaults.FILE_READING_CHUNK_SIZE) {
+        await targetFile.write(
+          await extraBlock.read(Math.min(extraLength - offset, Defaults.FILE_READING_CHUNK_SIZE)),
+        );
+      }
+      newPosition += extraLength;
+
+      oldPosition += seekLength;
+
+      if (callback !== undefined) {
+        callback(newPosition);
+      }
     }
   }
 
@@ -250,13 +225,24 @@ export default class BSDiffPatch extends Patch {
     position: number,
     size: number,
   ): Promise<Buffer> {
-    const old = Buffer.alloc(size);
     const start = Math.max(position, 0);
     const end = Math.min(position + size, sourceFile.getSize());
+    if (start === position && end - start === size) {
+      return await sourceFile.readAt(position, size);
+    }
+
+    const old = Buffer.alloc(size);
     if (start < end) {
       (await sourceFile.readAt(start, end - start)).copy(old, start - position);
     }
     return old;
+  }
+
+  /**
+   * @returns if {@link value} is a valid non-negative length
+   */
+  private static isLength(value: number): boolean {
+    return Number.isSafeInteger(value) && value >= 0;
   }
 
   private corruptException(): IgirException {

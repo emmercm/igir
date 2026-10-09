@@ -5,6 +5,7 @@ import IgirException from '../../exceptions/igirException.js';
 import FsUtil from '../../utils/fsUtil.js';
 import StreamUtil from '../../utils/streamUtil.js';
 import File from './file.js';
+import IOFile from './ioFile.js';
 
 /**
  * A singleton {@link File} representing an empty (zero-byte) file with precomputed checksums.
@@ -39,6 +40,19 @@ export default class ZeroSizeFile extends File {
       await FsUtil.rm(destinationPath, { force: true });
     }
     await FsUtil.touch(destinationPath);
+  }
+
+  /**
+   * Open the null device read-only as an empty {@link IOFile}, invoke the callback with it, then
+   * close it.
+   */
+  override async extractToIOFile<T>(callback: (ioFile: IOFile) => T | Promise<T>): Promise<T> {
+    const ioFile = await IOFile.fileFrom(this.getFilePath(), 'r', this.getSize());
+    try {
+      return await callback(ioFile);
+    } finally {
+      await ioFile.close();
+    }
   }
 
   /**

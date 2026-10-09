@@ -26,6 +26,12 @@
     <rom name="modify.rom" size="1024" crc="aabfe90e" md5="e5a17b92dfbe7465830c39a2e1e7b5ee" sha1="a888192353ebdec9ad0cdb0c04fc37929343d221" status="verified"/>
     <!-- After: name="modify.rom" size="1024" crc="700a409c" -->
   </game>
+  <!-- Patches: pmsr, pmsr-yay0 -->
+  <game name="pmsr">
+    <description>pmsr</description>
+    <rom name="pmsr.rom" size="41943040" crc="a7f5cd7e" md5="210173a4a3f64c0e3bd794f9ec32dd6d" sha1="00b99b9e7c393c7d766c42fcab8789abdb7a1aea" status="verified"/>
+    <!-- After: name="pmsr.rom" size="41944064" crc="e849c9c6" -->
+  </game>
   <!-- Patches: aps-gba, aps-n64, bps, bsdiff, dps, ips, ninja, ups, vcdiff -->
   <game name="shrink">
     <description>shrink</description>

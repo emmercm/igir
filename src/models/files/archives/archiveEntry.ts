@@ -16,6 +16,7 @@ import StreamUtil from '../../../utils/streamUtil.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumPropsWithSize } from '../fileChecksums.js';
+import type IOFile from '../ioFile.js';
 import ROMHeader from '../romHeader.js';
 import ROMPadding from '../romPadding.js';
 import type { ArchiveEntryLocation } from './archive.js';
@@ -251,6 +252,16 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
    */
   override async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
     return await ArchiveEntry.extractEntryToTempFile(this.getArchive(), this, callback);
+  }
+
+  /**
+   * Extract this entry to a temporary file, open it read-only as an {@link IOFile}, invoke the
+   * callback with it, then close and clean up the file.
+   */
+  override async extractToIOFile<T>(callback: (ioFile: IOFile) => T | Promise<T>): Promise<T> {
+    return await this.extractToTempFile(
+      async (tempFile) => await File.readWithIOFile(tempFile, callback),
+    );
   }
 
   private static async extractEntryToTempFile<T>(

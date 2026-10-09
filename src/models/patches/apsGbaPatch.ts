@@ -19,7 +19,7 @@ export default class APSGBAPatch extends Patch {
     const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
 
-    await file.extractToTempIOFile('r', async (patchFile) => {
+    await file.extractToIOFile(async (patchFile) => {
       patchFile.seek(this.FILE_SIGNATURE.length);
       patchFile.skipNext(4); // original file size
       targetSize = (await patchFile.readNext(4)).readUInt32LE();
@@ -36,7 +36,7 @@ export default class APSGBAPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const header = await patchFile.readNext(APSGBAPatch.FILE_SIGNATURE.length);
       if (!header.equals(APSGBAPatch.FILE_SIGNATURE)) {
         throw new IgirException(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);
@@ -68,20 +68,14 @@ export default class APSGBAPatch extends Patch {
     targetSize: number,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
+    await inputRomFile.extractToFile(outputRomPath);
+    await inputRomFile.extractToIOFile(async (sourceFile) => {
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
       try {
-        await FsUtil.copyFile(tempRomFile, outputRomPath);
-        const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
-
-        try {
-          await this.applyPatch(patchFile, sourceFile, targetFile, callback);
-          await targetFile.truncate(targetSize);
-        } finally {
-          await targetFile.close();
-        }
+        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+        await targetFile.truncate(targetSize);
       } finally {
-        await sourceFile.close();
+        await targetFile.close();
       }
     });
   }

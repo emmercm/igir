@@ -30,7 +30,7 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 // Every file in test/fixtures/patches matches exactly one ROM in test/fixtures/roms/patchable
-const patchFixtureCount = 45;
+const patchFixtureCount = 47;
 
 interface PatchedCandidate {
   gameName: string;
@@ -85,6 +85,7 @@ async function getExpectedPatchedCandidates(): Promise<PatchedCandidate[]> {
     grow: 'grow.rom',
     large: 'large.rom',
     modify: 'modify.rom',
+    pmsr: 'pmsr.zip',
     shrink: 'shrink.gz',
   };
   const patchedCandidates = await Promise.all(
@@ -193,7 +194,13 @@ describe('with inferred DATs', () => {
 
     // Then patched candidates were added
     expect(candidates).toHaveLength(romFiles.length + patchFixtureCount);
-    expect(getUnpatchedGameNames(candidates)).toEqual(['grow', 'large', 'modify', 'shrink']);
+    expect(getUnpatchedGameNames(candidates)).toEqual([
+      'grow',
+      'large',
+      'modify',
+      'pmsr',
+      'shrink',
+    ]);
     expect(getPatchedCandidates(candidates)).toEqual(await getExpectedPatchedCandidates());
   });
 
@@ -216,7 +223,13 @@ describe('with inferred DATs', () => {
 
     // Then - patched candidates should exist (patches matched against raw file inputs)
     expect(candidates).toHaveLength(romFiles.length + patchFixtureCount);
-    expect(getUnpatchedGameNames(candidates)).toEqual(['grow', 'large', 'modify', 'shrink']);
+    expect(getUnpatchedGameNames(candidates)).toEqual([
+      'grow',
+      'large',
+      'modify',
+      'pmsr',
+      'shrink',
+    ]);
     expect(getPatchedCandidates(candidates)).toEqual(await getExpectedPatchedCandidates());
     const patchedCandidates = candidates.filter((candidate) =>
       candidate

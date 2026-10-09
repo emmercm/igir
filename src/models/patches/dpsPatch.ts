@@ -36,7 +36,7 @@ export default class DPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       patchFile.skipNext(64); // patch name
       patchFile.skipNext(64); // patch author
       patchFile.skipNext(64); // patch version
@@ -60,24 +60,19 @@ export default class DPSPatch extends Patch {
     patchFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
-      try {
-        // The output only contains what the records write, so size it to the furthest record's end
-        const recordsPosition = patchFile.getPosition();
-        const outputSize = await this.calculateOutputSize(patchFile);
-        patchFile.seek(recordsPosition);
-        const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', outputSize);
+    await inputRomFile.extractToIOFile(async (sourceFile) => {
+      // The output only contains what the records write, so size it to the furthest record's end
+      const recordsPosition = patchFile.getPosition();
+      const outputSize = await this.calculateOutputSize(patchFile);
+      patchFile.seek(recordsPosition);
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', outputSize);
 
-        try {
-          await this.applyPatch(patchFile, sourceFile, targetFile, callback);
-          // Zero-fill any gap the records left at the end
-          await targetFile.truncate(outputSize);
-        } finally {
-          await targetFile.close();
-        }
+      try {
+        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
+        // Zero-fill any gap the records left at the end
+        await targetFile.truncate(outputSize);
       } finally {
-        await sourceFile.close();
+        await targetFile.close();
       }
     });
   }
