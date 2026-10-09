@@ -1,5 +1,7 @@
+import os from 'node:os';
 import path from 'node:path';
 
+import CandidateWriterSemaphore from '../../src/async/candidateWriterSemaphore.js';
 import Temp from '../../src/globals/temp.js';
 import Game from '../../src/models/dats/game.js';
 import Header from '../../src/models/dats/logiqx/header.js';
@@ -107,11 +109,11 @@ async function wrapReportGenerator(
     reportOutput,
   });
 
-  await new ReportGenerator(options, new ProgressBarFake()).generate(
-    romFiles,
-    cleanedOutputFiles,
-    datStatuses,
-  );
+  await new ReportGenerator(
+    options,
+    new ProgressBarFake(),
+    new CandidateWriterSemaphore(os.availableParallelism()),
+  ).generate(romFiles, cleanedOutputFiles, datStatuses);
 
   try {
     const contents = (await FsUtil.readFile(reportOutput)).toString();

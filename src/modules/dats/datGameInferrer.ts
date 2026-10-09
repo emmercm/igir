@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { parse } from '@gplane/cue';
 
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import Package from '../../globals/package.js';
 import type DAT from '../../models/dats/dat.js';
@@ -31,10 +32,12 @@ export default class DATGameInferrer extends Module {
   private static readonly DEFAULT_DAT_NAME = Package.NAME;
 
   private readonly options: Options;
+  private readonly readerSemaphore: MappableSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBar, readerSemaphore: MappableSemaphore) {
     super(progressBar, DATGameInferrer.name);
     this.options = options;
+    this.readerSemaphore = readerSemaphore;
   }
 
   /**
@@ -304,31 +307,30 @@ export default class DATGameInferrer extends Module {
     }, new Map<string, File>());
 
     const results = (
-      await Promise.all(
-        rawFiles
-          .filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'))
-          .map(async (cueFile): Promise<[string, File[]] | undefined> => {
-            try {
-              const cueData = await fs.promises.readFile(cueFile.getFilePath());
+      await this.readerSemaphore.map(
+        rawFiles.filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue')),
+        async (cueFile): Promise<[string, File[]] | undefined> => {
+          try {
+            const cueData = await fs.promises.readFile(cueFile.getFilePath());
 
-              const cueSheet = parse(cueData.toString(), {
-                fatal: true,
-              }).sheet;
+            const cueSheet = parse(cueData.toString(), {
+              fatal: true,
+            }).sheet;
 
-              const binFiles = cueSheet.files
-                .map((binFile) => path.join(path.dirname(cueFile.getFilePath()), binFile.name))
-                .map((binFilePath) => rawFilePathsToFiles.get(binFilePath))
-                .filter((file) => file !== undefined);
-              if (binFiles.length === 0) {
-                return undefined;
-              }
-
-              const gameName = DATGameInferrer.getGameName(cueFile);
-              return [gameName, [cueFile, ...binFiles]];
-            } catch {
+            const binFiles = cueSheet.files
+              .map((binFile) => path.join(path.dirname(cueFile.getFilePath()), binFile.name))
+              .map((binFilePath) => rawFilePathsToFiles.get(binFilePath))
+              .filter((file) => file !== undefined);
+            if (binFiles.length === 0) {
               return undefined;
             }
-          }),
+
+            const gameName = DATGameInferrer.getGameName(cueFile);
+            return [gameName, [cueFile, ...binFiles]];
+          } catch {
+            return undefined;
+          }
+        },
       )
     ).filter((result) => result !== undefined);
 
@@ -350,43 +352,40 @@ export default class DATGameInferrer extends Module {
     }, new Map<string, File>());
 
     const results = (
-      await Promise.all(
-        rawFiles
-          .filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.gdi'))
-          .map(async (gdiFile): Promise<[string, File[]] | undefined> => {
-            try {
-              const cueData = await fs.promises.readFile(gdiFile.getFilePath());
+      await this.readerSemaphore.map(
+        rawFiles.filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.gdi')),
+        async (gdiFile): Promise<[string, File[]] | undefined> => {
+          try {
+            const cueData = await fs.promises.readFile(gdiFile.getFilePath());
 
-              const { name: filePrefix } = path.parse(gdiFile.getFilePath());
-              const gdiContents = `${cueData
-                .toString()
-                .split(/\r?\n/)
-                .filter((line) => line.length > 0)
-                // Replace the chdman-generated track files with TOSEC-style track filenames
-                .map((line) => line.replace(filePrefix, 'track').replaceAll('"', ''))
-                .join('\r\n')}\r\n`;
+            const { name: filePrefix } = path.parse(gdiFile.getFilePath());
+            const gdiContents = `${cueData
+              .toString()
+              .split(/\r?\n/)
+              .filter((line) => line.length > 0)
+              // Replace the chdman-generated track files with TOSEC-style track filenames
+              .map((line) => line.replace(filePrefix, 'track').replaceAll('"', ''))
+              .join('\r\n')}\r\n`;
 
-              const trackFilePaths = gdiContents
-                .trim()
-                .split(/\r?\n/)
-                .slice(1)
-                .map((line) => line.split(' ', 5)[4]);
-              const trackFiles = trackFilePaths
-                .map((trackFilePath) =>
-                  path.join(path.dirname(gdiFile.getFilePath()), trackFilePath),
-                )
-                .map((trackFilePath) => rawFilePathsToFiles.get(trackFilePath))
-                .filter((file) => file !== undefined);
-              if (trackFiles.length === 0) {
-                return undefined;
-              }
-
-              const gameName = DATGameInferrer.getGameName(gdiFile);
-              return [gameName, [gdiFile, ...trackFiles]];
-            } catch {
+            const trackFilePaths = gdiContents
+              .trim()
+              .split(/\r?\n/)
+              .slice(1)
+              .map((line) => line.split(' ', 5)[4]);
+            const trackFiles = trackFilePaths
+              .map((trackFilePath) => path.join(path.dirname(gdiFile.getFilePath()), trackFilePath))
+              .map((trackFilePath) => rawFilePathsToFiles.get(trackFilePath))
+              .filter((file) => file !== undefined);
+            if (trackFiles.length === 0) {
               return undefined;
             }
-          }),
+
+            const gameName = DATGameInferrer.getGameName(gdiFile);
+            return [gameName, [gdiFile, ...trackFiles]];
+          } catch {
+            return undefined;
+          }
+        },
       )
     ).filter((result) => result !== undefined);
 

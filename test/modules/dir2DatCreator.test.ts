@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import CandidateWriterSemaphore from '../../src/async/candidateWriterSemaphore.js';
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import FileCache from '../../src/cache/fileCache.js';
 import FileFactory from '../../src/factories/fileFactory.js';
@@ -31,7 +32,11 @@ it('should do nothing if dir2dat command not provided', async () => {
   ).scan();
 
   // And a DAT
-  const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
+  const inferredDats = await new DATGameInferrer(
+    options,
+    new ProgressBarFake(),
+    new MappableSemaphore(os.availableParallelism()),
+  ).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
 
@@ -44,10 +49,11 @@ it('should do nothing if dir2dat command not provided', async () => {
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
-  const dir2dat = await new Dir2DatCreator(options, new ProgressBarFake()).create(
-    inferredDat,
-    candidates,
-  );
+  const dir2dat = await new Dir2DatCreator(
+    options,
+    new ProgressBarFake(),
+    new CandidateWriterSemaphore(os.availableParallelism()),
+  ).create(inferredDat, candidates);
 
   // Then the DAT wasn't written
   expect(dir2dat).toBeUndefined();
@@ -67,7 +73,11 @@ it('should write a valid DAT', async () => {
   ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
   // And a DAT
-  const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
+  const inferredDats = await new DATGameInferrer(
+    options,
+    new ProgressBarFake(),
+    new MappableSemaphore(os.availableParallelism()),
+  ).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
 
@@ -80,10 +90,11 @@ it('should write a valid DAT', async () => {
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
-  const dir2dat = await new Dir2DatCreator(options, new ProgressBarFake()).create(
-    inferredDat,
-    candidates,
-  );
+  const dir2dat = await new Dir2DatCreator(
+    options,
+    new ProgressBarFake(),
+    new CandidateWriterSemaphore(os.availableParallelism()),
+  ).create(inferredDat, candidates);
 
   // Then the written DAT exists
   if (dir2dat === undefined) {
@@ -154,7 +165,11 @@ it('should use the candidates for games and ROMs', async () => {
   ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
   // And a DAT
-  const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
+  const inferredDats = await new DATGameInferrer(
+    options,
+    new ProgressBarFake(),
+    new MappableSemaphore(os.availableParallelism()),
+  ).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
 
@@ -182,10 +197,11 @@ it('should use the candidates for games and ROMs', async () => {
   );
 
   // When writing the DAT to disk
-  const dir2dat = await new Dir2DatCreator(options, new ProgressBarFake()).create(
-    inferredDat,
-    updatedCandidates,
-  );
+  const dir2dat = await new Dir2DatCreator(
+    options,
+    new ProgressBarFake(),
+    new CandidateWriterSemaphore(os.availableParallelism()),
+  ).create(inferredDat, updatedCandidates);
 
   // Then the written DAT exists
   if (dir2dat === undefined) {

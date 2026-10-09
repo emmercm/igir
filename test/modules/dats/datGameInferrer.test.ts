@@ -139,7 +139,11 @@ test.each([
   ).scan();
 
   // When
-  const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+  const dats = await new DATGameInferrer(
+    options,
+    new ProgressBarFake(),
+    new MappableSemaphore(os.availableParallelism()),
+  ).infer(romFiles);
 
   // Then
   const datNameToGameNames = Object.fromEntries(
@@ -173,7 +177,11 @@ it('should prefer a recorded ROM name over an invented one, whatever order the f
     [bzip2Entry, gzipEntry],
     [gzipEntry, bzip2Entry],
   ]) {
-    const dats = await new DATGameInferrer(new Options(), new ProgressBarFake()).infer(romFiles);
+    const dats = await new DATGameInferrer(
+      new Options(),
+      new ProgressBarFake(),
+      new MappableSemaphore(os.availableParallelism()),
+    ).infer(romFiles);
 
     const games = dats.flatMap((dat) => dat.getGames());
     expect(games.map((game) => game.getName())).toEqual(['foobar']);

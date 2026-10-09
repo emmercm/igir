@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import type CandidateWriterSemaphore from '../async/candidateWriterSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import type DAT from '../models/dats/dat.js';
@@ -16,10 +17,16 @@ import Module from './module.js';
  */
 export default class FixdatCreator extends Module {
   private readonly options: Options;
+  private readonly writerSemaphore: CandidateWriterSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    writerSemaphore: CandidateWriterSemaphore,
+  ) {
     super(progressBar, FixdatCreator.name);
     this.options = options;
+    this.writerSemaphore = writerSemaphore;
   }
 
   /**
@@ -54,18 +61,19 @@ export default class FixdatCreator extends Module {
       return undefined;
     }
 
-    const fixdatDir = this.options.getFixdatOutput();
-    if (!(await FsUtil.exists(fixdatDir))) {
-      await FsUtil.mkdir(fixdatDir, { recursive: true });
-    }
-
     // Construct a new DAT and write it to the output dir
+    const fixdatDir = this.options.getFixdatOutput();
     const header = new IgirHeader('fixdat', originalDat, this.options);
     const fixdat = new LogiqxDAT({ header, games: gamesWithMissingRoms });
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
-    this.prefixedLogger.info(`${originalDat.getName()}: writing fixdat to '${fixdatPath}'`);
-    await FsUtil.writeFile(fixdatPath, fixdatContents);
+    await this.writerSemaphore.runExclusive(async () => {
+      if (!(await FsUtil.exists(fixdatDir))) {
+        await FsUtil.mkdir(fixdatDir, { recursive: true });
+      }
+      this.prefixedLogger.info(`${originalDat.getName()}: writing fixdat to '${fixdatPath}'`);
+      await FsUtil.writeFile(fixdatPath, fixdatContents);
+    });
 
     this.prefixedLogger.trace(`${originalDat.getName()}: done generating a fixdat`);
     return fixdatPath;

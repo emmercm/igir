@@ -6,14 +6,9 @@ import { Semaphore } from 'async-mutex';
 export default class MappableSemaphore extends Semaphore {
   private readonly threads: number;
 
-  // V8 rejects `Promise.allSettled()` over more than 2^21 promises, which a large input set can
-  // exceed, so {@link map} settles its values in chunks of this size.
-  private readonly chunkSize: number;
-
-  constructor(threads: number, chunkSize = 2 ** 20) {
+  constructor(threads: number) {
     super(threads);
     this.threads = threads;
-    this.chunkSize = chunkSize;
   }
 
   /**
@@ -33,43 +28,39 @@ export default class MappableSemaphore extends Semaphore {
     }
 
     let firstError: Error | undefined;
+    const results: Awaited<OUT>[] = [];
+    let nextIdx = 0;
 
-    const results: PromiseSettledResult<Awaited<OUT>>[] = [];
-    for (
-      let start = 0;
-      start < values.length && firstError === undefined;
-      start += this.chunkSize
-    ) {
-      const chunkResults = await Promise.allSettled(
-        values.slice(start, start + this.chunkSize).map(
-          async (value) =>
-            await this.runExclusive(async () => {
-              // Skip work if a prior callback already failed
-              if (firstError !== undefined) {
-                throw firstError;
-              }
-              try {
-                return await callback(value);
-              } catch (error) {
-                const wrappedError = error instanceof Error ? error : new Error(String(error));
-                firstError ??= wrappedError;
-                this.cancel();
-                throw wrappedError;
-              }
-            }),
-        ),
-      );
-      // Not `results.push(...chunkResults)`: spreading a chunk this large overflows the call stack
-      for (const result of chunkResults) {
-        results.push(result);
+    // Use a fixed pool of workers that each take the next value, rather than creating one promise
+    // per value, so that at most `threads` waiters are ever queued on the semaphore per call
+    const worker = async (): Promise<void> => {
+      while (firstError === undefined && nextIdx < values.length) {
+        const idx = nextIdx;
+        nextIdx += 1;
+        await this.runExclusive(async () => {
+          // Skip work if a prior callback already failed
+          if (firstError !== undefined) {
+            return;
+          }
+          try {
+            results[idx] = await callback(values[idx]);
+          } catch (error) {
+            firstError ??= error instanceof Error ? error : new Error(String(error));
+          }
+        });
       }
-    }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(this.threads, values.length) }, async () => {
+        await worker();
+      }),
+    );
 
-    // Re-throw the first real error after all promises have settled
+    // Re-throw the first real error after all in-flight callbacks have finished
     if (firstError !== undefined) {
       throw firstError;
     }
 
-    return results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+    return results;
   }
 }

@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import type CandidateWriterSemaphore from '../async/candidateWriterSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import type DAT from '../models/dats/dat.js';
@@ -17,10 +18,16 @@ import Module from './module.js';
  */
 export default class Dir2DatCreator extends Module {
   private readonly options: Options;
+  private readonly writerSemaphore: CandidateWriterSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    writerSemaphore: CandidateWriterSemaphore,
+  ) {
     super(progressBar, Dir2DatCreator.name);
     this.options = options;
+    this.writerSemaphore = writerSemaphore;
   }
 
   /**
@@ -69,18 +76,19 @@ export default class Dir2DatCreator extends Module {
       });
     });
 
-    const dir2datDir = this.options.getDir2DatOutput();
-    if (!(await FsUtil.exists(dir2datDir))) {
-      await FsUtil.mkdir(dir2datDir, { recursive: true });
-    }
-
     // Construct a new DAT and write it to the output dir
+    const dir2datDir = this.options.getDir2DatOutput();
     const header = new IgirHeader('dir2dat', dat, this.options);
     const dir2dat = new LogiqxDAT({ header, games: gamesFromCandidates });
     const dir2datContents = dir2dat.toXmlDat();
     const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
-    this.prefixedLogger.info(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);
-    await FsUtil.writeFile(dir2datPath, dir2datContents);
+    await this.writerSemaphore.runExclusive(async () => {
+      if (!(await FsUtil.exists(dir2datDir))) {
+        await FsUtil.mkdir(dir2datDir, { recursive: true });
+      }
+      this.prefixedLogger.info(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);
+      await FsUtil.writeFile(dir2datPath, dir2datContents);
+    });
 
     this.prefixedLogger.trace(`${dir2dat.getName()}: done writing dir2dat`);
     return dir2datPath;

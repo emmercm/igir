@@ -108,7 +108,7 @@ export default class CandidateWriter extends Module {
     }
     this.progressBar.resetProgress(writableCandidates.length);
 
-    await this.candidateSemaphore.map(writableCandidates, async (candidate) => {
+    await this.candidateSemaphore.mapCandidates(writableCandidates, async (candidate) => {
       this.progressBar.incrementInProgress();
       this.prefixedLogger.trace(
         `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
