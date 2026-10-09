@@ -89,8 +89,7 @@ export default class BSDiffPatch extends Patch {
    */
   static async patchFrom(file: File): Promise<BSDiffPatch> {
     const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
-    const header = await file.extractToTempIOFile(
-      'r',
+    const header = await file.extractToIOFile(
       async (patchFile) => await this.readHeader(patchFile, file),
     );
     return new BSDiffPatch(file, crcBefore, undefined, header.newSize);
@@ -126,10 +125,10 @@ export default class BSDiffPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const header = await BSDiffPatch.readHeader(patchFile, this.getFile());
 
-      await inputRomFile.extractToTempIOFile('r', async (sourceFile) => {
+      await inputRomFile.extractToIOFile(async (sourceFile) => {
         const targetFile = await IOFile.fileOfSize(outputRomPath, 'r+', header.newSize);
         try {
           await this.applyPatch(patchFile, header, sourceFile, targetFile, callback);

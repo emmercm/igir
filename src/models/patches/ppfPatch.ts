@@ -91,7 +91,7 @@ export default class PPFPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const header = await PPFHeader.fromIOFile(inputRomFile, patchFile);
 
       await PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header, callback);

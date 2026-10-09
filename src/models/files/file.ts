@@ -337,21 +337,27 @@ export default class File implements FileProps {
   }
 
   /**
-   * Copy this file to a temporary path, open it as an {@link IOFile} with the given flags,
-   * invoke the callback with the open handle, then close and clean up.
+   * Open this file read-only as an {@link IOFile}, invoke the callback with it, then close it.
+   * Files that can't be read in place are first extracted to a temporary path.
    */
-  async extractToTempIOFile<T>(
-    flags: fs.OpenMode,
+  async extractToIOFile<T>(callback: (ioFile: IOFile) => T | Promise<T>): Promise<T> {
+    return await File.readWithIOFile(this.getFilePath(), callback);
+  }
+
+  /**
+   * Open {@link filePath} read-only as an {@link IOFile}, invoke the callback with it, then close
+   * it.
+   */
+  protected static async readWithIOFile<T>(
+    filePath: string,
     callback: (ioFile: IOFile) => T | Promise<T>,
   ): Promise<T> {
-    return await this.extractToTempFile(async (tempFile) => {
-      const ioFile = await IOFile.fileFrom(tempFile, flags);
-      try {
-        return await callback(ioFile);
-      } finally {
-        await ioFile.close();
-      }
-    });
+    const ioFile = await IOFile.fileFrom(filePath, 'r');
+    try {
+      return await callback(ioFile);
+    } finally {
+      await ioFile.close();
+    }
   }
 
   /**

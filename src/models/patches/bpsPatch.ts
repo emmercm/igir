@@ -31,7 +31,7 @@ export default class BPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToTempIOFile('r', async (patchFile) => {
+    await file.extractToIOFile(async (patchFile) => {
       patchFile.seek(this.FILE_SIGNATURE.length);
       await super.readUpsUint(patchFile); // source size
       targetSize = await super.readUpsUint(patchFile);
@@ -70,7 +70,7 @@ export default class BPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
         throw new IgirException(`BPS patch header is invalid: ${this.getFile().toString()}`);
@@ -99,7 +99,7 @@ export default class BPSPatch extends Patch {
     patchFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await inputRomFile.extractToTempIOFile('r', async (inputRomIOFile) => {
+    await inputRomFile.extractToIOFile(async (inputRomIOFile) => {
       const targetFile = await IOFile.fileOfSize(
         outputRomPath,
         'r+',

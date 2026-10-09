@@ -425,6 +425,46 @@ describe('extractToTempFile', () => {
   });
 });
 
+describe('extractToIOFile', () => {
+  it('should read the file in place', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    const mktempSpy = vi.spyOn(FsUtil, 'mktemp');
+    try {
+      const filePath = path.join(tempDir, 'input.rom');
+      await FsUtil.writeFile(filePath, Buffer.from('0123456789abcdef', 'hex'));
+      const file = await File.fileOf({ filePath });
+
+      const result = await file.extractToIOFile(async (ioFile) => ({
+        pathLike: ioFile.getPathLike(),
+        contents: (await ioFile.readAt(0, ioFile.getSize())).toString('hex'),
+      }));
+
+      expect(result).toEqual({ pathLike: filePath, contents: '0123456789abcdef' });
+      expect(mktempSpy).not.toHaveBeenCalled();
+    } finally {
+      vi.restoreAllMocks();
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('should close the file even if the callback throws', async () => {
+    const file = await File.fileOf({
+      filePath: path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+    });
+    const closeSpy = vi.spyOn(IOFile.prototype, 'close');
+    try {
+      await expect(
+        file.extractToIOFile(() => {
+          throw new Error('callback failed');
+        }),
+      ).rejects.toThrow('callback failed');
+      expect(closeSpy).toHaveBeenCalledOnce();
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+});
+
 describe('extractAndTransformToFile', () => {
   it('writes raw bytes unchanged when no padding is set', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());

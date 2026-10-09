@@ -36,7 +36,7 @@ export default class APSN64Patch extends Patch {
     const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
 
-    await file.extractToTempIOFile('r', async (patchFile) => {
+    await file.extractToIOFile(async (patchFile) => {
       patchFile.seek(this.FILE_SIGNATURE.length);
       patchType = (await patchFile.readNext(1)).readUInt8() as APSN64PatchTypeValue;
       patchFile.skipNext(1); // encoding method
@@ -69,7 +69,7 @@ export default class APSN64Patch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const header = await patchFile.readNext(APSN64Patch.FILE_SIGNATURE.length);
       if (!header.equals(APSN64Patch.FILE_SIGNATURE)) {
         throw new IgirException(`APS (N64) patch header is invalid: ${this.getFile().toString()}`);
