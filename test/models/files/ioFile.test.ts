@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import Defaults from '../../../src/globals/defaults.js';
@@ -38,6 +39,20 @@ describe('fileOfSize', () => {
       await expect(FsUtil.size(tempFile)).resolves.toEqual(size);
     } finally {
       await FsUtil.rm(tempFile);
+    }
+  });
+
+  it('should close the file handle even if writing fails', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    vi.spyOn(IOFile.prototype, 'write').mockRejectedValue(new Error('write failed'));
+    const closeSpy = vi.spyOn(IOFile.prototype, 'close');
+
+    try {
+      await expect(IOFile.fileOfSize(tempFile, 'r', 16)).rejects.toThrow('write failed');
+      expect(closeSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.restoreAllMocks();
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 });
@@ -422,4 +437,30 @@ describe('truncate', () => {
       }
     },
   );
+});
+
+describe('close', () => {
+  it('should close the file handle even if flushing staged writes fails', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(tempFile, Buffer.alloc(16));
+    const open = fs.promises.open.bind(fs.promises);
+    const openedHandles: fs.promises.FileHandle[] = [];
+    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
+      const handle = await open(pathLike, flags);
+      openedHandles.push(handle);
+      return handle;
+    });
+
+    try {
+      const file = await IOFile.fileFrom(tempFile, 'r+');
+      await file.writeAt(Buffer.from('ABCDEF01'), 0);
+      vi.spyOn(openedHandles[0], 'write').mockRejectedValue(new Error('flush failed'));
+
+      await expect(file.close()).rejects.toThrow('flush failed');
+      expect(openedHandles.map((handle) => handle.fd)).toEqual([-1]);
+    } finally {
+      vi.restoreAllMocks();
+      await FsUtil.rm(tempFile);
+    }
+  });
 });

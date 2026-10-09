@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import PatchFactory from '../../src/factories/patchFactory.js';
 import File from '../../src/models/files/file.js';
 import Options from '../../src/models/options.js';
@@ -45,11 +47,15 @@ describe('patchFromFileContents', () => {
     const inputPatchFilePaths = await new Options({
       patch: ['./test/fixtures/patches'],
     }).scanPatchFilesWithoutExclusions();
-    expect(inputPatchFilePaths).toHaveLength(45);
+    expect(inputPatchFilePaths).toHaveLength(47);
 
     for (const inputPatchFilePath of inputPatchFilePaths) {
       // DPS has no file signature, so it can't be detected from its contents
       if (inputPatchFilePath.toLowerCase().endsWith('.dps')) {
+        continue;
+      }
+      // Yay0-compressed PMSR patches can only be detected by their extension
+      if (path.basename(inputPatchFilePath) === 'pmsr-pmsr-yay0.mod') {
         continue;
       }
       const inputPatchFile = await File.fileOf({ filePath: inputPatchFilePath });
