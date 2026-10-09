@@ -62,6 +62,23 @@ jobs:
             -e 's/^ref(actor)?:/Refactor:/i')"
           echo "${NEW_TITLE}"
 
+          # Match Renovate's title format for Dependabot updates, e.g.:
+          #   "Chore: Bump foo from 1.2.3 to 1.2.4" -> "Chore: update dependency foo to v1.2.4"
+          #   "Chore: Bump foo from 1.2.3 to 2.0.0 in /docs" -> "Chore: update dependency foo to v2"
+          DEPENDABOT_REGEX='^([A-Za-z]+): [Bb]ump ([^ ]+) from v?([^ ]+) to v?([^ ]+)( in [^ ]+)?$'
+          if [[ "${NEW_TITLE}" =~ ${DEPENDABOT_REGEX} ]]; then
+            TYPE="${BASH_REMATCH[1]}"
+            DEPENDENCY="${BASH_REMATCH[2]}"
+            FROM_VERSION="${BASH_REMATCH[3]}"
+            TO_VERSION="${BASH_REMATCH[4]}"
+            # Renovate only includes the major version for major updates
+            if [[ "${FROM_VERSION%%.*}" != "${TO_VERSION%%.*}" ]]; then
+              TO_VERSION="${TO_VERSION%%.*}"
+            fi
+            NEW_TITLE="${TYPE}: update dependency ${DEPENDENCY} to v${TO_VERSION}"
+            echo "${NEW_TITLE}"
+          fi
+
           # Lowercase the first letter of the description
           #TYPE="$(echo "${NEW_TITLE}" | cut -d ':' -f 1)"
           #FIRST_LETTER="$(echo "${NEW_TITLE}" | cut -d ':' -f 2 | awk '{$1=$1};1' | cut -c1 | tr [A-Z] [a-z])"
