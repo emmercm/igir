@@ -1,9 +1,15 @@
+import path from 'node:path';
+
+import Temp from '../../../src/globals/temp.js';
+import File from '../../../src/models/files/file.js';
 import VcdiffPatch from '../../../src/models/patches/vcdiffPatch.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
 
 const patchFrom = VcdiffPatch.patchFrom.bind(VcdiffPatch);
 const FILE_NAME = 'patch 00000000.xdelta';
 const SWAP = '08090a0b0c0d0e0f0001020304050607';
+const LZMA_FIXTURES_DIR = path.join('test', 'fixtures', 'vcdiff');
 
 describe('patchFrom', () => {
   it('should parse', async () => {
@@ -46,7 +52,44 @@ describe('createPatchedFile', () => {
     ],
     ['app header', 'd6c3c400040361626301100009100000020218180800', SWAP],
     ['adler32', 'd6c3c400000510000d100000020204b8007918180800', SWAP],
-    ['empty code table', 'd6c3c40003000001100009100000020218180800', SWAP],
+    // LZMA named in the header, but every window stored raw
+    ['lzma, no compressed sections', 'd6c3c400010201100009100000020218180800', SWAP],
+    // A code table delta that copies the default table unchanged
+    [
+      'identity code table',
+      'd6c3c40002160403d6c3c40000018c00000a8c0000000301138c000001100009100000020218180800',
+      SWAP,
+    ],
+    // The default table with inst1[0] (RUN) and inst1[1] (ADD) swapped, and s_near=5, s_same=2
+    [
+      'custom code table',
+      'd6c3c40002190502d6c3c40000018c00000d8c0000020401010203138b7e02011000121000050602aabbccddee0004010474140800',
+      'aabbccddeeeeeeee08090a0b00010203',
+    ],
+    // The same table with the default s_near=4, s_same=3, so COPY mode 6 is a same-cache mode
+    [
+      'custom code table, default caches',
+      'd6c3c40002190403d6c3c40000018c00000d8c0000020401010203138b7e02011000121000050602aabbccddee0004010474140800',
+      'aabbccddeeeeeeee0001020300010203',
+    ],
+    // LZMA and a code table together: the compressor ID comes before the code table
+    [
+      'lzma and custom code table',
+      'd6c3c4000302190502d6c3c40000018c00000d8c0000020401010203138b7e02011000121000050602aabbccddee0004010474140800',
+      'aabbccddeeeeeeee08090a0b00010203',
+    ],
+    // The code table delta has its own app header, "abc"
+    [
+      'custom code table with an app header',
+      'd6c3c400021d0502d6c3c4000403616263018c00000d8c0000020401010203138b7e02011000121000050602aabbccddee0004010474140800',
+      'aabbccddeeeeeeee08090a0b00010203',
+    ],
+    // The identity code table delta split into two windows, each copying 768 bytes of the source
+    [
+      'identity code table in two windows',
+      'd6c3c40002260403d6c3c40000018600000a8600000003011386000001860086000a8600000003011386000001100009100000020218180800',
+      SWAP,
+    ],
     ['truncate', 'd6c3c400000110000708000001011800', '0001020304050607'],
     [
       'two windows truncate',
@@ -61,18 +104,129 @@ describe('createPatchedFile', () => {
 
   test.each([
     ['bad header', 'd6c3c50000', /Vcdiff patch header is invalid/],
-    ['secondary compression', 'd6c3c4000102', /unsupported Vcdiff secondary decompressor LZMA/],
+    ['a patch ending after its version', 'd6c3c400', /Vcdiff patch is truncated/],
+    ['a patch ending before its compressor ID', 'd6c3c40001', /Vcdiff patch is truncated/],
+    // A window whose target window size is missing, so it ends before its delta indicator
+    ['a window ending before its delta indicator', 'd6c3c400000005', /Vcdiff patch is truncated/],
     [
-      'application-defined code table',
-      'd6c3c4000201',
-      /can't parse Vcdiff application-defined code table/,
+      'a code table delta ending after its version',
+      'd6c3c40002060403d6c3c400',
+      /Vcdiff patch is truncated/,
     ],
-    ['DATACOMP', 'd6c3c4000000050101000000', /DATACOMP/],
-    ['INSTCOMP', 'd6c3c4000000050102000000', /INSTCOMP/],
-    ['ADDRCOMP', 'd6c3c4000000050104000000', /ADDRCOMP/],
+    [
+      'DJW',
+      'd6c3c4000101',
+      /Vcdiff secondary compressor DJW \(static Huffman\) isn't supported, re-create the patch with "xdelta3 -S lzma" or "xdelta3 -S none"/,
+    ],
+    [
+      'FGK',
+      'd6c3c4000110',
+      /Vcdiff secondary compressor FGK \(adaptive Huffman\) isn't supported, re-create the patch with "xdelta3 -S lzma" or "xdelta3 -S none"/,
+    ],
+    ['compressor ID 0', 'd6c3c4000100', /unknown Vcdiff secondary compressor ID 0:/],
+    ['compressor ID 3', 'd6c3c4000103', /unknown Vcdiff secondary compressor ID 3:/],
+    ['code table length 0', 'd6c3c4000200', /Vcdiff code table length 0 is invalid/],
+    ['code table length 1', 'd6c3c4000201', /Vcdiff code table length 1 is invalid/],
+    ['code table length 2', 'd6c3c4000202', /Vcdiff code table length 2 is invalid/],
+    ['truncated code table', 'd6c3c400020504', /Vcdiff code table is truncated/],
+    [
+      'code table delta decoding to 2 bytes',
+      'd6c3c40002140403d6c3c40000018c0000080200020100010203',
+      /Vcdiff code table decodes to 2 bytes, expected 1536/,
+    ],
+    // One window whose target is a RUN of 1537 bytes, one more than the code table string holds
+    [
+      'code table delta writing past the code table',
+      'd6c3c40002130403d6c3c40000000a8c010001030000008c01',
+      /Vcdiff code table delta writes past 1536 bytes/,
+    ],
+    [
+      'code table delta with secondary compression',
+      'd6c3c40002080403d6c3c4000102',
+      /Vcdiff code table delta can't use secondary compression or another code table/,
+    ],
+    [
+      'code table delta with a code table',
+      'd6c3c40002080403d6c3c4000200',
+      /Vcdiff code table delta can't use secondary compression or another code table/,
+    ],
+    [
+      'code table instruction type 4',
+      'd6c3c40002190502d6c3c40000018c00000d8c0000020401040203138b7e02',
+      /Vcdiff code table entry 0 has an invalid instruction type 4/,
+    ],
+    // With s_near=0 and s_same=0 only modes 0 and 1 exist, and entry 51 is COPY mode 2
+    [
+      'code table COPY mode past the caches',
+      'd6c3c40002190000d6c3c40000018c00000d8c0000020401010203138b7e02',
+      /Vcdiff code table entry 51 has an invalid COPY mode 2/,
+    ],
+    [
+      'DATACOMP without a compressor',
+      'd6c3c4000000050101000000',
+      /Vcdiff window sets compressed-section bits but the header names no secondary compressor/,
+    ],
+    [
+      'INSTCOMP without a compressor',
+      'd6c3c4000000050102000000',
+      /Vcdiff window sets compressed-section bits but the header names no secondary compressor/,
+    ],
+    [
+      'ADDRCOMP without a compressor',
+      'd6c3c4000000050104000000',
+      /Vcdiff window sets compressed-section bits but the header names no secondary compressor/,
+    ],
+    [
+      'a compressed section size of 0',
+      'd6c3c40001020006010101000000',
+      /can't decompress Vcdiff data section: Vcdiff secondary-compressed section has an invalid size of 0/,
+    ],
+    [
+      'a compressed section without an xz header',
+      'd6c3c40001020007010102000001ff',
+      /can't decompress Vcdiff data section: xz stream header is truncated/,
+    ],
+    // Declares 5 bytes, but the LZMA2 data holds 3
+    [
+      'a compressed section size mismatch',
+      'd6c3c4000102002401011f000005fd377a585a000000ff12d9410200210116000000742fe5a3010002616263',
+      /can't decompress Vcdiff data section: xz decoder produced 3 bytes, expected 5/,
+    ],
   ])('should throw on %s', async (_name, patchHex, expectedError) => {
     await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).rejects.toThrow(
       expectedError,
+    );
+  });
+
+  test.each(['lzma c61fec0e.xdelta', 'lzma-window16k c61fec0e.xdelta'])(
+    'should apply an xdelta3 LZMA patch: %s',
+    async (patchName) => {
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+      try {
+        const patch = patchFrom(
+          await File.fileOf({ filePath: path.join(LZMA_FIXTURES_DIR, patchName) }),
+        );
+        const outputPath = path.join(tempDir, 'output.rom');
+        await patch.createPatchedFile(
+          await File.fileOf({ filePath: path.join(LZMA_FIXTURES_DIR, 'lzma.rom') }),
+          outputPath,
+        );
+        await expect(FsUtil.readFile(outputPath)).resolves.toEqual(
+          await FsUtil.readFile(path.join(LZMA_FIXTURES_DIR, 'lzma-patched.rom')),
+        );
+      } finally {
+        await FsUtil.rm(tempDir, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it('should throw on an xdelta3 LZMA patch truncated partway through a compressed section', async () => {
+    // The first 100 bytes end 49 bytes into the 126-byte compressed data section
+    const patch = await FsUtil.readFile(path.join(LZMA_FIXTURES_DIR, 'lzma c61fec0e.xdelta'));
+    await expect(
+      applyPatch(patchFrom, FILE_NAME, patch.subarray(0, 100).toString('hex'), INPUT16),
+    ).rejects.toThrow(
+      /can't decompress Vcdiff data section: xz data ends partway through an LZMA2 chunk/,
     );
   });
 });
