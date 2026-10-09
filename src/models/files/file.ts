@@ -328,9 +328,8 @@ export default class File implements FileProps {
     if (!(await FsUtil.exists(tempDir))) {
       await FsUtil.mkdir(tempDir, { recursive: true });
     }
-    await this.extractToFile(tempFile);
-
     try {
+      await this.extractToFile(tempFile);
       return await callback(tempFile);
     } finally {
       await FsUtil.rm(tempFile, { force: true });
@@ -397,8 +396,8 @@ export default class File implements FileProps {
       const tempFile = await FsUtil.mktemp(
         path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
       );
-      await patch.createPatchedFile(this, tempFile, callback);
       try {
+        await patch.createPatchedFile(this, tempFile, callback);
         await File.createStreamFromFile(
           tempFile,
           async (readable) => {

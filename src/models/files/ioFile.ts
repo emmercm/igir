@@ -9,19 +9,12 @@ import FsUtil from '../../utils/fsUtil.js';
  */
 export default class IOFile {
   private readonly pathLike: PathLike;
-
   private readonly fileHandle: fs.promises.FileHandle;
-
   private readonly fileMode: fs.Mode;
 
   private size: number;
-
-  private tempBuffer?: Buffer;
-
   private readPosition = 0;
-
   private fileBuffer?: Buffer;
-
   private wroteToMemory = false;
 
   private constructor(
@@ -72,17 +65,23 @@ export default class IOFile {
 
     const write = await this.fileFrom(pathLike, 'wx+', size);
     try {
-      let written = 0;
-      const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
-      while (written < size) {
-        const sizeToWrite = Math.min(size - written, buffer.length);
-        written += await write.write(buffer.subarray(0, sizeToWrite));
+      try {
+        let written = 0;
+        const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
+        while (written < size) {
+          const sizeToWrite = Math.min(size - written, buffer.length);
+          written += await write.write(buffer.subarray(0, sizeToWrite));
+        }
+      } finally {
+        await write.close();
       }
-    } finally {
-      await write.close();
-    }
 
-    return await this.fileFrom(pathLike, flags);
+      return await this.fileFrom(pathLike, flags);
+    } catch (error) {
+      // Don't leave a partially written file behind
+      await FsUtil.rm(pathLike, { force: true });
+      throw error;
+    }
   }
 
   getPathLike(): PathLike {
@@ -156,21 +155,19 @@ export default class IOFile {
       );
     }
 
-    if (this.tempBuffer === undefined || size > this.tempBuffer.length) {
-      this.tempBuffer = Buffer.allocUnsafe(Math.max(size, Defaults.FILE_READING_CHUNK_SIZE));
-    }
-
-    // If the file is large, read from the open file handle
+    // If the file is large, read from the open file handle. Each read gets its own buffer so
+    // concurrent reads can't overwrite each other's bytes
+    const buffer = Buffer.allocUnsafe(size);
     let bytesRead: number;
     try {
-      bytesRead = (await this.fileHandle.read(this.tempBuffer, 0, size, position)).bytesRead;
+      bytesRead = (await this.fileHandle.read(buffer, 0, size, position)).bytesRead;
     } catch {
       // NOTE(cemmer): Windows will give "EINVAL: invalid argument, read" when reading out of
       //  bounds, but other OSes don't. Swallow the error.
       return Buffer.allocUnsafe(0);
     }
 
-    return Buffer.from(this.tempBuffer.subarray(0, bytesRead));
+    return buffer.subarray(0, bytesRead);
   }
 
   /**
