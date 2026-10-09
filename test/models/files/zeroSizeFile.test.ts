@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 
 import Temp from '../../../src/globals/temp.js';
@@ -41,6 +42,19 @@ describe('extractToIOFile', () => {
       async (ioFile) => await ioFile.readAt(0, 1),
     );
     expect(contents).toHaveLength(0);
+  });
+
+  it('should read from the null device without creating a temp file', async () => {
+    const props = await ZeroSizeFile.getInstance().extractToIOFile((ioFile) => ({
+      pathLike: ioFile.getPathLike(),
+      size: ioFile.getSize(),
+      isEOF: ioFile.isEOF(),
+    }));
+    expect(props).toEqual({
+      pathLike: os.devNull,
+      size: 0,
+      isEOF: true,
+    });
   });
 });
 
