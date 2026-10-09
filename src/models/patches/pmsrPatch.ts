@@ -209,7 +209,7 @@ export default class PMSRPatch extends Patch {
       );
     }
 
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const reader = await this.readerFrom(patchFile);
 
       const header = await reader.readNext(PMSRPatch.HEADER_SIZE);

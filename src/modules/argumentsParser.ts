@@ -421,6 +421,10 @@ export default class ArgumentsParser {
           logger.warn(
             "archived files can't be patched unless the 'extract' or 'zip' command is used",
           );
+        } else if (checkArgv.patch && checkArgv['zip-exclude'] !== undefined) {
+          logger.warn(
+            "archived files excluded from zipping by '--zip-exclude <glob>' won't be patched unless the 'extract' command is used instead of 'zip'",
+          );
         }
         return true;
       })

@@ -540,7 +540,7 @@ export default class VcdiffPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromIOFile(patchFile);
 
@@ -563,20 +563,15 @@ export default class VcdiffPatch extends Patch {
     copyCache: VcdiffCache,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
-      try {
-        // The target windows write every output byte, so the output starts empty. The source's
-        // size is only a hint for whether to build the output in memory or on disk.
-        const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', sourceFile.getSize());
+    await inputRomFile.extractToIOFile(async (sourceFile) => {
+      // The target windows write every output byte, so the output starts empty. The source's
+      // size is only a hint for whether to build the output in memory or on disk.
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', sourceFile.getSize());
 
-        try {
-          await this.applyPatch(patchFile, sourceFile, targetFile, header, copyCache, callback);
-        } finally {
-          await targetFile.close();
-        }
+      try {
+        await this.applyPatch(patchFile, sourceFile, targetFile, header, copyCache, callback);
       } finally {
-        await sourceFile.close();
+        await targetFile.close();
       }
     });
   }

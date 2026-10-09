@@ -30,7 +30,7 @@ export default class IPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToIOFile(async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (IPSPatch.FILE_SIGNATURES.every((fileSignature) => !header.equals(fileSignature))) {
         throw new IgirException(`IPS patch header is invalid: ${this.getFile().toString()}`);

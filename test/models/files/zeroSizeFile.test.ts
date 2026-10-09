@@ -35,6 +35,15 @@ describe('extractToTempFile', () => {
   });
 });
 
+describe('extractToIOFile', () => {
+  it('should read zero bytes', async () => {
+    const contents = await ZeroSizeFile.getInstance().extractToIOFile(
+      async (ioFile) => await ioFile.readAt(0, 1),
+    );
+    expect(contents).toHaveLength(0);
+  });
+});
+
 describe('extractAndTransformToFile', () => {
   it('should extract to specified path', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());

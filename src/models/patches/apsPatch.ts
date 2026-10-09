@@ -16,7 +16,7 @@ export default abstract class APSPatch extends Patch {
    * depending on the patch's variant byte.
    */
   static async patchFrom(file: File): Promise<Patch> {
-    return await file.extractToTempIOFile('r', async (patchFile) => {
+    return await file.extractToIOFile(async (patchFile) => {
       patchFile.seek(this.FILE_SIGNATURE.length);
 
       const byteFive = (await patchFile.readNext(1)).toString();
