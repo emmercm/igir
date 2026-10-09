@@ -572,71 +572,85 @@ describe('zip', () => {
     });
   });
 
-  test.each([
-    // Control group of files without patches
-    ['raw/empty.rom', [['empty.zip|empty.rom', '00000000']]],
-    ['raw/fizzbuzz.nes', [['fizzbuzz.zip|fizzbuzz.nes', '370517b5']]],
-    ['raw/foobar.lnx', [['foobar.zip|foobar.lnx', 'b22c9747']]],
-    ['raw/loremipsum.rom', [['loremipsum.zip|loremipsum.rom', '70856527']]],
-    // Patchable files
-    [
-      'patchable/modify.rom',
+  test.each(
+    (
       [
-        ['modify-aps-gba.zip|modify-aps-gba.rom', '700a409c'],
-        ['modify-aps-n64.zip|modify-aps-n64.rom', '700a409c'],
-        ['modify-bps.zip|modify-bps.rom', '700a409c'],
-        ['modify-bsdiff.zip|modify-bsdiff.rom', '700a409c'],
-        ['modify-dps.zip|modify-dps.rom', '700a409c'],
-        ['modify-ebp.zip|modify-ebp.rom', '700a409c'],
-        ['modify-ips.zip|modify-ips.rom', '700a409c'],
-        ['modify-ips32.zip|modify-ips32.rom', '700a409c'],
-        ['modify-ninja.zip|modify-ninja.rom', '700a409c'],
-        ['modify-ppf.zip|modify-ppf.rom', '700a409c'],
-        ['modify-ups.zip|modify-ups.rom', '700a409c'],
-        ['modify-vcdiff.zip|modify-vcdiff.rom', '700a409c'],
-        ['modify.zip|modify.rom', 'aabfe90e'],
-      ],
-    ],
-    [
-      'patchable/shrink.gz',
-      [
-        ['shrink-aps-gba.zip|shrink-aps-gba.rom', 'c1f21914'],
-        ['shrink-aps-n64.zip|shrink-aps-n64.rom', 'c1f21914'],
-        ['shrink-bps.zip|shrink-bps.rom', 'c1f21914'],
-        ['shrink-bsdiff.zip|shrink-bsdiff.rom', 'c1f21914'],
-        ['shrink-dps.zip|shrink-dps.rom', 'c1f21914'],
-        ['shrink-ips.zip|shrink-ips.rom', 'c1f21914'],
-        ['shrink-ninja.zip|shrink-ninja.rom', 'c1f21914'],
-        ['shrink-ups.zip|shrink-ups.rom', 'c1f21914'],
-        ['shrink-vcdiff.zip|shrink-vcdiff.rom', 'c1f21914'],
-        ['shrink.zip|shrink.rom', '52249184'],
-      ],
-    ],
-  ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const options = new Options({
-        commands: ['copy', 'zip', 'test'],
-      });
-      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
-      const outputFiles = await walkAndStat(outputTemp);
+        // Control group of files without patches
+        ['raw/empty.rom', [['empty.zip|empty.rom', '00000000']]],
+        ['raw/fizzbuzz.nes', [['fizzbuzz.zip|fizzbuzz.nes', '370517b5']]],
+        ['raw/foobar.lnx', [['foobar.zip|foobar.lnx', 'b22c9747']]],
+        ['raw/loremipsum.rom', [['loremipsum.zip|loremipsum.rom', '70856527']]],
+        // Patchable files
+        [
+          'patchable/modify.rom',
+          [
+            ['modify-aps-gba.zip|modify-aps-gba.rom', '700a409c'],
+            ['modify-aps-n64.zip|modify-aps-n64.rom', '700a409c'],
+            ['modify-bps.zip|modify-bps.rom', '700a409c'],
+            ['modify-bsdiff.zip|modify-bsdiff.rom', '700a409c'],
+            ['modify-dps.zip|modify-dps.rom', '700a409c'],
+            ['modify-ebp.zip|modify-ebp.rom', '700a409c'],
+            ['modify-ips.zip|modify-ips.rom', '700a409c'],
+            ['modify-ips32.zip|modify-ips32.rom', '700a409c'],
+            ['modify-ninja.zip|modify-ninja.rom', '700a409c'],
+            ['modify-ppf.zip|modify-ppf.rom', '700a409c'],
+            ['modify-ups.zip|modify-ups.rom', '700a409c'],
+            ['modify-vcdiff.zip|modify-vcdiff.rom', '700a409c'],
+            ['modify.zip|modify.rom', 'aabfe90e'],
+          ],
+        ],
+        [
+          'patchable/shrink.gz',
+          [
+            ['shrink-aps-gba.zip|shrink-aps-gba.rom', 'c1f21914'],
+            ['shrink-aps-n64.zip|shrink-aps-n64.rom', 'c1f21914'],
+            ['shrink-bps.zip|shrink-bps.rom', 'c1f21914'],
+            ['shrink-bsdiff.zip|shrink-bsdiff.rom', 'c1f21914'],
+            ['shrink-dps.zip|shrink-dps.rom', 'c1f21914'],
+            ['shrink-ips.zip|shrink-ips.rom', 'c1f21914'],
+            ['shrink-ninja.zip|shrink-ninja.rom', 'c1f21914'],
+            ['shrink-ups.zip|shrink-ups.rom', 'c1f21914'],
+            ['shrink-vcdiff.zip|shrink-vcdiff.rom', 'c1f21914'],
+            ['shrink.zip|shrink.rom', '52249184'],
+          ],
+        ],
+      ] satisfies [string, string[][]][]
+    ).flatMap(([inputGlob, expectedFilesAndCrcs]) =>
+      // Patches should apply the same whether they're raw or inside an archive
+      ['patches', 'patches-zipped'].map((patchGlob): [string, string, string[][]] => [
+        inputGlob,
+        patchGlob,
+        expectedFilesAndCrcs,
+      ]),
+    ),
+  )(
+    'should patch files if appropriate: %s with %s',
+    async (inputGlob, patchGlob, expectedFilesAndCrcs) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        const options = new Options({
+          commands: ['copy', 'zip', 'test'],
+        });
+        await candidateWriter(options, inputTemp, inputGlob, patchGlob, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
 
-      const writtenRomsAndCrcs = (
-        await Promise.all(
-          outputFiles.map(
-            async ([outputPath]) =>
-              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
-          ),
+        const writtenRomsAndCrcs = (
+          await Promise.all(
+            outputFiles.map(
+              async ([outputPath]) =>
+                await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
+            ),
+          )
         )
-      )
-        .flat()
-        .map((entry) => [
-          entry.toString().replace(outputTemp + path.sep, ''),
-          entry.getCrc32() ?? '',
-        ])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
-      expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
-    });
-  });
+          .flat()
+          .map((entry) => [
+            entry.toString().replace(outputTemp + path.sep, ''),
+            entry.getCrc32() ?? '',
+          ])
+          .toSorted((a, b) => a[0].localeCompare(b[0]));
+        expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
+      });
+    },
+  );
 
   test.each([
     [
