@@ -42,6 +42,7 @@ export default class UPSPatch extends Patch {
 
       const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
       patchFile.seek(0);
+      // TODO(cemmer): consider chunking/streaming
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
       const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
       if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
@@ -129,6 +130,7 @@ export default class UPSPatch extends Patch {
   }
 
   private static async readPatchBlock(patchFile: IOFile, sourceFile: IOFile): Promise<Buffer> {
+    // TODO(cemmer): consider chunking/streaming
     const buffer: Buffer[] = [];
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
