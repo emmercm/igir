@@ -57,11 +57,14 @@ export default class Gzip extends Archive {
     callback?: FsReadCallback,
     shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<Archive>[]> {
-    // See if this file is actually a .tar.gz
-    try {
-      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
-    } catch {
-      // ignored
+    // See if this file is actually a .tar.gz. Only try when it starts with a tar header: the tar
+    // parser buffers a plain gzipped file, which takes hours on a disc-sized image.
+    if (await this.isTar()) {
+      try {
+        return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
+      } catch {
+        // ignored
+      }
     }
 
     const gzipHeaderTrailer = await this.getHeaderTrailerInfo();
@@ -99,6 +102,49 @@ export default class Gzip extends Archive {
         checksumBitmask,
       ),
     ];
+  }
+
+  /**
+   * Whether the decompressed stream starts with a tar header, judged by the header's checksum,
+   * which every tar format (v7, ustar, GNU, pax) carries.
+   */
+  private async isTar(): Promise<boolean> {
+    const header = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      let length = 0;
+      const readStream = fs.createReadStream(this.getFilePath());
+      const gunzip = zlib.createGunzip();
+      const finish = (): void => {
+        readStream.destroy();
+        gunzip.destroy();
+        resolve(Buffer.concat(chunks).subarray(0, 512));
+      };
+      gunzip.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
+        length += chunk.length;
+        if (length >= 512) {
+          finish();
+        }
+      });
+      gunzip.on('end', finish);
+      gunzip.on('error', reject);
+      readStream.on('error', reject);
+      readStream.pipe(gunzip);
+    }).catch(() => Buffer.alloc(0));
+    if (header.length < 512) {
+      return false;
+    }
+
+    // The checksum field is octal, and is summed as if it were eight spaces
+    const stored = Number.parseInt(
+      header.subarray(148, 156).toString('ascii').replace(/\0.*$/s, '').trim(),
+      8,
+    );
+    let sum = 0;
+    for (let i = 0; i < 512; i += 1) {
+      sum += i >= 148 && i < 156 ? 0x20 : header[i];
+    }
+    return !Number.isNaN(stored) && stored === sum;
   }
 
   private async getHeaderTrailerInfo(): Promise<GzipHeaderTrailer> {
