@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
+import string_decoder from 'node:string_decoder';
 import zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
+import { JSONParseStream } from 'json-web-streams';
 
 import KeyedMutex from '../async/keyedMutex.js';
 import Timer from '../async/timer.js';
@@ -19,6 +21,8 @@ export interface CacheProps {
  * A cache of an unbounded size.
  */
 export default class Cache<V> {
+  private static readonly SAVE_BATCH_LENGTH = 1024 * 1024;
+
   private keyValues = new Map<string, V>();
 
   private readonly keyedMutex = new KeyedMutex(1000);
@@ -262,26 +266,42 @@ export default class Cache<V> {
     }
 
     try {
-      const chunks: Buffer[] = [];
-      await stream.promises.pipeline(
-        fs.createReadStream(this.filePath),
-        zlib.createGunzip(),
-        new stream.Writable({
-          write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
-            chunks.push(chunk);
-            cb();
+      const keyValues = new Map<string, V>();
+      const parser = new JSONParseStream(['$[*]']);
+      const writer = parser.writable.getWriter();
+      const reader = parser.readable.getReader();
+      const parsed = (async (): Promise<void> => {
+        for (;;) {
+          const { done, value: record } = await reader.read();
+          if (done) {
+            return;
+          }
+          if (record.wildcardKeys !== undefined) {
+            keyValues.set(record.wildcardKeys[0], record.value as V);
+          }
+        }
+      })();
+
+      try {
+        await stream.promises.pipeline(
+          fs.createReadStream(this.filePath),
+          zlib.createGunzip(),
+          async (source: AsyncIterable<Buffer>) => {
+            const decoder = new string_decoder.StringDecoder('utf8');
+            for await (const chunk of source) {
+              await writer.write(decoder.write(chunk));
+            }
+            await writer.write(decoder.end());
+            await writer.close();
           },
-        }),
-      );
-      if (chunks.length === 0) {
-        return this;
+        );
+      } catch (error) {
+        await writer.abort(error).catch(() => undefined);
+        await parsed.catch(() => undefined);
+        throw error;
       }
-      const keyValuesObject = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<
-        string,
-        V
-      >;
-      const keyValuesEntries = Object.entries(keyValuesObject);
-      this.keyValues = new Map(keyValuesEntries);
+      await parsed;
+      this.keyValues = keyValues;
     } catch {
       // ignored
     }
@@ -309,6 +329,30 @@ export default class Cache<V> {
   }
 
   /**
+   * Serialize entries as one JSON object, yielded in batches so no single string holds the whole
+   * cache.
+   * @yields {Buffer} UTF-8 encoded batches of the serialized object
+   */
+  private static *serialize(entries: [string, unknown][]): Generator<Buffer> {
+    let batch = '{';
+    let separator = '';
+    for (const [key, value] of entries) {
+      const json = JSON.stringify(value) as string | undefined;
+      if (json === undefined) {
+        continue;
+      }
+      batch += `${separator}${JSON.stringify(key)}:${json}`;
+      separator = ',';
+      if (batch.length < this.SAVE_BATCH_LENGTH) {
+        continue;
+      }
+      yield Buffer.from(batch, 'utf8');
+      batch = '';
+    }
+    yield Buffer.from(`${batch}}`, 'utf8');
+  }
+
+  /**
    * Save the cache to a file.
    */
   async save(): Promise<void> {
@@ -324,8 +368,7 @@ export default class Cache<V> {
           return;
         }
 
-        const keyValuesObject = Object.fromEntries(this.keyValues);
-        const json = JSON.stringify(keyValuesObject);
+        const entries = [...this.keyValues];
         // Reset before I/O so mid-save changes re-set the flag
         this.hasChanged = false;
 
@@ -339,7 +382,7 @@ export default class Cache<V> {
         const tempFile = await FsUtil.mktemp(this.filePath);
         try {
           await stream.promises.pipeline(
-            stream.Readable.from([Buffer.from(json, 'utf8')]),
+            stream.Readable.from(Cache.serialize(entries)),
             zlib.createGzip(),
             fs.createWriteStream(tempFile),
           );

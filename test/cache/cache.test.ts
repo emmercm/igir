@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 import Cache from '../../src/cache/cache.js';
 import Temp from '../../src/globals/temp.js';
@@ -210,6 +212,46 @@ describe('load', () => {
       await FsUtil.rm(tempFile, { force: true });
     }
   });
+
+  it('should load a cache file written as a single JSON object', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const keyValues = { one: 1, 'two\n"2"': [2, { two: 'a\\b' }] };
+    await fs.promises.writeFile(tempFile, zlib.gzipSync(JSON.stringify(keyValues)));
+
+    try {
+      const cache = new Cache<unknown>({ filePath: tempFile });
+      await cache.load();
+      expect(
+        Object.fromEntries(
+          await Promise.all([...cache.keys()].map(async (key) => [key, await cache.get(key)])),
+        ),
+      ).toEqual(keyValues);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should round-trip values with special characters', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const value = 'line\nbreak "quoted" back\\slash \u{E9}\u{1F3AE}';
+
+    const firstCache = new Cache<string>({ filePath: tempFile });
+    for (let i = 0; i < 20_000; i += 1) {
+      await firstCache.set(`${value}${i}`, `${i}${value}`);
+    }
+    await firstCache.save();
+
+    try {
+      const secondCache = new Cache<string>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(20_000);
+      for (let i = 0; i < 20_000; i += 1) {
+        await expect(secondCache.get(`${value}${i}`)).resolves.toEqual(`${i}${value}`);
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
 });
 
 describe('save', () => {
@@ -238,6 +280,29 @@ describe('save', () => {
     try {
       await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
     } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should save in batches as a single JSON object', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const cache = new Cache<string>({ filePath: tempFile });
+    for (let i = 0; i < 50_000; i += 1) {
+      await cache.set(String(i), 'x'.repeat(100));
+    }
+    const bufferFrom = vi.spyOn(Buffer, 'from');
+    try {
+      await cache.save();
+      const serialized = zlib.gunzipSync(await fs.promises.readFile(tempFile)).toString('utf8');
+      const batchLengths = bufferFrom.mock.calls
+        .filter(([arg]) => typeof arg === 'string')
+        .map(([arg]) => (arg as string).length);
+      expect(batchLengths.length).toBeGreaterThan(1);
+      expect(Math.max(...batchLengths)).toBeLessThan(serialized.length);
+      expect(Object.keys(JSON.parse(serialized) as object)).toHaveLength(50_000);
+    } finally {
+      bufferFrom.mockRestore();
       await FsUtil.rm(tempFile, { force: true });
     }
   });
