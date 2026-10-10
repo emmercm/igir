@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
+import string_decoder from 'node:string_decoder';
 import zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
@@ -10,16 +11,31 @@ import Timer from '../async/timer.js';
 import Defaults from '../globals/defaults.js';
 import FsUtil from '../utils/fsUtil.js';
 
+interface EntryScannerState {
+  started: boolean;
+  done: boolean;
+  depth: number;
+  inString: boolean;
+  escaped: boolean;
+  entry: string;
+}
+
 export interface CacheProps {
   filePath?: string;
   fileFlushMillis?: number;
   saveOnExit?: boolean;
+  streamingThreshold?: number;
 }
 
 /**
  * A cache of an unbounded size.
  */
 export default class Cache<V> {
+  private static readonly SAVE_BATCH_LENGTH = 1024 * 1024;
+
+  // A whole-file parse is faster but holds the file and its object at once, so large files stream instead
+  private static readonly STREAMING_THRESHOLD = 64 * 1024 * 1024;
+
   private keyValues = new Map<string, V>();
 
   private readonly keyedMutex = new KeyedMutex(1000);
@@ -32,11 +48,14 @@ export default class Cache<V> {
 
   readonly fileFlushMillis?: number;
 
+  private readonly streamingThreshold: number;
+
   private readonly saveMutex = new Mutex();
 
   constructor(props?: CacheProps) {
     this.filePath = props?.filePath;
     this.fileFlushMillis = props?.fileFlushMillis;
+    this.streamingThreshold = props?.streamingThreshold ?? Cache.STREAMING_THRESHOLD;
     if (props?.saveOnExit) {
       // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
       process.once('beforeExit', async () => {
@@ -275,26 +294,61 @@ export default class Cache<V> {
     }
 
     try {
-      const chunks: Buffer[] = [];
+      const keyValues = new Map<string, V>();
+      const state: EntryScannerState = {
+        started: false,
+        done: false,
+        depth: 0,
+        inString: false,
+        escaped: false,
+        entry: '',
+      };
+      const onEntry = (entry: string): void => {
+        if (entry === '') {
+          return;
+        }
+        const parsed = JSON.parse(`{${entry}}`) as Record<string, V>;
+        for (const [key, value] of Object.entries(parsed)) {
+          keyValues.set(key, value);
+        }
+      };
+
+      const progress = { whole: '', isScanning: false };
       await stream.promises.pipeline(
         fs.createReadStream(this.filePath, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
         zlib.createGunzip({ chunkSize: Defaults.FILE_READING_CHUNK_SIZE }),
-        new stream.Writable({
-          write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
-            chunks.push(chunk);
-            cb();
-          },
-        }),
+        async (source: AsyncIterable<Buffer>) => {
+          const decoder = new string_decoder.StringDecoder('utf8');
+          for await (const chunk of source) {
+            const text = decoder.write(chunk);
+            if (progress.isScanning) {
+              Cache.scan(text, state, onEntry);
+            } else {
+              progress.whole += text;
+              if (progress.whole.length > this.streamingThreshold) {
+                Cache.scan(progress.whole, state, onEntry);
+                progress.whole = '';
+                progress.isScanning = true;
+              }
+            }
+          }
+          const tail = decoder.end();
+          if (progress.isScanning) {
+            Cache.scan(tail, state, onEntry);
+          } else {
+            progress.whole += tail;
+          }
+        },
       );
-      if (chunks.length === 0) {
-        return this;
+      if (progress.isScanning) {
+        if (!state.done) {
+          // Truncated, so reject it as the whole-file parse does rather than load a prefix
+          throw new Error('cache file is incomplete');
+        }
+        this.keyValues = keyValues;
+      } else {
+        this.keyValues = new Map(Object.entries(JSON.parse(progress.whole) as Record<string, V>));
       }
-      const keyValuesObject = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<
-        string,
-        V
-      >;
-      const keyValuesEntries = Object.entries(keyValuesObject);
-      this.keyValues = new Map(keyValuesEntries);
     } catch {
       // ignored
     }
@@ -322,6 +376,79 @@ export default class Cache<V> {
   }
 
   /**
+   * Serialize entries as one JSON object, yielded in batches so no single string holds the whole
+   * cache.
+   * @yields {Buffer} UTF-8 encoded batches of the serialized object
+   */
+  private static *serialize(entries: [string, unknown][]): Generator<Buffer> {
+    let batch = '{';
+    let separator = '';
+    for (const [key, value] of entries) {
+      const json = JSON.stringify(value) as string | undefined;
+      if (json === undefined) {
+        continue;
+      }
+      batch += `${separator}${JSON.stringify(key)}:${json}`;
+      separator = ',';
+      if (batch.length < this.SAVE_BATCH_LENGTH) {
+        continue;
+      }
+      yield Buffer.from(batch, 'utf8');
+      batch = '';
+    }
+    yield Buffer.from(`${batch}}`, 'utf8');
+  }
+
+  // Splits a streamed JSON object into its top-level entries, mirroring serialize()
+  private static scan(
+    text: string,
+    state: EntryScannerState,
+    onEntry: (entry: string) => void,
+  ): void {
+    let segmentStart = 0;
+    for (let i = 0; i < text.length && !state.done; i += 1) {
+      const char = text[i];
+      if (state.escaped) {
+        state.escaped = false;
+      } else if (state.inString) {
+        if (char === '\\') {
+          state.escaped = true;
+        } else if (char === '"') {
+          state.inString = false;
+        }
+      } else if (!state.started) {
+        if (char === '{') {
+          state.started = true;
+          segmentStart = i + 1;
+        }
+      } else if (char === '"') {
+        state.inString = true;
+      } else if (char === '{' || char === '[') {
+        state.depth += 1;
+      } else if (char === ']') {
+        state.depth = Math.max(0, state.depth - 1);
+      } else if (char === '}') {
+        if (state.depth === 0) {
+          state.entry += text.slice(segmentStart, i);
+          state.done = true;
+          onEntry(state.entry);
+          state.entry = '';
+        } else {
+          state.depth -= 1;
+        }
+      } else if (char === ',' && state.depth === 0) {
+        state.entry += text.slice(segmentStart, i);
+        onEntry(state.entry);
+        state.entry = '';
+        segmentStart = i + 1;
+      }
+    }
+    if (!state.done) {
+      state.entry += text.slice(segmentStart);
+    }
+  }
+
+  /**
    * Save the cache to a file.
    */
   async save(): Promise<void> {
@@ -337,8 +464,7 @@ export default class Cache<V> {
           return;
         }
 
-        const keyValuesObject = Object.fromEntries(this.keyValues);
-        const json = JSON.stringify(keyValuesObject);
+        const entries = [...this.keyValues];
         // Reset before I/O so mid-save changes re-set the flag
         this.hasChanged = false;
 
@@ -352,7 +478,7 @@ export default class Cache<V> {
         const tempFile = await FsUtil.mktemp(this.filePath);
         try {
           await stream.promises.pipeline(
-            stream.Readable.from([Buffer.from(json, 'utf8')]),
+            stream.Readable.from(Cache.serialize(entries)),
             zlib.createGzip(),
             fs.createWriteStream(tempFile),
           );
