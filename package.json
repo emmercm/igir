@@ -86,6 +86,7 @@
     "fast-xml-parser": "5.11.1",
     "is-admin": "4.0.0",
     "is-unicode-supported": "2.1.0",
+    "json-web-streams": "1.2.0",
     "junk": "4.0.1",
     "micromatch": "4.0.8",
     "node-unrar-js": "2.0.2",
