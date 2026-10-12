@@ -14,6 +14,7 @@ import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import type { OptionsProps } from '../../../src/models/options.js';
@@ -2200,6 +2201,59 @@ describe('link', () => {
         );
         await expect(FsUtil.exists(outputPathResolved)).resolves.toEqual(true);
         expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
+      }
+    });
+  });
+});
+
+describe('renamed files', () => {
+  it('should cache the checksums of a file moved by renaming', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const fileSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetFileChecksums');
+      const archiveSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetArchiveChecksums');
+      try {
+        const options = new Options({ commands: ['move', 'test'] });
+        await candidateWriter(
+          options,
+          inputTemp,
+          path.join('raw', 'fizzbuzz.nes'),
+          undefined,
+          outputTemp,
+        );
+
+        expect(fileSpy).toHaveBeenCalledTimes(1);
+        expect(fileSpy.mock.calls[0][0].getFilePath()).toContain(outputTemp);
+        expect(fileSpy.mock.calls[0][0].getCrc32()).toBeDefined();
+        expect(archiveSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+  });
+
+  it('should cache the entries of an archive moved by renaming', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const fileSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetFileChecksums');
+      const archiveSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetArchiveChecksums');
+      try {
+        const options = new Options({ commands: ['move', 'test'] });
+        await candidateWriter(
+          options,
+          inputTemp,
+          path.join('zip', 'foobar.zip'),
+          undefined,
+          outputTemp,
+        );
+
+        expect(fileSpy).toHaveBeenCalledTimes(1);
+        expect(fileSpy.mock.calls[0][0].getFilePath()).toContain(outputTemp);
+        expect(archiveSpy).toHaveBeenCalledTimes(1);
+        const [archive, archiveEntries] = archiveSpy.mock.calls[0];
+        expect(archive).toBeInstanceOf(Zip);
+        expect(archive.getFilePath()).toEqual(fileSpy.mock.calls[0][0].getFilePath());
+        expect(archiveEntries.map((entry) => entry.getCrc32())).toEqual(['b22c9747']);
+      } finally {
+        vi.restoreAllMocks();
       }
     });
   });

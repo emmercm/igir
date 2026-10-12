@@ -54,6 +54,23 @@ export default class FileFactory {
   }
 
   /**
+   * Cache a file's already-known checksums at its current path.
+   */
+  async computeAndSetFileChecksums(file: File): Promise<void> {
+    await this.fileCache.computeAndSetFileChecksums(file);
+  }
+
+  /**
+   * Cache an archive's already-known entries at its current path.
+   */
+  async computeAndSetArchiveChecksums<A extends Archive>(
+    archive: A,
+    archiveEntries: ArchiveEntry<A>[],
+  ): Promise<void> {
+    await this.fileCache.computeAndSetArchiveChecksums(archive, archiveEntries);
+  }
+
+  /**
    * Return every {@link File} represented by a path, expanding archives into their entries when
    * the path is (or appears to be) an archive, and falling back to a single non-archive file
    * otherwise.
