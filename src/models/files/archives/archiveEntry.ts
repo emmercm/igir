@@ -27,6 +27,11 @@ export interface ArchiveEntryProps<A extends Archive>
   readonly archive: A;
 }
 
+export interface ArchiveState {
+  exists: boolean;
+  symlinkSource?: string;
+}
+
 /**
  * A single entry inside an {@link Archive}, addressable by its entry path within the archive.
  */
@@ -68,6 +73,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   static async entryOf<A extends Archive>(
     archiveEntryProps: ArchiveEntryProps<A>,
     checksumBitmask: number = ChecksumBitmask.NONE,
+    archiveState?: ArchiveState,
   ): Promise<ArchiveEntry<A>> {
     let finalSize = archiveEntryProps.size;
     let finalCrcWithHeader = archiveEntryProps.crc32;
@@ -88,7 +94,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       : archiveEntryProps.sha256;
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
-    if (await FsUtil.exists(archiveEntryProps.archive.getFilePath())) {
+    const state = archiveState ?? (await this.archiveStateOf(archiveEntryProps.archive));
+    if (state.exists) {
       // Calculate checksums
       if (
         (!finalCrcWithHeader && checksumBitmask & ChecksumBitmask.CRC32) ||
@@ -125,8 +132,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSha256WithoutHeader = headerlessChecksums.sha256;
       }
 
-      if (await FsUtil.isSymlink(archiveEntryProps.archive.getFilePath())) {
-        finalSymlinkSource = await FsUtil.readlink(archiveEntryProps.archive.getFilePath());
+      if (state.symlinkSource !== undefined) {
+        finalSymlinkSource = state.symlinkSource;
       }
     } else {
       finalCrcWithHeader ??= '';
@@ -156,18 +163,36 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   /**
+   * Whether an archive exists, and where it links to if it's a symlink. Every entry of an archive
+   * shares these, so callers building many entries can look them up once.
+   */
+  static async archiveStateOf(archive: Archive): Promise<ArchiveState> {
+    const filePath = archive.getFilePath();
+    if (!(await FsUtil.exists(filePath))) {
+      return { exists: false };
+    }
+    return {
+      exists: true,
+      symlinkSource: (await FsUtil.isSymlink(filePath))
+        ? await FsUtil.readlink(filePath)
+        : undefined,
+    };
+  }
+
+  /**
    * Construct an {@link ArchiveEntry} by deserializing a plain object — the inverse of
    * {@link toEntryProps}.
    */
   static async entryOfObject<A extends Archive>(
     archive: A,
     obj: ArchiveEntryProps<A>,
+    archiveState?: ArchiveState,
   ): Promise<ArchiveEntry<A>> {
     const deserialized = plainToClassFromExist(new ArchiveEntry({ archive, entryPath: '' }), obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     });
-    return await this.entryOf({ ...deserialized, archive });
+    return await this.entryOf({ ...deserialized, archive }, ChecksumBitmask.NONE, archiveState);
   }
 
   /**

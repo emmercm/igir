@@ -63,6 +63,9 @@ export default class FileCache {
 
   private cache: Cache<CacheValue> = new Cache<CacheValue>();
 
+  // Archive types with cached entries, so a renamed file's keys can be found without a full scan
+  private readonly archiveTypes = new Set<string>();
+
   private enabled = true;
 
   private readonly prefixedLogger = logger.child(FileCache.name);
@@ -98,6 +101,15 @@ export default class FileCache {
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
     // Delete old versioned header/signature/validation keys (pre-version-in-value migration)
     await this.cache.delete(/\|[HSZ]\d+$/);
+
+    for (const key of this.cache.keys()) {
+      // From the end: a file path may itself contain '|'
+      const parts = key.split('|');
+      const archiveType = parts.at(-2);
+      if (parts.at(-1) === ValueType.ARCHIVE_CHECKSUMS && archiveType) {
+        this.archiveTypes.add(archiveType);
+      }
+    }
 
     this.prefixedLogger.trace(`loaded: ${cacheFilePath}`);
   }
@@ -206,6 +218,7 @@ export default class FileCache {
       // An empty file can't have entries
       return [];
     }
+    this.archiveTypes.add(archive.constructor.name);
     const cacheKey = this.getCacheKey(
       archive.getFilePath(),
       archive.constructor.name,
@@ -283,8 +296,11 @@ export default class FileCache {
     // We didn't compute the archive entries (cache hit), deserialize the properties into
     //  full objects
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
+    const archiveState = await ArchiveEntry.archiveStateOf(archive);
     return await Promise.all(
-      cachedEntries.map(async (props) => await ArchiveEntry.entryOfObject(archive, props)),
+      cachedEntries.map(
+        async (props) => await ArchiveEntry.entryOfObject(archive, props, archiveState),
+      ),
     );
   }
 
@@ -551,6 +567,30 @@ export default class FileCache {
           (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
       )
       .map(([, checksum]) => this.getCacheKey('', checksum, valueType));
+  }
+
+  /**
+   * Carry a renamed file's cached values to its new path. A rename keeps the file's contents, size,
+   * and modified time, so the values stay valid.
+   */
+  async renamed(oldFilePath: string, newFilePath: string): Promise<void> {
+    const subIdentifiersAndValueTypes: [string | undefined, ValueTypeValue][] = [
+      [undefined, ValueType.FILE_CHECKSUMS],
+      [undefined, ValueType.TZ_VALIDATION],
+      ...[...this.archiveTypes].map((archiveType): [string, ValueTypeValue] => [
+        archiveType,
+        ValueType.ARCHIVE_CHECKSUMS,
+      ]),
+    ];
+    for (const [subIdentifier, valueType] of subIdentifiersAndValueTypes) {
+      const oldKey = this.getCacheKey(oldFilePath, subIdentifier, valueType);
+      const value = await this.cache.get(oldKey);
+      if (value === undefined) {
+        continue;
+      }
+      await this.cache.set(this.getCacheKey(newFilePath, subIdentifier, valueType), value);
+      await this.cache.delete(oldKey);
+    }
   }
 
   private getCacheKey(

@@ -54,6 +54,13 @@ export default class FileFactory {
   }
 
   /**
+   * Carry a renamed file's cached values to its new path.
+   */
+  async renamed(oldFilePath: string, newFilePath: string): Promise<void> {
+    await this.fileCache.renamed(oldFilePath, newFilePath);
+  }
+
+  /**
    * Return every {@link File} represented by a path, expanding archives into their entries when
    * the path is (or appears to be) an archive, and falling back to a single non-archive file
    * otherwise.

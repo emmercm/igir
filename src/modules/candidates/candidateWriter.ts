@@ -7,6 +7,7 @@ import type FileMoveMutex from '../../async/fileMoveMutex.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type FileFactory from '../../factories/fileFactory.js';
+import type { CacheModeValue } from '../../factories/fileFactory.js';
 import { CacheMode } from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
@@ -211,12 +212,15 @@ export default class CandidateWriter extends Module {
         }
 
         if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
+          // An existing file was read during scanning, and its cached checksums are checked
+          // against its size and modified time; only a newly written file needs to be re-read
           const existingTest = await this.testZipContents(
             dat,
             candidate,
             outputZip.getFilePath(),
             inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
             childBar,
+            CacheMode.RESPECT_CACHED_VALUE,
           );
           if (this.options.shouldWrite() && !existingTest) {
             this.prefixedLogger.debug(
@@ -305,6 +309,7 @@ export default class CandidateWriter extends Module {
     zipFilePath: string,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
     progressBar: ProgressBar,
+    cacheMode: CacheModeValue = CacheMode.IGNORE_CACHED_VALUE,
   ): Promise<string | undefined> {
     this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${zipFilePath}: testing zip`,
@@ -328,7 +333,7 @@ export default class CandidateWriter extends Module {
         (await this.fileFactory.entriesFromArchive(
           zipFile,
           checksumBitmask,
-          CacheMode.IGNORE_CACHED_VALUE,
+          cacheMode,
           (progress, total) => {
             progressBar.setCompleted(progress);
             if (total !== undefined) {
@@ -396,10 +401,7 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    const tzValidationResult = await this.fileFactory.tzValidationFrom(
-      zipFile,
-      CacheMode.IGNORE_CACHED_VALUE,
-    );
+    const tzValidationResult = await this.fileFactory.tzValidationFrom(zipFile, cacheMode);
     if (
       this.options.getZipFormat() === ZipFormat.TORRENTZIP &&
       tzValidationResult !== ValidationResult.VALID_TORRENTZIP
@@ -588,12 +590,14 @@ export default class CandidateWriter extends Module {
         }
 
         if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
+          // An existing file was read during scanning, see the zip case above
           const existingTest = await this.testWrittenRaw(
             dat,
             candidate,
             outputFilePath,
             outputRomFile,
             childBar,
+            CacheMode.RESPECT_CACHED_VALUE,
           );
           if (this.options.shouldWrite() && !existingTest) {
             this.prefixedLogger.debug(
@@ -736,6 +740,10 @@ export default class CandidateWriter extends Module {
             progressBar.setCompleted(progress);
           },
         );
+        if (moveResult === MoveResult.RENAMED) {
+          // A renamed file isn't re-read, so carry its cached values instead
+          await this.fileFactory.renamed(inputRomFile.getFilePath(), outputFilePath);
+        }
         return [moveResult, outputFilePath];
       } catch (error) {
         this.prefixedLogger.error(
@@ -788,6 +796,7 @@ export default class CandidateWriter extends Module {
     outputFilePath: string,
     expectedFile: File,
     progressBar?: ProgressBar,
+    cacheMode: CacheModeValue = CacheMode.IGNORE_CACHED_VALUE,
   ): Promise<string | undefined> {
     this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: testing raw file`,
@@ -802,7 +811,7 @@ export default class CandidateWriter extends Module {
         (progress) => {
           progressBar?.setCompleted(progress);
         },
-        CacheMode.IGNORE_CACHED_VALUE,
+        cacheMode,
       );
     } catch (error) {
       return `failed to parse: ${error}`;
@@ -928,7 +937,14 @@ export default class CandidateWriter extends Module {
             inputRomFile.getFilePath(),
           );
         } else {
-          existingTest = await this.testWrittenRaw(dat, candidate, linkPath, outputRomFile);
+          existingTest = await this.testWrittenRaw(
+            dat,
+            candidate,
+            linkPath,
+            outputRomFile,
+            undefined,
+            CacheMode.RESPECT_CACHED_VALUE,
+          );
         }
         if (this.options.shouldWrite() && !existingTest) {
           this.prefixedLogger.debug(

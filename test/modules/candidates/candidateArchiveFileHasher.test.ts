@@ -4,6 +4,7 @@ import path from 'node:path';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
+import Temp from '../../../src/globals/temp.js';
 import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
@@ -16,6 +17,7 @@ import Options from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateArchiveFileHasher from '../../../src/modules/candidates/candidateArchiveFileHasher.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const FIXTURE_ROMS_DIR = path.join('test', 'fixtures', 'roms');
@@ -115,5 +117,112 @@ describe('hash', () => {
     const result = await buildHasher(options).hash(dat, candidates);
     expect(result).toHaveLength(1);
     expect(result[0].getRomsWithFiles()[0].getInputFile()).toBe(inputFile);
+  });
+});
+
+async function zipCandidate(
+  zipPath: string,
+  outputPath: string,
+): Promise<[WriteCandidate[], LogiqxDAT]> {
+  const archiveEntry = await ArchiveEntry.entryOf({
+    archive: new Zip(zipPath),
+    entryPath: 'foobar.lnx',
+  });
+  const archiveFile = new ArchiveFile(archiveEntry);
+  const outputFile = await File.fileOf({ filePath: outputPath, size: 0, crc32: '00000000' });
+  const rom = new ROM({ name: 'foobar.lnx', size: 0 });
+  return [
+    [
+      new WriteCandidate(new Game({ name: 'Zip Game' }), [
+        new ROMWithFiles(rom, archiveFile, outputFile),
+      ]),
+    ],
+    new LogiqxDAT({ header: new Header() }),
+  ];
+}
+
+async function withTempZip(
+  callback: (zipPath: string, tempDir: string) => Promise<void>,
+): Promise<void> {
+  await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
+  const tempDir = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'hasher'));
+  try {
+    const zipPath = path.join(tempDir, 'foobar.zip');
+    await FsUtil.copyFile(path.join(FIXTURE_ROMS_DIR, 'zip', 'foobar.zip'), zipPath);
+    await callback(zipPath, tempDir);
+  } finally {
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
+  }
+}
+
+describe('hash: links and renames', () => {
+  it.each([
+    ['should not hash archives that will be hard linked', ['link', 'test'], 'hardlink'],
+    ['should not hash archives that will be symlinked', ['link', 'test'], 'symlink'],
+  ])('%s', async (_, commands, linkMode) => {
+    await withTempZip(async (zipPath, tempDir) => {
+      const hashSpy = vi.spyOn(FileFactory.prototype, 'archiveFileFrom');
+      try {
+        const options = new Options({ commands, linkMode, output: tempDir });
+        const [candidates, dat] = await zipCandidate(
+          zipPath,
+          path.join(tempDir, 'out', 'foobar.zip'),
+        );
+        await buildHasher(options).hash(dat, candidates);
+        expect(hashSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+  });
+
+  it('should not hash archives that will be renamed into a new path', async () => {
+    await withTempZip(async (zipPath, tempDir) => {
+      const hashSpy = vi.spyOn(FileFactory.prototype, 'archiveFileFrom');
+      try {
+        const options = new Options({ commands: ['move', 'test'], output: tempDir });
+        const [candidates, dat] = await zipCandidate(
+          zipPath,
+          path.join(tempDir, 'out', 'foobar.zip'),
+        );
+        await buildHasher(options).hash(dat, candidates);
+        expect(hashSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+  });
+
+  it('should hash archives moving onto an output that already exists', async () => {
+    await withTempZip(async (zipPath, tempDir) => {
+      const existing = path.join(tempDir, 'existing.zip');
+      await FsUtil.copyFile(zipPath, existing);
+      const hashSpy = vi.spyOn(FileFactory.prototype, 'archiveFileFrom');
+      try {
+        const options = new Options({ commands: ['move', 'test'], output: tempDir });
+        const [candidates, dat] = await zipCandidate(zipPath, existing);
+        await buildHasher(options).hash(dat, candidates);
+        expect(hashSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+  });
+
+  it('should hash archives that will be copied', async () => {
+    await withTempZip(async (zipPath, tempDir) => {
+      const hashSpy = vi.spyOn(FileFactory.prototype, 'archiveFileFrom');
+      try {
+        const options = new Options({ commands: ['copy', 'test'], output: tempDir });
+        const [candidates, dat] = await zipCandidate(
+          zipPath,
+          path.join(tempDir, 'out', 'foobar.zip'),
+        );
+        await buildHasher(options).hash(dat, candidates);
+        expect(hashSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
   });
 });

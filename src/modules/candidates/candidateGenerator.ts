@@ -36,6 +36,9 @@ import Module from '../module.js';
  * and return a set of candidate files.
  */
 export default class CandidateGenerator extends Module {
+  // Excess entries only need to be found, not counted; this many are enough to log
+  private static readonly EXCESS_ENTRIES_TO_LOG = 10;
+
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
   private readonly readerSemaphore: MappableSemaphore;
@@ -494,6 +497,7 @@ export default class CandidateGenerator extends Module {
           archive,
           romsAndInputFiles.flatMap(([, inputFiles]) => inputFiles),
           indexedFiles,
+          CandidateGenerator.EXCESS_ENTRIES_TO_LOG,
         );
         if (unusedEntries.length > 0) {
           this.prefixedLogger.trace(
@@ -1105,10 +1109,9 @@ export default class CandidateGenerator extends Module {
         const rom = romWithFiles.getRom();
         const inputFile = romWithFiles.getInputFile();
         const candidates = indexedFiles
-          .findFiles(rom)
+          .findFilesAtPath(rom, inputFile.getFilePath())
           .filter(
             (foundFile) =>
-              foundFile.getFilePath() === inputFile.getFilePath() &&
               (inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile) &&
               foundFile instanceof ArchiveEntry &&
               inputFile.getArchive() === foundFile.getArchive(),
@@ -1148,6 +1151,7 @@ export default class CandidateGenerator extends Module {
         inputArchive,
         inputArchiveEntries,
         indexedFiles,
+        CandidateGenerator.EXCESS_ENTRIES_TO_LOG,
       );
       if (unusedEntries.length > 0) {
         this.prefixedLogger.trace(
@@ -1168,6 +1172,7 @@ export default class CandidateGenerator extends Module {
     archive: Archive,
     inputFiles: File[],
     indexedFiles: IndexedFiles,
+    limit = Infinity,
   ): ArchiveEntry<Archive>[] {
     if (this.options.shouldExtract() || this.options.getAllowExcessSets()) {
       // We don't particularly care where input files come from
@@ -1191,27 +1196,33 @@ export default class CandidateGenerator extends Module {
         .map((entry) => entry.getExtractedFilePath()),
     );
 
-    // Find which of the Archive's entries didn't match to a ROM from this Game
-    return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? []).filter(
-      (file): file is ArchiveEntry<Archive> => {
-        if (!(file instanceof ArchiveEntry)) {
-          // A non-archive file exists at the same path as the archive (this shouldn't happen)
-          return false;
-        }
-        if (file.getArchive() !== archive) {
-          // This archive entry is coming from a different archive at the same path (probably a
-          // different archive type)
-          return false;
-        }
-        if (
-          archive instanceof ChdBinCue &&
-          file.getExtractedFilePath().toLowerCase().endsWith('.cue')
-        ) {
-          return false;
-        }
-        return !usedEntryPaths.has(file.getExtractedFilePath());
-      },
-    );
+    // Find which of the Archive's entries didn't match to a ROM from this Game, stopping at
+    // `limit`: an archive can hold tens of thousands of entries, and this runs for every game
+    const unusedEntries: ArchiveEntry<Archive>[] = [];
+    const filesAtPath = indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? [];
+    for (const file of filesAtPath) {
+      if (!(file instanceof ArchiveEntry)) {
+        // A non-archive file exists at the same path as the archive (this shouldn't happen)
+        continue;
+      }
+      if (file.getArchive() !== archive) {
+        // This archive entry is coming from a different archive at the same path (probably a
+        // different archive type)
+        continue;
+      }
+      const extractedFilePath = file.getExtractedFilePath();
+      if (archive instanceof ChdBinCue && extractedFilePath.toLowerCase().endsWith('.cue')) {
+        continue;
+      }
+      if (usedEntryPaths.has(extractedFilePath)) {
+        continue;
+      }
+      unusedEntries.push(file as ArchiveEntry<Archive>);
+      if (unusedEntries.length >= limit) {
+        break;
+      }
+    }
+    return unusedEntries;
   }
 
   private async getOutputFile(
