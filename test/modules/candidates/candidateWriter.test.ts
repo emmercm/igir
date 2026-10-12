@@ -9,7 +9,7 @@ import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphor
 import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import FileFactory from '../../../src/factories/fileFactory.js';
+import FileFactory, { CacheMode } from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
@@ -2200,6 +2200,44 @@ describe('link', () => {
         );
         await expect(FsUtil.exists(outputPathResolved)).resolves.toEqual(true);
         expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
+      }
+    });
+  });
+});
+
+describe('existing outputs', () => {
+  it('should test an existing output against its cached checksums', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given a file already written to the output
+      await candidateWriter(
+        new Options({ commands: ['copy', 'test'] }),
+        inputTemp,
+        path.join('raw', 'fizzbuzz.nes'),
+        undefined,
+        outputTemp,
+      );
+
+      // When the same file is written again, testing the existing output
+      const fileFromSpy = vi.spyOn(FileFactory.prototype, 'fileFrom');
+      try {
+        await candidateWriter(
+          new Options({ commands: ['copy', 'test'], overwriteInvalid: true }),
+          inputTemp,
+          path.join('raw', 'fizzbuzz.nes'),
+          undefined,
+          outputTemp,
+        );
+
+        // Then the existing output is read through the cache
+        const outputCalls = fileFromSpy.mock.calls.filter(([filePath]) =>
+          filePath.startsWith(outputTemp),
+        );
+        expect(outputCalls.length).toBeGreaterThan(0);
+        for (const call of outputCalls) {
+          expect(call[3]).toEqual(CacheMode.RESPECT_CACHED_VALUE);
+        }
+      } finally {
+        vi.restoreAllMocks();
       }
     });
   });
