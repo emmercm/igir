@@ -4,6 +4,7 @@ import zlib from 'node:zlib';
 
 import { logger } from '../../../console/logger.js';
 import IgirException from '../../../exceptions/igirException.js';
+import Defaults from '../../../globals/defaults.js';
 import IOFile from '../../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import StreamUtil from '../../../utils/streamUtil.js';
@@ -147,8 +148,8 @@ export default class Gzip extends Archive {
     extractedFilePath: string,
   ): Promise<void> {
     await stream.promises.pipeline(
-      fs.createReadStream(this.getFilePath()),
-      zlib.createGunzip(),
+      fs.createReadStream(this.getFilePath(), { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+      zlib.createGunzip({ chunkSize: Defaults.FILE_READING_CHUNK_SIZE }),
       fs.createWriteStream(extractedFilePath),
     );
   }
@@ -162,8 +163,8 @@ export default class Gzip extends Archive {
     callback: (readable: stream.Readable) => Promise<T> | T,
   ): Promise<T> {
     return await StreamUtil.pipelineSafe(
-      fs.createReadStream(this.getFilePath()),
-      zlib.createGunzip(),
+      fs.createReadStream(this.getFilePath(), { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+      zlib.createGunzip({ chunkSize: Defaults.FILE_READING_CHUNK_SIZE }),
       callback,
     );
   }
