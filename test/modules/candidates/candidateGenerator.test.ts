@@ -1670,6 +1670,63 @@ describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
 describe('zip writing', () => {
   const options = new Options({ commands: ['copy', 'zip'] });
 
+  it('should stop looking for excess entries once some are found', async () => {
+    // Given an archive holding one ROM for each of several games among thousands of other entries,
+    // like a collection of cue sheets
+    const zip = new Zip(path.join(Temp.getTempDir(), 'Collection.zip'));
+    const gameNames = Array.from({ length: 10 }, (_, idx) => `Game ${idx}`);
+    const wanted = await Promise.all(
+      gameNames.map(
+        async (name, idx) =>
+          await ArchiveEntry.entryOf({
+            archive: zip,
+            entryPath: `${name}.cue`,
+            size: 4,
+            crc32: `f${idx.toString(16).padStart(7, '0')}`,
+          }),
+      ),
+    );
+    const others = await Promise.all(
+      Array.from(
+        { length: 5000 },
+        async (_, idx) =>
+          await ArchiveEntry.entryOf({
+            archive: zip,
+            entryPath: `Other ${idx}.cue`,
+            size: 4,
+            crc32: idx.toString(16).padStart(8, '0'),
+          }),
+      ),
+    );
+    const dat = new LogiqxDAT({
+      header: new Header(),
+      games: gameNames.map(
+        (name, idx) =>
+          new Game({
+            name,
+            roms: [
+              new ROM({
+                name: `${name}.cue`,
+                size: 4,
+                crc32: `f${idx.toString(16).padStart(7, '0')}`,
+              }),
+            ],
+          }),
+      ),
+    });
+
+    // When
+    const entryPathSpy = vi.spyOn(ArchiveEntry.prototype, 'getExtractedFilePath');
+    try {
+      await candidateGenerator(options, dat, [...wanted, ...others]);
+
+      // Then the archive isn't scanned entry by entry for every game
+      expect(entryPathSpy.mock.calls.length).toBeLessThan(3 * others.length);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
   it('should not raw-write an input zip that has excess entries', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
