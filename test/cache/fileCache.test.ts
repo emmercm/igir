@@ -38,3 +38,24 @@ describe('getOrComputeFileHeader', () => {
 describe('getOrComputeFilePaddings', () => {
   // Tested by romTrimProcessor.test.ts
 });
+
+describe('getOrComputeArchiveChecksums', () => {
+  it('should look up an archive once, not once per entry, on a cache hit', async () => {
+    const fileCache = new FileCache();
+    const zip = new Zip(path.join('test', 'fixtures', 'roms', 'zip', 'onetwothree.zip'));
+    const computed = await fileCache.getOrComputeArchiveChecksums(zip, ChecksumBitmask.CRC32);
+    expect(computed.length).toBeGreaterThan(1);
+
+    const symlinkSpy = vi.spyOn(FsUtil, 'isSymlink');
+    try {
+      const cached = await fileCache.getOrComputeArchiveChecksums(zip, ChecksumBitmask.CRC32);
+
+      expect(cached.map((entry) => entry.getCrc32())).toEqual(
+        computed.map((entry) => entry.getCrc32()),
+      );
+      expect(symlinkSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+});

@@ -283,8 +283,11 @@ export default class FileCache {
     // We didn't compute the archive entries (cache hit), deserialize the properties into
     //  full objects
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
+    const archiveState = await ArchiveEntry.archiveStateOf(archive);
     return await Promise.all(
-      cachedEntries.map(async (props) => await ArchiveEntry.entryOfObject(archive, props)),
+      cachedEntries.map(
+        async (props) => await ArchiveEntry.entryOfObject(archive, props, archiveState),
+      ),
     );
   }
 
