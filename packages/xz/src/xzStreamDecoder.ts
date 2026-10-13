@@ -48,7 +48,7 @@ export default class XzStreamDecoder {
       this.lzma2Decoder = new Lzma2Decoder(blockHeader.dictionarySize);
     }
 
-    const output = Buffer.alloc(outputSize);
+    const output = Buffer.allocUnsafe(outputSize);
     this.lzma2Decoder.decode(input, offset, input.length, output);
     const produced = this.lzma2Decoder.getOutputPosition();
     if (produced !== outputSize) {

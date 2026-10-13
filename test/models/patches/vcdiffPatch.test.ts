@@ -44,6 +44,12 @@ describe('createPatchedFile', () => {
       '08090a0b0c0d0e0f08090a0b0c0d0e0f',
     ],
     ['run after add', 'd6c3c40000000c0600030400aabbcc01020004', 'aabbcccccccc'],
+    // A RUN of 70,000 bytes, then a COPY of all of them, more than one 64 KiB chunk
+    [
+      'copy from target larger than a chunk',
+      'd6c3c40000001188c56000010801aa0084a2701384a27000',
+      'aa'.repeat(140_000),
+    ],
     ['grow', 'd6c3c400000110000e1400040401aabbccdd1310010400', `${INPUT16}aabbccdd`],
     [
       'vcd_target',
@@ -128,7 +134,17 @@ describe('createPatchedFile', () => {
     ['code table length 0', 'd6c3c4000200', /Vcdiff code table length 0 is invalid/],
     ['code table length 1', 'd6c3c4000201', /Vcdiff code table length 1 is invalid/],
     ['code table length 2', 'd6c3c4000202', /Vcdiff code table length 2 is invalid/],
-    ['truncated code table', 'd6c3c400020504', /Vcdiff code table is truncated/],
+    ['truncated code table', 'd6c3c400020504', /Vcdiff patch is truncated/],
+    [
+      'a window ending before its data section',
+      'd6c3c4000000050100010000',
+      /Vcdiff patch is truncated/,
+    ],
+    [
+      'a window ending partway through its ADLER32',
+      'd6c3c4000004050000000000abcd',
+      /Vcdiff patch is truncated/,
+    ],
     [
       'code table delta decoding to 2 bytes',
       'd6c3c40002140403d6c3c40000018c0000080200020100010203',
@@ -225,8 +241,6 @@ describe('createPatchedFile', () => {
     const patch = await FsUtil.readFile(path.join(LZMA_FIXTURES_DIR, 'lzma c61fec0e.xdelta'));
     await expect(
       applyPatch(patchFrom, FILE_NAME, patch.subarray(0, 100).toString('hex'), INPUT16),
-    ).rejects.toThrow(
-      /can't decompress Vcdiff data section: xz data ends partway through an LZMA2 chunk/,
-    );
+    ).rejects.toThrow(/Vcdiff patch is truncated/);
   });
 });
