@@ -119,15 +119,11 @@ describe('createPatchedFile', () => {
       'd6c3c40002060403d6c3c400',
       /Vcdiff patch is truncated/,
     ],
-    [
-      'DJW',
-      'd6c3c4000101',
-      /Vcdiff secondary compressor DJW \(static Huffman\) isn't supported, re-create the patch with "xdelta3 -S lzma" or "xdelta3 -S none"/,
-    ],
+    ['DJW', 'd6c3c4000101', /Vcdiff secondary compressor DJW \(static Huffman\) isn't supported:/],
     [
       'FGK',
       'd6c3c4000110',
-      /Vcdiff secondary compressor FGK \(adaptive Huffman\) isn't supported, re-create the patch with "xdelta3 -S lzma" or "xdelta3 -S none"/,
+      /Vcdiff secondary compressor FGK \(adaptive Huffman\) isn't supported:/,
     ],
     ['compressor ID 0', 'd6c3c4000100', /unknown Vcdiff secondary compressor ID 0:/],
     ['compressor ID 3', 'd6c3c4000103', /unknown Vcdiff secondary compressor ID 3:/],

@@ -64,6 +64,7 @@ export default class Tar extends Archive {
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
     // calculate the CRCs, so the CRC32 is always recalculated regardless of _forceChecksumCalculation
     let errorMessage: string | undefined;
+    new tar.Header().cksumValid;
     const writeStream = new tar.Parser({
       onwarn: (code, message): void => {
         errorMessage = `${code}: ${message}`;
