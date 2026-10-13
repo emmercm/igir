@@ -1,5 +1,6 @@
 /**
- * Deterministic pseudo-random bytes (xorshift32), which xz stores in uncompressed chunks.
+ * Deterministic pseudo-random bytes (xorshift32), which xz can't compress, so it may store them in
+ * uncompressed chunks.
  */
 function seededBytes(seed: number, size: number): Buffer {
   const buffer = Buffer.alloc(size);

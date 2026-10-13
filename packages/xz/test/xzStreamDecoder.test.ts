@@ -122,7 +122,7 @@ describe('decode', () => {
     expect(firstError).toEqual(
       new Error('LZMA data is corrupt: the LZMA2 control byte 0x3 is invalid'),
     );
-    // Valid input on its own, which an unchanged decoder still refuses
+    // Valid input on its own, but the decoder already failed, so it refuses it
     expect(() => xzStreamDecoder.decode(Buffer.from('02000064', 'hex'), 1)).toThrow(
       expect.objectContaining({
         message: "xz decoder can't continue after an earlier error",

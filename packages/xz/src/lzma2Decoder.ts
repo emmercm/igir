@@ -47,8 +47,8 @@ export default class Lzma2Decoder {
   }
 
   /**
-   * Decode the whole LZMA2 chunks in `input[start, end)` into `output`, starting where the
-   * previous call left off.
+   * Decode the whole LZMA2 chunks in `input[start, end)` into `output` from its start, continuing
+   * the dictionary and LZMA state from the previous call.
    */
   decode(input: Buffer, start: number, end: number, output: Buffer): void {
     this.dictionary.setOutput(output);

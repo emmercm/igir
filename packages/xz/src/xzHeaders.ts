@@ -41,7 +41,7 @@ export function readStreamHeader(input: Buffer, offset: number): number {
 }
 
 /**
- * Read a variable-length integer ending before `end`.
+ * Read a variable-length integer, which must end before `end`.
  */
 function readVli(
   input: Buffer,

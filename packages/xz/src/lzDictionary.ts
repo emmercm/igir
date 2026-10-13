@@ -137,7 +137,7 @@ export default class LzDictionary {
   }
 
   /**
-   * Put one byte.
+   * Append one byte to both the dictionary and the output.
    */
   put(byte: number): void {
     this.prepareWrite();
@@ -171,7 +171,7 @@ export default class LzDictionary {
         distance + 1,
       );
       if (chunkLength < BULK_COPY_MIN) {
-        // Short matches are common, and a plain loop beats the typed array calls' overhead
+        // Short matches are common, so copy them with a plain loop instead of typed array calls
         for (let i = 0; i < chunkLength; i += 1) {
           const byte = this.buffer[sourceIndex + i];
           this.buffer[this.bufferPosition + i] = byte;

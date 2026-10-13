@@ -1,6 +1,6 @@
 /**
  * Built on the liblzma ports in this directory, following XZ Utils v5.8.1's
- * `src/liblzma/common/stream_decoder.c` and `src/liblzma/common/block_decoder.c`.
+ * `src/liblzma/common/stream_decoder.c`.
  * @see https://github.com/tukaani-project/xz/blob/v5.8.1/src/liblzma/common/stream_decoder.c
  *
  * SPDX-License-Identifier: 0BSD

@@ -50,7 +50,7 @@ class LengthDecoder {
   }
 
   /**
-   * Decode one match length.
+   * Decode one match or rep length.
    */
   decode(rangeDecoder: RangeDecoder, posState: number): number {
     if (rangeDecoder.decodeBit(this.choice, 0) === 0) {
@@ -156,8 +156,8 @@ export default class LzmaDecoder {
   }
 
   private decodeLiteral(rangeDecoder: RangeDecoder, dictionary: LzDictionary): void {
-    // liblzma's literal_subcoder(): the mask already multiplies by 0x100, so multiplying by 3
-    // makes this a multiple of LITERAL_CODER_SIZE (0x300)
+    // liblzma's literal_subcoder(): after masking and shifting left by lc the value is a multiple
+    // of 0x100, so multiplying by 3 makes it a multiple of LITERAL_CODER_SIZE (0x300)
     const base =
       3 *
       ((((dictionary.getTotalPosition() << 8) + dictionary.getPreviousByte()) &
@@ -257,7 +257,7 @@ export default class LzmaDecoder {
           if (
             rangeDecoder.decodeBit(this.isRep0Long, this.state * POS_STATES_MAX + posState) === 0
           ) {
-            // A single byte
+            // A short rep: one byte from rep0
             this.state = this.state < LITERAL_STATES ? 9 : 11;
             dictionary.put(dictionary.get(this.rep0));
             remaining -= 1;

@@ -36,8 +36,7 @@ const VcdiffDeltaIndicator = {
 const VcdiffCopyAddressMode = {
   SELF: 0,
   HERE: 1,
-  // s_near "near modes"
-  // s_same "same modes"
+  // modes 2..s_near+1 are "near" modes, then s_same "same" modes (RFC 3284 section 5.3)
 };
 type VcdiffCopyAddressModeValue =
   (typeof VcdiffCopyAddressMode)[keyof typeof VcdiffCopyAddressMode];
@@ -76,7 +75,8 @@ type VcdiffWindowFile = PickSyncOrAsync<IOFile, 'readAt' | 'writeAt'>;
 
 /**
  * Read a VCDIFF variable-length unsigned integer from a buffer starting at the given offset,
- * returning the value and the new offset past the encoded bytes.
+ * returning the value and the new offset past the encoded bytes. Doesn't detect truncation: a
+ * value cut off by the end of the buffer is returned partially decoded.
  */
 function readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
   let num = 0;
@@ -87,7 +87,7 @@ function readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] 
     lastOffset += 1;
     num = (num << 7) + (bits & 0x7f);
     if (!(bits & 0x80)) {
-      // left-most bit is telling us to keep going
+      // high bit clear: this was the last byte
       break;
     }
   }
@@ -121,7 +121,8 @@ class VcdiffPatchReader {
   }
 
   /**
-   * Read the next `size` bytes, advancing the read position.
+   * Read up to the next `size` bytes (fewer at the end of the patch), advancing the read position
+   * by `size`.
    */
   async readNext(size: number): Promise<Buffer> {
     return await this.file.readNext(size);
@@ -160,6 +161,7 @@ class VcdiffPatchReader {
   async readUint(): Promise<number> {
     let num = 0;
 
+    // A set high bit means more bytes follow; seed it so the loop reads at least one byte
     let bits = 0x80;
     while (bits & 0x80) {
       bits = await this.readByte();
@@ -205,7 +207,8 @@ class VcdiffBuffer {
   }
 
   /**
-   * Read the next `size` bytes, advancing the read position.
+   * Read up to the next `size` bytes (fewer at the end of the buffer), advancing the read position
+   * by `size`.
    */
   readNext(size: number): Buffer {
     const result = this.readAt(this.position, size);
@@ -564,7 +567,7 @@ class VcdiffHeader {
 
 /**
  * A single delta-encoded window within a VCDIFF patch, holding the adds/runs, instructions,
- * and copy-address sections together with the source segment that they reference.
+ * and copy-address sections, and the size and position of the source segment they reference.
  */
 class VcdiffWindow {
   readonly winIndicator: number;
@@ -638,7 +641,7 @@ class VcdiffWindow {
     const copyAddressesLength = await patchFile.readUint();
 
     if (winIndicator & VcdiffWinIndicator.ADLER32) {
-      await patchFile.readExact(4); // TODO(cemmer): handle
+      await patchFile.readExact(4); // TODO(cemmer): verify the Adler-32 checksum
     }
 
     const addsAndRunsData = await this.readSection(
@@ -745,13 +748,11 @@ class VcdiffWindow {
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
-    // Read
     const data = this.addsAndRunsData.subarray(
       this.addsAndRunsOffset,
       this.addsAndRunsOffset + size,
     );
     this.addsAndRunsOffset += size;
-    // Write
     await targetFile.writeAt(data, targetWindowPosition + this.targetWindowOffset);
     this.targetWindowOffset += size;
   }
@@ -765,10 +766,8 @@ class VcdiffWindow {
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
-    // Read
     const data = Buffer.alloc(size, this.addsAndRunsData.readUInt8(this.addsAndRunsOffset));
     this.addsAndRunsOffset += 1;
-    // Write
     await targetFile.writeAt(data, targetWindowPosition + this.targetWindowOffset);
     this.targetWindowOffset += size;
   }
@@ -967,7 +966,8 @@ export default class VcdiffPatch extends Patch {
   static readonly FILE_SIGNATURE = VcdiffHeader.FILE_SIGNATURE;
 
   /**
-   * Parse a .vcdiff/.xdelta patch file and return a {@link VcdiffPatch}.
+   * Create a {@link VcdiffPatch} for a .vcdiff/.xdelta file, taking the source ROM's CRC from the
+   * file name.
    */
   static patchFrom(file: File): VcdiffPatch {
     const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
@@ -1007,7 +1007,7 @@ export default class VcdiffPatch extends Patch {
   ): Promise<void> {
     await inputRomFile.extractToIOFile(async (sourceFile) => {
       // The target windows write every output byte, so the output starts empty. The source's
-      // size is only a hint for whether to build the output in memory or on disk.
+      // size is only an estimate, used to pick in-memory vs on-disk and to preallocate.
       const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', sourceFile.getSize());
 
       try {
