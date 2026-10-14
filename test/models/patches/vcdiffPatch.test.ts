@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import Temp from '../../../src/globals/temp.js';
 import File from '../../../src/models/files/file.js';
+import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import VcdiffPatch from '../../../src/models/patches/vcdiffPatch.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
@@ -9,7 +10,8 @@ import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
 const patchFrom = VcdiffPatch.patchFrom.bind(VcdiffPatch);
 const FILE_NAME = 'patch 00000000.xdelta';
 const SWAP = '08090a0b0c0d0e0f0001020304050607';
-const LZMA_FIXTURES_DIR = path.join('test', 'fixtures', 'vcdiff');
+const LZMA_ROM = path.join('test', 'fixtures', 'roms', 'patchable', 'lzma.rom');
+const LZMA_PATCHES_DIR = path.join('test', 'fixtures', 'patches', 'lzma');
 
 describe('patchFrom', () => {
   it('should parse', async () => {
@@ -114,6 +116,12 @@ describe('createPatchedFile', () => {
     ['a patch ending before its compressor ID', 'd6c3c40001', /Vcdiff patch is truncated/],
     // A window whose target window size is missing, so it ends before its delta indicator
     ['a window ending before its delta indicator', 'd6c3c400000005', /Vcdiff patch is truncated/],
+    // A target window size of 64 MiB + 1
+    [
+      'a window larger than the hard window size',
+      'd6c3c400000005a0808001',
+      /Vcdiff window target size 67108865 exceeds the hard window size of 67108864/,
+    ],
     [
       'a code table delta ending after its version',
       'd6c3c40002060403d6c3c400',
@@ -210,22 +218,19 @@ describe('createPatchedFile', () => {
     );
   });
 
-  test.each(['lzma c61fec0e.xdelta', 'lzma-window16k c61fec0e.xdelta'])(
+  test.each(['lzma-vcdiff c61fec0e.xdelta', 'lzma-vcdiff-window16k c61fec0e.xdelta'])(
     'should apply an xdelta3 LZMA patch: %s',
     async (patchName) => {
       const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
         const patch = patchFrom(
-          await File.fileOf({ filePath: path.join(LZMA_FIXTURES_DIR, patchName) }),
+          await File.fileOf({ filePath: path.join(LZMA_PATCHES_DIR, patchName) }),
         );
         const outputPath = path.join(tempDir, 'output.rom');
-        await patch.createPatchedFile(
-          await File.fileOf({ filePath: path.join(LZMA_FIXTURES_DIR, 'lzma.rom') }),
-          outputPath,
-        );
-        await expect(FsUtil.readFile(outputPath)).resolves.toEqual(
-          await FsUtil.readFile(path.join(LZMA_FIXTURES_DIR, 'lzma-patched.rom')),
-        );
+        await patch.createPatchedFile(await File.fileOf({ filePath: LZMA_ROM }), outputPath);
+        // The patched size and CRC32 in test/fixtures/dats/patchable.dat
+        const outputFile = await File.fileOf({ filePath: outputPath }, ChecksumBitmask.CRC32);
+        expect([outputFile.getSize(), outputFile.getCrc32()]).toEqual([65_536, '0fb88b39']);
       } finally {
         await FsUtil.rm(tempDir, { recursive: true, force: true });
       }
@@ -234,7 +239,7 @@ describe('createPatchedFile', () => {
 
   it('should throw on an xdelta3 LZMA patch truncated partway through a compressed section', async () => {
     // The first 100 bytes end 49 bytes into the 126-byte compressed data section
-    const patch = await FsUtil.readFile(path.join(LZMA_FIXTURES_DIR, 'lzma c61fec0e.xdelta'));
+    const patch = await FsUtil.readFile(path.join(LZMA_PATCHES_DIR, 'lzma-vcdiff c61fec0e.xdelta'));
     await expect(
       applyPatch(patchFrom, FILE_NAME, patch.subarray(0, 100).toString('hex'), INPUT16),
     ).rejects.toThrow(/Vcdiff patch is truncated/);

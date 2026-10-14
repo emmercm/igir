@@ -172,6 +172,11 @@ class VcdiffPatchReader {
   }
 }
 
+/**
+ * xdelta3's XD3_HARDMAXWINSIZE, "a safety mechanism to protect decoders against malicious files"
+ */
+const VCDIFF_HARD_MAX_WINDOW_SIZE = 1 << 26;
+
 const CODE_TABLE_ENTRIES = 256;
 // RFC 3284 section 7: inst1, inst2, size1, size2, mode1, mode2
 const CODE_TABLE_STRING_SIZE = 6 * CODE_TABLE_ENTRIES;
@@ -627,6 +632,11 @@ class VcdiffWindow {
 
     await patchFile.readUint(); // delta encoding length
     const deltaEncodingTargetWindowSize = await patchFile.readUint();
+    if (deltaEncodingTargetWindowSize > VCDIFF_HARD_MAX_WINDOW_SIZE) {
+      throw new IgirException(
+        `Vcdiff window target size ${deltaEncodingTargetWindowSize} exceeds the hard window size of ${VCDIFF_HARD_MAX_WINDOW_SIZE}: ${patchFile.getPathLike().toString()}`,
+      );
+    }
     const deltaEncodingIndicator = await patchFile.readByte();
     const compressedSections =
       VcdiffDeltaIndicator.DATACOMP | VcdiffDeltaIndicator.INSTCOMP | VcdiffDeltaIndicator.ADDRCOMP;
