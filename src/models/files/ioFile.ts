@@ -1,35 +1,58 @@
 import type { OpenMode, PathLike } from 'node:fs';
 import fs from 'node:fs';
 
+import { Mutex } from 'async-mutex';
+
 import Defaults from '../../globals/defaults.js';
 import FsUtil from '../../utils/fsUtil.js';
 
-export interface IOFileProps {
-  readonly pathLike: PathLike;
-  readonly fileHandle: fs.promises.FileHandle;
-  readonly fileMode: fs.Mode;
-  readonly size: number;
+/**
+ * A page of an {@link IOFile}'s contents, cached in memory.
+ */
+interface IOFilePage {
+  readonly data: Buffer;
+  // If the page has been written to since it was read from disk
+  dirty: boolean;
 }
 
 /**
- * A wrapper for readable and writable files, with one read position. To read from several
- * positions in the same file at the same time, use an {@link IOFileCursor} for each.
+ * A wrapper for readable and writable files.
+ *
+ * Reads and writes go through an in-memory cache of the file's contents, in pages of
+ * {@link Defaults.FILE_READING_CHUNK_SIZE} bytes, up to {@link Defaults.MAX_IO_FILE_CACHE_SIZE}
+ * bytes per file. Files that fit within the limit end up entirely in memory, and larger files keep
+ * their most recently used pages. Writes are staged in memory, and written to disk when their page
+ * is evicted or the file is closed.
  */
-export default class IOFile implements IOFileProps {
-  readonly pathLike: PathLike;
-  readonly fileHandle: fs.promises.FileHandle;
-  readonly fileMode: fs.Mode;
-  size: number;
+export default class IOFile {
+  private readonly pathLike: PathLike;
+  private readonly fileHandle: fs.promises.FileHandle;
+  private readonly writable: boolean;
 
+  private size: number;
+  // The size of the file on disk, past which it reads as zeros
+  private diskSize: number;
   private readPosition = 0;
-  private fileBuffer?: Buffer;
-  private wroteToMemory = false;
 
-  protected constructor(ioFileProps: IOFileProps) {
-    this.pathLike = ioFileProps.pathLike;
-    this.fileHandle = ioFileProps.fileHandle;
-    this.fileMode = ioFileProps.fileMode;
-    this.size = ioFileProps.size;
+  // Cached pages by page index, from least to most recently used
+  private readonly pages = new Map<number, IOFilePage>();
+  // Load and evict pages one operation at a time, so a page can't be evicted mid-operation.
+  // Operations on cached pages don't await, so they don't need it.
+  private readonly pagesMutex = new Mutex();
+  private wroteToPages = false;
+
+  private constructor(
+    pathLike: PathLike,
+    fileHandle: fs.promises.FileHandle,
+    fileMode: fs.Mode,
+    size: number,
+    diskSize: number,
+  ) {
+    this.pathLike = pathLike;
+    this.fileHandle = fileHandle;
+    this.writable = /w|a|r\+/.test(fileMode.toString());
+    this.size = size;
+    this.diskSize = diskSize;
   }
 
   /**
@@ -48,12 +71,16 @@ export default class IOFile implements IOFileProps {
      */
     const finalMode = mode.toString().startsWith('a') ? 'r+' : mode;
 
-    return new IOFile({
-      pathLike,
-      fileHandle: await fs.promises.open(pathLike, finalMode),
-      fileMode: finalMode,
-      size: expectedSize ?? (await FsUtil.size(pathLike)),
-    });
+    const fileHandle = await fs.promises.open(pathLike, finalMode);
+    let diskSize: number;
+    try {
+      diskSize = (await fileHandle.stat()).size;
+    } catch (error) {
+      await fileHandle.close();
+      throw error;
+    }
+
+    return new IOFile(pathLike, fileHandle, finalMode, expectedSize ?? diskSize, diskSize);
   }
 
   /**
@@ -66,15 +93,10 @@ export default class IOFile implements IOFileProps {
       await FsUtil.rm(pathLike, { force: true });
     }
 
-    const write = await this.fileFrom(pathLike, 'wx+', size);
+    const write = await this.fileFrom(pathLike, 'wx+');
     try {
       try {
-        let written = 0;
-        const buffer = Buffer.alloc(Math.min(size, Defaults.FILE_READING_CHUNK_SIZE));
-        while (written < size) {
-          const sizeToWrite = Math.min(size - written, buffer.length);
-          written += await write.write(buffer.subarray(0, sizeToWrite));
-        }
+        await write.truncate(size);
       } finally {
         await write.close();
       }
@@ -133,7 +155,7 @@ export default class IOFile implements IOFileProps {
    * seek position the same amount
    */
   async readNext(size: number): Promise<Buffer> {
-    const result = await this.peekNext(size);
+    const result = await this.readAt(this.readPosition, size);
     this.readPosition += size;
     return result;
   }
@@ -160,39 +182,21 @@ export default class IOFile implements IOFileProps {
     return { data, delimiterFound: isDelimiterFound };
   }
 
-  private async loadFileBuffer(): Promise<Buffer> {
-    this.fileBuffer ??= await this.fileHandle.readFile();
-    return this.fileBuffer;
-  }
-
   /**
-   * @returns bytes of size {@link size} at the seek position {@link offset}
+   * @returns bytes of size {@link size} (fewer at the end of the file) at the seek position
+   * {@link position}
    */
   async readAt(position: number, size: number): Promise<Buffer> {
-    // If the file is small, read the entire file to memory and "read" from there
-    if (this.fileBuffer !== undefined || this.size <= Defaults.MAX_MEMORY_FILE_SIZE) {
-      // Read into the file buffer (if we haven't already)
-      const fileBuffer = await this.loadFileBuffer();
-
-      // Read from the file buffer, which may have been allocated past the end of the file
-      return Buffer.from(
-        fileBuffer.subarray(position, Math.max(position, Math.min(position + size, this.size))),
-      );
+    const end = Math.min(position + size, this.size);
+    if (position >= end) {
+      return Buffer.alloc(0);
     }
 
-    // If the file is large, read from the open file handle. Each read gets its own buffer so
-    // concurrent reads can't overwrite each other's bytes
-    const buffer = Buffer.allocUnsafe(size);
-    let bytesRead: number;
-    try {
-      bytesRead = (await this.fileHandle.read(buffer, 0, size, position)).bytesRead;
-    } catch {
-      // NOTE(cemmer): Windows will give "EINVAL: invalid argument, read" when reading out of
-      //  bounds, but other OSes don't. Swallow the error.
-      return Buffer.allocUnsafe(0);
-    }
-
-    return buffer.subarray(0, bytesRead);
+    const result = Buffer.allocUnsafe(end - position);
+    await this.visitPages(position, result.length, false, (page, pageOffset, resultOffset) =>
+      page.data.copy(result, resultOffset, pageOffset, pageOffset + result.length - resultOffset),
+    );
+    return result;
   }
 
   /**
@@ -205,49 +209,28 @@ export default class IOFile implements IOFileProps {
   }
 
   /**
-   * Write {@link buffer} at the seek position {@link offset}
+   * Write {@link buffer} at the seek position {@link position}
    */
   async writeAt(buffer: Buffer, position: number): Promise<number> {
-    // If the file is small, write to memory
-    if (
-      (this.fileBuffer !== undefined || this.size <= Defaults.MAX_MEMORY_FILE_SIZE) &&
-      /w|a|r\+/.test(this.fileMode.toString())
-    ) {
-      // Read into the file buffer (if we haven't already)
-      this.fileBuffer = await this.loadFileBuffer();
-
-      // Expand the file buffer if we're writing past its size
-      if (position + buffer.length > this.fileBuffer.length) {
-        this.fileBuffer = Buffer.concat([
-          this.fileBuffer,
-          Buffer.alloc(
-            Math.max(
-              // We only need this many more bytes to write the requested bytes...
-              position + buffer.length - this.fileBuffer.length,
-              // ...but if we know the final file size, just allocate the full amount,
-              // because constant buffer allocation can be very expensive
-              this.size,
-            ),
-          ),
-        ]);
-      }
-
-      // Write to the file buffer
-      const bytesWritten = buffer.copy(this.fileBuffer, position);
-      this.size = Math.max(this.size, position + bytesWritten);
-      this.wroteToMemory = true;
-
-      // Yield to the event loop so progress bars can redraw
-      if (bytesWritten > 1) {
-        await new Promise((resolve) => setImmediate(resolve));
-      }
-
+    if (!this.writable) {
+      // The file isn't writable, let the file handle throw
+      const { bytesWritten } = await this.fileHandle.write(buffer, 0, buffer.length, position);
       return bytesWritten;
     }
 
-    const { bytesWritten } = await this.fileHandle.write(buffer, 0, buffer.length, position);
-    this.size = Math.max(this.size, position + bytesWritten);
-    return bytesWritten;
+    await this.visitPages(position, buffer.length, true, (page, pageOffset, bufferOffset) => {
+      page.dirty = true;
+      return buffer.copy(page.data, pageOffset, bufferOffset);
+    });
+    this.size = Math.max(this.size, position + buffer.length);
+    this.wroteToPages = true;
+
+    // Yield to the event loop so progress bars can redraw
+    if (buffer.length > 1) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+
+    return buffer.length;
   }
 
   /**
@@ -347,33 +330,212 @@ export default class IOFile implements IOFileProps {
    * Truncate or zero-extend the file to {@link size} bytes.
    */
   async truncate(size: number): Promise<void> {
-    if (this.fileBuffer !== undefined) {
-      if (size > this.fileBuffer.length) {
-        this.fileBuffer = Buffer.concat([
-          this.fileBuffer,
-          Buffer.alloc(size - this.fileBuffer.length),
-        ]);
-      } else {
-        // Drop the bytes past the new end, so growing the file later can't expose them
-        this.fileBuffer = this.fileBuffer.subarray(0, size);
+    await this.pagesMutex.runExclusive(async () => {
+      await this.fileHandle.truncate(size);
+      this.diskSize = size;
+      this.size = size;
+
+      for (const [pageIndex, page] of this.pages) {
+        const pageStart = pageIndex * Defaults.FILE_READING_CHUNK_SIZE;
+        if (pageStart >= size) {
+          this.pages.delete(pageIndex);
+        } else if (pageStart + Defaults.FILE_READING_CHUNK_SIZE > size) {
+          // Zero the bytes past the new end, so growing the file later can't expose them
+          page.data.fill(0, size - pageStart);
+        }
       }
-    }
-    await this.fileHandle.truncate(size);
-    this.size = size;
+    });
   }
 
   /**
-   * Close the underlying file handle
+   * Write any staged writes to disk, and close the underlying file handle
    */
   async close(): Promise<void> {
-    try {
-      if (this.fileBuffer !== undefined && this.wroteToMemory) {
-        // We staged writes in memory, we need to rewrite the entire file
-        await this.fileHandle.write(this.fileBuffer, 0, this.size, 0);
+    await this.pagesMutex.runExclusive(async () => {
+      try {
+        await this.flushPages();
+        if (this.wroteToPages && this.size > this.diskSize) {
+          // Zero-extend the file to the size it was written to, or was expected to be
+          await this.fileHandle.truncate(this.size);
+        }
+      } finally {
+        // Close the handle even if flushing the staged writes failed
+        this.pages.clear();
+        await this.fileHandle.close();
       }
-    } finally {
-      // Close the handle even if flushing the staged writes failed
-      await this.fileHandle.close();
+    });
+  }
+
+  /**
+   * Call {@link visit} with each page in the region [{@link position}, {@link position} +
+   * {@link size}), in order, with the offset into the page and the number of bytes already
+   * visited. {@link visit} returns the number of bytes it visited in the page.
+   *
+   * Cached pages are visited without locking, as visiting them doesn't await. Only once a page
+   * needs to be read from disk are the remaining pages visited under the lock.
+   */
+  private async visitPages(
+    position: number,
+    size: number,
+    isWrite: boolean,
+    visit: (page: IOFilePage, pageOffset: number, visited: number) => number,
+  ): Promise<void> {
+    let visited = 0;
+
+    // A locked operation may be mid-way through evicting a page, so wait for it
+    if (!this.pagesMutex.isLocked()) {
+      while (visited < size) {
+        const pageIndex = Math.floor((position + visited) / Defaults.FILE_READING_CHUNK_SIZE);
+        const page = this.getCachedPage(pageIndex);
+        if (page === undefined) {
+          break;
+        }
+        visited += visit(page, (position + visited) % Defaults.FILE_READING_CHUNK_SIZE, visited);
+      }
+    }
+
+    if (visited < size) {
+      await this.pagesMutex.runExclusive(async () => {
+        while (visited < size) {
+          const pageIndex = Math.floor((position + visited) / Defaults.FILE_READING_CHUNK_SIZE);
+          const pageOffset = (position + visited) % Defaults.FILE_READING_CHUNK_SIZE;
+          const page =
+            this.getCachedPage(pageIndex) ??
+            (await this.loadPage(
+              pageIndex,
+              // Don't read a page from disk that's about to be entirely overwritten
+              isWrite && pageOffset === 0 && size - visited >= Defaults.FILE_READING_CHUNK_SIZE,
+            ));
+          visited += visit(page, pageOffset, visited);
+        }
+      });
+    }
+  }
+
+  /**
+   * Find the page with index {@link pageIndex} in the cache, marking it as the most recently used.
+   * @returns the page, or undefined if it isn't cached
+   */
+  private getCachedPage(pageIndex: number): IOFilePage | undefined {
+    const page = this.pages.get(pageIndex);
+    if (page !== undefined) {
+      // Move the page to the most recently used end
+      this.pages.delete(pageIndex);
+      this.pages.set(pageIndex, page);
+    }
+    return page;
+  }
+
+  /**
+   * Read the page with index {@link pageIndex} from disk into the cache, evicting the least
+   * recently used page if the cache is full. If {@link isOverwritten} is true, the caller is about
+   * to overwrite the whole page, so its contents aren't read.
+   * @returns the page
+   */
+  private async loadPage(pageIndex: number, isOverwritten: boolean): Promise<IOFilePage> {
+    const pageStart = pageIndex * Defaults.FILE_READING_CHUNK_SIZE;
+    // Writable files can grow into their last page, but read-only files can't
+    const pageSize = this.writable
+      ? Defaults.FILE_READING_CHUNK_SIZE
+      : Math.min(Defaults.FILE_READING_CHUNK_SIZE, this.size - pageStart);
+
+    // Make room if another page would exceed the cache size, reusing the evicted page's memory
+    let data: Buffer | undefined;
+    if (
+      (this.pages.size + 1) * Defaults.FILE_READING_CHUNK_SIZE >
+      Defaults.MAX_IO_FILE_CACHE_SIZE
+    ) {
+      data = await this.evictPage();
+    }
+    if (data?.length !== pageSize) {
+      data = Buffer.allocUnsafe(pageSize);
+    }
+
+    if (!isOverwritten) {
+      let bytesRead = 0;
+      // Past the end of the file on disk is all zeros, so don't read it
+      const diskBytes = Math.min(pageSize, this.diskSize - pageStart);
+      while (bytesRead < diskBytes) {
+        const result = await this.fileHandle.read(
+          data,
+          bytesRead,
+          diskBytes - bytesRead,
+          pageStart + bytesRead,
+        );
+        if (result.bytesRead === 0) {
+          break;
+        }
+        bytesRead += result.bytesRead;
+      }
+      data.fill(0, bytesRead);
+    }
+
+    const page: IOFilePage = { data, dirty: false };
+    this.pages.set(pageIndex, page);
+    return page;
+  }
+
+  /**
+   * Evict the least recently used page, writing it to disk first if it has staged writes.
+   * @returns the evicted page's memory, to be reused
+   */
+  private async evictPage(): Promise<Buffer | undefined> {
+    const leastRecentlyUsed = this.pages.entries().next();
+    if (leastRecentlyUsed.done === true) {
+      return undefined;
+    }
+    const [pageIndex, page] = leastRecentlyUsed.value;
+    if (page.dirty) {
+      await this.writePages(pageIndex, [page]);
+    }
+    this.pages.delete(pageIndex);
+    return page.data;
+  }
+
+  /**
+   * Write every page with staged writes to disk, combining consecutive pages into one write
+   */
+  private async flushPages(): Promise<void> {
+    const dirtyPages = [...this.pages]
+      .filter(([, page]) => page.dirty)
+      .toSorted(([firstIndex], [secondIndex]) => firstIndex - secondIndex);
+
+    let runStart = 0;
+    while (runStart < dirtyPages.length) {
+      let runEnd = runStart + 1;
+      while (
+        runEnd < dirtyPages.length &&
+        dirtyPages[runEnd][0] === dirtyPages[runEnd - 1][0] + 1
+      ) {
+        runEnd += 1;
+      }
+      await this.writePages(
+        dirtyPages[runStart][0],
+        dirtyPages.slice(runStart, runEnd).map(([, page]) => page),
+      );
+      runStart = runEnd;
+    }
+  }
+
+  /**
+   * Write the consecutive {@link pages}, starting at page index {@link firstPageIndex}, to disk
+   */
+  private async writePages(firstPageIndex: number, pages: IOFilePage[]): Promise<void> {
+    const position = firstPageIndex * Defaults.FILE_READING_CHUNK_SIZE;
+    // Don't write the zeros past the end of the file
+    const buffers = pages.map((page, pageOffset) =>
+      page.data.subarray(
+        0,
+        Math.min(
+          Defaults.FILE_READING_CHUNK_SIZE,
+          this.size - position - pageOffset * Defaults.FILE_READING_CHUNK_SIZE,
+        ),
+      ),
+    );
+    const { bytesWritten } = await this.fileHandle.writev(buffers, position);
+    this.diskSize = Math.max(this.diskSize, position + bytesWritten);
+    for (const page of pages) {
+      page.dirty = false;
     }
   }
 }

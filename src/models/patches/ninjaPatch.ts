@@ -1,7 +1,6 @@
 import IgirException from '../../exceptions/igirException.js';
 import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
-import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
@@ -89,14 +88,13 @@ export default class NinjaPatch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      const patchCursor = IOFileCursor.cursorFromFile(patchFile);
-      while (!patchCursor.isEOF()) {
-        await this.applyCommand(patchCursor, targetFile);
+      while (!patchFile.isEOF()) {
+        await this.applyCommand(patchFile, targetFile);
 
         if (callback === undefined) {
           continue;
         }
-        const progressPercentage = patchCursor.getPosition() / patchCursor.getSize();
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
         callback(Math.floor(progressPercentage * targetFile.getSize()));
       }
     } finally {
@@ -104,7 +102,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private async applyCommand(patchFile: IOFileCursor, targetFile: IOFile): Promise<void> {
+  private async applyCommand(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     const command = (await patchFile.readNext(1)).readUInt8() as NinjaCommandValue;
 
     if (command === NinjaCommand.TERMINATE) {
@@ -118,7 +116,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private async applyCommandOpen(patchFile: IOFileCursor, targetFile: IOFile): Promise<void> {
+  private async applyCommandOpen(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     const multiFile = (await patchFile.readNext(1)).readUInt8();
     if (multiFile > 0) {
       throw new IgirException(
@@ -170,7 +168,7 @@ export default class NinjaPatch extends Patch {
    * target, a chunk at a time, advancing the patch's read position past them.
    */
   private static async appendOverflow(
-    patchFile: IOFileCursor,
+    patchFile: IOFile,
     targetFile: IOFile,
     overflowSize: number,
   ): Promise<void> {
@@ -191,7 +189,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private static async applyCommandXor(patchFile: IOFileCursor, targetFile: IOFile): Promise<void> {
+  private static async applyCommandXor(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     const offsetLength = (await patchFile.readNext(1)).readUInt8();
     const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
     targetFile.seek(offset);

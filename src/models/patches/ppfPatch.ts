@@ -1,6 +1,5 @@
 import IgirException from '../../exceptions/igirException.js';
 import IOFile from '../../models/files/ioFile.js';
-import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
@@ -110,12 +109,11 @@ export default class PPFPatch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      const patchCursor = IOFileCursor.cursorFromFile(patchFile);
-      while (!patchCursor.isEOF()) {
-        await this.applyPatchBlock(patchCursor, targetFile, header);
+      while (!patchFile.isEOF()) {
+        await this.applyPatchBlock(patchFile, targetFile, header);
 
         callback?.(
-          Math.floor((patchCursor.getPosition() / patchCursor.getSize()) * targetFile.getSize()),
+          Math.floor((patchFile.getPosition() / patchFile.getSize()) * targetFile.getSize()),
         );
       }
     } finally {
@@ -124,7 +122,7 @@ export default class PPFPatch extends Patch {
   }
 
   private static async applyPatchBlock(
-    patchFile: IOFileCursor,
+    patchFile: IOFile,
     targetFile: IOFile,
     header: PPFHeader,
   ): Promise<void> {

@@ -1,7 +1,6 @@
 import IgirException from '../../exceptions/igirException.js';
 import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
-import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
@@ -13,11 +12,13 @@ type PMSRReader = Pick<IOFile, 'getPosition' | 'getSize' | 'readNext'>;
  * Reads forward through a part of a Yay0-compressed file, throwing if the file ends first.
  */
 class Yay0Cursor {
-  private readonly cursor: IOFileCursor;
+  private readonly file: IOFile;
+  private position: number;
   private readonly eofException: () => IgirException;
 
   constructor(file: IOFile, position: number, eofException: () => IgirException) {
-    this.cursor = IOFileCursor.cursorFromFile(file, position);
+    this.file = file;
+    this.position = position;
     this.eofException = eofException;
   }
 
@@ -25,10 +26,11 @@ class Yay0Cursor {
    * Read the next byte, throwing if the file ends first.
    */
   async readUInt8(): Promise<number> {
-    const value = await this.cursor.readNext(1);
+    const value = await this.file.readAt(this.position, 1);
     if (value.length === 0) {
       throw this.eofException();
     }
+    this.position += 1;
     return value.readUInt8();
   }
 

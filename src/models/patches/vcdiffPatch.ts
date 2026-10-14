@@ -4,7 +4,6 @@ import { XzStreamDecoder } from '../../../packages/xz/index.js';
 import IgirException from '../../exceptions/igirException.js';
 import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
-import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
@@ -1046,15 +1045,13 @@ export default class VcdiffPatch extends Patch {
     callback?: FsReadCallback,
   ): Promise<void> {
     await this.getFile().extractToIOFile(async (patchFile) => {
-      // Window headers are many small values, so read ahead
-      const patchCursor = IOFileCursor.cursorFromFile(patchFile);
-      const header = await VcdiffHeader.fromReader(new VcdiffPatchReader(patchCursor));
+      const header = await VcdiffHeader.fromReader(new VcdiffPatchReader(patchFile));
       const copyCache = new VcdiffCache(header.sNear, header.sSame);
 
       await VcdiffPatch.writeOutputFile(
         inputRomFile,
         outputRomPath,
-        patchCursor,
+        patchFile,
         header,
         copyCache,
         callback,
@@ -1065,14 +1062,14 @@ export default class VcdiffPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: IOFileCursor,
+    patchFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
     callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToIOFile(async (sourceFile) => {
       // The target windows write every output byte, so the output starts empty. The source's
-      // size is only an estimate, used to pick in-memory vs on-disk and to preallocate.
+      // size is only an estimate; the output is truncated to its real size once patched.
       const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', sourceFile.getSize());
 
       try {
@@ -1084,7 +1081,7 @@ export default class VcdiffPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: IOFileCursor,
+    patchFile: IOFile,
     sourceFile: IOFile,
     targetFile: IOFile,
     header: VcdiffHeader,

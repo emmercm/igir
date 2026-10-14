@@ -1,6 +1,5 @@
 import IgirException from '../../exceptions/igirException.js';
 import IOFile from '../../models/files/ioFile.js';
-import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
@@ -121,24 +120,19 @@ export default class BPSPatch extends Patch {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;
 
-    // Actions are read in order from the patch, and SOURCE_READs read the source in order, so read
-    // ahead in both
-    const patchCursor = IOFileCursor.cursorFromFile(patchFile);
-    const sourceCursor = IOFileCursor.cursorFromFile(sourceFile, 0);
-
-    while (patchCursor.getPosition() < patchCursor.getSize() - 12) {
-      const blockHeader = await super.readUpsUint(patchCursor);
+    while (patchFile.getPosition() < patchFile.getSize() - 12) {
+      const blockHeader = await super.readUpsUint(patchFile);
       const action = (blockHeader & 3) as BPSActionValue;
       const length = (blockHeader >> 2) + 1;
 
       const targetPosition = targetFile.getPosition();
       if (action === BPSAction.SOURCE_READ) {
-        sourceCursor.seek(targetPosition);
-        targetFile.skipNext(await sourceCursor.copyNext(targetFile, targetPosition, length));
+        sourceFile.seek(targetPosition);
+        targetFile.skipNext(await sourceFile.copyNext(targetFile, targetPosition, length));
       } else if (action === BPSAction.TARGET_READ) {
-        targetFile.skipNext(await patchCursor.copyNext(targetFile, targetPosition, length));
+        targetFile.skipNext(await patchFile.copyNext(targetFile, targetPosition, length));
       } else if (action === BPSAction.SOURCE_COPY) {
-        const offset = await super.readUpsUint(patchCursor);
+        const offset = await super.readUpsUint(patchFile);
         sourceRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
         targetFile.skipNext(
           await sourceFile.copyChunked(
@@ -150,7 +144,7 @@ export default class BPSPatch extends Patch {
         );
         sourceRelativeOffset += length;
       } else if (action === BPSAction.TARGET_COPY) {
-        const offset = await super.readUpsUint(patchCursor);
+        const offset = await super.readUpsUint(patchFile);
         targetRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
         // The copy can overlap the bytes it writes, which repeats them
         targetFile.skipNext(
@@ -169,7 +163,7 @@ export default class BPSPatch extends Patch {
       if (callback === undefined) {
         continue;
       }
-      const progressPercentage = patchCursor.getPosition() / patchCursor.getSize();
+      const progressPercentage = patchFile.getPosition() / patchFile.getSize();
       callback(Math.floor(progressPercentage * targetFile.getSize()));
     }
   }
