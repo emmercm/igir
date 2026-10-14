@@ -117,44 +117,4 @@ export default abstract class Patch {
 
     return data;
   }
-
-  /**
-   * Read a VCDIFF-style variable-length unsigned integer from the given file handle, advancing
-   * the read position past the encoded value.
-   */
-  static async readVcdiffUintFromFile(fp: IOFile): Promise<number> {
-    let num = 0;
-
-    while (!fp.isEOF()) {
-      const bits = (await fp.readNext(1)).readUInt8();
-      num = (num << 7) + (bits & 0x7f);
-      if (!(bits & 0x80)) {
-        // left-most bit is telling us to keep going
-        break;
-      }
-    }
-
-    return num;
-  }
-
-  /**
-   * Read a VCDIFF-style variable-length unsigned integer from a buffer starting at the given
-   * offset, returning the value and the new offset past the encoded bytes.
-   */
-  static readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
-    let num = 0;
-
-    let lastOffset = offset;
-    while (lastOffset < buffer.length) {
-      const bits = buffer.readUInt8(lastOffset);
-      lastOffset += 1;
-      num = (num << 7) + (bits & 0x7f);
-      if (!(bits & 0x80)) {
-        // left-most bit is telling us to keep going
-        break;
-      }
-    }
-
-    return [num, lastOffset];
-  }
 }
