@@ -13,6 +13,9 @@ import type File from '../files/file.js';
  * that identify the source and result ROMs.
  */
 export default abstract class Patch {
+  // Enough for any UPS-style unsigned integer up to Number.MAX_SAFE_INTEGER
+  private static readonly UPS_UINT_READ_AHEAD_SIZE = 8;
+
   private readonly file: File;
 
   private readonly crcBefore: string;
@@ -125,15 +128,21 @@ export default abstract class Patch {
     let data = 0;
     let shift = 1;
 
-    while (!fp.isEOF()) {
-      const x = (await fp.readNext(1)).readUInt8();
-      data += (x & 0x7f) * shift; // drop the left-most bit
-      if (x & 0x80) {
-        // left-most bit is telling us this is the end
-        break;
+    // Read ahead rather than byte-by-byte, encoded values are usually only a few bytes
+    let bytes = await fp.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
+    while (bytes.length > 0) {
+      for (const [i, byte] of bytes.entries()) {
+        data += (byte & 0x7f) * shift; // drop the left-most bit
+        if (byte & 0x80) {
+          // left-most bit is telling us this is the end
+          fp.skipNext(i + 1);
+          return data;
+        }
+        shift <<= 7;
+        data += shift;
       }
-      shift <<= 7;
-      data += shift;
+      fp.skipNext(bytes.length);
+      bytes = await fp.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
     }
 
     return data;

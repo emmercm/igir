@@ -823,13 +823,21 @@ class VcdiffWindow {
     }
     let writePosition = targetWindowPosition + this.targetWindowOffset;
 
+    const distance = writePosition - readPosition;
+    if (
+      readFile === targetFile &&
+      distance > 0 &&
+      distance < Math.min(size, Defaults.FILE_READING_CHUNK_SIZE)
+    ) {
+      await VcdiffWindow.writeRepeatingCopyData(targetFile, readPosition, writePosition, size);
+      this.targetWindowOffset += size;
+      return;
+    }
+
+    // If this copy overlaps itself, the read is at least a chunk behind the write, so each chunk
+    // only reads bytes that were already written
     for (let copied = 0; copied < size;) {
-      let chunkSize = Math.min(size - copied, Defaults.FILE_READING_CHUNK_SIZE);
-      if (readFile === targetFile && readPosition < writePosition) {
-        // A copy from earlier in the target can read bytes that it also writes, so read no further
-        // than what has already been written
-        chunkSize = Math.min(chunkSize, writePosition - readPosition);
-      }
+      const chunkSize = Math.min(size - copied, Defaults.FILE_READING_CHUNK_SIZE);
       const chunk = await readFile.readAt(readPosition, chunkSize);
       await targetFile.writeAt(chunk, writePosition);
       readPosition += chunkSize;
@@ -837,6 +845,39 @@ class VcdiffWindow {
       copied += chunkSize;
     }
     this.targetWindowOffset += size;
+  }
+
+  /**
+   * Copy `size` bytes from `readPosition` of the target to the later, overlapping
+   * `writePosition`. The copy repeats the bytes between the two positions, so read those once and
+   * write their repetitions a chunk at a time, rather than a repetition at a time.
+   */
+  private static async writeRepeatingCopyData(
+    targetFile: VcdiffWindowFile,
+    readPosition: number,
+    writePosition: number,
+    size: number,
+  ): Promise<void> {
+    const pattern = await targetFile.readAt(readPosition, writePosition - readPosition);
+    if (pattern.length < writePosition - readPosition) {
+      // The target ends before the write position, so there's nothing to repeat
+      if (pattern.length > 0) {
+        await targetFile.writeAt(pattern, writePosition);
+      }
+      return;
+    }
+
+    // Keep each chunk a whole number of repetitions, so every chunk starts at the pattern's start
+    const repetitions = Buffer.alloc(
+      Math.min(
+        size,
+        Defaults.FILE_READING_CHUNK_SIZE - (Defaults.FILE_READING_CHUNK_SIZE % pattern.length),
+      ),
+      pattern,
+    );
+    for (let written = 0; written < size; written += repetitions.length) {
+      await targetFile.writeAt(repetitions.subarray(0, size - written), writePosition + written);
+    }
   }
 
   /**

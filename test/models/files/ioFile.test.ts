@@ -467,6 +467,51 @@ describe('copyChunked', () => {
       Buffer.from(Array.from({ length: source.length }, (_value, idx) => run[idx % run.length])),
     );
   });
+
+  it('should repeat a single byte a chunk at a time', async () => {
+    const source = Buffer.concat([
+      Buffer.from('a'),
+      Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE * 3),
+    ]);
+
+    let copied = 0;
+    let writes = 0;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      const writeAt = vi.spyOn(ioFiles[0], 'writeAt');
+      copied = await ioFiles[0].copyChunked(ioFiles[0], 1, 0, source.length - 1);
+      writes = writeAt.mock.calls.length;
+    });
+
+    expect(copied).toEqual(source.length - 1);
+    expect(sourceAfter).toEqual(Buffer.alloc(source.length, 'a'));
+    expect(writes).toEqual(3);
+  });
+
+  it('should repeat bytes when copying forward to a region of the same file more than a chunk later', async () => {
+    const distance = Defaults.FILE_READING_CHUNK_SIZE + 3;
+    const run = patterned(distance);
+    const source = Buffer.concat([run, Buffer.alloc(distance * 2)]);
+
+    let copied = 0;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[0], distance, 0, source.length - distance);
+    });
+
+    expect(copied).toEqual(source.length - distance);
+    expect(sourceAfter).toEqual(Buffer.concat([run, run, run]));
+  });
+
+  it('should stop when copying forward from past the end of the same file', async () => {
+    const source = patterned(10);
+
+    let copied = 0;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[0], 20, 5, 100);
+    });
+
+    expect(copied).toEqual(5);
+    expect(sourceAfter).toEqual(Buffer.concat([source, Buffer.alloc(10), source.subarray(5)]));
+  });
 });
 
 describe('truncate', () => {

@@ -241,14 +241,23 @@ export default class IOFile {
     sourceStart = 0,
     sourceEnd = this.getSize(),
   ): Promise<number> {
+    const distance = targetStart - sourceStart;
+    if (
+      target === this &&
+      distance > 0 &&
+      distance < Math.min(sourceEnd - sourceStart, Defaults.FILE_READING_CHUNK_SIZE)
+    ) {
+      return await this.copyRepeating(targetStart, sourceStart, sourceEnd - sourceStart);
+    }
+
+    // If this copy overlaps itself, the source is at least a chunk behind the target, so each
+    // chunk only reads bytes that were already written
     let copied = 0;
     while (sourceStart + copied < sourceEnd) {
-      let chunkSize = Math.min(sourceEnd - sourceStart - copied, Defaults.FILE_READING_CHUNK_SIZE);
-      if (target === this && sourceStart < targetStart) {
-        // Don't read past what this copy has written so far
-        chunkSize = Math.min(chunkSize, targetStart - sourceStart);
-      }
-
+      const chunkSize = Math.min(
+        sourceEnd - sourceStart - copied,
+        Defaults.FILE_READING_CHUNK_SIZE,
+      );
       const chunk = await this.readAt(sourceStart + copied, chunkSize);
       if (chunk.length === 0) {
         break;
@@ -257,6 +266,37 @@ export default class IOFile {
       if (chunk.length < chunkSize) {
         break;
       }
+    }
+    return copied;
+  }
+
+  /**
+   * Copy {@link size} bytes from {@link sourceStart} of this file to the later, overlapping
+   * {@link targetStart}. The copy repeats the bytes between the two starts, so read those once and
+   * write their repetitions a chunk at a time, rather than a repetition at a time.
+   */
+  private async copyRepeating(
+    targetStart: number,
+    sourceStart: number,
+    size: number,
+  ): Promise<number> {
+    const pattern = await this.readAt(sourceStart, targetStart - sourceStart);
+    if (pattern.length < targetStart - sourceStart) {
+      // This file ends before the target region, so there's nothing to repeat
+      return pattern.length > 0 ? await this.writeAt(pattern, targetStart) : 0;
+    }
+
+    // Keep each chunk a whole number of repetitions, so every chunk starts at the pattern's start
+    const repetitions = Buffer.alloc(
+      Math.min(
+        size,
+        Defaults.FILE_READING_CHUNK_SIZE - (Defaults.FILE_READING_CHUNK_SIZE % pattern.length),
+      ),
+      pattern,
+    );
+    let copied = 0;
+    while (copied < size) {
+      copied += await this.writeAt(repetitions.subarray(0, size - copied), targetStart + copied);
     }
     return copied;
   }
