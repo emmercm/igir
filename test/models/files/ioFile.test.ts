@@ -162,6 +162,74 @@ describe('readNext', () => {
   });
 });
 
+describe('readUntil', () => {
+  it('should read up to the delimiter and advance past it', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(tempFile, Buffer.from([1, 2, 3, 0, 0, 4, 5]));
+
+    const file = await IOFile.fileFrom(tempFile, 'r');
+    try {
+      await expect(file.readUntil(0, 100)).resolves.toEqual({
+        data: Buffer.from([1, 2, 3]),
+        delimiterFound: true,
+      });
+      await expect(file.readUntil(0, 100)).resolves.toEqual({
+        data: Buffer.alloc(0),
+        delimiterFound: true,
+      });
+      await expect(file.readUntil(0, 100)).resolves.toEqual({
+        data: Buffer.from([4, 5]),
+        delimiterFound: false,
+      });
+      expect(file.getPosition()).toEqual(7);
+    } finally {
+      await file.close();
+      await FsUtil.rm(tempFile);
+    }
+  });
+
+  it('should not read past the max size', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(tempFile, Buffer.from([1, 2, 3, 0]));
+
+    const file = await IOFile.fileFrom(tempFile, 'r');
+    try {
+      await expect(file.readUntil(0, 2)).resolves.toEqual({
+        data: Buffer.from([1, 2]),
+        delimiterFound: false,
+      });
+      expect(file.getPosition()).toEqual(2);
+    } finally {
+      await file.close();
+      await FsUtil.rm(tempFile);
+    }
+  });
+
+  it('should read at most a chunk at a time', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(
+      tempFile,
+      Buffer.concat([Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE + 10, 1), Buffer.from([0])]),
+    );
+
+    const file = await IOFile.fileFrom(tempFile, 'r');
+    try {
+      await expect(file.readUntil(0, file.getSize())).resolves.toEqual({
+        data: Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE, 1),
+        delimiterFound: false,
+      });
+      await expect(file.readUntil(0, file.getSize())).resolves.toEqual({
+        data: Buffer.alloc(10, 1),
+        delimiterFound: true,
+      });
+      expect(file.getPosition()).toEqual(file.getSize());
+    } finally {
+      await file.close();
+      await FsUtil.rm(tempFile);
+    }
+  });
+});
+
 describe('readAt', () => {
   it('should read a small file', async () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
@@ -511,6 +579,34 @@ describe('copyChunked', () => {
 
     expect(copied).toEqual(5);
     expect(sourceAfter).toEqual(Buffer.concat([source, Buffer.alloc(10), source.subarray(5)]));
+  });
+});
+
+describe('copyNext', () => {
+  it('should copy from the read position and advance by the requested size', async () => {
+    const sourceTempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(sourceTempFile, 'ABCDEF0123456789');
+    const targetTempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(targetTempFile, '----------');
+
+    try {
+      const source = await IOFile.fileFrom(sourceTempFile, 'r');
+      const target = await IOFile.fileFrom(targetTempFile, 'r+');
+      try {
+        source.seek(10);
+        await expect(source.copyNext(target, 2, 4)).resolves.toEqual(4);
+        expect(source.getPosition()).toEqual(14);
+        await expect(source.copyNext(target, 6, 100)).resolves.toEqual(2);
+        expect(source.getPosition()).toEqual(114);
+      } finally {
+        await source.close();
+        await target.close();
+      }
+      await expect(FsUtil.readFile(targetTempFile)).resolves.toEqual(Buffer.from('--456789--'));
+    } finally {
+      await FsUtil.rm(sourceTempFile);
+      await FsUtil.rm(targetTempFile);
+    }
   });
 });
 

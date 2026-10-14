@@ -4,29 +4,32 @@ import fs from 'node:fs';
 import Defaults from '../../globals/defaults.js';
 import FsUtil from '../../utils/fsUtil.js';
 
-/**
- * A wrapper for readable and writable files
- */
-export default class IOFile {
-  private readonly pathLike: PathLike;
-  private readonly fileHandle: fs.promises.FileHandle;
-  private readonly fileMode: fs.Mode;
+export interface IOFileProps {
+  readonly pathLike: PathLike;
+  readonly fileHandle: fs.promises.FileHandle;
+  readonly fileMode: fs.Mode;
+  readonly size: number;
+}
 
-  private size: number;
+/**
+ * A wrapper for readable and writable files, with one read position. To read from several
+ * positions in the same file at the same time, use an {@link IOFileCursor} for each.
+ */
+export default class IOFile implements IOFileProps {
+  readonly pathLike: PathLike;
+  readonly fileHandle: fs.promises.FileHandle;
+  readonly fileMode: fs.Mode;
+  size: number;
+
   private readPosition = 0;
   private fileBuffer?: Buffer;
   private wroteToMemory = false;
 
-  private constructor(
-    pathLike: PathLike,
-    fileHandle: fs.promises.FileHandle,
-    fileMode: fs.Mode,
-    size: number,
-  ) {
-    this.pathLike = pathLike;
-    this.fileHandle = fileHandle;
-    this.fileMode = fileMode;
-    this.size = size;
+  protected constructor(ioFileProps: IOFileProps) {
+    this.pathLike = ioFileProps.pathLike;
+    this.fileHandle = ioFileProps.fileHandle;
+    this.fileMode = ioFileProps.fileMode;
+    this.size = ioFileProps.size;
   }
 
   /**
@@ -45,12 +48,12 @@ export default class IOFile {
      */
     const finalMode = mode.toString().startsWith('a') ? 'r+' : mode;
 
-    return new IOFile(
+    return new IOFile({
       pathLike,
-      await fs.promises.open(pathLike, finalMode),
-      finalMode,
-      expectedSize ?? (await FsUtil.size(pathLike)),
-    );
+      fileHandle: await fs.promises.open(pathLike, finalMode),
+      fileMode: finalMode,
+      size: expectedSize ?? (await FsUtil.size(pathLike)),
+    });
   }
 
   /**
@@ -67,7 +70,7 @@ export default class IOFile {
     try {
       try {
         let written = 0;
-        const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
+        const buffer = Buffer.alloc(Math.min(size, Defaults.FILE_READING_CHUNK_SIZE));
         while (written < size) {
           const sizeToWrite = Math.min(size - written, buffer.length);
           written += await write.write(buffer.subarray(0, sizeToWrite));
@@ -130,9 +133,31 @@ export default class IOFile {
    * seek position the same amount
    */
   async readNext(size: number): Promise<Buffer> {
-    const result = await this.readAt(this.readPosition, size);
+    const result = await this.peekNext(size);
     this.readPosition += size;
     return result;
+  }
+
+  /**
+   * Read up to {@link maxSize} bytes from the current seek position, stopping before the first
+   * {@link delimiter} byte. Reads at most a chunk per call, so it can stop before finding the
+   * delimiter or reaching {@link maxSize}; call it again to keep reading. The seek position
+   * increments past the bytes read, and past the delimiter if it was found.
+   * @returns the bytes read, and if the delimiter was found
+   */
+  async readUntil(
+    delimiter: number,
+    maxSize: number,
+  ): Promise<{ data: Buffer; delimiterFound: boolean }> {
+    const available = await this.peekNext(
+      Math.max(0, Math.min(maxSize, Defaults.FILE_READING_CHUNK_SIZE)),
+    );
+    const delimiterIndex = available.indexOf(delimiter);
+    const isDelimiterFound = delimiterIndex !== -1;
+
+    const data = isDelimiterFound ? available.subarray(0, delimiterIndex) : available;
+    this.readPosition += data.length + (isDelimiterFound ? 1 : 0);
+    return { data, delimiterFound: isDelimiterFound };
   }
 
   private async loadFileBuffer(): Promise<Buffer> {
@@ -267,6 +292,23 @@ export default class IOFile {
         break;
       }
     }
+    return copied;
+  }
+
+  /**
+   * Copy the next {@link size} bytes (fewer at the end of the file) from the current seek
+   * position to {@link target} starting at {@link targetStart}, a chunk at a time, also
+   * incrementing the seek position by {@link size}.
+   * @returns the number of bytes copied
+   */
+  async copyNext(target: IOFile, targetStart: number, size: number): Promise<number> {
+    const copied = await this.copyChunked(
+      target,
+      targetStart,
+      this.readPosition,
+      this.readPosition + size,
+    );
+    this.readPosition += size;
     return copied;
   }
 

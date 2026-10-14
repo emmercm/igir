@@ -1,5 +1,6 @@
 import IgirException from '../../exceptions/igirException.js';
 import IOFile from '../../models/files/ioFile.js';
+import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
@@ -100,7 +101,7 @@ export default class APSN64Patch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      await this.applyPatch(patchFile, targetFile, callback);
+      await this.applyPatch(IOFileCursor.cursorFromFile(patchFile), targetFile, callback);
       await targetFile.truncate(targetSize);
     } finally {
       await targetFile.close();
@@ -108,7 +109,7 @@ export default class APSN64Patch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: IOFile,
+    patchFile: IOFileCursor,
     targetFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {

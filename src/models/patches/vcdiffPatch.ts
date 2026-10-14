@@ -4,6 +4,7 @@ import { XzStreamDecoder } from '../../../packages/xz/index.js';
 import IgirException from '../../exceptions/igirException.js';
 import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
+import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
@@ -1045,13 +1046,15 @@ export default class VcdiffPatch extends Patch {
     callback?: FsReadCallback,
   ): Promise<void> {
     await this.getFile().extractToIOFile(async (patchFile) => {
-      const header = await VcdiffHeader.fromReader(new VcdiffPatchReader(patchFile));
+      // Window headers are many small values, so read ahead
+      const patchCursor = IOFileCursor.cursorFromFile(patchFile);
+      const header = await VcdiffHeader.fromReader(new VcdiffPatchReader(patchCursor));
       const copyCache = new VcdiffCache(header.sNear, header.sSame);
 
       await VcdiffPatch.writeOutputFile(
         inputRomFile,
         outputRomPath,
-        patchFile,
+        patchCursor,
         header,
         copyCache,
         callback,
@@ -1062,7 +1065,7 @@ export default class VcdiffPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: IOFile,
+    patchFile: IOFileCursor,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
     callback?: FsReadCallback,
@@ -1081,7 +1084,7 @@ export default class VcdiffPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: IOFile,
+    patchFile: IOFileCursor,
     sourceFile: IOFile,
     targetFile: IOFile,
     header: VcdiffHeader,

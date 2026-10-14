@@ -1,6 +1,7 @@
 import IgirException from '../../exceptions/igirException.js';
 import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
+import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
@@ -9,19 +10,14 @@ import Patch from './patch.js';
 type PMSRReader = Pick<IOFile, 'getPosition' | 'getSize' | 'readNext'>;
 
 /**
- * Reads forward through an {@link IOFile} from a position, a chunk at a time.
+ * Reads forward through a part of a Yay0-compressed file, throwing if the file ends first.
  */
-class IOFileCursor {
-  private readonly file: IOFile;
+class Yay0Cursor {
+  private readonly cursor: IOFileCursor;
   private readonly eofException: () => IgirException;
 
-  private position: number;
-  private chunk: Buffer = Buffer.alloc(0);
-  private chunkOffset = 0;
-
   constructor(file: IOFile, position: number, eofException: () => IgirException) {
-    this.file = file;
-    this.position = position;
+    this.cursor = IOFileCursor.cursorFromFile(file, position);
     this.eofException = eofException;
   }
 
@@ -29,18 +25,11 @@ class IOFileCursor {
    * Read the next byte, throwing if the file ends first.
    */
   async readUInt8(): Promise<number> {
-    if (this.chunkOffset >= this.chunk.length) {
-      this.chunk = await this.file.readAt(this.position, Defaults.FILE_READING_CHUNK_SIZE);
-      if (this.chunk.length === 0) {
-        throw this.eofException();
-      }
-      this.position += this.chunk.length;
-      this.chunkOffset = 0;
+    const value = await this.cursor.readNext(1);
+    if (value.length === 0) {
+      throw this.eofException();
     }
-
-    const value = this.chunk.readUInt8(this.chunkOffset);
-    this.chunkOffset += 1;
-    return value;
+    return value.readUInt8();
   }
 
   /**
@@ -64,9 +53,9 @@ class Yay0Reader implements PMSRReader {
   static readonly FILE_SIGNATURE = Buffer.from('Yay0');
 
   private readonly decompressedSize: number;
-  private readonly commands: IOFileCursor;
-  private readonly links: IOFileCursor;
-  private readonly literals: IOFileCursor;
+  private readonly commands: Yay0Cursor;
+  private readonly links: Yay0Cursor;
+  private readonly literals: Yay0Cursor;
   private readonly invalidException: () => IgirException;
   private readonly window = Buffer.alloc(Yay0Reader.WINDOW_SIZE);
 
@@ -84,9 +73,9 @@ class Yay0Reader implements PMSRReader {
     invalidException: () => IgirException,
   ) {
     this.decompressedSize = decompressedSize;
-    this.commands = new IOFileCursor(patchFile, Yay0Reader.HEADER_SIZE, invalidException);
-    this.links = new IOFileCursor(patchFile, linkOffset, invalidException);
-    this.literals = new IOFileCursor(patchFile, literalOffset, invalidException);
+    this.commands = new Yay0Cursor(patchFile, Yay0Reader.HEADER_SIZE, invalidException);
+    this.links = new Yay0Cursor(patchFile, linkOffset, invalidException);
+    this.literals = new Yay0Cursor(patchFile, literalOffset, invalidException);
     this.invalidException = invalidException;
   }
 

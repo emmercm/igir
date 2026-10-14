@@ -1,6 +1,6 @@
 import IgirException from '../../exceptions/igirException.js';
-import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
+import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
@@ -107,20 +107,24 @@ export default class UPSPatch extends Patch {
     targetFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
-    while (patchFile.getPosition() < patchFile.getSize() - 12) {
-      const relativeOffset = await super.readUpsUint(patchFile);
-      sourceFile.skipNext(relativeOffset);
+    // Records are read in order from both the patch and the source, so read ahead in both
+    const patchCursor = IOFileCursor.cursorFromFile(patchFile);
+    const sourceCursor = IOFileCursor.cursorFromFile(sourceFile);
+
+    while (patchCursor.getPosition() < patchCursor.getSize() - 12) {
+      const relativeOffset = await super.readUpsUint(patchCursor);
+      sourceCursor.skipNext(relativeOffset);
       targetFile.skipNext(relativeOffset);
 
-      await this.applyPatchBlock(patchFile, sourceFile, targetFile);
+      await this.applyPatchBlock(patchCursor, sourceCursor, targetFile);
 
-      sourceFile.skipNext(1);
+      sourceCursor.skipNext(1);
       targetFile.skipNext(1);
 
       if (callback === undefined) {
         continue;
       }
-      const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+      const progressPercentage = patchCursor.getPosition() / patchCursor.getSize();
       callback(Math.floor(progressPercentage * targetFile.getSize()));
     }
   }
@@ -130,40 +134,35 @@ export default class UPSPatch extends Patch {
    * at a time, leaving the patch positioned past the terminator.
    */
   private static async applyPatchBlock(
-    patchFile: IOFile,
-    sourceFile: IOFile,
+    patchCursor: IOFileCursor,
+    sourceCursor: IOFileCursor,
     targetFile: IOFile,
   ): Promise<void> {
-    const patchBlocksEnd = patchFile.getSize() - 12;
+    const patchBlocksEnd = patchCursor.getSize() - 12;
 
-    while (patchFile.getPosition() < patchBlocksEnd) {
-      const xorChunk = await patchFile.readAt(
-        patchFile.getPosition(),
-        Math.min(patchBlocksEnd - patchFile.getPosition(), Defaults.FILE_READING_CHUNK_SIZE),
+    while (patchCursor.getPosition() < patchBlocksEnd) {
+      const { data: xorData, delimiterFound } = await patchCursor.readUntil(
+        0x00,
+        patchBlocksEnd - patchCursor.getPosition(),
       );
-      if (xorChunk.length === 0) {
+      if (xorData.length === 0 && !delimiterFound) {
         break;
       }
-      const terminatorIndex = xorChunk.indexOf(0x00);
-      const xorData = terminatorIndex === -1 ? xorChunk : xorChunk.subarray(0, terminatorIndex);
 
       // Bytes past the end of the source are 0x00
-      const sourceData = await sourceFile.readAt(sourceFile.getPosition(), xorData.length);
+      const sourceData = await sourceCursor.readNext(xorData.length);
       for (const [i, sourceDatum] of sourceData.entries()) {
         xorData[i] ^= sourceDatum;
       }
       await targetFile.write(xorData);
-      sourceFile.skipNext(xorData.length);
-      patchFile.skipNext(xorData.length);
 
-      if (terminatorIndex !== -1) {
-        patchFile.skipNext(1);
+      if (delimiterFound) {
         return;
       }
     }
 
     throw new IgirException(
-      `UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike().toString()}`,
+      `UPS patch failed to read 0x00 block termination: ${patchCursor.getPathLike().toString()}`,
     );
   }
 }

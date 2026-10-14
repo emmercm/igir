@@ -1,6 +1,7 @@
 import IgirException from '../../exceptions/igirException.js';
 import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
+import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
@@ -88,13 +89,14 @@ export default class NinjaPatch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      while (!patchFile.isEOF()) {
-        await this.applyCommand(patchFile, targetFile);
+      const patchCursor = IOFileCursor.cursorFromFile(patchFile);
+      while (!patchCursor.isEOF()) {
+        await this.applyCommand(patchCursor, targetFile);
 
         if (callback === undefined) {
           continue;
         }
-        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        const progressPercentage = patchCursor.getPosition() / patchCursor.getSize();
         callback(Math.floor(progressPercentage * targetFile.getSize()));
       }
     } finally {
@@ -102,7 +104,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private async applyCommand(patchFile: IOFile, targetFile: IOFile): Promise<void> {
+  private async applyCommand(patchFile: IOFileCursor, targetFile: IOFile): Promise<void> {
     const command = (await patchFile.readNext(1)).readUInt8() as NinjaCommandValue;
 
     if (command === NinjaCommand.TERMINATE) {
@@ -116,7 +118,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private async applyCommandOpen(patchFile: IOFile, targetFile: IOFile): Promise<void> {
+  private async applyCommandOpen(patchFile: IOFileCursor, targetFile: IOFile): Promise<void> {
     const multiFile = (await patchFile.readNext(1)).readUInt8();
     if (multiFile > 0) {
       throw new IgirException(
@@ -159,34 +161,37 @@ export default class NinjaPatch extends Patch {
       await NinjaPatch.appendOverflow(patchFile, targetFile, overflowSize);
     } else {
       await targetFile.truncate(modifiedFileSize);
+      patchFile.skipNext(overflowSize);
     }
-    patchFile.skipNext(overflowSize);
   }
 
   /**
    * Append the {@link overflowSize} bytes of overflow data at the patch's read position to the
-   * target, a chunk at a time, without moving the patch's read position.
+   * target, a chunk at a time, advancing the patch's read position past them.
    */
   private static async appendOverflow(
-    patchFile: IOFile,
+    patchFile: IOFileCursor,
     targetFile: IOFile,
     overflowSize: number,
   ): Promise<void> {
-    let written = 0;
-    while (written < overflowSize) {
-      const chunkSize = Math.min(overflowSize - written, Defaults.FILE_READING_CHUNK_SIZE);
-      const overflow = await patchFile.readAt(patchFile.getPosition() + written, chunkSize);
+    let read = 0;
+    while (read < overflowSize) {
+      const chunkSize = Math.min(overflowSize - read, Defaults.FILE_READING_CHUNK_SIZE);
+      const overflow = await patchFile.readNext(chunkSize);
+      read += chunkSize;
       for (let i = 0; i < overflow.length; i += 1) {
         overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
       }
-      written += await targetFile.writeAt(overflow, targetFile.getSize());
+      await targetFile.writeAt(overflow, targetFile.getSize());
       if (overflow.length < chunkSize) {
+        // The patch ended early, skip what's left of the overflow
+        patchFile.skipNext(overflowSize - read);
         break;
       }
     }
   }
 
-  private static async applyCommandXor(patchFile: IOFile, targetFile: IOFile): Promise<void> {
+  private static async applyCommandXor(patchFile: IOFileCursor, targetFile: IOFile): Promise<void> {
     const offsetLength = (await patchFile.readNext(1)).readUInt8();
     const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
     targetFile.seek(offset);
@@ -196,7 +201,7 @@ export default class NinjaPatch extends Patch {
     for (let xored = 0; xored < length; xored += Defaults.FILE_READING_CHUNK_SIZE) {
       const chunkSize = Math.min(length - xored, Defaults.FILE_READING_CHUNK_SIZE);
       const sourceData = await targetFile.readAt(offset + xored, chunkSize);
-      const xorData = await patchFile.readAt(patchFile.getPosition() + xored, chunkSize);
+      const xorData = await patchFile.readNext(chunkSize);
       const targetData = Buffer.allocUnsafe(chunkSize);
       for (let i = 0; i < chunkSize; i += 1) {
         // Bytes past the end of the target or the patch are 0x00
@@ -206,6 +211,5 @@ export default class NinjaPatch extends Patch {
       await targetFile.writeAt(targetData, offset + xored);
     }
     targetFile.skipNext(length);
-    patchFile.skipNext(length);
   }
 }

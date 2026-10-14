@@ -1,5 +1,6 @@
 import IgirException from '../../exceptions/igirException.js';
 import IOFile from '../../models/files/ioFile.js';
+import IOFileCursor from '../../models/files/ioFileCursor.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
@@ -73,12 +74,13 @@ export default class IPSPatch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      await this.applyPatch(patchFile, targetFile, offsetSize, eofString, callback);
+      const patchCursor = IOFileCursor.cursorFromFile(patchFile);
+      await this.applyPatch(patchCursor, targetFile, offsetSize, eofString, callback);
       if (isTruncatable) {
         // An optional 3-byte truncation size can follow "EOF"
-        patchFile.skipNext(eofString.length);
-        if (patchFile.getSize() - patchFile.getPosition() === 3) {
-          const truncateSize = (await patchFile.readNext(3)).readUIntBE(0, 3);
+        patchCursor.skipNext(eofString.length);
+        if (patchCursor.getSize() - patchCursor.getPosition() === 3) {
+          const truncateSize = (await patchCursor.readNext(3)).readUIntBE(0, 3);
           // The truncation size can only shrink the output, never extend it
           if (truncateSize < targetFile.getSize()) {
             await targetFile.truncate(truncateSize);
@@ -91,7 +93,7 @@ export default class IPSPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: IOFile,
+    patchFile: IOFileCursor,
     targetFile: IOFile,
     offsetSize: number,
     eofString: string,
