@@ -30,6 +30,7 @@ export default eslintConfig.defineConfig([
       'addons/*/deps/**',
       'addons/*/build/**',
       'addons/*/addon-*/**',
+      'coverage/**',
       'dist/**',
       'site/**',
     ],
