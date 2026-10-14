@@ -121,7 +121,7 @@ export default class APSN64Patch extends Patch {
         // Run-length encoding record
         const byte = await patchFile.readNext(1);
         const rleSize = (await patchFile.readNext(1)).readUInt8();
-        data = Buffer.from(byte.toString('hex').repeat(rleSize), 'hex');
+        data = byte.length > 0 ? Buffer.alloc(rleSize, byte) : byte;
       } else {
         // Standard record
         data = await patchFile.readNext(size);

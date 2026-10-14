@@ -109,7 +109,8 @@ export default class IPSPatch extends Patch {
       if (size === 0) {
         // Run-length encoding record
         const rleSize = (await patchFile.readNext(2)).readUInt16BE();
-        data = Buffer.from((await patchFile.readNext(1)).toString('hex').repeat(rleSize), 'hex');
+        const byte = await patchFile.readNext(1);
+        data = byte.length > 0 ? Buffer.alloc(rleSize, byte) : byte;
       } else {
         // Standard record
         data = await patchFile.readNext(size);

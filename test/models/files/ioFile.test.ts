@@ -357,6 +357,118 @@ describe('writeAt', () => {
   });
 });
 
+describe('copyChunked', () => {
+  /** Bytes that differ from their neighbors, so misplaced copies are caught */
+  const patterned = (size: number): Buffer =>
+    Buffer.from(Array.from({ length: size }, (_value, idx) => (idx * 7 + 3) & 0xff));
+
+  /**
+   * Write {@link contents} to temp files, then call {@link callback} with them opened as
+   * {@link IOFile}s, returning their contents after they're closed.
+   */
+  const withIOFiles = async (
+    contents: Buffer[],
+    callback: (ioFiles: IOFile[]) => Promise<void>,
+  ): Promise<Buffer[]> => {
+    const tempFiles = await Promise.all(
+      contents.map(async () => await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'))),
+    );
+    try {
+      await Promise.all(
+        tempFiles.map(async (tempFile, idx) => {
+          await FsUtil.writeFile(tempFile, contents[idx]);
+        }),
+      );
+      const ioFiles = await Promise.all(
+        tempFiles.map(async (tempFile) => await IOFile.fileFrom(tempFile, 'r+')),
+      );
+      try {
+        await callback(ioFiles);
+      } finally {
+        await Promise.all(
+          ioFiles.map(async (ioFile) => {
+            await ioFile.close();
+          }),
+        );
+      }
+      return await Promise.all(tempFiles.map(async (tempFile) => await FsUtil.readFile(tempFile)));
+    } finally {
+      await Promise.all(
+        tempFiles.map(async (tempFile) => {
+          await FsUtil.rm(tempFile, { force: true });
+        }),
+      );
+    }
+  };
+
+  it('should copy a region spanning multiple chunks to another file', async () => {
+    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE * 2 + 100);
+    const target = Buffer.alloc(source.length);
+
+    let copied = 0;
+    const [sourceAfter, targetAfter] = await withIOFiles([source, target], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[1], 5, 10, source.length - 20);
+    });
+
+    expect(copied).toEqual(source.length - 30);
+    expect(sourceAfter).toEqual(source);
+    expect(targetAfter).toEqual(
+      Buffer.concat([Buffer.alloc(5), source.subarray(10, -20), Buffer.alloc(25)]),
+    );
+  });
+
+  it('should copy the whole file by default', async () => {
+    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE + 1);
+
+    let copied = 0;
+    const [, targetAfter] = await withIOFiles([source, Buffer.alloc(0)], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[1]);
+    });
+
+    expect(copied).toEqual(source.length);
+    expect(targetAfter).toEqual(source);
+  });
+
+  it('should stop at the end of the source', async () => {
+    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE + 1);
+
+    let copied = 0;
+    const [, targetAfter] = await withIOFiles([source, Buffer.alloc(0)], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[1], 0, 1, source.length * 3);
+    });
+
+    expect(copied).toEqual(source.length - 1);
+    expect(targetAfter).toEqual(source.subarray(1));
+  });
+
+  it('should copy to an earlier region of the same file', async () => {
+    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE * 2 + 100);
+
+    let copied = 0;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[0], 0, 3);
+    });
+
+    expect(copied).toEqual(source.length - 3);
+    expect(sourceAfter).toEqual(Buffer.concat([source.subarray(3), source.subarray(-3)]));
+  });
+
+  it('should repeat bytes when copying forward to an overlapping region of the same file', async () => {
+    const run = Buffer.from('abc');
+    const source = Buffer.concat([run, Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE * 2 + 100)]);
+
+    let copied = 0;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[0], run.length, 0, source.length - run.length);
+    });
+
+    expect(copied).toEqual(source.length - run.length);
+    expect(sourceAfter).toEqual(
+      Buffer.from(Array.from({ length: source.length }, (_value, idx) => run[idx % run.length])),
+    );
+  });
+});
+
 describe('truncate', () => {
   test.each([
     // [name, initial hex, truncate size, expected hex]

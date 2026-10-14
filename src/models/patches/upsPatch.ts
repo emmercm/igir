@@ -1,15 +1,15 @@
 import IgirException from '../../exceptions/igirException.js';
+import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
-import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
 
 /**
  * WARN(cemmer): because UPS patches use nul-byte termination for records rather than some kind of
- * length identifier, which forces patchers to read both the UPS file and ROM file byte-by-byte,
- * large patches can perform tremendously poorly if they contain many small records.
+ * length identifier, patchers have to scan each record for its terminator, and large patches can
+ * perform poorly if they contain many small records.
  * @see https://www.romhacking.net/documents/392/
  * @see https://github.com/btimofeev/UniPatcher/wiki/UPS
  * @see https://www.gamebrew.org/wiki/Upset
@@ -41,13 +41,10 @@ export default class UPSPatch extends Patch {
       // Validate the patch contents
 
       const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
-      patchFile.seek(0);
-      // TODO(cemmer): consider chunking/streaming
-      const patchData = await patchFile.readNext(patchFile.getSize() - 4);
-      const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
-      if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
+      const patchChecksumActual = await super.crc32Range(patchFile, 0, patchFile.getSize() - 4);
+      if (patchChecksumActual !== patchChecksumExpected) {
         throw new IgirException(
-          `UPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
+          `UPS patch is invalid, CRC of contents (${patchChecksumActual}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
         );
       }
     });
@@ -115,8 +112,7 @@ export default class UPSPatch extends Patch {
       sourceFile.skipNext(relativeOffset);
       targetFile.skipNext(relativeOffset);
 
-      const data = await this.readPatchBlock(patchFile, sourceFile);
-      await targetFile.write(data);
+      await this.applyPatchBlock(patchFile, sourceFile, targetFile);
 
       sourceFile.skipNext(1);
       targetFile.skipNext(1);
@@ -129,19 +125,41 @@ export default class UPSPatch extends Patch {
     }
   }
 
-  private static async readPatchBlock(patchFile: IOFile, sourceFile: IOFile): Promise<Buffer> {
-    // TODO(cemmer): consider chunking/streaming
-    const buffer: Buffer[] = [];
+  /**
+   * Write the XOR of the patch's next 0x00-terminated block and the source to the target, a chunk
+   * at a time, leaving the patch positioned past the terminator.
+   */
+  private static async applyPatchBlock(
+    patchFile: IOFile,
+    sourceFile: IOFile,
+    targetFile: IOFile,
+  ): Promise<void> {
+    const patchBlocksEnd = patchFile.getSize() - 12;
 
-    while (patchFile.getPosition() < patchFile.getSize() - 12) {
-      const xorByte = (await patchFile.readNext(1)).readUInt8();
-      if (!xorByte) {
-        // terminating byte 0x00
-        return Buffer.concat(buffer);
+    while (patchFile.getPosition() < patchBlocksEnd) {
+      const xorChunk = await patchFile.readAt(
+        patchFile.getPosition(),
+        Math.min(patchBlocksEnd - patchFile.getPosition(), Defaults.FILE_READING_CHUNK_SIZE),
+      );
+      if (xorChunk.length === 0) {
+        break;
       }
+      const terminatorIndex = xorChunk.indexOf(0x00);
+      const xorData = terminatorIndex === -1 ? xorChunk : xorChunk.subarray(0, terminatorIndex);
 
-      const sourceByte = sourceFile.isEOF() ? 0x00 : (await sourceFile.readNext(1)).readUInt8();
-      buffer.push(Buffer.of(sourceByte ^ xorByte));
+      // Bytes past the end of the source are 0x00
+      const sourceData = await sourceFile.readAt(sourceFile.getPosition(), xorData.length);
+      for (const [i, sourceDatum] of sourceData.entries()) {
+        xorData[i] ^= sourceDatum;
+      }
+      await targetFile.write(xorData);
+      sourceFile.skipNext(xorData.length);
+      patchFile.skipNext(xorData.length);
+
+      if (terminatorIndex !== -1) {
+        patchFile.skipNext(1);
+        return;
+      }
     }
 
     throw new IgirException(

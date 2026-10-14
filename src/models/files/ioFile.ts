@@ -226,6 +226,42 @@ export default class IOFile {
   }
 
   /**
+   * Copy bytes from the region [{@link sourceStart}, {@link sourceEnd}) of this file to
+   * {@link target} starting at {@link targetStart}, a chunk at a time, like
+   * {@link Buffer.copy}. Stops early if this file ends before {@link sourceEnd}.
+   *
+   * Unlike {@link Buffer.copy}, when {@link target} is this file and the target region starts
+   * after the source region, the copy moves forward: bytes written earlier in the copy are read
+   * again later in it, which repeats them (LZ77-style).
+   * @returns the number of bytes copied
+   */
+  async copyChunked(
+    target: IOFile,
+    targetStart = 0,
+    sourceStart = 0,
+    sourceEnd = this.getSize(),
+  ): Promise<number> {
+    let copied = 0;
+    while (sourceStart + copied < sourceEnd) {
+      let chunkSize = Math.min(sourceEnd - sourceStart - copied, Defaults.FILE_READING_CHUNK_SIZE);
+      if (target === this && sourceStart < targetStart) {
+        // Don't read past what this copy has written so far
+        chunkSize = Math.min(chunkSize, targetStart - sourceStart);
+      }
+
+      const chunk = await this.readAt(sourceStart + copied, chunkSize);
+      if (chunk.length === 0) {
+        break;
+      }
+      copied += await target.writeAt(chunk, targetStart + copied);
+      if (chunk.length < chunkSize) {
+        break;
+      }
+    }
+    return copied;
+  }
+
+  /**
    * Truncate or zero-extend the file to {@link size} bytes.
    */
   async truncate(size: number): Promise<void> {

@@ -1,4 +1,5 @@
 import IgirException from '../../exceptions/igirException.js';
+import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
@@ -154,16 +155,34 @@ export default class NinjaPatch extends Patch {
       overflowSizeLength > 0
         ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
         : 0;
-    // TODO(cemmer): consider chunking/streaming
-    const overflow =
-      overflowSize > 0 ? await patchFile.readNext(overflowSize) : Buffer.alloc(overflowSize);
-    for (let i = 0; i < overflow.length; i += 1) {
-      overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
-    }
     if (modifiedFileSize > sourceFileSize) {
-      await targetFile.writeAt(overflow, targetFile.getSize());
+      await NinjaPatch.appendOverflow(patchFile, targetFile, overflowSize);
     } else {
       await targetFile.truncate(modifiedFileSize);
+    }
+    patchFile.skipNext(overflowSize);
+  }
+
+  /**
+   * Append the {@link overflowSize} bytes of overflow data at the patch's read position to the
+   * target, a chunk at a time, without moving the patch's read position.
+   */
+  private static async appendOverflow(
+    patchFile: IOFile,
+    targetFile: IOFile,
+    overflowSize: number,
+  ): Promise<void> {
+    let written = 0;
+    while (written < overflowSize) {
+      const chunkSize = Math.min(overflowSize - written, Defaults.FILE_READING_CHUNK_SIZE);
+      const overflow = await patchFile.readAt(patchFile.getPosition() + written, chunkSize);
+      for (let i = 0; i < overflow.length; i += 1) {
+        overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
+      }
+      written += await targetFile.writeAt(overflow, targetFile.getSize());
+      if (overflow.length < chunkSize) {
+        break;
+      }
     }
   }
 
@@ -174,14 +193,19 @@ export default class NinjaPatch extends Patch {
 
     const lengthLength = (await patchFile.readNext(1)).readUInt8();
     const length = (await patchFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
-    // TODO(cemmer): consider chunking/streaming
-    const sourceData = await targetFile.readNext(length);
-
-    const xorData = await patchFile.readNext(length);
-    const targetData = Buffer.allocUnsafe(length);
-    for (let i = 0; i < length; i += 1) {
-      targetData[i] = (i < sourceData.length ? sourceData[i] : 0x00) ^ xorData[i];
+    for (let xored = 0; xored < length; xored += Defaults.FILE_READING_CHUNK_SIZE) {
+      const chunkSize = Math.min(length - xored, Defaults.FILE_READING_CHUNK_SIZE);
+      const sourceData = await targetFile.readAt(offset + xored, chunkSize);
+      const xorData = await patchFile.readAt(patchFile.getPosition() + xored, chunkSize);
+      const targetData = Buffer.allocUnsafe(chunkSize);
+      for (let i = 0; i < chunkSize; i += 1) {
+        // Bytes past the end of the target or the patch are 0x00
+        targetData[i] =
+          (i < sourceData.length ? sourceData[i] : 0x00) ^ (i < xorData.length ? xorData[i] : 0x00);
+      }
+      await targetFile.writeAt(targetData, offset + xored);
     }
-    await targetFile.writeAt(targetData, offset);
+    targetFile.skipNext(length);
+    patchFile.skipNext(length);
   }
 }

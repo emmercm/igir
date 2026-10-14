@@ -3,7 +3,6 @@ import IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
-import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
 
 const BPSAction = {
@@ -45,13 +44,10 @@ export default class BPSPatch extends Patch {
       // Validate the patch contents
 
       const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
-      patchFile.seek(0);
-      // TODO(cemmer): consider chunking/streaming
-      const patchData = await patchFile.readNext(patchFile.getSize() - 4);
-      const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
-      if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
+      const patchChecksumActual = await super.crc32Range(patchFile, 0, patchFile.getSize() - 4);
+      if (patchChecksumActual !== patchChecksumExpected) {
         throw new IgirException(
-          `BPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
+          `BPS patch is invalid, CRC of contents (${patchChecksumActual}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
         );
       }
     });
@@ -129,27 +125,52 @@ export default class BPSPatch extends Patch {
       const action = (blockHeader & 3) as BPSActionValue;
       const length = (blockHeader >> 2) + 1;
 
-      // TODO(cemmer): consider chunking/streaming
+      const targetPosition = targetFile.getPosition();
       if (action === BPSAction.SOURCE_READ) {
-        await targetFile.write(await sourceFile.readAt(targetFile.getPosition(), length));
+        targetFile.skipNext(
+          await sourceFile.copyChunked(
+            targetFile,
+            targetPosition,
+            targetPosition,
+            targetPosition + length,
+          ),
+        );
       } else if (action === BPSAction.TARGET_READ) {
-        const data = await patchFile.readNext(length);
-        await targetFile.write(data);
+        const patchPosition = patchFile.getPosition();
+        targetFile.skipNext(
+          await patchFile.copyChunked(
+            targetFile,
+            targetPosition,
+            patchPosition,
+            patchPosition + length,
+          ),
+        );
+        patchFile.skipNext(length);
       } else if (action === BPSAction.SOURCE_COPY) {
         const offset = await super.readUpsUint(patchFile);
         sourceRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
-        await targetFile.write(await sourceFile.readAt(sourceRelativeOffset, length));
+        targetFile.skipNext(
+          await sourceFile.copyChunked(
+            targetFile,
+            targetPosition,
+            sourceRelativeOffset,
+            sourceRelativeOffset + length,
+          ),
+        );
         sourceRelativeOffset += length;
       } else if (action === BPSAction.TARGET_COPY) {
         const offset = await super.readUpsUint(patchFile);
         targetRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
-        // WARN: you explicitly can't read the target file all at once, you have to read byte by
-        // byte, because later iterations of the loop may need to read data that was changed by
-        // earlier iterations of the loop.
-        for (let i = 0; i < length; i += 1) {
-          await targetFile.write(await targetFile.readAt(targetRelativeOffset, 1));
-          targetRelativeOffset += 1;
-        }
+        // The copy can overlap the bytes it writes, which repeats them
+        targetFile.skipNext(
+          await targetFile.copyChunked(
+            targetFile,
+            targetPosition,
+            targetRelativeOffset,
+            targetRelativeOffset + length,
+          ),
+        );
+        targetRelativeOffset += length;
       } else {
         throw new IgirException(`BPS action ${action} isn't supported`);
       }

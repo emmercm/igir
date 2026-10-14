@@ -278,7 +278,8 @@ class VcdiffSecondaryDecompressor {
     if (size === 0) {
       throw new Error('Vcdiff secondary-compressed section has an invalid size of 0');
     }
-    // TODO(cemmer): consider chunking/streaming
+    // NOTE(cemmer): this can't be chunked, the xz decoder needs whole LZMA2 chunks as input and
+    //  produces the whole section as output
     return this.decoders[section].decode(data.subarray(offset), size);
   }
 }
@@ -697,7 +698,8 @@ class VcdiffWindow {
     deltaEncodingIndicator: number,
     secondaryDecompressor: VcdiffSecondaryDecompressor | undefined,
   ): Promise<Buffer> {
-    // TODO(cemmer): consider chunking/streaming
+    // NOTE(cemmer): sections are read whole, rather than chunked, because compressed sections
+    //  need to be decompressed whole (see VcdiffSecondaryDecompressor)
     const data = await patchFile.readExact(length);
     if (
       !(deltaEncodingIndicator & VcdiffSectionCompressedBit[section]) ||
@@ -776,9 +778,18 @@ class VcdiffWindow {
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
-    const data = Buffer.alloc(size, this.addsAndRunsData.readUInt8(this.addsAndRunsOffset));
+    // Runs can be as large as the target window, so write them a chunk at a time
+    const chunk = Buffer.alloc(
+      Math.min(size, Defaults.FILE_READING_CHUNK_SIZE),
+      this.addsAndRunsData.readUInt8(this.addsAndRunsOffset),
+    );
     this.addsAndRunsOffset += 1;
-    await targetFile.writeAt(data, targetWindowPosition + this.targetWindowOffset);
+    for (let written = 0; written < size; written += chunk.length) {
+      await targetFile.writeAt(
+        chunk.subarray(0, size - written),
+        targetWindowPosition + this.targetWindowOffset + written,
+      );
+    }
     this.targetWindowOffset += size;
   }
 

@@ -94,12 +94,21 @@ export default class DPSPatch extends Patch {
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const record = await this.readRecord(patchFile);
-      // TODO(cemmer): consider chunking/streaming
-      const data =
-        'inputOffset' in record
-          ? await sourceFile.readAt(record.inputOffset, record.length)
-          : await patchFile.readAt(record.dataPosition, record.length);
-      await targetFile.writeAt(data, record.outputOffset);
+      if ('inputOffset' in record) {
+        await sourceFile.copyChunked(
+          targetFile,
+          record.outputOffset,
+          record.inputOffset,
+          record.inputOffset + record.length,
+        );
+      } else {
+        await patchFile.copyChunked(
+          targetFile,
+          record.outputOffset,
+          record.dataPosition,
+          record.dataPosition + record.length,
+        );
+      }
 
       if (callback === undefined) {
         continue;

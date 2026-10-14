@@ -1,6 +1,8 @@
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 import IgirException from '../../exceptions/igirException.js';
+import Defaults from '../../globals/defaults.js';
 import type IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
@@ -94,6 +96,25 @@ export default abstract class Patch {
     const magnitude =
       buffer.readUInt32LE(offset) + (buffer.readUInt32LE(offset + 4) & 0x7f_ff_ff_ff) * 2 ** 32;
     return buffer.readUInt8(offset + 7) & 0x80 ? -magnitude : magnitude;
+  }
+
+  /**
+   * Calculate the CRC32 of the region [{@link start}, {@link end}) of a file, a chunk at a time,
+   * stopping early if the file ends first.
+   */
+  protected static async crc32Range(file: IOFile, start: number, end: number): Promise<string> {
+    let crc = 0;
+    let position = start;
+    while (position < end) {
+      const chunkSize = Math.min(end - position, Defaults.FILE_READING_CHUNK_SIZE);
+      const chunk = await file.readAt(position, chunkSize);
+      crc = zlib.crc32(chunk, crc);
+      position += chunkSize;
+      if (chunk.length < chunkSize) {
+        break;
+      }
+    }
+    return (crc >>> 0).toString(16).padStart(8, '0');
   }
 
   /**
