@@ -47,7 +47,7 @@ describe('patchFromFileContents', () => {
     const inputPatchFilePaths = await new Options({
       patch: ['./test/fixtures/patches'],
     }).scanPatchFilesWithoutExclusions();
-    expect(inputPatchFilePaths).toHaveLength(47);
+    expect(inputPatchFilePaths).toHaveLength(49);
 
     for (const inputPatchFilePath of inputPatchFilePaths) {
       // DPS has no file signature, so it can't be detected from its contents

@@ -61,7 +61,7 @@ describe('scan', () => {
 
   describe('multiple files', () => {
     it('should scan multiple files with no exclusions', async () => {
-      const expectedPatchFiles = 47;
+      const expectedPatchFiles = 49;
       await expect(createPatchScanner(['test/fixtures/patches/*/*']).scan()).resolves.toHaveLength(
         expectedPatchFiles,
       );
@@ -86,7 +86,7 @@ describe('scan', () => {
             [],
             isInputChecksumQuick,
           ).scan(),
-        ).resolves.toHaveLength(47);
+        ).resolves.toHaveLength(49);
       },
     );
 
@@ -96,7 +96,7 @@ describe('scan', () => {
           'test/fixtures/patches/*/*',
           'test/fixtures/patches-zipped/patches.zip',
         ]).scan(),
-      ).resolves.toHaveLength(47);
+      ).resolves.toHaveLength(49);
     });
 
     it('should keep different patches with the same CRC32 and size', async () => {
@@ -115,13 +115,13 @@ describe('scan', () => {
           ['test/fixtures/patches/*/*'],
           ['test/fixtures/patches/**/*.ips*'],
         ).scan(),
-      ).resolves.toHaveLength(40);
+      ).resolves.toHaveLength(42);
       await expect(
         createPatchScanner(
           ['test/fixtures/patches/*/*'],
           ['test/fixtures/patches/**/*.ips*', 'test/fixtures/patches/**/*.ips*'],
         ).scan(),
-      ).resolves.toHaveLength(40);
+      ).resolves.toHaveLength(42);
     });
 
     it('should scan multiple files with every file excluded', async () => {

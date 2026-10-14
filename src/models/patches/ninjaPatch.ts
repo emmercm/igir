@@ -154,6 +154,7 @@ export default class NinjaPatch extends Patch {
       overflowSizeLength > 0
         ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
         : 0;
+    // TODO(cemmer): consider chunking/streaming
     const overflow =
       overflowSize > 0 ? await patchFile.readNext(overflowSize) : Buffer.alloc(overflowSize);
     for (let i = 0; i < overflow.length; i += 1) {
@@ -173,6 +174,7 @@ export default class NinjaPatch extends Patch {
 
     const lengthLength = (await patchFile.readNext(1)).readUInt8();
     const length = (await patchFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
+    // TODO(cemmer): consider chunking/streaming
     const sourceData = await targetFile.readNext(length);
 
     const xorData = await patchFile.readNext(length);

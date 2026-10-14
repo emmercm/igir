@@ -124,7 +124,7 @@ test.each([
         'LCDTestROM.lnx',
         'speed_test_v51',
       ],
-      patchable: ['grow', 'large', 'modify', 'pmsr', 'shrink'],
+      patchable: ['grow', 'large', 'lzma', 'modify', 'pmsr', 'shrink'],
       headerless: ['speed_test_v51.sfc'],
     },
   ],
