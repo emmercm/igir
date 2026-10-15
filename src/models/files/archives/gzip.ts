@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import stream from 'node:stream';
 import zlib from 'node:zlib';
 
+import * as tar from 'tar';
+
 import { logger } from '../../../console/logger.js';
 import IgirException from '../../../exceptions/igirException.js';
 import IOFile from '../../../models/files/ioFile.js';
@@ -57,11 +59,14 @@ export default class Gzip extends Archive {
     callback?: FsReadCallback,
     shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<Archive>[]> {
-    // See if this file is actually a .tar.gz
-    try {
-      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
-    } catch {
-      // ignored
+    // See if this file is actually a .tar.gz. Only try when it starts with a tar header: the tar
+    // parser buffers a plain gzipped file, which takes hours on a disc-sized image.
+    if (await this.isTar()) {
+      try {
+        return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
+      } catch {
+        // ignored
+      }
     }
 
     const gzipHeaderTrailer = await this.getHeaderTrailerInfo();
@@ -99,6 +104,30 @@ export default class Gzip extends Archive {
         checksumBitmask,
       ),
     ];
+  }
+
+  /**
+   * Whether the decompressed stream starts with a tar header, judged by the header's checksum,
+   * which every tar format (v7, ustar, GNU, pax) carries.
+   */
+  private async isTar(): Promise<boolean> {
+    try {
+      const header = await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
+        const chunks: Buffer[] = [];
+        let length = 0;
+        for await (const chunk of readable as AsyncIterable<Buffer>) {
+          chunks.push(chunk);
+          length += chunk.length;
+          if (length >= 512) {
+            break;
+          }
+        }
+        return Buffer.concat(chunks).subarray(0, 512);
+      });
+      return header.length === 512 && new tar.Header(header).cksumValid;
+    } catch {
+      return false;
+    }
   }
 
   private async getHeaderTrailerInfo(): Promise<GzipHeaderTrailer> {
