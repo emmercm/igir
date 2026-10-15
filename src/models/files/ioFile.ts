@@ -364,7 +364,11 @@ export default class IOFile {
    * seek position by {@link size}.
    * @returns the number of bytes copied
    */
-  async copyNext(target: IOFile, targetStart: number, size: number): Promise<number> {
+  async copyNext(
+    target: Pick<IOFile, 'writeAt'>,
+    targetStart: number,
+    size: number,
+  ): Promise<number> {
     const copied = await this.copyChunked(
       target,
       targetStart,
@@ -382,34 +386,86 @@ export default class IOFile {
    * @returns the number of bytes copied
    */
   async copyChunked(
-    target: IOFile,
+    target: Pick<IOFile, 'writeAt'>,
     targetStart = 0,
     sourceStart = 0,
     sourceEnd = this.getSize(),
   ): Promise<number> {
     this.assertOpen();
-    // When copying within this file to a later position, the target starts this many bytes after
-    // the source. If the source and target regions overlap, the source eventually reaches bytes
-    // that this copy wrote. Those bytes must only be read after they're written, otherwise the copy
-    // would read the file's old contents instead of the bytes it wrote.
-    const distance = target === this ? targetStart - sourceStart : 0;
     const size = sourceEnd - sourceStart;
+    // When copying to a later position in this same file, the target starts this many bytes after
+    // the source. If they overlap, part of the source is bytes that this copy writes.
+    const distance = target === this ? targetStart - sourceStart : 0;
+
     let copied = 0;
     while (copied < size) {
-      const position = distance > 0 ? sourceStart + (copied % distance) : sourceStart + copied;
-      if (position >= this.fileSize) {
+      const writePosition = targetStart + copied;
+
+      // When the copy overlaps, the next byte can be read from any multiple of distance bytes
+      // before writePosition. Each step reads from whichever one allows the longest step, without
+      // reading unwritten bytes or crossing a page boundary. For example, copying 20 bytes from
+      // position 5 to position 8 with 8-byte pages ("r" is read, "w" is written):
+      //
+      //   before:  |.....abc|________|________|________|
+      //
+      //                  rrr
+      //   step 1:  |.....abc|abc_____|________|________|   source
+      //                      www
+      //
+      //                  rrr
+      //   step 2:  |.....abc|abcabc__|________|________|   source
+      //                         www
+      //
+      //                      rrrrrr
+      //   step 3:  |.....abc|abcabcab|cabc____|________|   last page written
+      //                            ww wwww
+      //
+      //                      rrrrrrrr
+      //   step 4:  |.....abc|abcabcab|cabcabca|bcab____|   page before the last page written
+      //                                   wwww wwww
+      const lastWrittenPageStart =
+        IOFile.nextPageStart(writePosition - 1) - Defaults.IO_FILE_PAGE_SIZE;
+      const readPositions =
+        distance > 0
+          ? [
+              // The source, which is limited by its page's end
+              sourceStart,
+              // The page before the last page written to, which is fully written
+              lastWrittenPageStart - Defaults.IO_FILE_PAGE_SIZE,
+              // The last page written to, which is limited by writePosition
+              lastWrittenPageStart,
+            ].map((regionStart) => {
+              const searchStart = Math.max(sourceStart, regionStart);
+              return searchStart + ((writePosition - searchStart) % distance);
+            })
+          : // Without overlap, the next byte can only be read from its position in the source
+            [sourceStart + copied];
+
+      let readPosition = 0;
+      let readEnd = 0;
+      for (const position of readPositions) {
+        const end = Math.min(
+          // Copy straight from one cached page
+          IOFile.nextPageStart(position),
+          position + size - copied,
+          // Only read bytes that were already written
+          distance > 0 ? writePosition : Infinity,
+          // The copy can grow this file, so check its size every step
+          this.fileSize,
+        );
+        if (!(end - position > readEnd - readPosition)) {
+          continue;
+        }
+
+        readPosition = position;
+        readEnd = end;
+      }
+
+      if (readEnd <= readPosition) {
+        // This file ends before the source does
         break;
       }
-      const stepEnd = Math.min(
-        // Copy straight from one cached page
-        IOFile.nextPageStart(position),
-        position + size - copied,
-        // Only read bytes that were already written
-        distance > 0 ? targetStart + copied : Infinity,
-        // The copy can grow this file, so check its size every step
-        this.fileSize,
-      );
-      copied += await this.copyPage(target, targetStart + copied, position, stepEnd);
+      copied += await this.copyPage(target, writePosition, readPosition, readEnd);
     }
     return copied;
   }
@@ -420,7 +476,7 @@ export default class IOFile {
    * @returns the number of bytes copied
    */
   private async copyPage(
-    target: IOFile,
+    target: Pick<IOFile, 'writeAt'>,
     targetStart: number,
     sourceStart: number,
     sourceEnd: number,

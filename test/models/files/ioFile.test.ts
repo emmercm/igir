@@ -1337,6 +1337,37 @@ describe('copyChunked', () => {
     expect(writes).toEqual(Math.log2(Defaults.IO_FILE_PAGE_SIZE) + 3);
   });
 
+  it('should repeat a single byte at the end of a page in steps that double up to a page', async () => {
+    const sourceStart = Defaults.IO_FILE_PAGE_SIZE - 1;
+    const size = Defaults.IO_FILE_PAGE_SIZE * 4;
+    const source = Buffer.concat([
+      Buffer.alloc(sourceStart, 'b'),
+      Buffer.from('a'),
+      Buffer.alloc(size, 'c'),
+    ]);
+
+    let copied = 0;
+    let writes = 0;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      const writeAt = vi.spyOn(ioFiles[0], 'writeAt');
+      copied = await ioFiles[0].copyChunked(
+        ioFiles[0],
+        sourceStart + 1,
+        sourceStart,
+        sourceStart + size,
+      );
+      writes = writeAt.mock.calls.length;
+    });
+
+    expect(copied).toEqual(size);
+    expect(sourceAfter).toEqual(
+      Buffer.concat([Buffer.alloc(sourceStart, 'b'), Buffer.alloc(size + 1, 'a')]),
+    );
+    // One byte from the end of the first page, then steps of 1, 2, 4, ... bytes from the second
+    // page until a page has been copied, then a page at a time for the remaining three pages
+    expect(writes).toEqual(Math.log2(Defaults.IO_FILE_PAGE_SIZE) + 4);
+  });
+
   it('should repeat bytes when copying to a region of the same file more than a page later', async () => {
     const distance = Defaults.IO_FILE_PAGE_SIZE + 3;
     const run = patterned(distance);
@@ -1351,32 +1382,105 @@ describe('copyChunked', () => {
     expect(sourceAfter).toEqual(Buffer.concat([run, run, run]));
   });
 
-  test.each([2, 3, 7, 100, Defaults.IO_FILE_PAGE_SIZE - 1, Defaults.IO_FILE_PAGE_SIZE])(
-    'should repeat bytes across page boundaries when copying to %s bytes later in the same file',
-    async (distance) => {
+  test.each(
+    [
+      0,
+      1,
+      Defaults.IO_FILE_PAGE_SIZE / 2,
+      Defaults.IO_FILE_PAGE_SIZE - 5,
+      Defaults.IO_FILE_PAGE_SIZE - 1,
+      Defaults.IO_FILE_PAGE_SIZE,
+      Defaults.IO_FILE_PAGE_SIZE + 1,
+    ].flatMap((sourceStart) =>
+      [
+        1,
+        2,
+        3,
+        7,
+        100,
+        Defaults.IO_FILE_PAGE_SIZE / 2 + 1,
+        Defaults.IO_FILE_PAGE_SIZE - 1,
+        Defaults.IO_FILE_PAGE_SIZE,
+        Defaults.IO_FILE_PAGE_SIZE + 1,
+        Defaults.IO_FILE_PAGE_SIZE * 2 + 1,
+      ].flatMap((distance) =>
+        [Defaults.IO_FILE_PAGE_SIZE * 4, Defaults.IO_FILE_PAGE_SIZE * 4 + 5].map((size) => [
+          sourceStart,
+          distance,
+          size,
+        ]),
+      ),
+    ),
+  )(
+    'should copy from position %s to %s bytes later in the same file, %s bytes',
+    async (sourceStart, distance, size) => {
       const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 6);
-      const sourceStart = Defaults.IO_FILE_PAGE_SIZE - 3;
-      const size = Defaults.IO_FILE_PAGE_SIZE * 4;
 
       let copied = 0;
+      let writes = 0;
       const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+        const writeAt = vi.spyOn(ioFiles[0], 'writeAt');
         copied = await ioFiles[0].copyChunked(
           ioFiles[0],
           sourceStart + distance,
           sourceStart,
           sourceStart + size,
         );
+        writes = writeAt.mock.calls.length;
       });
 
       // Copy a byte at a time
-      const expected = Buffer.from(source);
+      const expected = Buffer.alloc(Math.max(source.length, sourceStart + distance + size));
+      source.copy(expected);
       for (let offset = 0; offset < size; offset += 1) {
         expected[sourceStart + distance + offset] = expected[sourceStart + offset];
       }
       expect(copied).toEqual(size);
       expect(sourceAfter).toEqual(expected);
+      // Steps double in length until they reach a page, then take at most two steps per page
+      expect(writes).toBeLessThanOrEqual(
+        Math.log2(Defaults.IO_FILE_PAGE_SIZE) + Math.ceil(size / Defaults.IO_FILE_PAGE_SIZE) * 2,
+      );
     },
   );
+
+  it('should copy nothing when the source is empty', async () => {
+    const source = patterned(10);
+
+    let copied = -1;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[0], 7, 3, 3);
+    });
+
+    expect(copied).toEqual(0);
+    expect(sourceAfter).toEqual(source);
+  });
+
+  it('should leave the file unchanged when copying a region of the same file onto itself', async () => {
+    const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 2 + 100);
+
+    let copied = 0;
+    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
+      copied = await ioFiles[0].copyChunked(ioFiles[0], 10, 10, source.length - 10);
+    });
+
+    expect(copied).toEqual(source.length - 20);
+    expect(sourceAfter).toEqual(source);
+  });
+
+  it('should copy the original source bytes to a later position in another file', async () => {
+    const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 2 + 100);
+    const target = Buffer.alloc(source.length);
+
+    let copied = 0;
+    const [, targetAfter] = await withIOFiles([source, target], async (ioFiles) => {
+      // Positions that would overlap if the source and target were the same file
+      copied = await ioFiles[0].copyChunked(ioFiles[1], 13, 10, source.length - 3);
+    });
+
+    expect(copied).toEqual(source.length - 13);
+    expect(targetAfter).toEqual(Buffer.concat([Buffer.alloc(13), source.subarray(10, -3)]));
+  });
 
   test.each([
     ['less than a page', 15],
