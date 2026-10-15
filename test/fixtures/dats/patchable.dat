@@ -20,6 +20,12 @@
     <rom name="large.rom" size="262144" crc="58263663" md5="a47206a0a0bb0e19909af165c9340854" sha1="a46d163b75c90a26c86fd27b2d0785748af5eb71" status="verified"/>
     <!-- After: name="large.rom" size="262144" crc="4429a239" -->
   </game>
+  <!-- Patches: vcdiff, vcdiff-window16k -->
+  <game name="lzma">
+    <description>lzma</description>
+    <rom name="lzma.rom" size="65536" crc="c61fec0e" md5="98f2ab0488380ee93fa7f83530e1c8e6" sha1="8d2d333ef981d9b9a09c3fd1165d86e1c9de0290" status="verified"/>
+    <!-- After: name="lzma.rom" size="65536" crc="0fb88b39" -->
+  </game>
   <!-- Patches: aps-gba, aps-n64, bps, bsdiff, dps, ebp, ips, ips32, ninja, ppf, ups, vcdiff -->
   <game name="modify">
     <description>modify</description>

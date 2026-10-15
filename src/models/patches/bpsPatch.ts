@@ -46,6 +46,7 @@ export default class BPSPatch extends Patch {
 
       const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
       patchFile.seek(0);
+      // TODO(cemmer): consider chunking/streaming
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
       const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
       if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
@@ -128,6 +129,7 @@ export default class BPSPatch extends Patch {
       const action = (blockHeader & 3) as BPSActionValue;
       const length = (blockHeader >> 2) + 1;
 
+      // TODO(cemmer): consider chunking/streaming
       if (action === BPSAction.SOURCE_READ) {
         await targetFile.write(await sourceFile.readAt(targetFile.getPosition(), length));
       } else if (action === BPSAction.TARGET_READ) {

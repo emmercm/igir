@@ -30,7 +30,7 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 // Every file in test/fixtures/patches matches exactly one ROM in test/fixtures/roms/patchable
-const patchFixtureCount = 47;
+const patchFixtureCount = 49;
 
 interface PatchedCandidate {
   gameName: string;
@@ -84,6 +84,7 @@ async function getExpectedPatchedCandidates(): Promise<PatchedCandidate[]> {
   const inputFileNames: Record<string, string> = {
     grow: 'grow.rom',
     large: 'large.rom',
+    lzma: 'lzma.rom',
     modify: 'modify.rom',
     pmsr: 'pmsr.zip',
     shrink: 'shrink.gz',
@@ -201,6 +202,7 @@ describe('with inferred DATs', () => {
     expect(getUnpatchedGameNames(candidates)).toEqual([
       'grow',
       'large',
+      'lzma',
       'modify',
       'pmsr',
       'shrink',
@@ -230,6 +232,7 @@ describe('with inferred DATs', () => {
     expect(getUnpatchedGameNames(candidates)).toEqual([
       'grow',
       'large',
+      'lzma',
       'modify',
       'pmsr',
       'shrink',
