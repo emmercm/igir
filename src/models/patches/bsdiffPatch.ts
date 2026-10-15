@@ -23,7 +23,7 @@ class BSDiffBlockReader {
   private pending: Buffer = Buffer.alloc(0);
 
   constructor(
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     start: number,
     end: number,
     corruptException: () => IgirException,
@@ -32,7 +32,7 @@ class BSDiffBlockReader {
     let position = start;
     const compressed = new ReadableStream<Uint8Array>({
       pull: async (controller): Promise<void> => {
-        const chunk = await patchFile.readAt(
+        const chunk = await patchIOFile.readAt(
           position,
           Math.min(end - position, Defaults.FILE_READING_CHUNK_SIZE),
         );
@@ -90,13 +90,13 @@ export default class BSDiffPatch extends Patch {
   static async patchFrom(file: File): Promise<BSDiffPatch> {
     const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     const header = await file.extractToIOFile(
-      async (patchFile) => await this.readHeader(patchFile, file),
+      async (patchIOFile) => await this.readHeader(patchIOFile, file),
     );
     return new BSDiffPatch(file, crcBefore, undefined, header.newSize);
   }
 
-  private static async readHeader(patchFile: IOFile, file: File): Promise<BSDiffHeader> {
-    const header = await patchFile.readAt(0, this.HEADER_SIZE);
+  private static async readHeader(patchIOFile: IOFile, file: File): Promise<BSDiffHeader> {
+    const header = await patchIOFile.readAt(0, this.HEADER_SIZE);
     if (
       header.length < this.HEADER_SIZE ||
       !header.subarray(0, this.FILE_SIGNATURE.length).equals(this.FILE_SIGNATURE)
@@ -109,7 +109,7 @@ export default class BSDiffPatch extends Patch {
     const newSize = this.readBsdiffInt(header, 24);
     if (
       [controlLength, diffLength, newSize].some((value) => !this.isLength(value)) ||
-      this.HEADER_SIZE + controlLength + diffLength > patchFile.getSize()
+      this.HEADER_SIZE + controlLength + diffLength > patchIOFile.getSize()
     ) {
       throw new IgirException(`BSDiff patch header is invalid: ${file.toString()}`);
     }
@@ -125,47 +125,47 @@ export default class BSDiffPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToIOFile(async (patchFile) => {
-      const header = await BSDiffPatch.readHeader(patchFile, this.getFile());
+    await this.getFile().extractToIOFile(async (patchIOFile) => {
+      const header = await BSDiffPatch.readHeader(patchIOFile, this.getFile());
 
-      await inputRomFile.extractToIOFile(async (sourceFile) => {
-        const targetFile = await IOFile.fileOfSize(outputRomPath, 'r+', header.newSize);
+      await inputRomFile.extractToIOFile(async (sourceIOFile) => {
+        const targetIOFile = await IOFile.fileOfSize(outputRomPath, 'r+', header.newSize);
         try {
-          await this.applyPatch(patchFile, header, sourceFile, targetFile, callback);
+          await this.applyPatch(patchIOFile, header, sourceIOFile, targetIOFile, callback);
         } finally {
-          await targetFile.close();
+          await targetIOFile.close();
         }
       });
     });
   }
 
   private async applyPatch(
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     header: BSDiffHeader,
-    sourceFile: IOFile,
-    targetFile: IOFile,
+    sourceIOFile: IOFile,
+    targetIOFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
     const diffStart = BSDiffPatch.HEADER_SIZE + header.controlLength;
     const extraStart = diffStart + header.diffLength;
     const corruptException = (): IgirException => this.corruptException();
     const controlBlock = new BSDiffBlockReader(
-      patchFile,
+      patchIOFile,
       BSDiffPatch.HEADER_SIZE,
       diffStart,
       corruptException,
     );
     const diffBlock = new BSDiffBlockReader(
-      patchFile,
+      patchIOFile,
       diffStart,
       extraStart,
       corruptException,
       header.newSize,
     );
     const extraBlock = new BSDiffBlockReader(
-      patchFile,
+      patchIOFile,
       extraStart,
-      patchFile.getSize(),
+      patchIOFile.getSize(),
       corruptException,
       header.newSize,
     );
@@ -191,19 +191,19 @@ export default class BSDiffPatch extends Patch {
         const diff = await diffBlock.read(
           Math.min(diffLength - offset, Defaults.FILE_READING_CHUNK_SIZE),
         );
-        const old = await BSDiffPatch.readOld(sourceFile, oldPosition + offset, diff.length);
+        const old = await BSDiffPatch.readOld(sourceIOFile, oldPosition + offset, diff.length);
         for (let i = 0; i < diff.length; i += 1) {
           // Buffers wrap values mod 256 on assignment
           diff[i] += old[i];
         }
-        await targetFile.write(diff);
+        await targetIOFile.write(diff);
       }
       oldPosition += diffLength;
       newPosition += diffLength;
 
       // Copy the extra block's bytes
       for (let offset = 0; offset < extraLength; offset += Defaults.FILE_READING_CHUNK_SIZE) {
-        await targetFile.write(
+        await targetIOFile.write(
           await extraBlock.read(Math.min(extraLength - offset, Defaults.FILE_READING_CHUNK_SIZE)),
         );
       }
@@ -221,19 +221,19 @@ export default class BSDiffPatch extends Patch {
    * Read {@link size} bytes from the old file, treating out-of-bounds bytes as zero.
    */
   private static async readOld(
-    sourceFile: IOFile,
+    sourceIOFile: IOFile,
     position: number,
     size: number,
   ): Promise<Buffer> {
     const start = Math.max(position, 0);
-    const end = Math.min(position + size, sourceFile.getSize());
+    const end = Math.min(position + size, sourceIOFile.getSize());
     if (start === position && end - start === size) {
-      return await sourceFile.readAt(position, size);
+      return await sourceIOFile.readAt(position, size);
     }
 
     const old = Buffer.alloc(size);
     if (start < end) {
-      (await sourceFile.readAt(start, end - start)).copy(old, start - position);
+      (await sourceIOFile.readAt(start, end - start)).copy(old, start - position);
     }
     return old;
   }

@@ -102,9 +102,9 @@ export default class Gzip extends Archive {
   }
 
   private async getHeaderTrailerInfo(): Promise<GzipHeaderTrailer> {
-    const file = await IOFile.fileFrom(this.getFilePath(), 'r');
+    const ioFile = await IOFile.fileFrom(this.getFilePath(), 'r');
     try {
-      const header = await file.readAt(0, 10);
+      const header = await ioFile.readAt(0, 10);
       if (header[0] !== 0x1f || header[1] !== 0x8b) {
         // Not a valid gzip file
         throw new IgirException('missing gzip magic number');
@@ -116,11 +116,11 @@ export default class Gzip extends Archive {
         let offset = 10;
         if (flags & 0x04) {
           // Skip FEXTRA field
-          offset += 2 + (await file.readAt(offset, 2)).readUInt16LE();
+          offset += 2 + (await ioFile.readAt(offset, 2)).readUInt16LE();
         }
         // Parse FNAME header
-        while (!file.isEOF()) {
-          fname += (await file.readAt(offset, 256)).toString('latin1');
+        while (!ioFile.isEOF()) {
+          fname += (await ioFile.readAt(offset, 256)).toString('latin1');
           const nullByteIdx = fname.indexOf('\0');
           if (nullByteIdx !== -1) {
             fname = fname.slice(0, nullByteIdx);
@@ -129,13 +129,13 @@ export default class Gzip extends Archive {
         }
       }
 
-      const trailer = await file.readAt(file.getSize() - 8, 8);
+      const trailer = await ioFile.readAt(ioFile.getSize() - 8, 8);
       const crc32 = trailer.readUInt32LE().toString(16).toLowerCase().padStart(8, '0');
       const size = trailer.readUInt32LE(4);
 
       return { fname, crc32, size };
     } finally {
-      await file.close();
+      await ioFile.close();
     }
   }
 

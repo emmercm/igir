@@ -32,13 +32,13 @@ async function applyToInput(
     const patch = patchFrom(file);
 
     const inputPath = path.join(tempDir, 'input.z64');
-    const inputFile = await IOFile.fileOfSize(inputPath, 'r+', SOURCE_SIZE);
+    const inputIOFile = await IOFile.fileOfSize(inputPath, 'r+', SOURCE_SIZE);
     try {
       for (const [offset, hex] of INPUT_WRITES) {
-        await inputFile.writeAt(Buffer.from(hex, 'hex'), offset);
+        await inputIOFile.writeAt(Buffer.from(hex, 'hex'), offset);
       }
     } finally {
-      await inputFile.close();
+      await inputIOFile.close();
     }
 
     const outputPath = path.join(tempDir, 'output.z64');
@@ -58,9 +58,9 @@ async function findMismatchedChunks(
   expectedWrites: [number, string][],
 ): Promise<number[]> {
   const mismatches: number[] = [];
-  const actualFile = await IOFile.fileFrom(filePath, 'r');
+  const actualIOFile = await IOFile.fileFrom(filePath, 'r');
   try {
-    expect(actualFile.getSize()).toEqual(expectedSize);
+    expect(actualIOFile.getSize()).toEqual(expectedSize);
 
     for (let position = 0; position < expectedSize; position += Defaults.FILE_READING_CHUNK_SIZE) {
       const length = Math.min(Defaults.FILE_READING_CHUNK_SIZE, expectedSize - position);
@@ -74,12 +74,12 @@ async function findMismatchedChunks(
         }
       }
 
-      if (!(await actualFile.readAt(position, length)).equals(expected)) {
+      if (!(await actualIOFile.readAt(position, length)).equals(expected)) {
         mismatches.push(position);
       }
     }
   } finally {
-    await actualFile.close();
+    await actualIOFile.close();
   }
   return mismatches;
 }

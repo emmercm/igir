@@ -104,12 +104,12 @@ export default abstract class Patch {
   /**
    * Calculate the CRC32 of the region [{@link start}, {@link end}) of a file, a chunk at a time.
    */
-  protected static async crc32Range(file: IOFile, start: number, end: number): Promise<string> {
+  protected static async crc32Range(ioFile: IOFile, start: number, end: number): Promise<string> {
     let crc = 0;
     let position = start;
     while (position < end) {
       const chunkSize = Math.min(end - position, Defaults.FILE_READING_CHUNK_SIZE);
-      const chunk = await file.readAt(position, chunkSize);
+      const chunk = await ioFile.readAt(position, chunkSize);
       crc = zlib.crc32(chunk, crc);
       position += chunkSize;
     }
@@ -120,26 +120,26 @@ export default abstract class Patch {
    * Read a UPS-style variable-length unsigned integer from the given file, advancing the read
    * position past the encoded value.
    */
-  protected static async readUpsUint(file: Pick<IOFile, 'peekNext' | 'skipNext'>): Promise<number> {
+  protected static async readUpsUint(ioFile: Pick<IOFile, 'peekNext' | 'skipNext'>): Promise<number> {
     let data = 0;
     let shift = 1;
 
     // Read ahead rather than byte-by-byte, encoded values are usually only a few bytes
-    let bytes = await file.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
+    let bytes = await ioFile.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
     while (bytes.length > 0) {
       for (const [i, byte] of bytes.entries()) {
         data += (byte & 0x7f) * shift; // drop the left-most bit
         if (byte & 0x80) {
           // left-most bit is telling us this is the end
-          file.skipNext(i + 1);
+          ioFile.skipNext(i + 1);
           return data;
         }
         // Multiply rather than shift, as bitwise operators only work on 32-bit integers
         shift *= 128;
         data += shift;
       }
-      file.skipNext(bytes.length);
-      bytes = await file.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
+      ioFile.skipNext(bytes.length);
+      bytes = await ioFile.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
     }
 
     return data;

@@ -33,24 +33,24 @@ export default class BPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToIOFile(async (patchFile) => {
-      patchFile.seek(this.FILE_SIGNATURE.length);
-      await super.readUpsUint(patchFile); // source size
-      targetSize = await super.readUpsUint(patchFile);
-      if (patchFile.getPosition() > patchFile.getSize() - this.FOOTER_SIZE) {
+    await file.extractToIOFile(async (patchIOFile) => {
+      patchIOFile.seek(this.FILE_SIGNATURE.length);
+      await super.readUpsUint(patchIOFile); // source size
+      targetSize = await super.readUpsUint(patchIOFile);
+      if (patchIOFile.getPosition() > patchIOFile.getSize() - this.FOOTER_SIZE) {
         throw new IgirException(`BPS patch is truncated: ${file.toString()}`);
       }
 
-      patchFile.seek(patchFile.getSize() - this.FOOTER_SIZE);
+      patchIOFile.seek(patchIOFile.getSize() - this.FOOTER_SIZE);
 
-      crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
+      crcBefore = (await patchIOFile.readNext(4)).reverse().toString('hex');
 
-      crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
+      crcAfter = (await patchIOFile.readNext(4)).reverse().toString('hex');
 
       // Validate the patch contents
 
-      const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
-      const patchChecksumActual = await super.crc32Range(patchFile, 0, patchFile.getSize() - 4);
+      const patchChecksumExpected = (await patchIOFile.readNext(4)).reverse().toString('hex');
+      const patchChecksumActual = await super.crc32Range(patchIOFile, 0, patchIOFile.getSize() - 4);
       if (patchChecksumActual !== patchChecksumExpected) {
         throw new IgirException(
           `BPS patch is invalid, CRC of contents (${patchChecksumActual}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
@@ -73,76 +73,76 @@ export default class BPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToIOFile(async (patchFile) => {
-      const header = await patchFile.readNext(4);
+    await this.getFile().extractToIOFile(async (patchIOFile) => {
+      const header = await patchIOFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
         throw new IgirException(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }
 
-      const sourceSize = await Patch.readUpsUint(patchFile);
+      const sourceSize = await Patch.readUpsUint(patchIOFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new IgirException(
           `BPS patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
         );
       }
-      await Patch.readUpsUint(patchFile); // target size
+      await Patch.readUpsUint(patchIOFile); // target size
 
-      const metadataSize = await Patch.readUpsUint(patchFile);
+      const metadataSize = await Patch.readUpsUint(patchIOFile);
       if (metadataSize) {
-        patchFile.skipNext(metadataSize);
+        patchIOFile.skipNext(metadataSize);
       }
 
-      await this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await this.writeOutputFile(inputRomFile, outputRomPath, patchIOFile, callback);
     });
   }
 
   private async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToIOFile(async (inputRomIOFile) => {
-      const targetFile = await IOFile.fileOfSize(
+      const targetIOFile = await IOFile.fileOfSize(
         outputRomPath,
         'r+',
         this.getSizeAfter() as number,
       );
 
       try {
-        await BPSPatch.applyPatch(patchFile, inputRomIOFile, targetFile, callback);
+        await BPSPatch.applyPatch(patchIOFile, inputRomIOFile, targetIOFile, callback);
       } finally {
-        await targetFile.close();
+        await targetIOFile.close();
       }
     });
   }
 
   private static async applyPatch(
-    patchFile: IOFile,
-    sourceFile: IOFile,
-    targetFile: IOFile,
+    patchIOFile: IOFile,
+    sourceIOFile: IOFile,
+    targetIOFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;
 
-    while (patchFile.getPosition() < patchFile.getSize() - this.FOOTER_SIZE) {
-      const blockHeader = await super.readUpsUint(patchFile);
+    while (patchIOFile.getPosition() < patchIOFile.getSize() - this.FOOTER_SIZE) {
+      const blockHeader = await super.readUpsUint(patchIOFile);
       const action = (blockHeader % 4) as BPSActionValue;
       const length = Math.floor(blockHeader / 4) + 1;
 
-      const targetPosition = targetFile.getPosition();
+      const targetPosition = targetIOFile.getPosition();
       if (action === BPSAction.SOURCE_READ) {
-        sourceFile.seek(targetPosition);
-        targetFile.skipNext(await sourceFile.copyNext(targetFile, targetPosition, length));
+        sourceIOFile.seek(targetPosition);
+        targetIOFile.skipNext(await sourceIOFile.copyNext(targetIOFile, targetPosition, length));
       } else if (action === BPSAction.TARGET_READ) {
-        targetFile.skipNext(await patchFile.copyNext(targetFile, targetPosition, length));
+        targetIOFile.skipNext(await patchIOFile.copyNext(targetIOFile, targetPosition, length));
       } else if (action === BPSAction.SOURCE_COPY) {
-        const offset = await super.readUpsUint(patchFile);
+        const offset = await super.readUpsUint(patchIOFile);
         sourceRelativeOffset += (offset % 2 === 1 ? -1 : 1) * Math.floor(offset / 2);
-        targetFile.skipNext(
-          await sourceFile.copyRange(
-            targetFile,
+        targetIOFile.skipNext(
+          await sourceIOFile.copyRange(
+            targetIOFile,
             targetPosition,
             sourceRelativeOffset,
             sourceRelativeOffset + length,
@@ -150,12 +150,12 @@ export default class BPSPatch extends Patch {
         );
         sourceRelativeOffset += length;
       } else if (action === BPSAction.TARGET_COPY) {
-        const offset = await super.readUpsUint(patchFile);
+        const offset = await super.readUpsUint(patchIOFile);
         targetRelativeOffset += (offset % 2 === 1 ? -1 : 1) * Math.floor(offset / 2);
         // The copy can overlap the bytes it writes, which repeats them
-        targetFile.skipNext(
-          await targetFile.copyRange(
-            targetFile,
+        targetIOFile.skipNext(
+          await targetIOFile.copyRange(
+            targetIOFile,
             targetPosition,
             targetRelativeOffset,
             targetRelativeOffset + length,
@@ -169,8 +169,8 @@ export default class BPSPatch extends Patch {
       if (callback === undefined) {
         continue;
       }
-      const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-      callback(Math.floor(progressPercentage * targetFile.getSize()));
+      const progressPercentage = patchIOFile.getPosition() / patchIOFile.getSize();
+      callback(Math.floor(progressPercentage * targetIOFile.getSize()));
     }
   }
 }

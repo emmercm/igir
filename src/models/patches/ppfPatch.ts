@@ -24,42 +24,42 @@ class PPFHeader {
   /**
    * Read and validate the PPF header from the patch file, advancing the read position past it.
    */
-  static async fromIOFile(inputRomFile: File, patchFile: IOFile): Promise<PPFHeader> {
-    const header = (await patchFile.readNext(5)).toString();
+  static async fromIOFile(inputRomFile: File, patchIOFile: IOFile): Promise<PPFHeader> {
+    const header = (await patchIOFile.readNext(5)).toString();
     if (!header.startsWith(this.FILE_SIGNATURE.toString())) {
-      throw new IgirException(`PPF patch header is invalid: ${patchFile.getPathLike().toString()}`);
+      throw new IgirException(`PPF patch header is invalid: ${patchIOFile.getPathLike().toString()}`);
     }
-    const encoding = (await patchFile.readNext(1)).readUInt8();
+    const encoding = (await patchIOFile.readNext(1)).readUInt8();
     const version = encoding + 1;
     if (!header.endsWith(`${version}0`)) {
       throw new IgirException(
-        `PPF patch header has an invalid version: ${patchFile.getPathLike().toString()}`,
+        `PPF patch header has an invalid version: ${patchIOFile.getPathLike().toString()}`,
       );
     }
-    patchFile.skipNext(50); // description
+    patchIOFile.skipNext(50); // description
 
     let isBlockCheckEnabled: boolean;
     let isUndoDataAvailable = false;
     if (version === 2) {
-      const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
+      const sourceSize = (await patchIOFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
         throw new IgirException(
-          `PPF patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
+          `PPF patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchIOFile.getPathLike().toString()}`,
         );
       }
       isBlockCheckEnabled = true;
     } else if (version === 3) {
-      patchFile.skipNext(1); // image type
-      isBlockCheckEnabled = (await patchFile.readNext(1)).readUInt8() === 0x01;
-      isUndoDataAvailable = (await patchFile.readNext(1)).readUInt8() === 0x01;
-      patchFile.skipNext(1); // dummy
+      patchIOFile.skipNext(1); // image type
+      isBlockCheckEnabled = (await patchIOFile.readNext(1)).readUInt8() === 0x01;
+      isUndoDataAvailable = (await patchIOFile.readNext(1)).readUInt8() === 0x01;
+      patchIOFile.skipNext(1); // dummy
     } else {
       throw new IgirException(
-        `PPF v${version} isn't supported: ${patchFile.getPathLike().toString()}`,
+        `PPF v${version} isn't supported: ${patchIOFile.getPathLike().toString()}`,
       );
     }
     if (isBlockCheckEnabled) {
-      patchFile.skipNext(1024);
+      patchIOFile.skipNext(1024);
     }
 
     return new PPFHeader(version, isUndoDataAvailable);
@@ -91,67 +91,67 @@ export default class PPFPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToIOFile(async (patchFile) => {
-      const header = await PPFHeader.fromIOFile(inputRomFile, patchFile);
+    await this.getFile().extractToIOFile(async (patchIOFile) => {
+      const header = await PPFHeader.fromIOFile(inputRomFile, patchIOFile);
 
-      await PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header, callback);
+      await PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchIOFile, header, callback);
     });
   }
 
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     header: PPFHeader,
     callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
+    const targetIOFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      while (!patchFile.isEOF()) {
-        await this.applyPatchBlock(patchFile, targetFile, header);
+      while (!patchIOFile.isEOF()) {
+        await this.applyPatchBlock(patchIOFile, targetIOFile, header);
 
         callback?.(
-          Math.floor((patchFile.getPosition() / patchFile.getSize()) * targetFile.getSize()),
+          Math.floor((patchIOFile.getPosition() / patchIOFile.getSize()) * targetIOFile.getSize()),
         );
       }
     } finally {
-      await targetFile.close();
+      await targetIOFile.close();
     }
   }
 
   private static async applyPatchBlock(
-    patchFile: IOFile,
-    targetFile: IOFile,
+    patchIOFile: IOFile,
+    targetIOFile: IOFile,
     header: PPFHeader,
   ): Promise<void> {
-    const peek = (await patchFile.peekNext(18)).toString();
+    const peek = (await patchIOFile.peekNext(18)).toString();
     if (!peek) {
       // End of file
       return;
     }
     if (peek === '@BEGIN_FILE_ID.DIZ') {
       // FILE_ID.DIZ is always last; skip it
-      patchFile.seek(patchFile.getSize());
+      patchIOFile.seek(patchIOFile.getSize());
       return;
     }
 
     let offset = 0;
     if (header.version === 2) {
-      offset = (await patchFile.readNext(4)).readUInt32LE();
+      offset = (await patchIOFile.readNext(4)).readUInt32LE();
     } else if (header.version === 3) {
       offset =
-        (await patchFile.readNext(4)).readUInt32LE() +
-        (await patchFile.readNext(4)).readUInt32LE() * 0x1_00_00_00_00;
+        (await patchIOFile.readNext(4)).readUInt32LE() +
+        (await patchIOFile.readNext(4)).readUInt32LE() * 0x1_00_00_00_00;
     }
 
-    const bytesToChange = (await patchFile.readNext(1)).readUInt8();
-    const data = await patchFile.readNext(bytesToChange);
+    const bytesToChange = (await patchIOFile.readNext(1)).readUInt8();
+    const data = await patchIOFile.readNext(bytesToChange);
     if (header.undoDataAvailable) {
-      patchFile.skipNext(bytesToChange);
+      patchIOFile.skipNext(bytesToChange);
     }
 
-    await targetFile.writeAt(data, offset);
+    await targetIOFile.writeAt(data, offset);
   }
 }

@@ -949,8 +949,8 @@ describe('copyRange', () => {
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
-      async ([sourceFile, targetFile]) =>
-        await sourceFile.copyRange(targetFile, 5, 10, source.length - 20),
+      async ([sourceIOFile, targetIOFile]) =>
+        await sourceIOFile.copyRange(targetIOFile, 5, 10, source.length - 20),
     );
     const [sourceAfter, targetAfter] = contents;
 
@@ -966,7 +966,7 @@ describe('copyRange', () => {
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
-      async ([sourceFile, targetFile]) => await sourceFile.copyRange(targetFile),
+      async ([sourceIOFile, targetIOFile]) => await sourceIOFile.copyRange(targetIOFile),
     );
     const [, targetAfter] = contents;
 
@@ -979,8 +979,8 @@ describe('copyRange', () => {
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
-      async ([sourceFile, targetFile]) =>
-        await sourceFile.copyRange(targetFile, 0, 1, source.length * 3),
+      async ([sourceIOFile, targetIOFile]) =>
+        await sourceIOFile.copyRange(targetIOFile, 0, 1, source.length * 3),
     );
     const [, targetAfter] = contents;
 
@@ -1061,8 +1061,8 @@ describe('copyRange', () => {
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
       // Positions that would overlap if the source and target were the same file
-      async ([sourceFile, targetFile]) =>
-        await sourceFile.copyRange(targetFile, 13, 10, source.length - 3),
+      async ([sourceIOFile, targetIOFile]) =>
+        await sourceIOFile.copyRange(targetIOFile, 13, 10, source.length - 3),
     );
     const [, targetAfter] = contents;
 
@@ -1102,12 +1102,12 @@ describe('copyNext', () => {
   it('should copy from the read position and advance by the requested size', async () => {
     const { contents } = await withIOFiles(
       [{ contents: 'ABCDEF0123456789', mode: 'r' }, { contents: '----------' }],
-      async ([sourceFile, targetFile]) => {
-        sourceFile.seek(10);
-        await expect(sourceFile.copyNext(targetFile, 2, 4)).resolves.toEqual(4);
-        expect(sourceFile.getPosition()).toEqual(14);
-        await expect(sourceFile.copyNext(targetFile, 6, 100)).resolves.toEqual(2);
-        expect(sourceFile.getPosition()).toEqual(114);
+      async ([sourceIOFile, targetIOFile]) => {
+        sourceIOFile.seek(10);
+        await expect(sourceIOFile.copyNext(targetIOFile, 2, 4)).resolves.toEqual(4);
+        expect(sourceIOFile.getPosition()).toEqual(14);
+        await expect(sourceIOFile.copyNext(targetIOFile, 6, 100)).resolves.toEqual(2);
+        expect(sourceIOFile.getPosition()).toEqual(114);
       },
     );
     const [, targetAfter] = contents;

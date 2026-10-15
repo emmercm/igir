@@ -422,17 +422,17 @@ export default class IOFile {
 
   /**
    * Copy the next {@link size} bytes (fewer at the end of the file) from the current seek
-   * position to {@link target} starting at {@link targetStart}, a page at a time, and advance the
-   * seek position by {@link size}.
+   * position to {@link targetIOFile} starting at {@link targetStart}, a page at a time, and
+   * advance the seek position by {@link size}.
    * @returns the number of bytes copied
    */
   async copyNext(
-    target: Pick<IOFile, 'writeAt'>,
+    targetIOFile: Pick<IOFile, 'writeAt'>,
     targetStart: number,
     size: number,
   ): Promise<number> {
     const copied = await this.copyRange(
-      target,
+      targetIOFile,
       targetStart,
       this.seekPosition,
       this.seekPosition + size,
@@ -443,12 +443,12 @@ export default class IOFile {
 
   /**
    * Copy bytes from the region [{@link sourceStart}, {@link sourceEnd}) of this file to
-   * {@link target} starting at {@link targetStart}, a page at a time straight from this file's
-   * cached pages. Stops early if this file ends before {@link sourceEnd}.
+   * {@link targetIOFile} starting at {@link targetStart}, a page at a time straight from this
+   * file's cached pages. Stops early if this file ends before {@link sourceEnd}.
    * @returns the number of bytes copied
    */
   async copyRange(
-    target: Pick<IOFile, 'writeAt'>,
+    targetIOFile: Pick<IOFile, 'writeAt'>,
     targetStart = 0,
     sourceStart = 0,
     sourceEnd = this.getSize(),
@@ -459,7 +459,7 @@ export default class IOFile {
     const size = sourceEnd - sourceStart;
     // When copying to a later position in this same file, the target starts this many bytes after
     // the source. If they overlap, part of the source is bytes that this copy writes.
-    const distance = target === this ? targetStart - sourceStart : 0;
+    const distance = targetIOFile === this ? targetStart - sourceStart : 0;
 
     let copied = 0;
     while (copied < size) {
@@ -529,18 +529,19 @@ export default class IOFile {
         // This file ends before the source does
         break;
       }
-      copied += await this.copyPage(target, writePosition, readPosition, readEnd);
+      copied += await this.copyPage(targetIOFile, writePosition, readPosition, readEnd);
     }
     return copied;
   }
 
   /**
    * Copy the region [{@link sourceStart}, {@link sourceEnd}) of this file, which must be within
-   * one page, to {@link target} starting at {@link targetStart}, straight from the cached page.
+   * one page, to {@link targetIOFile} starting at {@link targetStart}, straight from the cached
+   * page.
    * @returns the number of bytes copied
    */
   private async copyPage(
-    target: Pick<IOFile, 'writeAt'>,
+    targetIOFile: Pick<IOFile, 'writeAt'>,
     targetStart: number,
     sourceStart: number,
     sourceEnd: number,
@@ -560,7 +561,7 @@ export default class IOFile {
     }
 
     try {
-      return await target.writeAt(source, targetStart);
+      return await targetIOFile.writeAt(source, targetStart);
     } finally {
       pinnedPage.pins -= 1;
     }

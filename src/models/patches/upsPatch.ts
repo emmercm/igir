@@ -29,24 +29,24 @@ export default class UPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToIOFile(async (patchFile) => {
-      patchFile.seek(this.FILE_SIGNATURE.length);
-      await super.readUpsUint(patchFile); // source size
-      targetSize = await super.readUpsUint(patchFile);
-      if (patchFile.getPosition() > patchFile.getSize() - this.FOOTER_SIZE) {
+    await file.extractToIOFile(async (patchIOFile) => {
+      patchIOFile.seek(this.FILE_SIGNATURE.length);
+      await super.readUpsUint(patchIOFile); // source size
+      targetSize = await super.readUpsUint(patchIOFile);
+      if (patchIOFile.getPosition() > patchIOFile.getSize() - this.FOOTER_SIZE) {
         throw new IgirException(`UPS patch is truncated: ${file.toString()}`);
       }
 
-      patchFile.seek(patchFile.getSize() - this.FOOTER_SIZE);
+      patchIOFile.seek(patchIOFile.getSize() - this.FOOTER_SIZE);
 
-      crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
+      crcBefore = (await patchIOFile.readNext(4)).reverse().toString('hex');
 
-      crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
+      crcAfter = (await patchIOFile.readNext(4)).reverse().toString('hex');
 
       // Validate the patch contents
 
-      const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
-      const patchChecksumActual = await super.crc32Range(patchFile, 0, patchFile.getSize() - 4);
+      const patchChecksumExpected = (await patchIOFile.readNext(4)).reverse().toString('hex');
+      const patchChecksumActual = await super.crc32Range(patchIOFile, 0, patchIOFile.getSize() - 4);
       if (patchChecksumActual !== patchChecksumExpected) {
         throw new IgirException(
           `UPS patch is invalid, CRC of contents (${patchChecksumActual}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
@@ -69,60 +69,60 @@ export default class UPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToIOFile(async (patchFile) => {
-      const header = await patchFile.readNext(4);
+    await this.getFile().extractToIOFile(async (patchIOFile) => {
+      const header = await patchIOFile.readNext(4);
       if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
         throw new IgirException(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }
 
-      const sourceSize = await Patch.readUpsUint(patchFile);
+      const sourceSize = await Patch.readUpsUint(patchIOFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new IgirException(
-          `UPS patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
+          `UPS patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchIOFile.getPathLike().toString()}`,
         );
       }
-      const targetSize = await Patch.readUpsUint(patchFile);
+      const targetSize = await Patch.readUpsUint(patchIOFile);
 
-      await UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, targetSize, callback);
+      await UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchIOFile, targetSize, callback);
     });
   }
 
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     targetSize: number,
     callback?: FsReadCallback,
   ): Promise<void> {
     // The target starts as a copy of the source, and blocks are XORed into it in place
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
+    const targetIOFile = await IOFile.fileFrom(outputRomPath, 'r+');
     try {
-      await this.applyPatch(patchFile, targetFile, callback);
-      await targetFile.truncate(targetSize);
+      await this.applyPatch(patchIOFile, targetIOFile, callback);
+      await targetIOFile.truncate(targetSize);
     } finally {
-      await targetFile.close();
+      await targetIOFile.close();
     }
   }
 
   private static async applyPatch(
-    patchFile: IOFile,
-    targetFile: IOFile,
+    patchIOFile: IOFile,
+    targetIOFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
-    while (patchFile.getPosition() < patchFile.getSize() - this.FOOTER_SIZE) {
-      const relativeOffset = await super.readUpsUint(patchFile);
-      targetFile.skipNext(relativeOffset);
+    while (patchIOFile.getPosition() < patchIOFile.getSize() - this.FOOTER_SIZE) {
+      const relativeOffset = await super.readUpsUint(patchIOFile);
+      targetIOFile.skipNext(relativeOffset);
 
-      await this.applyPatchBlock(patchFile, targetFile);
+      await this.applyPatchBlock(patchIOFile, targetIOFile);
 
-      targetFile.skipNext(1);
+      targetIOFile.skipNext(1);
 
       if (callback === undefined) {
         continue;
       }
-      const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-      callback(Math.floor(progressPercentage * targetFile.getSize()));
+      const progressPercentage = patchIOFile.getPosition() / patchIOFile.getSize();
+      callback(Math.floor(progressPercentage * targetIOFile.getSize()));
     }
   }
 
@@ -130,22 +130,22 @@ export default class UPSPatch extends Patch {
    * XOR the patch's next 0x00-terminated block into the target at its seek position, a chunk at a
    * time, leaving the patch positioned past the terminator.
    */
-  private static async applyPatchBlock(patchFile: IOFile, targetFile: IOFile): Promise<void> {
-    const patchBlocksEnd = patchFile.getSize() - this.FOOTER_SIZE;
+  private static async applyPatchBlock(patchIOFile: IOFile, targetIOFile: IOFile): Promise<void> {
+    const patchBlocksEnd = patchIOFile.getSize() - this.FOOTER_SIZE;
 
-    while (patchFile.getPosition() < patchBlocksEnd) {
-      const { data: xorData, isDelimiterFound } = await patchFile.readUntil(
+    while (patchIOFile.getPosition() < patchBlocksEnd) {
+      const { data: xorData, isDelimiterFound } = await patchIOFile.readUntil(
         0x00,
-        patchBlocksEnd - patchFile.getPosition(),
+        patchBlocksEnd - patchIOFile.getPosition(),
       );
 
       // The target still holds the source's bytes here, and bytes past the end of the source are
       // 0x00
-      const sourceData = await targetFile.peekNext(xorData.length);
+      const sourceData = await targetIOFile.peekNext(xorData.length);
       for (const [i, sourceDatum] of sourceData.entries()) {
         xorData[i] ^= sourceDatum;
       }
-      await targetFile.write(xorData);
+      await targetIOFile.write(xorData);
 
       if (isDelimiterFound) {
         return;
@@ -153,7 +153,7 @@ export default class UPSPatch extends Patch {
     }
 
     throw new IgirException(
-      `UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike().toString()}`,
+      `UPS patch failed to read 0x00 block termination: ${patchIOFile.getPathLike().toString()}`,
     );
   }
 }

@@ -12,12 +12,12 @@ type PMSRReader = Pick<IOFile, 'getPosition' | 'getSize' | 'readNext'>;
  * Reads forward through a part of a Yay0-compressed file, throwing if the file ends first.
  */
 class Yay0Cursor {
-  private readonly file: IOFile;
+  private readonly ioFile: IOFile;
   private position: number;
   private readonly eofException: () => IgirException;
 
-  constructor(file: IOFile, position: number, eofException: () => IgirException) {
-    this.file = file;
+  constructor(ioFile: IOFile, position: number, eofException: () => IgirException) {
+    this.ioFile = ioFile;
     this.position = position;
     this.eofException = eofException;
   }
@@ -26,7 +26,7 @@ class Yay0Cursor {
    * Read the next byte, throwing if the file ends first.
    */
   async readUInt8(): Promise<number> {
-    const value = await this.file.readAt(this.position, 1);
+    const value = await this.ioFile.readAt(this.position, 1);
     if (value.length === 0) {
       throw this.eofException();
     }
@@ -68,32 +68,32 @@ class Yay0Reader implements PMSRReader {
   private copyRemaining = 0;
 
   private constructor(
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     decompressedSize: number,
     linkOffset: number,
     literalOffset: number,
     invalidException: () => IgirException,
   ) {
     this.decompressedSize = decompressedSize;
-    this.commands = new Yay0Cursor(patchFile, Yay0Reader.HEADER_SIZE, invalidException);
-    this.links = new Yay0Cursor(patchFile, linkOffset, invalidException);
-    this.literals = new Yay0Cursor(patchFile, literalOffset, invalidException);
+    this.commands = new Yay0Cursor(patchIOFile, Yay0Reader.HEADER_SIZE, invalidException);
+    this.links = new Yay0Cursor(patchIOFile, linkOffset, invalidException);
+    this.literals = new Yay0Cursor(patchIOFile, literalOffset, invalidException);
     this.invalidException = invalidException;
   }
 
   /**
-   * Parse the Yay0 header of {@link patchFile} and return a {@link Yay0Reader} for it.
+   * Parse the Yay0 header of {@link patchIOFile} and return a {@link Yay0Reader} for it.
    */
   static async readerFrom(
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     invalidException: () => IgirException,
   ): Promise<Yay0Reader> {
-    const header = await patchFile.readAt(0, this.HEADER_SIZE);
+    const header = await patchIOFile.readAt(0, this.HEADER_SIZE);
     if (header.length < this.HEADER_SIZE) {
       throw invalidException();
     }
     return new Yay0Reader(
-      patchFile,
+      patchIOFile,
       header.readUInt32BE(4),
       header.readUInt32BE(8),
       header.readUInt32BE(12),
@@ -200,8 +200,8 @@ export default class PMSRPatch extends Patch {
       );
     }
 
-    await this.getFile().extractToIOFile(async (patchFile) => {
-      const reader = await this.readerFrom(patchFile);
+    await this.getFile().extractToIOFile(async (patchIOFile) => {
+      const reader = await this.readerFrom(patchIOFile);
 
       const header = await reader.readNext(PMSRPatch.HEADER_SIZE);
       if (
@@ -213,23 +213,23 @@ export default class PMSRPatch extends Patch {
       const recordCount = header.readUInt32BE(4);
 
       await inputRomFile.extractToFile(outputRomPath);
-      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
+      const targetIOFile = await IOFile.fileFrom(outputRomPath, 'r+');
       try {
-        await this.applyRecords(reader, recordCount, targetFile, callback);
+        await this.applyRecords(reader, recordCount, targetIOFile, callback);
       } finally {
-        await targetFile.close();
+        await targetIOFile.close();
       }
     });
   }
 
-  private async readerFrom(patchFile: IOFile): Promise<PMSRReader> {
+  private async readerFrom(patchIOFile: IOFile): Promise<PMSRReader> {
     // Star Rod can wrap the PMSR data in Yay0 compression
-    const signature = await patchFile.peekNext(Yay0Reader.FILE_SIGNATURE.length);
+    const signature = await patchIOFile.peekNext(Yay0Reader.FILE_SIGNATURE.length);
     if (!signature.equals(Yay0Reader.FILE_SIGNATURE)) {
-      return patchFile;
+      return patchIOFile;
     }
     return await Yay0Reader.readerFrom(
-      patchFile,
+      patchIOFile,
       () =>
         new IgirException(`PMSR patch Yay0 compression is invalid: ${this.getFile().toString()}`),
     );
@@ -238,7 +238,7 @@ export default class PMSRPatch extends Patch {
   private async applyRecords(
     reader: PMSRReader,
     recordCount: number,
-    targetFile: IOFile,
+    targetIOFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
     for (let i = 0; i < recordCount; i += 1) {
@@ -257,12 +257,12 @@ export default class PMSRPatch extends Patch {
         if (data.length < chunkSize) {
           throw this.truncatedException();
         }
-        await targetFile.writeAt(data, offset + written);
+        await targetIOFile.writeAt(data, offset + written);
         written += chunkSize;
       }
 
       if (callback !== undefined) {
-        callback(Math.floor((reader.getPosition() / reader.getSize()) * targetFile.getSize()));
+        callback(Math.floor((reader.getPosition() / reader.getSize()) * targetIOFile.getSize()));
       }
     }
   }
