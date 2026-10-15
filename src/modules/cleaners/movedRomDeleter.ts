@@ -64,11 +64,19 @@ export default class MovedROMDeleter extends Module {
     // Take the input files from the WriteCandidates that were moved, and look for duplicate input
     // files that could also be deleted (even if they weren't chosen to be used in a WriteCandidate)
     const movedRoms = new Set<File>();
+    // One input file can serve many ROMs (one placeholder image in thousands of slots), and each
+    // lookup walks every file sharing its checksum, so look each input file up once
+    const duplicatesByInput = new Map<File, File[]>();
     for (const writeCandidate of movedWriteCandidates) {
       for (const romsWithFiles of writeCandidate.getRomsWithFiles()) {
         const inputFile = romsWithFiles.getInputFile();
-        let possibleDuplicates =
-          inputFile instanceof ArchiveFile ? [inputFile] : indexedRoms.findFiles(inputFile);
+        let possibleDuplicates: File[];
+        if (inputFile instanceof ArchiveFile) {
+          possibleDuplicates = [inputFile];
+        } else {
+          possibleDuplicates = duplicatesByInput.get(inputFile) ?? indexedRoms.findFiles(inputFile);
+          duplicatesByInput.set(inputFile, possibleDuplicates);
+        }
 
         if (
           this.options.shouldExtractRom(romsWithFiles.getRom()) ||
