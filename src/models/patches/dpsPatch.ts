@@ -98,7 +98,7 @@ export default class DPSPatch extends Patch {
     while (!patchFile.isEOF()) {
       const record = await this.readRecord(patchFile);
       if ('inputOffset' in record) {
-        await sourceFile.copyChunked(
+        await sourceFile.copyRange(
           targetFile,
           record.outputOffset,
           record.inputOffset,

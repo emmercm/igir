@@ -22,6 +22,9 @@ export default class BPSPatch extends Patch {
 
   static readonly FILE_SIGNATURE = Buffer.from('BPS1');
 
+  // The source CRC32, target CRC32, and patch CRC32 at the end of the patch
+  private static readonly FOOTER_SIZE = 12;
+
   /**
    * Parse a .bps patch file and return a {@link BPSPatch}.
    */
@@ -34,8 +37,11 @@ export default class BPSPatch extends Patch {
       patchFile.seek(this.FILE_SIGNATURE.length);
       await super.readUpsUint(patchFile); // source size
       targetSize = await super.readUpsUint(patchFile);
+      if (patchFile.getPosition() > patchFile.getSize() - this.FOOTER_SIZE) {
+        throw new IgirException(`BPS patch is truncated: ${file.toString()}`);
+      }
 
-      patchFile.seek(patchFile.getSize() - 12);
+      patchFile.seek(patchFile.getSize() - this.FOOTER_SIZE);
 
       crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
 
@@ -120,10 +126,10 @@ export default class BPSPatch extends Patch {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;
 
-    while (patchFile.getPosition() < patchFile.getSize() - 12) {
+    while (patchFile.getPosition() < patchFile.getSize() - this.FOOTER_SIZE) {
       const blockHeader = await super.readUpsUint(patchFile);
-      const action = (blockHeader & 3) as BPSActionValue;
-      const length = (blockHeader >> 2) + 1;
+      const action = (blockHeader % 4) as BPSActionValue;
+      const length = Math.floor(blockHeader / 4) + 1;
 
       const targetPosition = targetFile.getPosition();
       if (action === BPSAction.SOURCE_READ) {
@@ -133,9 +139,9 @@ export default class BPSPatch extends Patch {
         targetFile.skipNext(await patchFile.copyNext(targetFile, targetPosition, length));
       } else if (action === BPSAction.SOURCE_COPY) {
         const offset = await super.readUpsUint(patchFile);
-        sourceRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
+        sourceRelativeOffset += (offset % 2 === 1 ? -1 : 1) * Math.floor(offset / 2);
         targetFile.skipNext(
-          await sourceFile.copyChunked(
+          await sourceFile.copyRange(
             targetFile,
             targetPosition,
             sourceRelativeOffset,
@@ -145,10 +151,10 @@ export default class BPSPatch extends Patch {
         sourceRelativeOffset += length;
       } else if (action === BPSAction.TARGET_COPY) {
         const offset = await super.readUpsUint(patchFile);
-        targetRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
+        targetRelativeOffset += (offset % 2 === 1 ? -1 : 1) * Math.floor(offset / 2);
         // The copy can overlap the bytes it writes, which repeats them
         targetFile.skipNext(
-          await targetFile.copyChunked(
+          await targetFile.copyRange(
             targetFile,
             targetPosition,
             targetRelativeOffset,

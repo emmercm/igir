@@ -79,6 +79,9 @@ describe('patchFrom', () => {
       '55505331909082ffff0084a90088e2cecec2109b1e863d5c66',
       /UPS patch is invalid, CRC of contents \(675c3d86\) doesn't match expected \(665c3d86\)/,
     ],
+    ['only a header', '55505331', /UPS patch is truncated/],
+    // Source and target sizes, but no room for the CRC32 footer
+    ['a missing footer', '555053319090', /UPS patch is truncated/],
   ])('should throw on %s', async (_name, patchHex, expectedError) => {
     await expect(parsePatch(patchFrom, 'patch.ups', patchHex)).rejects.toThrow(expectedError);
   });

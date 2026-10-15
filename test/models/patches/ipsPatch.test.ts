@@ -31,6 +31,8 @@ describe('createPatchedFile', () => {
       '504154434800000400000003cc454f46',
       '00010203cccccc0708090a0b0c0d0e0f',
     ],
+    // An RLE record cut short before its byte writes nothing
+    ['rle cut short', 'patch 00000000.ips', '504154434800000400000003', INPUT16],
     ['grow', 'patch 00000000.ips', '50415443480000100002eeff454f46', `${INPUT16}eeff`],
     [
       'no eof',

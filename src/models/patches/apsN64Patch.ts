@@ -113,18 +113,18 @@ export default class APSN64Patch extends Patch {
     callback?: FsReadCallback,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
-      const offset = (await patchFile.readNext(4)).readUInt32LE();
-      const size = (await patchFile.readNext(1)).readUInt8();
+      const offset = (await this.readRecordBytes(patchFile, 4)).readUInt32LE();
+      const size = (await this.readRecordBytes(patchFile, 1)).readUInt8();
 
       let data: Buffer;
       if (size === 0) {
         // Run-length encoding record
-        const byte = await patchFile.readNext(1);
-        const rleSize = (await patchFile.readNext(1)).readUInt8();
-        data = byte.length > 0 ? Buffer.alloc(rleSize, byte) : byte;
+        const byte = await this.readRecordBytes(patchFile, 1);
+        const rleSize = (await this.readRecordBytes(patchFile, 1)).readUInt8();
+        data = Buffer.alloc(rleSize, byte);
       } else {
         // Standard record
-        data = await patchFile.readNext(size);
+        data = await this.readRecordBytes(patchFile, size);
       }
 
       await targetFile.writeAt(data, offset);
@@ -133,5 +133,19 @@ export default class APSN64Patch extends Patch {
         Math.floor((patchFile.getPosition() / patchFile.getSize()) * targetFile.getSize()),
       );
     }
+  }
+
+  /**
+   * Read exactly the next {@link size} bytes of a record, throwing if the patch ends first.
+   * @returns the record bytes
+   */
+  private static async readRecordBytes(patchFile: IOFile, size: number): Promise<Buffer> {
+    const data = await patchFile.readNext(size);
+    if (data.length !== size) {
+      throw new IgirException(
+        `APS (N64) patch is truncated: ${patchFile.getPathLike().toString()}`,
+      );
+    }
+    return data;
   }
 }

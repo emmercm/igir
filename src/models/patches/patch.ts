@@ -13,7 +13,7 @@ import type File from '../files/file.js';
  * that identify the source and result ROMs.
  */
 export default abstract class Patch {
-  // Enough for any UPS-style unsigned integer up to Number.MAX_SAFE_INTEGER
+  // Enough bytes, at 7 bits each, for any UPS-style unsigned integer up to Number.MAX_SAFE_INTEGER
   private static readonly UPS_UINT_READ_AHEAD_SIZE = 8;
 
   private readonly file: File;
@@ -102,8 +102,7 @@ export default abstract class Patch {
   }
 
   /**
-   * Calculate the CRC32 of the region [{@link start}, {@link end}) of a file, a chunk at a time,
-   * stopping early if the file ends first.
+   * Calculate the CRC32 of the region [{@link start}, {@link end}) of a file, a chunk at a time.
    */
   protected static async crc32Range(file: IOFile, start: number, end: number): Promise<string> {
     let crc = 0;
@@ -113,9 +112,6 @@ export default abstract class Patch {
       const chunk = await file.readAt(position, chunkSize);
       crc = zlib.crc32(chunk, crc);
       position += chunkSize;
-      if (chunk.length < chunkSize) {
-        break;
-      }
     }
     return (crc >>> 0).toString(16).padStart(8, '0');
   }
@@ -124,25 +120,26 @@ export default abstract class Patch {
    * Read a UPS-style variable-length unsigned integer from the given file, advancing the read
    * position past the encoded value.
    */
-  protected static async readUpsUint(fp: Pick<IOFile, 'peekNext' | 'skipNext'>): Promise<number> {
+  protected static async readUpsUint(file: Pick<IOFile, 'peekNext' | 'skipNext'>): Promise<number> {
     let data = 0;
     let shift = 1;
 
     // Read ahead rather than byte-by-byte, encoded values are usually only a few bytes
-    let bytes = await fp.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
+    let bytes = await file.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
     while (bytes.length > 0) {
       for (const [i, byte] of bytes.entries()) {
         data += (byte & 0x7f) * shift; // drop the left-most bit
         if (byte & 0x80) {
           // left-most bit is telling us this is the end
-          fp.skipNext(i + 1);
+          file.skipNext(i + 1);
           return data;
         }
-        shift <<= 7;
+        // Multiply rather than shift, as bitwise operators only work on 32-bit integers
+        shift *= 128;
         data += shift;
       }
-      fp.skipNext(bytes.length);
-      bytes = await fp.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
+      file.skipNext(bytes.length);
+      bytes = await file.peekNext(this.UPS_UINT_READ_AHEAD_SIZE);
     }
 
     return data;

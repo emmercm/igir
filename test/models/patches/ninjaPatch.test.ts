@@ -50,6 +50,20 @@ describe('createPatchedFile', () => {
       `${HEADER}01000001100112${MD5S}41000201100102010200`,
       '000102030405060708090a0b0c0d0e0f0102',
     ],
+    // 16 → 20 bytes, with the overflow data cut short by the end of the patch
+    ['overflow cut short', `${HEADER}01000001100114${MD5S}4101045544`, `${INPUT16}aabb`],
+    // 16 → 16 bytes; XOR data cut short by the end of the patch, the rest is XORed with 0x00
+    [
+      'XOR cut short',
+      `${HEADER}01000001100110${MD5S}0201020104ffff`,
+      '0001fdfc0405060708090a0b0c0d0e0f',
+    ],
+    // 16 → 18 bytes; XOR data cut short, and past the end of the input
+    [
+      'XOR cut short past the end',
+      `${HEADER}01000001100110${MD5S}02010e0104ffff`,
+      '000102030405060708090a0b0c0df1f00000',
+    ],
   ])('should apply: %s', async (_name, patchHex, expectedHex) => {
     await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(
       Buffer.from(expectedHex, 'hex'),

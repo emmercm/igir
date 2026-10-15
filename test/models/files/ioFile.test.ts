@@ -156,7 +156,7 @@ describe('fileFrom', () => {
   test.each(['r', 'rs', 'sr'])('should open a read-only file with mode: %s', async (mode) => {
     const { contents } = await withIOFile({ contents: 'ABCD', mode }, async (ioFile) => {
       await expect(ioFile.readAt(0, 4)).resolves.toEqual(Buffer.from('ABCD'));
-      await expect(ioFile.writeAt(Buffer.from('ff', 'hex'), 1)).rejects.toThrow();
+      await expect(ioFile.writeAt(Buffer.from('ff', 'hex'), 1)).rejects.toThrow(/read-only/);
     });
 
     expect(contents).toEqual(Buffer.from('ABCD'));
@@ -205,6 +205,42 @@ describe('fileFrom', () => {
     } finally {
       await FsUtil.rm(tempFile, { force: true });
     }
+  });
+
+  it('should truncate a writable file larger than its expected size', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(tempFile, 'ABCDEFGH');
+    try {
+      const ioFile = await IOFile.fileFrom(tempFile, 'r+', 4);
+      expect(ioFile.getSize()).toEqual(4);
+      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCD'));
+      await expect(ioFile.readAt(0, 16)).resolves.toEqual(Buffer.from('ABCD'));
+      await ioFile.close();
+
+      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCD'));
+    } finally {
+      await FsUtil.rm(tempFile);
+    }
+  });
+
+  it('should read a read-only file only up to its expected size', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(tempFile, 'ABCDEFGH');
+    try {
+      const ioFile = await IOFile.fileFrom(tempFile, 'r', 4);
+      expect(ioFile.getSize()).toEqual(4);
+      await expect(ioFile.readAt(0, 16)).resolves.toEqual(Buffer.from('ABCD'));
+      await ioFile.close();
+
+      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCDEFGH'));
+    } finally {
+      await FsUtil.rm(tempFile);
+    }
+  });
+
+  it('should throw when a write-only file is in a missing directory', async () => {
+    const tempFile = path.join(await FsUtil.mktemp(path.join(Temp.getTempDir(), 'dir')), 'file');
+    await expect(IOFile.fileFrom(tempFile, 'w')).rejects.toThrow(/ENOENT/);
   });
 
   it('should not extend a read-only file to its expected size', async () => {
@@ -269,6 +305,36 @@ describe('fileOfSize', () => {
     } finally {
       await FsUtil.rm(tempFile, { force: true });
     }
+  });
+});
+
+describe('getPathLike', () => {
+  it('should return the path the file was opened with', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(tempFile, 'ABCD');
+    const ioFile = await IOFile.fileFrom(tempFile, 'r');
+    try {
+      expect(ioFile.getPathLike()).toEqual(tempFile);
+    } finally {
+      await ioFile.close();
+      await FsUtil.rm(tempFile);
+    }
+  });
+});
+
+describe('getPosition', () => {
+  it('should start at zero and follow reads, writes, and seeks', async () => {
+    await withIOFile({ contents: 'ABCDEF' }, async (ioFile) => {
+      expect(ioFile.getPosition()).toEqual(0);
+      await ioFile.readNext(2);
+      expect(ioFile.getPosition()).toEqual(2);
+      await ioFile.write(Buffer.from('ff', 'hex'));
+      expect(ioFile.getPosition()).toEqual(3);
+      // Reading and writing at a position doesn't move it
+      await ioFile.readAt(5, 1);
+      await ioFile.writeAt(Buffer.from('ff', 'hex'), 0);
+      expect(ioFile.getPosition()).toEqual(3);
+    });
   });
 });
 
@@ -429,9 +495,10 @@ describe('readUntil', () => {
     });
   });
 
-  it('should find a delimiter at the end of the chunk', async () => {
-    // When chunks are larger than pages, the delimiter is in a later page
-    const delimiterPosition = Defaults.FILE_READING_CHUNK_SIZE - 5;
+  it('should find a delimiter at the last byte of the chunk, in a later page', async () => {
+    // Starting partway into the first page, the chunk's last byte is in the second page
+    const start = 3;
+    const delimiterPosition = start + Defaults.FILE_READING_CHUNK_SIZE - 1;
     const contents = Buffer.concat([
       Buffer.alloc(delimiterPosition, 1),
       Buffer.from([0]),
@@ -439,11 +506,30 @@ describe('readUntil', () => {
     ]);
 
     await withIOFile({ contents, mode: 'r' }, async (ioFile) => {
+      ioFile.seek(start);
       await expect(ioFile.readUntil(0, ioFile.getSize())).resolves.toEqual({
-        data: Buffer.alloc(delimiterPosition, 1),
+        data: Buffer.alloc(delimiterPosition - start, 1),
         isDelimiterFound: true,
       });
       expect(ioFile.getPosition()).toEqual(delimiterPosition + 1);
+    });
+  });
+
+  it('should read nothing at the end of the file', async () => {
+    await withIOFile({ contents: 'ABCD', mode: 'r' }, async (ioFile) => {
+      ioFile.seek(4);
+      await expect(ioFile.readUntil(0, 100)).resolves.toEqual({
+        data: Buffer.alloc(0),
+        isDelimiterFound: false,
+      });
+      expect(ioFile.getPosition()).toEqual(4);
+    });
+  });
+
+  it('should throw on a negative read position', async () => {
+    await withIOFile({ contents: 'ABCD', mode: 'r' }, async (ioFile) => {
+      ioFile.seek(-1);
+      await expect(ioFile.readUntil(0, 100)).rejects.toThrow(/negative position -1/);
     });
   });
 });
@@ -484,6 +570,27 @@ describe('readAt', () => {
     });
   });
 
+  it('should throw on a negative position', async () => {
+    await withIOFile({ contents: 'ABCD', mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readAt(-1, 2)).rejects.toThrow(/negative position -1/);
+    });
+  });
+
+  it('should read zeros where the file shrank on disk after opening', async () => {
+    await withIOFile({ contents: 'ABCDEF', mode: 'r' }, async (ioFile) => {
+      await fs.promises.truncate(ioFile.getPathLike(), 2);
+      expect(ioFile.getSize()).toEqual(6);
+      await expect(ioFile.readAt(0, 6)).resolves.toEqual(Buffer.from('AB\u{0}\u{0}\u{0}\u{0}'));
+    });
+  });
+
+  it('should read zeros where the file was emptied on disk after opening', async () => {
+    await withIOFile({ contents: 'ABCDEF', mode: 'r' }, async (ioFile) => {
+      await fs.promises.truncate(ioFile.getPathLike(), 0);
+      await expect(ioFile.readAt(0, 6)).resolves.toEqual(Buffer.alloc(6));
+    });
+  });
+
   it('should not read past the end of the file when a page extends past it', async () => {
     const expected = Buffer.from(`${'00'.repeat(16)}ff`, 'hex');
 
@@ -502,7 +609,7 @@ describe('readAt', () => {
 describe('write', () => {
   it('should throw with mode: r', async () => {
     const { contents } = await withIOFile({ size: 16, mode: 'r' }, async (ioFile) => {
-      await expect(ioFile.write(Buffer.from('ABCDEF01'))).rejects.toThrow();
+      await expect(ioFile.write(Buffer.from('ABCDEF01'))).rejects.toThrow(/read-only/);
     });
 
     expect(contents).toEqual(Buffer.alloc(16));
@@ -554,7 +661,7 @@ describe('write', () => {
 describe('writeAt', () => {
   it('should throw with mode: r', async () => {
     const { contents } = await withIOFile({ size: 16, mode: 'r' }, async (ioFile) => {
-      await expect(ioFile.writeAt(Buffer.from('ABCDEF01'), 4)).rejects.toThrow();
+      await expect(ioFile.writeAt(Buffer.from('ABCDEF01'), 4)).rejects.toThrow(/read-only/);
     });
 
     expect(contents).toEqual(Buffer.alloc(16));
@@ -595,6 +702,16 @@ describe('writeAt', () => {
       expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF0123'));
     },
   );
+
+  it('should throw on a negative position', async () => {
+    const { contents } = await withIOFile({ contents: 'ABCD' }, async (ioFile) => {
+      await expect(ioFile.writeAt(Buffer.from('ff', 'hex'), -1)).rejects.toThrow(
+        /negative position -1/,
+      );
+    });
+
+    expect(contents).toEqual(Buffer.from('ABCD'));
+  });
 
   it('should not grow a file when writing nothing past its end', async () => {
     const { contents } = await withIOFile({ contents: 'ABCD' }, async (ioFile) => {
@@ -761,19 +878,13 @@ describe('writeAt', () => {
     const { result: reads, contents } = await withIOFile(
       { size: expected.length },
       async (ioFile) => {
-        // More pages than the cache holds, so pages are evicted while other operations wait
-        await Promise.all(
-          Array.from(
-            { length: pageCount },
-            async (_value, pageIndex) =>
-              await ioFile.writeAt(Buffer.from([pageIndex & 0xff, 0xff]), pageIndex * pageSize + 1),
-          ),
-        );
+        // More pages than the cache holds, so pages are evicted while other pages' writes and
+        // reads wait
         return await Promise.all(
-          Array.from(
-            { length: pageCount },
-            async (_value, pageIndex) => await ioFile.readAt(pageIndex * pageSize, 3),
-          ),
+          Array.from({ length: pageCount }, async (_value, pageIndex) => {
+            await ioFile.writeAt(Buffer.from([pageIndex & 0xff, 0xff]), pageIndex * pageSize + 1);
+            return await ioFile.readAt(pageIndex * pageSize, 3);
+          }),
         );
       },
     );
@@ -817,14 +928,29 @@ describe('writeAt', () => {
   );
 });
 
-describe('copyChunked', () => {
+describe('copyRange', () => {
+  const SAME_FILE_COPY_SOURCE = patterned(Defaults.IO_FILE_PAGE_SIZE * 6);
+
+  test.each([
+    ['source', 4, -1],
+    ['target', -1, 0],
+  ])('should throw on a negative %s position', async (_name, targetStart, sourceStart) => {
+    const { contents } = await withIOFile({ contents: 'ABCDEF' }, async (ioFile) => {
+      await expect(ioFile.copyRange(ioFile, targetStart, sourceStart, 2)).rejects.toThrow(
+        /negative position -1/,
+      );
+    });
+
+    expect(contents).toEqual(Buffer.from('ABCDEF'));
+  });
+
   it('should copy a region spanning multiple chunks to another file', async () => {
     const source = patterned(Defaults.FILE_READING_CHUNK_SIZE + 100);
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
       async ([sourceFile, targetFile]) =>
-        await sourceFile.copyChunked(targetFile, 5, 10, source.length - 20),
+        await sourceFile.copyRange(targetFile, 5, 10, source.length - 20),
     );
     const [sourceAfter, targetAfter] = contents;
 
@@ -840,7 +966,7 @@ describe('copyChunked', () => {
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
-      async ([sourceFile, targetFile]) => await sourceFile.copyChunked(targetFile),
+      async ([sourceFile, targetFile]) => await sourceFile.copyRange(targetFile),
     );
     const [, targetAfter] = contents;
 
@@ -854,7 +980,7 @@ describe('copyChunked', () => {
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
       async ([sourceFile, targetFile]) =>
-        await sourceFile.copyChunked(targetFile, 0, 1, source.length * 3),
+        await sourceFile.copyRange(targetFile, 0, 1, source.length * 3),
     );
     const [, targetAfter] = contents;
 
@@ -867,7 +993,7 @@ describe('copyChunked', () => {
 
     const { result: copied, contents: sourceAfter } = await withIOFile(
       { contents: source },
-      async (ioFile) => await ioFile.copyChunked(ioFile, 0, 3),
+      async (ioFile) => await ioFile.copyRange(ioFile, 0, 3),
     );
 
     expect(copied).toEqual(source.length - 3);
@@ -897,13 +1023,13 @@ describe('copyChunked', () => {
   )(
     'should copy from position %s to %s bytes later in the same file',
     async (sourceStart, distance) => {
-      const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 6);
+      const source = SAME_FILE_COPY_SOURCE;
       const size = Defaults.IO_FILE_PAGE_SIZE * 3 + 5;
 
       const { result: copied, contents: sourceAfter } = await withIOFile(
         { contents: source },
         async (ioFile) =>
-          await ioFile.copyChunked(ioFile, sourceStart + distance, sourceStart, sourceStart + size),
+          await ioFile.copyRange(ioFile, sourceStart + distance, sourceStart, sourceStart + size),
       );
 
       // Copy a byte at a time
@@ -922,7 +1048,7 @@ describe('copyChunked', () => {
 
     const { result: copied, contents: sourceAfter } = await withIOFile(
       { contents: source },
-      async (ioFile) => await ioFile.copyChunked(ioFile, 7, 3, 3),
+      async (ioFile) => await ioFile.copyRange(ioFile, 7, 3, 3),
     );
 
     expect(copied).toEqual(0);
@@ -936,7 +1062,7 @@ describe('copyChunked', () => {
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
       // Positions that would overlap if the source and target were the same file
       async ([sourceFile, targetFile]) =>
-        await sourceFile.copyChunked(targetFile, 13, 10, source.length - 3),
+        await sourceFile.copyRange(targetFile, 13, 10, source.length - 3),
     );
     const [, targetAfter] = contents;
 
@@ -957,7 +1083,7 @@ describe('copyChunked', () => {
       const { result: copied, contents: sourceAfter } = await withIOFile(
         { contents: source },
         async (ioFile) =>
-          await ioFile.copyChunked(ioFile, sourceStart + distance, sourceStart, sourceStart + size),
+          await ioFile.copyRange(ioFile, sourceStart + distance, sourceStart, sourceStart + size),
       );
 
       // Copy a byte at a time, the gap past the end of the file reading as zeros
@@ -1070,6 +1196,23 @@ describe('truncate', () => {
     expect(contents).toEqual(Buffer.from('0001020300000000', 'hex'));
   });
 
+  it('should drop cached pages past the new end of a multi-page file', async () => {
+    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
+    const initial = patterned(pageSize * 3);
+    const expected = Buffer.concat([initial.subarray(0, 10), Buffer.alloc(pageSize * 3 - 10)]);
+
+    const { contents } = await withIOFile({ contents: initial }, async (ioFile) => {
+      // Cache and dirty every page, then shrink into the first page and zero-extend back
+      await ioFile.writeAt(Buffer.alloc(pageSize * 3, 0xff), 0);
+      await ioFile.writeAt(initial, 0);
+      await ioFile.truncate(10);
+      await ioFile.truncate(pageSize * 3);
+      await expect(ioFile.readAt(0, pageSize * 3)).resolves.toEqual(expected);
+    });
+
+    expect(contents).toEqual(expected);
+  });
+
   it('should truncate to zero bytes when the size is negative', async () => {
     const { contents } = await withIOFile({ contents: 'ABCD' }, async (ioFile) => {
       await ioFile.truncate(-1);
@@ -1092,6 +1235,22 @@ describe('close', () => {
     expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF01'));
   });
 
+  it('should flush pages written in reverse order', async () => {
+    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
+    const expected = patterned(pageSize * 4);
+
+    const { contents } = await withIOFile({ size: expected.length }, async (ioFile) => {
+      for (let pageIndex = 3; pageIndex >= 0; pageIndex -= 1) {
+        await ioFile.writeAt(
+          expected.subarray(pageIndex * pageSize, (pageIndex + 1) * pageSize),
+          pageIndex * pageSize,
+        );
+      }
+    });
+
+    expect(contents).toEqual(expected);
+  });
+
   it('should throw when using the file after closing it', async () => {
     const { contents } = await withIOFile({ contents: 'ABCDEF01' }, async (ioFile) => {
       await ioFile.readAt(0, 1); // cache the first page
@@ -1103,8 +1262,8 @@ describe('close', () => {
       await expect(ioFile.writeAt(Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE), 0)).rejects.toThrow(
         'closed',
       );
-      await expect(ioFile.copyChunked(ioFile, 4)).rejects.toThrow('closed');
-      await expect(ioFile.copyChunked(ioFile, 4, 0, 0)).rejects.toThrow('closed');
+      await expect(ioFile.copyRange(ioFile, 4)).rejects.toThrow('closed');
+      await expect(ioFile.copyRange(ioFile, 4, 0, 0)).rejects.toThrow('closed');
       await expect(ioFile.copyNext(ioFile, 4, 1)).rejects.toThrow('closed');
       expect(ioFile.getPosition()).toEqual(0);
       await expect(ioFile.truncate(0)).rejects.toThrow('closed');

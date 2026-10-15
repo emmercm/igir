@@ -200,11 +200,14 @@ export default class NinjaPatch extends Patch {
       const chunkSize = Math.min(length - xored, Defaults.FILE_READING_CHUNK_SIZE);
       const sourceData = await targetFile.readAt(offset + xored, chunkSize);
       const xorData = await patchFile.readNext(chunkSize);
-      const targetData = Buffer.allocUnsafe(chunkSize);
-      for (let i = 0; i < chunkSize; i += 1) {
-        // Bytes past the end of the target or the patch are 0x00
-        targetData[i] =
-          (i < sourceData.length ? sourceData[i] : 0x00) ^ (i < xorData.length ? xorData[i] : 0x00);
+      // Bytes past the end of the patch are 0x00, so the whole chunk is still written
+      const targetData =
+        xorData.length === chunkSize
+          ? xorData
+          : Buffer.concat([xorData, Buffer.alloc(chunkSize - xorData.length)]);
+      // Bytes past the end of the target are 0x00, so they're left as the XOR data
+      for (const [i, sourceDatum] of sourceData.entries()) {
+        targetData[i] ^= sourceDatum;
       }
       await targetFile.writeAt(targetData, offset + xored);
     }

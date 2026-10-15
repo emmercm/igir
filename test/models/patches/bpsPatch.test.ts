@@ -83,6 +83,9 @@ describe('patchFrom', () => {
       '42505331908a8085abcd9780878988e2cecea1f53268f3729e38',
       /BPS patch is invalid, CRC of contents \(399e72f3\) doesn't match expected \(389e72f3\)/,
     ],
+    ['only a header', '42505331', /BPS patch is truncated/],
+    // Source and target sizes, but no room for the CRC32 footer
+    ['a missing footer', '425053319090', /BPS patch is truncated/],
   ])('should throw on %s', async (_name, patchHex, expectedError) => {
     await expect(parsePatch(patchFrom, 'patch.bps', patchHex)).rejects.toThrow(expectedError);
   });
@@ -114,6 +117,12 @@ describe('createPatchedFile', () => {
   test.each([
     ['wrong size', '425053318888809c9f68aa889f68aa88e28ab048', /BPS patch expected ROM size of 8B/],
     ['bad header', '42505332909080bc88e2cece88e2cece5e0c26c8', /BPS patch header is invalid/],
+    // SOURCE_COPY with a relative offset of -1 from the start of the source
+    [
+      'negative source offset',
+      '425053319084808e8388e2cece00000000b9008eef',
+      /negative position -1/,
+    ],
   ])('should throw on %s', async (_name, patchHex, expectedError) => {
     await expect(applyPatch(patchFrom, 'patch.bps', patchHex, INPUT16)).rejects.toThrow(
       expectedError,

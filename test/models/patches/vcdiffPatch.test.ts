@@ -116,6 +116,8 @@ describe('createPatchedFile', () => {
     ['a patch ending before its compressor ID', 'd6c3c40001', /Vcdiff patch is truncated/],
     // A window whose target window size is missing, so it ends before its delta indicator
     ['a window ending before its delta indicator', 'd6c3c400000005', /Vcdiff patch is truncated/],
+    // A window whose delta encoding length ends partway through its integer
+    ['an integer cut short', 'd6c3c400000085', /Vcdiff patch is truncated/],
     // A target window size of 64 MiB + 1
     [
       'a window larger than the hard window size',
@@ -143,6 +145,18 @@ describe('createPatchedFile', () => {
       'a window ending before its data section',
       'd6c3c4000000050100010000',
       /Vcdiff patch is truncated/,
+    ],
+    // An ADD of 1 byte with an empty data section
+    [
+      'a data section ending early',
+      'd6c3c400000006010000010002',
+      /Vcdiff window's data section ends early/,
+    ],
+    // A HERE-mode COPY of 4 bytes from 5 bytes before the start of the target
+    [
+      'a COPY address before the start of the target',
+      'd6c3c40000000704000001012405',
+      /negative position -5/,
     ],
     [
       'a window ending partway through its ADLER32',
