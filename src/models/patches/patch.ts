@@ -120,7 +120,9 @@ export default abstract class Patch {
    * Read a UPS-style variable-length unsigned integer from the given file, advancing the read
    * position past the encoded value.
    */
-  protected static async readUpsUint(ioFile: Pick<IOFile, 'peekNext' | 'skipNext'>): Promise<number> {
+  protected static async readUpsUint(
+    ioFile: Pick<IOFile, 'peekNext' | 'skipNext'>,
+  ): Promise<number> {
     let data = 0;
     let shift = 1;
 

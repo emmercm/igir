@@ -83,7 +83,13 @@ export default class UPSPatch extends Patch {
       }
       const targetSize = await Patch.readUpsUint(patchIOFile);
 
-      await UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchIOFile, targetSize, callback);
+      await UPSPatch.writeOutputFile(
+        inputRomFile,
+        outputRomPath,
+        patchIOFile,
+        targetSize,
+        callback,
+      );
     });
   }
 

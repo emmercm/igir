@@ -292,6 +292,13 @@ export default class IOFile {
     }
 
     const result = Buffer.allocUnsafe(end - position);
+    const cachedPage = this.getCachedPageOfRegion(position, result.length);
+    if (cachedPage !== undefined) {
+      const pageOffset = position % Defaults.IO_FILE_PAGE_SIZE;
+      const copied = cachedPage.data.copy(result, 0, pageOffset, pageOffset + result.length);
+      return copied < result.length ? result.subarray(0, copied) : result;
+    }
+
     let resultSize = 0;
     await this.visitPages(position, result.length, false, (page, pageOffset, resultOffset) => {
       const copied = page.data.copy(
@@ -390,25 +397,20 @@ export default class IOFile {
       return bytesWritten;
     }
 
-    await this.visitPages(writePosition, buffer.length, true, (page, pageOffset, bufferOffset) => {
-      const copyEnd = Math.min(
-        pageOffset + buffer.length - bufferOffset,
-        Defaults.IO_FILE_PAGE_SIZE,
+    const cachedPage = this.getCachedPageOfRegion(writePosition, buffer.length);
+    if (cachedPage === undefined) {
+      await this.visitPages(writePosition, buffer.length, true, (page, pageOffset, bufferOffset) =>
+        this.writeToPage(page, pageOffset, buffer, bufferOffset, writePosition),
       );
-      IOFile.reservePage(page, copyEnd);
-      page.isDirty = true;
-      const copied = buffer.copy(
-        page.data,
-        pageOffset,
-        bufferOffset,
-        bufferOffset + copyEnd - pageOffset,
+    } else {
+      this.writeToPage(
+        cachedPage,
+        writePosition % Defaults.IO_FILE_PAGE_SIZE,
+        buffer,
+        0,
+        writePosition,
       );
-      // Grow the file as each page is staged, because a write larger than the cache evicts its own
-      // dirty pages partway through, and only the bytes within the file's size are written to disk.
-      // A write that fails partway through grows the file by only the bytes it staged.
-      this.growFileSize(writePosition + bufferOffset + copied);
-      return copied;
-    });
+    }
 
     // Yield to the event loop after every chunk written, so progress bars can redraw
     this.bytesSinceYield += buffer.length;
@@ -418,6 +420,34 @@ export default class IOFile {
     }
 
     return buffer.length;
+  }
+
+  /**
+   * Stage the bytes of {@link buffer} from {@link bufferOffset} onward that fit in {@link page},
+   * starting at {@link pageOffset}, as part of a write of {@link buffer} at {@link writePosition}.
+   * @returns the number of bytes staged
+   */
+  private writeToPage(
+    page: IOFilePage,
+    pageOffset: number,
+    buffer: Buffer,
+    bufferOffset: number,
+    writePosition: number,
+  ): number {
+    const copyEnd = Math.min(pageOffset + buffer.length - bufferOffset, Defaults.IO_FILE_PAGE_SIZE);
+    IOFile.reservePage(page, copyEnd);
+    page.isDirty = true;
+    const copied = buffer.copy(
+      page.data,
+      pageOffset,
+      bufferOffset,
+      bufferOffset + copyEnd - pageOffset,
+    );
+    // Grow the file as each page is staged, because a write larger than the cache evicts its own
+    // dirty pages partway through, and only the bytes within the file's size are written to disk.
+    // A write that fails partway through grows the file by only the bytes it staged.
+    this.growFileSize(writePosition + bufferOffset + copied);
+    return copied;
   }
 
   /**
@@ -692,6 +722,25 @@ export default class IOFile {
         visited += visit(page, (position + visited) % Defaults.IO_FILE_PAGE_SIZE, visited);
       }
     });
+  }
+
+  /**
+   * Find the cached page holding all of the non-empty region [{@link position}, {@link position} +
+   * {@link size}), marking it as the most recently used. Reads and writes within one cached page,
+   * the common case for small ones, can use it directly, without the closure and promise that
+   * {@link visitPages} needs.
+   * @returns the page, or undefined if the region is empty, spans more than one page, isn't
+   * cached, or a locked operation may be midway through evicting it
+   */
+  private getCachedPageOfRegion(position: number, size: number): IOFilePage | undefined {
+    if (size <= 0 || this.pagesMutex.isLocked()) {
+      return undefined;
+    }
+    const pageIndex = Math.floor(position / Defaults.IO_FILE_PAGE_SIZE);
+    if (Math.floor((position + size - 1) / Defaults.IO_FILE_PAGE_SIZE) !== pageIndex) {
+      return undefined;
+    }
+    return this.getCachedPage(pageIndex);
   }
 
   /**

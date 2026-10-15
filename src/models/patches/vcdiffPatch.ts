@@ -370,7 +370,11 @@ class VcdiffSectionCursor {
    * Copy and consume the next `size` bytes of the section to `targetIOFile` starting at
    * `targetStart`, throwing if the section ends first.
    */
-  async copyTo(targetIOFile: Pick<IOFile, 'writeAt'>, targetStart: number, size: number): Promise<void> {
+  async copyTo(
+    targetIOFile: Pick<IOFile, 'writeAt'>,
+    targetStart: number,
+    size: number,
+  ): Promise<void> {
     if (this.position + size > this.end) {
       throw this.endsEarlyError();
     }
@@ -605,7 +609,10 @@ class VcdiffHeader {
     await this.skipAppHeader(delta, deltaIndicator);
 
     const source = new VcdiffBuffer(this.getDefaultCodeTableString(), patchIOFile.getPathLike());
-    const target = new VcdiffBuffer(Buffer.alloc(CODE_TABLE_STRING_SIZE), patchIOFile.getPathLike());
+    const target = new VcdiffBuffer(
+      Buffer.alloc(CODE_TABLE_STRING_SIZE),
+      patchIOFile.getPathLike(),
+    );
     const copyCache = new VcdiffCache(this.DEFAULT_S_NEAR, this.DEFAULT_S_SAME);
     let targetWindowPosition = 0;
     while (!delta.isEOF()) {
@@ -887,7 +894,11 @@ class VcdiffWindow {
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
-    await this.addsAndRuns.copyTo(targetIOFile, targetWindowPosition + this.targetWindowOffset, size);
+    await this.addsAndRuns.copyTo(
+      targetIOFile,
+      targetWindowPosition + this.targetWindowOffset,
+      size,
+    );
     this.targetWindowOffset += size;
   }
 

@@ -27,7 +27,9 @@ class PPFHeader {
   static async fromIOFile(inputRomFile: File, patchIOFile: IOFile): Promise<PPFHeader> {
     const header = (await patchIOFile.readNext(5)).toString();
     if (!header.startsWith(this.FILE_SIGNATURE.toString())) {
-      throw new IgirException(`PPF patch header is invalid: ${patchIOFile.getPathLike().toString()}`);
+      throw new IgirException(
+        `PPF patch header is invalid: ${patchIOFile.getPathLike().toString()}`,
+      );
     }
     const encoding = (await patchIOFile.readNext(1)).readUInt8();
     const version = encoding + 1;
