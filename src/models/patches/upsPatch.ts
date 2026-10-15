@@ -136,11 +136,11 @@ export default class UPSPatch extends Patch {
     const patchBlocksEnd = patchFile.getSize() - 12;
 
     while (patchFile.getPosition() < patchBlocksEnd) {
-      const { data: xorData, delimiterFound } = await patchFile.readUntil(
+      const { data: xorData, isDelimiterFound } = await patchFile.readUntil(
         0x00,
         patchBlocksEnd - patchFile.getPosition(),
       );
-      if (xorData.length === 0 && !delimiterFound) {
+      if (xorData.length === 0 && !isDelimiterFound) {
         break;
       }
 
@@ -151,7 +151,7 @@ export default class UPSPatch extends Patch {
       }
       await targetFile.write(xorData);
 
-      if (delimiterFound) {
+      if (isDelimiterFound) {
         return;
       }
     }
