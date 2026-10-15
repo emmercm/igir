@@ -729,6 +729,13 @@ export default class CandidateWriter extends Module {
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
+        const archiveEntries =
+          inputRomFile instanceof ArchiveFile
+            ? await this.fileFactory.entriesFromArchive(
+                inputRomFile.getArchive(),
+                ChecksumBitmask.NONE,
+              )
+            : undefined;
         const moveResult = await FsUtil.mv(
           inputRomFile.getFilePath(),
           outputFilePath,
@@ -736,6 +743,17 @@ export default class CandidateWriter extends Module {
             progressBar.setCompleted(progress);
           },
         );
+        if (moveResult === MoveResult.RENAMED) {
+          await this.fileFactory.computeAndSetFileChecksums(
+            inputRomFile.withFilePath(outputFilePath),
+          );
+          if (inputRomFile instanceof ArchiveFile && archiveEntries !== undefined) {
+            await this.fileFactory.computeAndSetArchiveChecksums(
+              inputRomFile.getArchive().withFilePath(outputFilePath),
+              archiveEntries,
+            );
+          }
+        }
         return [moveResult, outputFilePath];
       } catch (error) {
         this.prefixedLogger.error(

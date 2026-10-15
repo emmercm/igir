@@ -139,11 +139,7 @@ export default class FileCache {
           callback,
         );
         computedFile = await File.fileOf({ filePath, ...checksums }, checksumBitmask);
-        return {
-          fileSize: stats.size,
-          modifiedTimeSec: stats.mtimeS,
-          value: computedFile.toFileProps(),
-        };
+        return this.fileChecksumsCacheValue(computedFile, stats);
       },
       (cached) => {
         if (shouldForceRecompute) {
@@ -223,11 +219,7 @@ export default class FileCache {
           callback,
           shouldForceChecksumCalculation,
         )) as ArchiveEntry<T>[];
-        return {
-          fileSize: stats.size,
-          modifiedTimeSec: stats.mtimeS,
-          value: computedEntries.map((entry) => entry.toEntryProps()),
-        };
+        return this.archiveChecksumsCacheValue(computedEntries, stats);
       },
       (cached) => {
         if (shouldForceRecompute) {
@@ -551,6 +543,54 @@ export default class FileCache {
           (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
       )
       .map(([, checksum]) => this.getCacheKey('', checksum, valueType));
+  }
+
+  /**
+   * Cache a file's already-known checksums at its current path.
+   */
+  async computeAndSetFileChecksums(file: File): Promise<void> {
+    const stats = await FsUtil.stat(file.getFilePath());
+    await this.cache.set(
+      this.getCacheKey(file.getFilePath(), undefined, ValueType.FILE_CHECKSUMS),
+      this.fileChecksumsCacheValue(file, stats),
+    );
+  }
+
+  /**
+   * Cache an archive's already-known entries at its current path.
+   */
+  async computeAndSetArchiveChecksums<T extends Archive>(
+    archive: T,
+    archiveEntries: ArchiveEntry<T>[],
+  ): Promise<void> {
+    const stats = await FsUtil.stat(archive.getFilePath());
+    await this.cache.set(
+      this.getCacheKey(
+        archive.getFilePath(),
+        archive.constructor.name,
+        ValueType.ARCHIVE_CHECKSUMS,
+      ),
+      this.archiveChecksumsCacheValue(archiveEntries, stats),
+    );
+  }
+
+  private fileChecksumsCacheValue(file: File, stats: { size: number; mtimeS: number }): CacheValue {
+    return {
+      fileSize: stats.size,
+      modifiedTimeSec: stats.mtimeS,
+      value: file.toFileProps(),
+    };
+  }
+
+  private archiveChecksumsCacheValue<T extends Archive>(
+    archiveEntries: ArchiveEntry<T>[],
+    stats: { size: number; mtimeS: number },
+  ): CacheValue {
+    return {
+      fileSize: stats.size,
+      modifiedTimeSec: stats.mtimeS,
+      value: archiveEntries.map((entry) => entry.toEntryProps()),
+    };
   }
 
   private getCacheKey(
