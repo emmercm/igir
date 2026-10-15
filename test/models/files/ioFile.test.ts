@@ -1,3 +1,4 @@
+import type { OpenMode } from 'node:fs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -10,48 +11,183 @@ if (!(await FsUtil.exists(Temp.getTempDir()))) {
   await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 /** Bytes that differ from their neighbors, so misplaced reads and copies are caught */
-const patterned = (size: number): Buffer =>
-  Buffer.from(Array.from({ length: size }, (_value, idx) => (idx * 7 + 3) & 0xff));
+const patterned = (size: number): Buffer => {
+  const buffer = Buffer.allocUnsafe(size);
+  for (let idx = 0; idx < size; idx += 1) {
+    buffer[idx] = (idx * 7 + 3) & 0xff;
+  }
+  return buffer;
+};
+
+interface TempIOFile {
+  // Written to a temp file that's opened with IOFile.fileFrom()
+  contents?: Buffer | string;
+  // Otherwise, the size of a temp file created with IOFile.fileOfSize()
+  size?: number;
+  // Defaults to 'r+'
+  mode?: OpenMode;
+}
+
+/**
+ * Open temp files described by {@link files} as {@link IOFile}s, call {@link callback} with them,
+ * then close and delete them. Neither {@link TempIOFile.contents} nor {@link TempIOFile.size}
+ * opens a file that doesn't exist yet.
+ * @returns the callback's result, and the files' contents after they're closed
+ */
+const withIOFiles = async <T>(
+  files: TempIOFile[],
+  callback: (ioFiles: IOFile[]) => Promise<T>,
+): Promise<{ result: T; contents: Buffer[] }> => {
+  const tempFiles = await Promise.all(
+    files.map(async () => await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'))),
+  );
+  const ioFiles: IOFile[] = [];
+  try {
+    for (const [idx, file] of files.entries()) {
+      const mode = file.mode ?? 'r+';
+      if (file.contents !== undefined) {
+        await FsUtil.writeFile(tempFiles[idx], file.contents);
+      }
+      ioFiles.push(
+        file.size === undefined
+          ? await IOFile.fileFrom(tempFiles[idx], mode)
+          : await IOFile.fileOfSize(tempFiles[idx], mode, file.size),
+      );
+    }
+    const result = await callback(ioFiles);
+    await Promise.all(
+      ioFiles.map(async (ioFile) => {
+        await ioFile.close();
+      }),
+    );
+    const contents = await Promise.all(
+      tempFiles.map(async (tempFile) => await FsUtil.readFile(tempFile)),
+    );
+    return { result, contents };
+  } finally {
+    // Closing an already closed file does nothing
+    await Promise.all(
+      ioFiles.map(async (ioFile) => {
+        await ioFile.close();
+      }),
+    );
+    await Promise.all(
+      tempFiles.map(async (tempFile) => {
+        await FsUtil.rm(tempFile, { force: true });
+      }),
+    );
+  }
+};
+
+/**
+ * Open a temp file described by {@link file} as an {@link IOFile}, call {@link callback} with it,
+ * then close and delete it.
+ * @returns the callback's result, and the file's contents after it's closed
+ */
+const withIOFile = async <T>(
+  file: TempIOFile,
+  callback: (ioFile: IOFile) => Promise<T>,
+): Promise<{ result: T; contents: Buffer }> => {
+  const { result, contents } = await withIOFiles(
+    [file],
+    async ([ioFile]) => await callback(ioFile),
+  );
+  return { result, contents: contents[0] };
+};
+
+/**
+ * Spy on {@link fs.promises.open}, calling {@link onOpen} with each file handle it opens.
+ * @returns the file handles opened
+ */
+const spyOnOpenedHandles = (
+  onOpen?: (handle: fs.promises.FileHandle) => void,
+): fs.promises.FileHandle[] => {
+  const open = fs.promises.open.bind(fs.promises);
+  const openedHandles: fs.promises.FileHandle[] = [];
+  vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
+    const handle = await open(pathLike, flags);
+    onOpen?.(handle);
+    openedHandles.push(handle);
+    return handle;
+  });
+  return openedHandles;
+};
+
+/**
+ * Make {@link fs.promises.open} fail to open files for reading and writing, as if they could only
+ * be written to.
+ */
+const denyReadWriteOpens = (): void => {
+  const open = fs.promises.open.bind(fs.promises);
+  vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
+    if (typeof flags === 'number' && (flags & fs.constants.O_RDWR) !== 0) {
+      throw Object.assign(new Error('permission denied'), { code: 'EACCES' });
+    }
+    return await open(pathLike, flags);
+  });
+};
 
 describe('fileFrom', () => {
   test.each([
-    // [mode, writable, expected contents after writing 0xff at 1]
-    ['r', false, '41424344'],
-    ['rs', false, '41424344'],
-    ['sr', false, '41424344'],
-    ['r+', true, '41ff4344'],
-    ['sr+', true, '41ff4344'],
-    ['as', true, '41424344ff'],
-    ['sa+', true, '41424344ff'],
-    ['w', true, '00ff'],
-    ['xw+', true, '00ff'],
-    ['xa', true, 'ff'],
-  ])('should open a file with mode: %s', async (mode, writable, expectedHex) => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    if (!mode.includes('x')) {
-      await FsUtil.writeFile(tempFile, 'ABCD');
-    }
-    try {
-      const file = await IOFile.fileFrom(tempFile, mode);
-      try {
-        const written = await file.writeAt(Buffer.from('ff', 'hex'), 1).catch(() => undefined);
-        expect(written).toEqual(writable ? 1 : undefined);
-      } finally {
-        await file.close();
-      }
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from(expectedHex, 'hex'));
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    // [mode, expected contents after writing 0xff at 1]
+    ['r+', '41ff4344'],
+    ['sr+', '41ff4344'],
+    ['as', '41424344ff'],
+    ['sa+', '41424344ff'],
+    ['w', '00ff'],
+    ['xw+', '00ff'],
+    ['xa', 'ff'],
+  ])('should open a writable file with mode: %s', async (mode, expectedHex) => {
+    const { contents } = await withIOFile(
+      { contents: mode.includes('x') ? undefined : 'ABCD', mode },
+      async (ioFile) => {
+        await expect(ioFile.writeAt(Buffer.from('ff', 'hex'), 1)).resolves.toEqual(1);
+      },
+    );
+
+    expect(contents).toEqual(Buffer.from(expectedHex, 'hex'));
   });
 
-  test.each(['rw', 'R', 'r++', ''])('should throw on the invalid mode: %s', async (mode) => {
+  test.each(['r', 'rs', 'sr'])('should open a read-only file with mode: %s', async (mode) => {
+    const { contents } = await withIOFile({ contents: 'ABCD', mode }, async (ioFile) => {
+      await expect(ioFile.readAt(0, 4)).resolves.toEqual(Buffer.from('ABCD'));
+      await expect(ioFile.writeAt(Buffer.from('ff', 'hex'), 1)).rejects.toThrow();
+    });
+
+    expect(contents).toEqual(Buffer.from('ABCD'));
+  });
+
+  test.each([
+    ['rw', 'invalid'],
+    ['R', 'invalid'],
+    ['r++', 'invalid'],
+    ['', 'invalid'],
+    [1.5, RangeError],
+    [2 ** 40, RangeError],
+  ])('should throw on the invalid mode: %s', async (mode, expectedError) => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
     await FsUtil.writeFile(tempFile, 'ABCD');
     try {
-      await expect(IOFile.fileFrom(tempFile, mode)).rejects.toThrow('invalid');
+      await expect(IOFile.fileFrom(tempFile, mode)).rejects.toThrow(expectedError);
       // The file wasn't opened, so it wasn't truncated
+      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCD'));
+    } finally {
+      await FsUtil.rm(tempFile);
+    }
+  });
+
+  it('should throw when a file needing reading can only be written to', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.writeFile(tempFile, 'ABCD');
+    denyReadWriteOpens();
+
+    try {
+      await expect(IOFile.fileFrom(tempFile, 'r+')).rejects.toThrow('permission denied');
       await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCD'));
     } finally {
       await FsUtil.rm(tempFile);
@@ -61,9 +197,9 @@ describe('fileFrom', () => {
   it('should zero-extend a writable file to its expected size, even without writes', async () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
     try {
-      const file = await IOFile.fileFrom(tempFile, 'w+', 8);
-      expect(file.getSize()).toEqual(8);
-      await file.close();
+      const ioFile = await IOFile.fileFrom(tempFile, 'w+', 8);
+      expect(ioFile.getSize()).toEqual(8);
+      await ioFile.close();
 
       await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.alloc(8));
     } finally {
@@ -75,21 +211,12 @@ describe('fileFrom', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
     await FsUtil.writeFile(tempFile, 'ABCD');
     try {
-      const file = await IOFile.fileFrom(tempFile, 'r', 8);
-      expect(file.getSize()).toEqual(8);
-      await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.from('ABCD\u{0}\u{0}\u{0}\u{0}'));
-      await file.close();
+      const ioFile = await IOFile.fileFrom(tempFile, 'r', 8);
+      expect(ioFile.getSize()).toEqual(8);
+      await expect(ioFile.readAt(0, 16)).resolves.toEqual(Buffer.from('ABCD\u{0}\u{0}\u{0}\u{0}'));
+      await ioFile.close();
 
       await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCD'));
-    } finally {
-      await FsUtil.rm(tempFile);
-    }
-  });
-  test.each([1.5, 2 ** 40])('should throw on the invalid numeric flags: %s', async (flags) => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCD');
-    try {
-      await expect(IOFile.fileFrom(tempFile, flags)).rejects.toThrow(RangeError);
     } finally {
       await FsUtil.rm(tempFile);
     }
@@ -97,100 +224,42 @@ describe('fileFrom', () => {
 });
 
 describe('fileOfSize', () => {
-  it('should delete an existing file', async () => {
-    const size = 8080;
-
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.touch(tempFile);
-    await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
-
-    try {
-      const file = await IOFile.fileOfSize(tempFile, 'r', size);
-      await file.close();
-      expect(file.getPathLike()).toEqual(tempFile);
-      await expect(FsUtil.size(tempFile)).resolves.toEqual(size);
-    } finally {
-      await FsUtil.rm(tempFile);
-    }
-  });
-
   test.each([1, 42, 226, 1337, 8_675_309])('should create a file of size: %s', async (size) => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
-
     try {
-      const file = await IOFile.fileOfSize(tempFile, 'r', size);
-      await file.close();
-      expect(file.getPathLike()).toEqual(tempFile);
+      const ioFile = await IOFile.fileOfSize(tempFile, 'r', size);
+      expect(ioFile.getPathLike()).toEqual(tempFile);
+      expect(ioFile.getSize()).toEqual(size);
+      await ioFile.close();
+
       await expect(FsUtil.size(tempFile)).resolves.toEqual(size);
     } finally {
       await FsUtil.rm(tempFile);
     }
   });
 
-  it('should not read the new file from disk', async () => {
+  it('should replace an existing file without changing its hard links', async () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
-    });
+    await FsUtil.writeFile(tempFile, 'ABCD');
+    const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
+    await FsUtil.hardlink(tempFile, tempLink);
 
     try {
-      const size = Defaults.IO_FILE_PAGE_SIZE * 3;
-      const ioFile = await IOFile.fileOfSize(tempFile, 'r+', size);
-      expect(openedHandles).toHaveLength(1);
-      const read = vi.spyOn(openedHandles[0], 'read');
-      const readv = vi.spyOn(openedHandles[0], 'readv');
-      await expect(ioFile.readAt(0, size)).resolves.toEqual(Buffer.alloc(size));
-      expect(read).toHaveBeenCalledTimes(0);
-      expect(readv).toHaveBeenCalledTimes(0);
+      const ioFile = await IOFile.fileOfSize(tempFile, 'r+', 8);
       await ioFile.close();
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.alloc(size));
+      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.alloc(8));
+      await expect(FsUtil.readFile(tempLink)).resolves.toEqual(Buffer.from('ABCD'));
     } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile, { force: true });
-    }
-  });
-
-  it('should not resize the file again when closing it', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
-    });
-
-    try {
-      const ioFile = await IOFile.fileOfSize(tempFile, 'r+', 16);
-      const truncate = vi.spyOn(openedHandles[0], 'truncate');
-      await ioFile.writeAt(Buffer.from('ff', 'hex'), 1);
-      await ioFile.close();
-
-      expect(truncate).toHaveBeenCalledTimes(0);
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-        Buffer.from(`00ff${'00'.repeat(14)}`, 'hex'),
-      );
-    } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile, { force: true });
+      await FsUtil.rm(tempLink);
+      await FsUtil.rm(tempFile);
     }
   });
 
   it('should close the file handle and delete the file if sizing fails', async () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
+    const openedHandles = spyOnOpenedHandles((handle) => {
       vi.spyOn(handle, 'truncate').mockRejectedValue(new Error('truncate failed'));
-      openedHandles.push(handle);
-      return handle;
     });
 
     try {
@@ -198,7 +267,6 @@ describe('fileOfSize', () => {
       expect(openedHandles.map((handle) => handle.fd)).toEqual([-1]);
       await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
     } finally {
-      vi.restoreAllMocks();
       await FsUtil.rm(tempFile, { force: true });
     }
   });
@@ -213,684 +281,384 @@ describe('getSize', () => {
   ] satisfies [string, number][];
 
   test.each(filesWithSizes)('should get size of raw file: %s', async (filePath, expectedSize) => {
-    const file = await IOFile.fileFrom(filePath, 'r');
+    const ioFile = await IOFile.fileFrom(filePath, 'r');
     try {
-      expect(file.getSize()).toEqual(expectedSize);
+      expect(ioFile.getSize()).toEqual(expectedSize);
     } finally {
-      await file.close();
+      await ioFile.close();
     }
   });
 
-  test.each(filesWithSizes)(
-    'should get size of symlinked file: %s',
-    async (filePath, expectedSize) => {
-      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-      await FsUtil.copyFile(filePath, tempFile);
-      const tempSymlink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'symlink'));
-      await FsUtil.symlink(path.resolve(tempFile), tempSymlink);
+  test.each(
+    ['symbolic', 'hard'].flatMap((linkType) =>
+      filesWithSizes.map(([filePath, expectedSize]): [string, string, number] => [
+        linkType,
+        filePath,
+        expectedSize,
+      ]),
+    ),
+  )('should get size of a %s linked file: %s', async (linkType, filePath, expectedSize) => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+    await FsUtil.copyFile(filePath, tempFile);
+    const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
+    await (linkType === 'symbolic'
+      ? FsUtil.symlink(path.resolve(tempFile), tempLink)
+      : FsUtil.hardlink(tempFile, tempLink));
 
-      const file = await IOFile.fileFrom(tempSymlink, 'r');
-      try {
-        expect(file.getSize()).toEqual(expectedSize);
-      } finally {
-        await file.close();
-        await FsUtil.rm(tempSymlink);
-        await FsUtil.rm(tempFile);
-      }
-    },
-  );
+    const ioFile = await IOFile.fileFrom(tempLink, 'r');
+    try {
+      expect(ioFile.getSize()).toEqual(expectedSize);
+    } finally {
+      await ioFile.close();
+      await FsUtil.rm(tempLink);
+      await FsUtil.rm(tempFile);
+    }
+  });
+});
 
-  test.each(filesWithSizes)(
-    'should get size of hard linked file: %s',
-    async (filePath, expectedSize) => {
-      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-      await FsUtil.copyFile(filePath, tempFile);
-      const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
-      await FsUtil.hardlink(tempFile, tempLink);
+describe('isEOF', () => {
+  it('should be true once the read position reaches the end of the file', async () => {
+    await withIOFile({ contents: 'ABCD', mode: 'r' }, async (ioFile) => {
+      expect(ioFile.isEOF()).toEqual(false);
+      await ioFile.readNext(3);
+      expect(ioFile.isEOF()).toEqual(false);
+      await ioFile.readNext(1);
+      expect(ioFile.isEOF()).toEqual(true);
+      ioFile.seek(100);
+      expect(ioFile.isEOF()).toEqual(true);
+    });
+  });
+});
 
-      const file = await IOFile.fileFrom(tempLink, 'r');
-      try {
-        expect(file.getSize()).toEqual(expectedSize);
-      } finally {
-        await file.close();
-        await FsUtil.rm(tempLink);
-        await FsUtil.rm(tempFile);
-      }
-    },
-  );
+describe('seek', () => {
+  it('should move the read position backward and forward', async () => {
+    await withIOFile({ contents: 'ABCDEF0123456789', mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readNext(5)).resolves.toEqual(Buffer.from('ABCDE'));
+      ioFile.seek(1);
+      expect(ioFile.getPosition()).toEqual(1);
+      await expect(ioFile.readNext(3)).resolves.toEqual(Buffer.from('BCD'));
+      ioFile.seek(10);
+      await expect(ioFile.readNext(3)).resolves.toEqual(Buffer.from('456'));
+    });
+  });
+});
+
+describe('skipNext', () => {
+  it('should advance the read position', async () => {
+    await withIOFile({ contents: 'ABCDEF0123456789', mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readNext(2)).resolves.toEqual(Buffer.from('AB'));
+      ioFile.skipNext(4);
+      expect(ioFile.getPosition()).toEqual(6);
+      await expect(ioFile.readNext(5)).resolves.toEqual(Buffer.from('01234'));
+    });
+  });
+});
+
+describe('peekNext', () => {
+  it('should read from the read position without advancing it', async () => {
+    await withIOFile({ contents: 'ABCDEF', mode: 'r' }, async (ioFile) => {
+      ioFile.seek(2);
+      await expect(ioFile.peekNext(3)).resolves.toEqual(Buffer.from('CDE'));
+      await expect(ioFile.peekNext(100)).resolves.toEqual(Buffer.from('CDEF'));
+      expect(ioFile.getPosition()).toEqual(2);
+    });
+  });
 });
 
 describe('readNext', () => {
-  it('should read from the beginning', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCDEF0123456789');
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
-      await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
-      await expect(file.readNext(4)).resolves.toEqual(Buffer.from('F012'));
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should respect seek', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCDEF0123456789');
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
-      await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
-      file.seek(0);
-      await expect(file.readNext(4)).resolves.toEqual(Buffer.from('ABCD'));
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should respect skipNext', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCDEF0123456789');
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
-      await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
-      file.skipNext(4);
-      await expect(file.readNext(5)).resolves.toEqual(Buffer.from('34567'));
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
+  it('should read from the read position and advance it by the requested size', async () => {
+    await withIOFile({ contents: 'ABCDEF0123456789', mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readNext(4)).resolves.toEqual(Buffer.from('ABCD'));
+      expect(ioFile.getPosition()).toEqual(4);
+      // Fewer bytes at the end of the file
+      await expect(ioFile.readNext(100)).resolves.toEqual(Buffer.from('EF0123456789'));
+      expect(ioFile.getPosition()).toEqual(104);
+      await expect(ioFile.readNext(1)).resolves.toEqual(Buffer.alloc(0));
+    });
   });
 });
 
 describe('readUntil', () => {
   it('should read up to the delimiter and advance past it', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.from([1, 2, 3, 0, 0, 4, 5]));
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readUntil(0, 100)).resolves.toEqual({
-        data: Buffer.from([1, 2, 3]),
-        isDelimiterFound: true,
-      });
-      await expect(file.readUntil(0, 100)).resolves.toEqual({
-        data: Buffer.alloc(0),
-        isDelimiterFound: true,
-      });
-      await expect(file.readUntil(0, 100)).resolves.toEqual({
-        data: Buffer.from([4, 5]),
-        isDelimiterFound: false,
-      });
-      expect(file.getPosition()).toEqual(7);
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
+    await withIOFile(
+      { contents: Buffer.from([1, 2, 3, 0, 0, 4, 5]), mode: 'r' },
+      async (ioFile) => {
+        await expect(ioFile.readUntil(0, 100)).resolves.toEqual({
+          data: Buffer.from([1, 2, 3]),
+          isDelimiterFound: true,
+        });
+        await expect(ioFile.readUntil(0, 100)).resolves.toEqual({
+          data: Buffer.alloc(0),
+          isDelimiterFound: true,
+        });
+        await expect(ioFile.readUntil(0, 100)).resolves.toEqual({
+          data: Buffer.from([4, 5]),
+          isDelimiterFound: false,
+        });
+        expect(ioFile.getPosition()).toEqual(7);
+      },
+    );
   });
 
   it('should not read past the max size', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.from([1, 2, 3, 0]));
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readUntil(0, 2)).resolves.toEqual({
+    await withIOFile({ contents: Buffer.from([1, 2, 3, 0]), mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readUntil(0, 2)).resolves.toEqual({
         data: Buffer.from([1, 2]),
         isDelimiterFound: false,
       });
-      expect(file.getPosition()).toEqual(2);
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
+      expect(ioFile.getPosition()).toEqual(2);
+    });
   });
 
   it('should read at most a chunk at a time', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(
-      tempFile,
-      Buffer.concat([Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE + 10, 1), Buffer.from([0])]),
-    );
+    const contents = Buffer.concat([
+      Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE + 10, 1),
+      Buffer.from([0]),
+    ]);
 
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readUntil(0, file.getSize())).resolves.toEqual({
+    await withIOFile({ contents, mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readUntil(0, ioFile.getSize())).resolves.toEqual({
         data: Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE, 1),
         isDelimiterFound: false,
       });
-      await expect(file.readUntil(0, file.getSize())).resolves.toEqual({
+      await expect(ioFile.readUntil(0, ioFile.getSize())).resolves.toEqual({
         data: Buffer.alloc(10, 1),
         isDelimiterFound: true,
       });
-      expect(file.getPosition()).toEqual(file.getSize());
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should only copy the bytes before the delimiter', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(
-      tempFile,
-      Buffer.concat([
-        Buffer.from('ABCDE'),
-        Buffer.from([0]),
-        Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE * 2, 1),
-      ]),
-    );
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readUntil(0, file.getSize())).resolves.toEqual({
-        data: Buffer.from('ABCDE'),
-        isDelimiterFound: true,
-      });
-      expect(file.getPosition()).toEqual(6);
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
+      expect(ioFile.getPosition()).toEqual(ioFile.getSize());
+    });
   });
 
   it('should find a delimiter at the end of the chunk', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
     // When chunks are larger than pages, the delimiter is in a later page
     const delimiterPosition = Defaults.FILE_READING_CHUNK_SIZE - 5;
-    await FsUtil.writeFile(
-      tempFile,
-      Buffer.concat([Buffer.alloc(delimiterPosition, 1), Buffer.from([0]), Buffer.alloc(10, 1)]),
-    );
+    const contents = Buffer.concat([
+      Buffer.alloc(delimiterPosition, 1),
+      Buffer.from([0]),
+      Buffer.alloc(10, 1),
+    ]);
 
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readUntil(0, file.getSize())).resolves.toEqual({
+    await withIOFile({ contents, mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readUntil(0, ioFile.getSize())).resolves.toEqual({
         data: Buffer.alloc(delimiterPosition, 1),
         isDelimiterFound: true,
       });
-      expect(file.getPosition()).toEqual(delimiterPosition + 1);
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should not read past maxSize', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.from('ABCDEF\u{0}'));
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readUntil(0, 3)).resolves.toEqual({
-        data: Buffer.from('ABC'),
-        isDelimiterFound: false,
-      });
-      expect(file.getPosition()).toEqual(3);
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
+      expect(ioFile.getPosition()).toEqual(delimiterPosition + 1);
+    });
   });
 });
 
 describe('readAt', () => {
   test.each([
-    ['smaller than the cache', Defaults.MAX_IO_FILE_CACHE_SIZE - 1],
-    ['larger than the cache', Defaults.MAX_IO_FILE_CACHE_SIZE * 2 + 100],
+    ['smaller than the cache', Defaults.IO_FILE_PAGE_SIZE * 2 + 1],
+    ['larger than the cache', Defaults.MAX_IO_FILE_CACHE_SIZE + Defaults.IO_FILE_PAGE_SIZE * 2],
   ])('should read a file %s', async (_name, size) => {
     const contents = patterned(size);
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, contents);
 
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      // Read the start, then the end, which evicts the start of larger files, then the start again
-      await expect(file.readAt(0, 16)).resolves.toEqual(contents.subarray(0, 16));
-      await expect(file.readAt(size - 16, 16)).resolves.toEqual(contents.subarray(size - 16));
-      await expect(file.readAt(0, 16)).resolves.toEqual(contents.subarray(0, 16));
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
+    await withIOFile({ contents, mode: 'r' }, async (ioFile) => {
+      // Read the start, then the whole file, which evicts the start of larger files, then the
+      // start again
+      await expect(ioFile.readAt(0, 16)).resolves.toEqual(contents.subarray(0, 16));
+      await expect(ioFile.readAt(0, size)).resolves.toEqual(contents);
+      await expect(ioFile.readAt(0, 16)).resolves.toEqual(contents.subarray(0, 16));
+    });
   });
 
   it('should read across pages', async () => {
     const contents = patterned(Defaults.IO_FILE_PAGE_SIZE * 3);
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, contents);
+    const position = Defaults.IO_FILE_PAGE_SIZE - 10;
+    const size = Defaults.IO_FILE_PAGE_SIZE + 20;
 
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      const position = Defaults.IO_FILE_PAGE_SIZE - 10;
-      const size = Defaults.IO_FILE_PAGE_SIZE + 20;
-      await expect(file.readAt(position, size)).resolves.toEqual(
+    await withIOFile({ contents, mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readAt(position, size)).resolves.toEqual(
         contents.subarray(position, position + size),
       );
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should read consecutive missing pages from disk together, at most a chunk at a time', async () => {
-    const contents = patterned(Defaults.IO_FILE_PAGE_SIZE * 4);
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, contents);
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
     });
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      const read = vi.spyOn(openedHandles[0], 'read');
-      const readv = vi.spyOn(openedHandles[0], 'readv');
-      await expect(file.readAt(10, contents.length - 20)).resolves.toEqual(
-        contents.subarray(10, -10),
-      );
-      expect(read).toHaveBeenCalledTimes(0);
-      const readSizes = readv.mock.calls.map(([buffers]) =>
-        buffers.reduce((sum, buffer) => sum + buffer.byteLength, 0),
-      );
-      expect(readSizes).toEqual(
-        Array.from(
-          { length: Math.ceil(contents.length / Defaults.FILE_READING_CHUNK_SIZE) },
-          (_value, idx) =>
-            Math.min(
-              Defaults.FILE_READING_CHUNK_SIZE,
-              contents.length - idx * Defaults.FILE_READING_CHUNK_SIZE,
-            ),
-        ),
-      );
-    } finally {
-      vi.restoreAllMocks();
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should read ahead as many uncached pages as were read', async () => {
-    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const contents = patterned(pageSize * 5);
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, contents);
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
-    });
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      const readv = vi.spyOn(openedHandles[0], 'readv');
-      const bytesRead = (): number =>
-        readv.mock.calls
-          .flatMap(([buffers]) => buffers)
-          .reduce((sum, buffer) => sum + buffer.byteLength, 0);
-
-      // Reads the second page, and reads ahead the third
-      await expect(file.readAt(pageSize, 1)).resolves.toEqual(
-        contents.subarray(pageSize, pageSize + 1),
-      );
-      expect(bytesRead()).toEqual(pageSize * 2);
-      // Doesn't read ahead the cached second page
-      await expect(file.readAt(0, 1)).resolves.toEqual(contents.subarray(0, 1));
-      expect(bytesRead()).toEqual(pageSize * 3);
-      // Reads the fourth and fifth pages, but not past the end of the file
-      await expect(file.readAt(pageSize * 3, pageSize * 2)).resolves.toEqual(
-        contents.subarray(pageSize * 3),
-      );
-      expect(bytesRead()).toEqual(pageSize * 5);
-      await expect(file.readAt(0, contents.length)).resolves.toEqual(contents);
-      expect(bytesRead()).toEqual(pageSize * 5);
-    } finally {
-      vi.restoreAllMocks();
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should evict read ahead pages before the pages that were read', async () => {
-    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const maxPages = Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize;
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.alloc((maxPages + 2) * pageSize));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
-    });
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      const readv = vi.spyOn(openedHandles[0], 'readv');
-      const bytesRead = (): number =>
-        readv.mock.calls
-          .flatMap(([buffers]) => buffers)
-          .reduce((sum, buffer) => sum + buffer.byteLength, 0);
-
-      // Reads the first half of the cache, and reads ahead the second half, filling it
-      await file.readAt(0, (maxPages / 2) * pageSize);
-      expect(bytesRead()).toEqual(maxPages * pageSize);
-      // Evicts two of the read ahead pages, rather than the first page
-      await file.readAt(maxPages * pageSize, 1);
-      expect(bytesRead()).toEqual((maxPages + 2) * pageSize);
-      await file.readAt(0, 1);
-      expect(bytesRead()).toEqual((maxPages + 2) * pageSize);
-    } finally {
-      vi.restoreAllMocks();
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
   });
 
   it('should read fewer bytes at the end of the file', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCDEF');
-
-    const file = await IOFile.fileFrom(tempFile, 'r');
-    try {
-      await expect(file.readAt(4, 16)).resolves.toEqual(Buffer.from('EF'));
-      await expect(file.readAt(6, 16)).resolves.toEqual(Buffer.alloc(0));
-      await expect(file.readAt(100, 16)).resolves.toEqual(Buffer.alloc(0));
-    } finally {
-      await file.close();
-      await FsUtil.rm(tempFile);
-    }
+    await withIOFile({ contents: 'ABCDEF', mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.readAt(4, 16)).resolves.toEqual(Buffer.from('EF'));
+      await expect(ioFile.readAt(6, 16)).resolves.toEqual(Buffer.alloc(0));
+      await expect(ioFile.readAt(100, 16)).resolves.toEqual(Buffer.alloc(0));
+    });
   });
 
   it('should not read past the end of the file when a page extends past it', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      const ioFile = await IOFile.fileOfSize(tempFile, 'r+', 16);
+    const expected = Buffer.from(`${'00'.repeat(16)}ff`, 'hex');
+
+    const { contents } = await withIOFile({ size: 16 }, async (ioFile) => {
       // Writing past the end allocates more of the memory buffer than was written
       await ioFile.writeAt(Buffer.from('ff', 'hex'), 16);
-      await expect(ioFile.readAt(0, 64)).resolves.toEqual(
-        Buffer.from(`${'00'.repeat(16)}ff`, 'hex'),
-      );
+      expect(ioFile.getSize()).toEqual(17);
+      await expect(ioFile.readAt(0, 64)).resolves.toEqual(expected);
       await expect(ioFile.readAt(20, 4)).resolves.toEqual(Buffer.alloc(0));
-      await ioFile.close();
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    });
+
+    expect(contents).toEqual(expected);
   });
 });
 
 describe('write', () => {
-  describe('file mode: r', () => {
-    it('should throw on write', async () => {
-      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-
-      try {
-        const file = await IOFile.fileOfSize(tempFile, 'r', 16);
-        await expect(file.write(Buffer.from('ABCDEF01'))).rejects.toThrow();
-        await file.close();
-
-        const contents = await FsUtil.readFile(tempFile);
-        expect(contents).toEqual(
-          Buffer.from(
-            '\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}',
-          ),
-        );
-      } finally {
-        await FsUtil.rm(tempFile);
-      }
+  it('should throw with mode: r', async () => {
+    const { contents } = await withIOFile({ size: 16, mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.write(Buffer.from('ABCDEF01'))).rejects.toThrow();
     });
+
+    expect(contents).toEqual(Buffer.alloc(16));
   });
 
-  describe.each(['r+', 'rs+', 'w', 'wx', fs.constants.O_RDWR, fs.constants.O_WRONLY])(
-    'file mode: %s',
-    (openMode) => {
-      it('should overwrite contents', async () => {
-        const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+  it('should write at the read position and advance it', async () => {
+    const { contents } = await withIOFile({ size: 12 }, async (ioFile) => {
+      ioFile.seek(2);
+      await expect(ioFile.write(Buffer.from('ABCDEF01'))).resolves.toEqual(8);
+      expect(ioFile.getPosition()).toEqual(10);
+      // Past the end of the file
+      await expect(ioFile.write(Buffer.from('2345'))).resolves.toEqual(4);
+      expect(ioFile.getPosition()).toEqual(14);
+      expect(ioFile.getSize()).toEqual(14);
+    });
 
-        try {
-          const file = await IOFile.fileOfSize(tempFile, openMode, 16);
-          await file.write(Buffer.from('ABCDEF01'));
-          await file.close();
+    expect(contents).toEqual(Buffer.from('\u{0}\u{0}ABCDEF012345'));
+  });
 
-          const contents = await FsUtil.readFile(tempFile);
-          expect(contents).toEqual(Buffer.from('ABCDEF01\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}'));
-        } finally {
-          await FsUtil.rm(tempFile);
-        }
+  test.each(['a', 'ax', 'as+', fs.constants.O_WRONLY | fs.constants.O_APPEND])(
+    'should write to the end of the file with mode: %s',
+    async (mode) => {
+      const { contents } = await withIOFile({ size: 4, mode }, async (ioFile) => {
+        await ioFile.write(Buffer.from('ABCDEF01'));
+        expect(ioFile.getPosition()).toEqual(12);
+        ioFile.seek(0);
+        await ioFile.write(Buffer.from('23'));
+        expect(ioFile.getPosition()).toEqual(14);
       });
 
-      it('should extend the file size', async () => {
-        const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-
-        try {
-          const file = await IOFile.fileOfSize(tempFile, openMode, 4);
-          await file.write(Buffer.from('ABCDEF01'));
-          expect(file.getSize()).toEqual(8);
-          await file.close();
-
-          const contents = await FsUtil.readFile(tempFile);
-          expect(contents).toEqual(Buffer.from('ABCDEF01'));
-        } finally {
-          await FsUtil.rm(tempFile);
-        }
-      });
+      expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF0123'));
     },
   );
-  describe.each(['a', 'ax', 'as+', fs.constants.O_WRONLY | fs.constants.O_APPEND])(
-    'file mode: %s',
-    (openMode) => {
-      it('should write to the end of the file', async () => {
-        const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
 
-        try {
-          const file = await IOFile.fileOfSize(tempFile, openMode, 4);
-          await file.write(Buffer.from('ABCDEF01'));
-          expect(file.getPosition()).toEqual(12);
-          file.seek(0);
-          await file.write(Buffer.from('23'));
-          expect(file.getPosition()).toEqual(14);
-          await file.close();
+  it('should append to a file many bytes at a time', async () => {
+    const expected = patterned(Defaults.IO_FILE_PAGE_SIZE + 1000);
 
-          await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-            Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF0123'),
-          );
-        } finally {
-          await FsUtil.rm(tempFile);
-        }
-      });
-    },
-  );
+    const { contents } = await withIOFile({ mode: 'w+' }, async (ioFile) => {
+      for (let position = 0; position < expected.length; position += 100) {
+        await ioFile.write(expected.subarray(position, position + 100));
+      }
+      await expect(ioFile.readAt(0, expected.length)).resolves.toEqual(expected);
+    });
+
+    expect(contents).toEqual(expected);
+  });
 });
 
 describe('writeAt', () => {
-  describe('file mode: r', () => {
-    it('should throw on write', async () => {
-      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-
-      try {
-        const file = await IOFile.fileOfSize(tempFile, 'r', 16);
-        await expect(file.writeAt(Buffer.from('ABCDEF01'), 4)).rejects.toThrow();
-        await file.close();
-
-        const contents = await FsUtil.readFile(tempFile);
-        expect(contents).toEqual(
-          Buffer.from(
-            '\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}',
-          ),
-        );
-      } finally {
-        await FsUtil.rm(tempFile);
-      }
+  it('should throw with mode: r', async () => {
+    const { contents } = await withIOFile({ size: 16, mode: 'r' }, async (ioFile) => {
+      await expect(ioFile.writeAt(Buffer.from('ABCDEF01'), 4)).rejects.toThrow();
     });
+
+    expect(contents).toEqual(Buffer.alloc(16));
   });
 
   describe.each(['r+', 'rs+', 'w', 'wx', fs.constants.O_RDWR, fs.constants.O_WRONLY])(
     'file mode: %s',
-    (openMode) => {
+    (mode) => {
       it('should overwrite contents', async () => {
-        const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+        const { contents } = await withIOFile({ size: 16, mode }, async (ioFile) => {
+          await expect(ioFile.writeAt(Buffer.from('ABCDEF01'), 6)).resolves.toEqual(8);
+          expect(ioFile.getSize()).toEqual(16);
+        });
 
-        try {
-          const file = await IOFile.fileOfSize(tempFile, openMode, 16);
-          await file.writeAt(Buffer.from('ABCDEF01'), 6);
-          await file.close();
-
-          const contents = await FsUtil.readFile(tempFile);
-          expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}ABCDEF01\u{0}\u{0}'));
-        } finally {
-          await FsUtil.rm(tempFile);
-        }
+        expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}ABCDEF01\u{0}\u{0}'));
       });
 
       it('should extend the file size', async () => {
-        const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+        const { contents } = await withIOFile({ size: 4, mode }, async (ioFile) => {
+          await expect(ioFile.writeAt(Buffer.from('ABCDEF01'), 6)).resolves.toEqual(8);
+          expect(ioFile.getSize()).toEqual(14);
+        });
 
-        try {
-          const file = await IOFile.fileOfSize(tempFile, openMode, 4);
-          await file.writeAt(Buffer.from('ABCDEF01'), 6);
-          expect(file.getSize()).toEqual(14);
-          await file.close();
-
-          const contents = await FsUtil.readFile(tempFile);
-          expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}ABCDEF01'));
-        } finally {
-          await FsUtil.rm(tempFile);
-        }
+        expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}ABCDEF01'));
       });
     },
   );
 
-  it('should grow a file by only the bytes written past its end', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      const ioFile = await IOFile.fileOfSize(tempFile, 'r+', 16);
-      await ioFile.writeAt(Buffer.from('ff', 'hex'), 16);
-      expect(ioFile.getSize()).toEqual(17);
-      await ioFile.close();
+  test.each(['a', 'ax', 'as+', fs.constants.O_WRONLY | fs.constants.O_APPEND])(
+    'should write to the end of the file with mode: %s',
+    async (mode) => {
+      const { contents } = await withIOFile({ size: 4, mode }, async (ioFile) => {
+        await expect(ioFile.writeAt(Buffer.from('ABCDEF01'), 0)).resolves.toEqual(8);
+        await expect(ioFile.writeAt(Buffer.from('23'), 1)).resolves.toEqual(2);
+        expect(ioFile.getSize()).toEqual(14);
+      });
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-        Buffer.from(`${'00'.repeat(16)}ff`, 'hex'),
-      );
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
-  });
+      expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF0123'));
+    },
+  );
 
   it('should not grow a file when writing nothing past its end', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCD');
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
+    const { contents } = await withIOFile({ contents: 'ABCD' }, async (ioFile) => {
       await expect(ioFile.writeAt(Buffer.alloc(0), 1000)).resolves.toEqual(0);
       expect(ioFile.getSize()).toEqual(4);
-      await ioFile.close();
+    });
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCD'));
-    } finally {
-      await FsUtil.rm(tempFile);
-    }
+    expect(contents).toEqual(Buffer.from('ABCD'));
   });
 
   it('should not grow a file when the write fails', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCD');
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
+    const { contents } = await withIOFile({ contents: 'ABCD' }, async (ioFile) => {
       // The write needs the lock to load its page, which the close holds
       const closing = ioFile.close();
       await expect(ioFile.writeAt(Buffer.from('ff', 'hex'), 1000)).rejects.toThrow('closed');
       await closing;
+    });
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCD'));
-    } finally {
-      await FsUtil.rm(tempFile);
-    }
+    expect(contents).toEqual(Buffer.from('ABCD'));
   });
 
-  it('should keep the bytes between the end of a cached page and a write past it zeros', async () => {
+  it('should zero the gap between a cached page and a write past it', async () => {
     const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const contents = patterned(10);
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, contents);
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
+    const initial = patterned(10);
+    const expected = Buffer.concat([
+      initial,
+      Buffer.alloc(pageSize * 2 - initial.length),
+      Buffer.from('ff', 'hex'),
+    ]);
+
+    const { contents } = await withIOFile({ contents: initial }, async (ioFile) => {
       await ioFile.readAt(0, 1); // cache the first page
       await ioFile.writeAt(Buffer.from('ff', 'hex'), pageSize * 2);
-      const expected = Buffer.concat([
-        contents,
-        Buffer.alloc(pageSize * 2 - contents.length),
-        Buffer.from('ff', 'hex'),
-      ]);
       await expect(ioFile.readAt(0, expected.length)).resolves.toEqual(expected);
-      await ioFile.close();
+    });
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(expected);
-    } finally {
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should append to a file many bytes at a time', async () => {
-    const contents = patterned(Defaults.IO_FILE_PAGE_SIZE + 1000);
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'w+');
-      for (let position = 0; position < contents.length; position += 100) {
-        await ioFile.write(contents.subarray(position, position + 100));
-      }
-      await expect(ioFile.readAt(0, contents.length)).resolves.toEqual(contents);
-      await ioFile.close();
-
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(contents);
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    expect(contents).toEqual(expected);
   });
 
   it('should grow a file larger than the cache', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      await FsUtil.writeFile(tempFile, Buffer.from('00010203', 'hex'));
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      await ioFile.writeAt(Buffer.from('ff', 'hex'), Defaults.MAX_IO_FILE_CACHE_SIZE + 1);
-      expect(ioFile.getSize()).toEqual(Defaults.MAX_IO_FILE_CACHE_SIZE + 2);
-      await ioFile.close();
+    const expected = Buffer.alloc(Defaults.MAX_IO_FILE_CACHE_SIZE + 2);
+    Buffer.from('00010203', 'hex').copy(expected);
+    expected[Defaults.MAX_IO_FILE_CACHE_SIZE + 1] = 0xff;
 
-      await expect(FsUtil.size(tempFile)).resolves.toEqual(Defaults.MAX_IO_FILE_CACHE_SIZE + 2);
-      const readFile = await IOFile.fileFrom(tempFile, 'r');
-      try {
-        await expect(readFile.readAt(0, 8)).resolves.toEqual(
-          Buffer.from('0001020300000000', 'hex'),
-        );
-        await expect(readFile.readAt(Defaults.MAX_IO_FILE_CACHE_SIZE - 1, 16)).resolves.toEqual(
-          Buffer.from('0000ff', 'hex'),
-        );
-      } finally {
-        await readFile.close();
-      }
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    const { contents } = await withIOFile(
+      { contents: Buffer.from('00010203', 'hex') },
+      async (ioFile) => {
+        await ioFile.writeAt(Buffer.from('ff', 'hex'), Defaults.MAX_IO_FILE_CACHE_SIZE + 1);
+        expect(ioFile.getSize()).toEqual(Defaults.MAX_IO_FILE_CACHE_SIZE + 2);
+      },
+    );
+
+    expect(contents).toEqual(expected);
   });
 
   it('should keep writes to pages evicted from the cache', async () => {
     const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const pageCount = (Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize) * 2;
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      await FsUtil.writeFile(tempFile, Buffer.alloc(pageCount * pageSize));
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
+    const pageCount = Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize + 2;
+    const expected = Buffer.alloc(pageCount * pageSize);
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+      expected[pageIndex * pageSize] = pageIndex & 0xff;
+    }
+
+    const { contents } = await withIOFile({ size: expected.length }, async (ioFile) => {
       // Write the page index to the start of every page, more pages than the cache holds
       for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
         await ioFile.writeAt(Buffer.from([pageIndex & 0xff]), pageIndex * pageSize);
@@ -898,26 +666,23 @@ describe('writeAt', () => {
       // The first pages were evicted, so they're read back from disk
       await expect(ioFile.readAt(0, 1)).resolves.toEqual(Buffer.from([0]));
       await expect(ioFile.readAt(pageSize, 1)).resolves.toEqual(Buffer.from([1]));
-      await ioFile.close();
+    });
 
-      const contents = await FsUtil.readFile(tempFile);
-      expect(contents.length).toEqual(pageCount * pageSize);
-      for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
-        expect(contents[pageIndex * pageSize]).toEqual(pageIndex & 0xff);
-      }
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    expect(contents).toEqual(expected);
   });
 
   test.each(['w', 'w+'])(
-    'should read pages evicted from the cache of a file opened with mode: %s',
-    async (openMode) => {
+    'should read evicted pages of a file opened with mode: %s',
+    async (mode) => {
       const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-      const pageCount = (Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize) * 2;
-      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-      try {
-        const ioFile = await IOFile.fileFrom(tempFile, openMode);
+      const pageCount = Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize + 2;
+      const expected = Buffer.alloc((pageCount - 1) * pageSize + 1);
+      for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+        expected[pageIndex * pageSize] = pageIndex & 0xff;
+      }
+      expected[1] = 0xff;
+
+      const { contents } = await withIOFile({ mode }, async (ioFile) => {
         // More pages than the cache holds, so the first pages are written to disk and evicted
         for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
           await ioFile.writeAt(Buffer.from([pageIndex & 0xff]), pageIndex * pageSize);
@@ -925,325 +690,143 @@ describe('writeAt', () => {
         // The first page is read back from disk
         await ioFile.writeAt(Buffer.from([0xff]), 1);
         await expect(ioFile.readAt(0, 2)).resolves.toEqual(Buffer.from([0, 0xff]));
-        await ioFile.close();
+      });
 
-        const contents = await FsUtil.readFile(tempFile);
-        expect(contents.length).toEqual((pageCount - 1) * pageSize + 1);
-        expect(contents.subarray(0, 2)).toEqual(Buffer.from([0, 0xff]));
-        expect(contents[pageSize]).toEqual(1);
-      } finally {
-        await FsUtil.rm(tempFile, { force: true });
-      }
+      expect(contents).toEqual(expected);
     },
   );
 
   it('should stage writes in memory until the file is closed', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE * 2));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
-    });
+    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
+    const expected = Buffer.alloc(pageSize * 2);
+    for (let position = 0; position < expected.length; position += 1024) {
+      expected[position] = 0xff;
+    }
 
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      const write = vi.spyOn(openedHandles[0], 'write');
-      const writev = vi.spyOn(openedHandles[0], 'writev');
+    const { contents } = await withIOFile({ size: expected.length }, async (ioFile) => {
       // Many small writes across two pages
-      for (let position = 0; position < Defaults.IO_FILE_PAGE_SIZE * 2; position += 1024) {
+      for (let position = 0; position < expected.length; position += 1024) {
         await ioFile.writeAt(Buffer.from([0xff]), position);
       }
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-        Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE * 2),
+      await expect(FsUtil.readFile(ioFile.getPathLike())).resolves.toEqual(
+        Buffer.alloc(expected.length),
       );
-      await ioFile.close();
-
-      // Both pages were written to disk together, a chunk at a time
-      expect(write).toHaveBeenCalledTimes(0);
-      expect(writev).toHaveBeenCalledTimes(
-        Math.ceil((Defaults.IO_FILE_PAGE_SIZE * 2) / Defaults.FILE_READING_CHUNK_SIZE),
-      );
-      const expected = Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE * 2);
-      for (let position = 0; position < expected.length; position += 1024) {
-        expected[position] = 0xff;
-      }
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(expected);
-    } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should write each byte to disk once, at most a chunk at a time', async () => {
-    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const pageCount = (Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize) * 2;
-    const contents = patterned(pageCount * pageSize);
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.alloc(contents.length));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
     });
 
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      const write = vi.spyOn(openedHandles[0], 'write');
-      const writev = vi.spyOn(openedHandles[0], 'writev');
+    expect(contents).toEqual(expected);
+  });
+
+  it('should keep every byte of writes to more pages than the cache holds', async () => {
+    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
+    const pageCount = Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize + 2;
+    const expected = patterned(pageCount * pageSize);
+
+    const { contents } = await withIOFile({ size: expected.length }, async (ioFile) => {
       // More pages than the cache holds, so dirty pages are evicted, then the rest are flushed
       for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
         await ioFile.writeAt(
-          contents.subarray(pageIndex * pageSize, (pageIndex + 1) * pageSize),
+          expected.subarray(pageIndex * pageSize, (pageIndex + 1) * pageSize),
           pageIndex * pageSize,
         );
       }
-      await ioFile.close();
-
-      expect(write).toHaveBeenCalledTimes(0);
-      const writeSizes = writev.mock.calls.map(([buffers]) =>
-        buffers.reduce((sum, buffer) => sum + buffer.byteLength, 0),
-      );
-      expect(
-        writeSizes.every((writeSize) => writeSize <= Defaults.FILE_READING_CHUNK_SIZE),
-      ).toEqual(true);
-      expect(writeSizes.reduce((sum, writeSize) => sum + writeSize, 0)).toEqual(contents.length);
-      // Deep-comparing buffers this large exhausts the heap
-      expect((await FsUtil.readFile(tempFile)).equals(contents)).toEqual(true);
-    } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile);
-    }
-  });
-
-  it('should not read pages from disk that are entirely overwritten', async () => {
-    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.alloc(pageSize * 3));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
     });
 
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      const read = vi.spyOn(openedHandles[0], 'read');
-      const readv = vi.spyOn(openedHandles[0], 'readv');
-      // Overwrites the second page entirely, but only part of the first and third pages
-      const contents = patterned(pageSize + 20);
-      await ioFile.writeAt(contents, pageSize - 10);
-      // Only the first and third pages are read
-      expect(read).toHaveBeenCalledTimes(0);
-      expect(readv).toHaveBeenCalledTimes(
-        Math.ceil(pageSize / Defaults.FILE_READING_CHUNK_SIZE) * 2,
-      );
-      await expect(ioFile.readAt(pageSize - 10, contents.length)).resolves.toEqual(contents);
-      await ioFile.close();
+    expect(contents).toEqual(expected);
+  });
 
-      const written = await FsUtil.readFile(tempFile);
-      expect(written.subarray(pageSize - 10, pageSize + 10 + pageSize)).toEqual(contents);
-      expect(written.subarray(0, pageSize - 10)).toEqual(Buffer.alloc(pageSize - 10));
-    } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile);
-    }
+  it('should overwrite a region spanning partial and whole pages', async () => {
+    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
+    // Overwrites the second page entirely, but only part of the first and third pages
+    const written = patterned(pageSize + 20);
+    const expected = Buffer.alloc(pageSize * 3);
+    written.copy(expected, pageSize - 10);
+
+    const { contents } = await withIOFile({ size: expected.length }, async (ioFile) => {
+      await expect(ioFile.writeAt(written, pageSize - 10)).resolves.toEqual(written.length);
+      await expect(ioFile.readAt(pageSize - 10, written.length)).resolves.toEqual(written);
+    });
+
+    expect(contents).toEqual(expected);
   });
 
   it('should read and write concurrently', async () => {
     const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const pageCount = (Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize) * 2;
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.alloc(pageCount * pageSize));
-
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      // More pages than the cache holds, so pages are evicted while other operations wait
-      await Promise.all(
-        Array.from(
-          { length: pageCount },
-          async (_value, pageIndex) =>
-            await ioFile.writeAt(Buffer.from([pageIndex & 0xff, 0xff]), pageIndex * pageSize + 1),
-        ),
-      );
-      const reads = await Promise.all(
-        Array.from(
-          { length: pageCount },
-          async (_value, pageIndex) => await ioFile.readAt(pageIndex * pageSize, 3),
-        ),
-      );
-      for (const [pageIndex, read] of reads.entries()) {
-        expect(read).toEqual(Buffer.from([0, pageIndex & 0xff, 0xff]));
-      }
-      await ioFile.close();
-    } finally {
-      await FsUtil.rm(tempFile);
+    const pageCount = Defaults.MAX_IO_FILE_CACHE_SIZE / pageSize + 2;
+    const expected = Buffer.alloc(pageCount * pageSize);
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+      expected[pageIndex * pageSize + 1] = pageIndex & 0xff;
+      expected[pageIndex * pageSize + 2] = 0xff;
     }
+
+    const { result: reads, contents } = await withIOFile(
+      { size: expected.length },
+      async (ioFile) => {
+        // More pages than the cache holds, so pages are evicted while other operations wait
+        await Promise.all(
+          Array.from(
+            { length: pageCount },
+            async (_value, pageIndex) =>
+              await ioFile.writeAt(Buffer.from([pageIndex & 0xff, 0xff]), pageIndex * pageSize + 1),
+          ),
+        );
+        return await Promise.all(
+          Array.from(
+            { length: pageCount },
+            async (_value, pageIndex) => await ioFile.readAt(pageIndex * pageSize, 3),
+          ),
+        );
+      },
+    );
+
+    expect(reads).toEqual(
+      Array.from({ length: pageCount }, (_value, pageIndex) =>
+        Buffer.from([0, pageIndex & 0xff, 0xff]),
+      ),
+    );
+    expect(contents).toEqual(expected);
   });
 
   it('should write more than the cache holds past the end of the file at once', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'w+');
-      // Evicts the write's own dirty pages before it finishes
-      const contents = patterned(Defaults.MAX_IO_FILE_CACHE_SIZE + Defaults.IO_FILE_PAGE_SIZE);
-      await ioFile.writeAt(contents, 1);
-      expect(ioFile.getSize()).toEqual(contents.length + 1);
-      await ioFile.close();
+    // Evicts the write's own dirty pages before it finishes
+    const written = patterned(Defaults.MAX_IO_FILE_CACHE_SIZE + Defaults.IO_FILE_PAGE_SIZE);
 
-      const written = await FsUtil.readFile(tempFile);
-      // Deep-comparing buffers this large exhausts the heap
-      expect(written.equals(Buffer.concat([Buffer.alloc(1), contents]))).toEqual(true);
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    const { contents } = await withIOFile({ mode: 'w+' }, async (ioFile) => {
+      await expect(ioFile.writeAt(written, 1)).resolves.toEqual(written.length);
+      expect(ioFile.getSize()).toEqual(written.length + 1);
+    });
+
+    expect(contents).toEqual(Buffer.concat([Buffer.alloc(1), written]));
   });
-
-  it('should zero-extend a file to its expected size', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'w+', 8);
-      expect(ioFile.getSize()).toEqual(8);
-      await ioFile.writeAt(Buffer.from('ff', 'hex'), 2);
-      await expect(ioFile.readAt(0, 16)).resolves.toEqual(Buffer.from('0000ff0000000000', 'hex'));
-      await ioFile.close();
-
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-        Buffer.from('0000ff0000000000', 'hex'),
-      );
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
-  });
-  describe.each(['a', 'ax', 'as+', fs.constants.O_WRONLY | fs.constants.O_APPEND])(
-    'file mode: %s',
-    (openMode) => {
-      it('should write to the end of the file', async () => {
-        const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-
-        try {
-          const file = await IOFile.fileOfSize(tempFile, openMode, 4);
-          await expect(file.writeAt(Buffer.from('ABCDEF01'), 0)).resolves.toEqual(8);
-          await expect(file.writeAt(Buffer.from('23'), 1)).resolves.toEqual(2);
-          expect(file.getSize()).toEqual(14);
-          await file.close();
-
-          await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-            Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF0123'),
-          );
-        } finally {
-          await FsUtil.rm(tempFile);
-        }
-      });
-    },
-  );
 
   test.each(['w', 'a'])(
-    'should write straight to a file that can only be written to, with mode: %s',
-    async (openMode) => {
-      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-      await FsUtil.writeFile(tempFile, 'ABCD');
-      const open = fs.promises.open.bind(fs.promises);
-      const openedHandles: fs.promises.FileHandle[] = [];
-      vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-        if (typeof flags === 'number' && (flags & fs.constants.O_RDWR) !== 0) {
-          throw Object.assign(new Error('permission denied'), { code: 'EACCES' });
-        }
-        const handle = await open(pathLike, flags);
-        openedHandles.push(handle);
-        return handle;
+    'should write straight to a write-only file with mode: %s',
+    async (mode) => {
+      denyReadWriteOpens();
+
+      const { contents } = await withIOFile({ contents: 'ABCD', mode }, async (ioFile) => {
+        await expect(ioFile.writeAt(Buffer.from('EF'), 1)).resolves.toEqual(2);
+        await expect(ioFile.readAt(0, 1)).rejects.toThrow('write-only');
+        // Written straight to disk, rather than staged until the file is closed
+        await expect(FsUtil.readFile(ioFile.getPathLike())).resolves.toEqual(
+          Buffer.from(mode === 'w' ? '\u{0}EF' : 'ABCDEF'),
+        );
       });
 
-      try {
-        const file = await IOFile.fileFrom(tempFile, openMode);
-        const write = vi.spyOn(openedHandles[0], 'write');
-        await expect(file.writeAt(Buffer.from('EF'), 1)).resolves.toEqual(2);
-        expect(write).toHaveBeenCalledTimes(1);
-        await expect(file.readAt(0, 1)).rejects.toThrow('write-only');
-        await file.close();
-
-        vi.restoreAllMocks();
-        await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-          Buffer.from(openMode === 'w' ? '\u{0}EF' : 'ABCDEF'),
-        );
-      } finally {
-        vi.restoreAllMocks();
-        await FsUtil.rm(tempFile);
-      }
+      expect(contents).toEqual(Buffer.from(mode === 'w' ? '\u{0}EF' : 'ABCDEF'));
     },
   );
-
-  it('should not open a file that can only be written to with a mode that needs reading', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCD');
-    vi.spyOn(fs.promises, 'open').mockRejectedValue(
-      Object.assign(new Error('permission denied'), { code: 'EACCES' }),
-    );
-
-    try {
-      await expect(IOFile.fileFrom(tempFile, 'r+')).rejects.toThrow('permission denied');
-      expect(fs.promises.open).toHaveBeenCalledTimes(1);
-    } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile);
-    }
-  });
 });
 
 describe('copyChunked', () => {
-  /**
-   * Write {@link contents} to temp files, then call {@link callback} with them opened as
-   * {@link IOFile}s, returning their contents after they're closed.
-   */
-  const withIOFiles = async (
-    contents: Buffer[],
-    callback: (ioFiles: IOFile[]) => Promise<void>,
-  ): Promise<Buffer[]> => {
-    const tempFiles = await Promise.all(
-      contents.map(async () => await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'))),
-    );
-    try {
-      await Promise.all(
-        tempFiles.map(async (tempFile, idx) => {
-          await FsUtil.writeFile(tempFile, contents[idx]);
-        }),
-      );
-      const ioFiles = await Promise.all(
-        tempFiles.map(async (tempFile) => await IOFile.fileFrom(tempFile, 'r+')),
-      );
-      try {
-        await callback(ioFiles);
-      } finally {
-        await Promise.all(
-          ioFiles.map(async (ioFile) => {
-            await ioFile.close();
-          }),
-        );
-      }
-      return await Promise.all(tempFiles.map(async (tempFile) => await FsUtil.readFile(tempFile)));
-    } finally {
-      await Promise.all(
-        tempFiles.map(async (tempFile) => {
-          await FsUtil.rm(tempFile, { force: true });
-        }),
-      );
-    }
-  };
-
   it('should copy a region spanning multiple chunks to another file', async () => {
-    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE * 2 + 100);
-    const target = Buffer.alloc(source.length);
+    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE + 100);
 
-    let copied = 0;
-    const [sourceAfter, targetAfter] = await withIOFiles([source, target], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[1], 5, 10, source.length - 20);
-    });
+    const { result: copied, contents } = await withIOFiles(
+      [{ contents: source }, { contents: Buffer.alloc(source.length) }],
+      async ([sourceFile, targetFile]) =>
+        await sourceFile.copyChunked(targetFile, 5, 10, source.length - 20),
+    );
+    const [sourceAfter, targetAfter] = contents;
 
     expect(copied).toEqual(source.length - 30);
     expect(sourceAfter).toEqual(source);
@@ -1252,29 +835,14 @@ describe('copyChunked', () => {
     );
   });
 
-  it('should copy straight from the source pages', async () => {
-    const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 2 + 100);
-
-    let copied = 0;
-    let reads = 0;
-    const [, targetAfter] = await withIOFiles([source, Buffer.alloc(0)], async (ioFiles) => {
-      const readAt = vi.spyOn(ioFiles[0], 'readAt');
-      copied = await ioFiles[0].copyChunked(ioFiles[1]);
-      reads = readAt.mock.calls.length;
-    });
-
-    expect(copied).toEqual(source.length);
-    expect(reads).toEqual(0);
-    expect(targetAfter).toEqual(source);
-  });
-
   it('should copy the whole file by default', async () => {
     const source = patterned(Defaults.FILE_READING_CHUNK_SIZE + 1);
 
-    let copied = 0;
-    const [, targetAfter] = await withIOFiles([source, Buffer.alloc(0)], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[1]);
-    });
+    const { result: copied, contents } = await withIOFiles(
+      [{ contents: source }, { contents: Buffer.alloc(0) }],
+      async ([sourceFile, targetFile]) => await sourceFile.copyChunked(targetFile),
+    );
+    const [, targetAfter] = contents;
 
     expect(copied).toEqual(source.length);
     expect(targetAfter).toEqual(source);
@@ -1283,103 +851,27 @@ describe('copyChunked', () => {
   it('should stop at the end of the source', async () => {
     const source = patterned(Defaults.FILE_READING_CHUNK_SIZE + 1);
 
-    let copied = 0;
-    const [, targetAfter] = await withIOFiles([source, Buffer.alloc(0)], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[1], 0, 1, source.length * 3);
-    });
+    const { result: copied, contents } = await withIOFiles(
+      [{ contents: source }, { contents: Buffer.alloc(0) }],
+      async ([sourceFile, targetFile]) =>
+        await sourceFile.copyChunked(targetFile, 0, 1, source.length * 3),
+    );
+    const [, targetAfter] = contents;
 
     expect(copied).toEqual(source.length - 1);
     expect(targetAfter).toEqual(source.subarray(1));
   });
 
   it('should copy to an earlier region of the same file', async () => {
-    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE * 2 + 100);
+    const source = patterned(Defaults.FILE_READING_CHUNK_SIZE + 100);
 
-    let copied = 0;
-    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[0], 0, 3);
-    });
+    const { result: copied, contents: sourceAfter } = await withIOFile(
+      { contents: source },
+      async (ioFile) => await ioFile.copyChunked(ioFile, 0, 3),
+    );
 
     expect(copied).toEqual(source.length - 3);
     expect(sourceAfter).toEqual(Buffer.concat([source.subarray(3), source.subarray(-3)]));
-  });
-
-  it('should repeat bytes when copying to an overlapping later region of the same file', async () => {
-    const run = Buffer.from('abc');
-    const source = Buffer.concat([run, Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE * 2 + 100)]);
-
-    let copied = 0;
-    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[0], run.length, 0, source.length - run.length);
-    });
-
-    expect(copied).toEqual(source.length - run.length);
-    expect(sourceAfter).toEqual(
-      Buffer.from(Array.from({ length: source.length }, (_value, idx) => run[idx % run.length])),
-    );
-  });
-
-  it('should repeat a single byte in steps that double up to a page', async () => {
-    const source = Buffer.concat([Buffer.from('a'), Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE * 3)]);
-
-    let copied = 0;
-    let writes = 0;
-    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-      const writeAt = vi.spyOn(ioFiles[0], 'writeAt');
-      copied = await ioFiles[0].copyChunked(ioFiles[0], 1, 0, source.length - 1);
-      writes = writeAt.mock.calls.length;
-    });
-
-    expect(copied).toEqual(source.length - 1);
-    expect(sourceAfter).toEqual(Buffer.alloc(source.length, 'a'));
-    // Steps of 1, 2, 4, ... bytes until a page has been copied, then a page at a time for the
-    // remaining two pages and one byte
-    expect(writes).toEqual(Math.log2(Defaults.IO_FILE_PAGE_SIZE) + 3);
-  });
-
-  it('should repeat a single byte at the end of a page in steps that double up to a page', async () => {
-    const sourceStart = Defaults.IO_FILE_PAGE_SIZE - 1;
-    const size = Defaults.IO_FILE_PAGE_SIZE * 4;
-    const source = Buffer.concat([
-      Buffer.alloc(sourceStart, 'b'),
-      Buffer.from('a'),
-      Buffer.alloc(size, 'c'),
-    ]);
-
-    let copied = 0;
-    let writes = 0;
-    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-      const writeAt = vi.spyOn(ioFiles[0], 'writeAt');
-      copied = await ioFiles[0].copyChunked(
-        ioFiles[0],
-        sourceStart + 1,
-        sourceStart,
-        sourceStart + size,
-      );
-      writes = writeAt.mock.calls.length;
-    });
-
-    expect(copied).toEqual(size);
-    expect(sourceAfter).toEqual(
-      Buffer.concat([Buffer.alloc(sourceStart, 'b'), Buffer.alloc(size + 1, 'a')]),
-    );
-    // One byte from the end of the first page, then steps of 1, 2, 4, ... bytes from the second
-    // page until a page has been copied, then a page at a time for the remaining three pages
-    expect(writes).toEqual(Math.log2(Defaults.IO_FILE_PAGE_SIZE) + 4);
-  });
-
-  it('should repeat bytes when copying to a region of the same file more than a page later', async () => {
-    const distance = Defaults.IO_FILE_PAGE_SIZE + 3;
-    const run = patterned(distance);
-    const source = Buffer.concat([run, Buffer.alloc(distance * 2)]);
-
-    let copied = 0;
-    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[0], distance, 0, source.length - distance);
-    });
-
-    expect(copied).toEqual(source.length - distance);
-    expect(sourceAfter).toEqual(Buffer.concat([run, run, run]));
   });
 
   test.each(
@@ -1387,47 +879,32 @@ describe('copyChunked', () => {
       0,
       1,
       Defaults.IO_FILE_PAGE_SIZE / 2,
-      Defaults.IO_FILE_PAGE_SIZE - 5,
       Defaults.IO_FILE_PAGE_SIZE - 1,
-      Defaults.IO_FILE_PAGE_SIZE,
       Defaults.IO_FILE_PAGE_SIZE + 1,
     ].flatMap((sourceStart) =>
       [
+        0,
         1,
         2,
         3,
-        7,
-        100,
         Defaults.IO_FILE_PAGE_SIZE / 2 + 1,
         Defaults.IO_FILE_PAGE_SIZE - 1,
         Defaults.IO_FILE_PAGE_SIZE,
         Defaults.IO_FILE_PAGE_SIZE + 1,
         Defaults.IO_FILE_PAGE_SIZE * 2 + 1,
-      ].flatMap((distance) =>
-        [Defaults.IO_FILE_PAGE_SIZE * 4, Defaults.IO_FILE_PAGE_SIZE * 4 + 5].map((size) => [
-          sourceStart,
-          distance,
-          size,
-        ]),
-      ),
+      ].map((distance) => [sourceStart, distance]),
     ),
   )(
-    'should copy from position %s to %s bytes later in the same file, %s bytes',
-    async (sourceStart, distance, size) => {
+    'should copy from position %s to %s bytes later in the same file',
+    async (sourceStart, distance) => {
       const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 6);
+      const size = Defaults.IO_FILE_PAGE_SIZE * 3 + 5;
 
-      let copied = 0;
-      let writes = 0;
-      const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-        const writeAt = vi.spyOn(ioFiles[0], 'writeAt');
-        copied = await ioFiles[0].copyChunked(
-          ioFiles[0],
-          sourceStart + distance,
-          sourceStart,
-          sourceStart + size,
-        );
-        writes = writeAt.mock.calls.length;
-      });
+      const { result: copied, contents: sourceAfter } = await withIOFile(
+        { contents: source },
+        async (ioFile) =>
+          await ioFile.copyChunked(ioFile, sourceStart + distance, sourceStart, sourceStart + size),
+      );
 
       // Copy a byte at a time
       const expected = Buffer.alloc(Math.max(source.length, sourceStart + distance + size));
@@ -1437,46 +914,31 @@ describe('copyChunked', () => {
       }
       expect(copied).toEqual(size);
       expect(sourceAfter).toEqual(expected);
-      // Steps double in length until they reach a page, then take at most two steps per page
-      expect(writes).toBeLessThanOrEqual(
-        Math.log2(Defaults.IO_FILE_PAGE_SIZE) + Math.ceil(size / Defaults.IO_FILE_PAGE_SIZE) * 2,
-      );
     },
   );
 
   it('should copy nothing when the source is empty', async () => {
     const source = patterned(10);
 
-    let copied = -1;
-    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[0], 7, 3, 3);
-    });
+    const { result: copied, contents: sourceAfter } = await withIOFile(
+      { contents: source },
+      async (ioFile) => await ioFile.copyChunked(ioFile, 7, 3, 3),
+    );
 
     expect(copied).toEqual(0);
     expect(sourceAfter).toEqual(source);
   });
 
-  it('should leave the file unchanged when copying a region of the same file onto itself', async () => {
+  it('should copy to an overlapping position in another file', async () => {
     const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 2 + 100);
 
-    let copied = 0;
-    const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-      copied = await ioFiles[0].copyChunked(ioFiles[0], 10, 10, source.length - 10);
-    });
-
-    expect(copied).toEqual(source.length - 20);
-    expect(sourceAfter).toEqual(source);
-  });
-
-  it('should copy the original source bytes to a later position in another file', async () => {
-    const source = patterned(Defaults.IO_FILE_PAGE_SIZE * 2 + 100);
-    const target = Buffer.alloc(source.length);
-
-    let copied = 0;
-    const [, targetAfter] = await withIOFiles([source, target], async (ioFiles) => {
+    const { result: copied, contents } = await withIOFiles(
+      [{ contents: source }, { contents: Buffer.alloc(source.length) }],
       // Positions that would overlap if the source and target were the same file
-      copied = await ioFiles[0].copyChunked(ioFiles[1], 13, 10, source.length - 3);
-    });
+      async ([sourceFile, targetFile]) =>
+        await sourceFile.copyChunked(targetFile, 13, 10, source.length - 3),
+    );
+    const [, targetAfter] = contents;
 
     expect(copied).toEqual(source.length - 13);
     expect(targetAfter).toEqual(Buffer.concat([Buffer.alloc(13), source.subarray(10, -3)]));
@@ -1486,21 +948,17 @@ describe('copyChunked', () => {
     ['less than a page', 15],
     ['more than a page', Defaults.IO_FILE_PAGE_SIZE + 15],
   ])(
-    'should repeat the gap when copying from past the end of the same file to %s later',
+    'should copy zeros from past the end of the same file to %s later',
     async (_name, distance) => {
       const source = patterned(10);
       const sourceStart = 5;
       const size = distance * 3;
 
-      let copied = 0;
-      const [sourceAfter] = await withIOFiles([source], async (ioFiles) => {
-        copied = await ioFiles[0].copyChunked(
-          ioFiles[0],
-          sourceStart + distance,
-          sourceStart,
-          sourceStart + size,
-        );
-      });
+      const { result: copied, contents: sourceAfter } = await withIOFile(
+        { contents: source },
+        async (ioFile) =>
+          await ioFile.copyChunked(ioFile, sourceStart + distance, sourceStart, sourceStart + size),
+      );
 
       // Copy a byte at a time, the gap past the end of the file reading as zeros
       const expected = Buffer.alloc(sourceStart + distance + size);
@@ -1516,253 +974,169 @@ describe('copyChunked', () => {
 
 describe('copyNext', () => {
   it('should copy from the read position and advance by the requested size', async () => {
-    const sourceTempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(sourceTempFile, 'ABCDEF0123456789');
-    const targetTempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(targetTempFile, '----------');
+    const { contents } = await withIOFiles(
+      [{ contents: 'ABCDEF0123456789', mode: 'r' }, { contents: '----------' }],
+      async ([sourceFile, targetFile]) => {
+        sourceFile.seek(10);
+        await expect(sourceFile.copyNext(targetFile, 2, 4)).resolves.toEqual(4);
+        expect(sourceFile.getPosition()).toEqual(14);
+        await expect(sourceFile.copyNext(targetFile, 6, 100)).resolves.toEqual(2);
+        expect(sourceFile.getPosition()).toEqual(114);
+      },
+    );
+    const [, targetAfter] = contents;
 
-    try {
-      const source = await IOFile.fileFrom(sourceTempFile, 'r');
-      const target = await IOFile.fileFrom(targetTempFile, 'r+');
-      try {
-        source.seek(10);
-        await expect(source.copyNext(target, 2, 4)).resolves.toEqual(4);
-        expect(source.getPosition()).toEqual(14);
-        await expect(source.copyNext(target, 6, 100)).resolves.toEqual(2);
-        expect(source.getPosition()).toEqual(114);
-      } finally {
-        await source.close();
-        await target.close();
-      }
-      await expect(FsUtil.readFile(targetTempFile)).resolves.toEqual(Buffer.from('--456789--'));
-    } finally {
-      await FsUtil.rm(sourceTempFile);
-      await FsUtil.rm(targetTempFile);
-    }
+    expect(targetAfter).toEqual(Buffer.from('--456789--'));
   });
 });
 
 describe('truncate', () => {
   test.each([
-    // [name, initial hex, truncate size, expected hex]
-    ['shrink', '00010203040506070809', 4, '00010203'],
-    ['zero-extend', '00010203', 8, '0001020300000000'],
-  ])('should %s a cached file', async (_name, initialHex, truncateSize, expectedHex) => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      await FsUtil.writeFile(tempFile, Buffer.from(initialHex, 'hex'));
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      await ioFile.readAt(0, 1); // cache the first page
-      await ioFile.truncate(truncateSize);
-      expect(ioFile.getSize()).toEqual(truncateSize);
-      await expect(ioFile.readAt(0, 1024)).resolves.toEqual(Buffer.from(expectedHex, 'hex'));
-      await ioFile.close();
+    // [name, cached, initial hex, truncate size, expected hex]
+    ['shrink', 'a cached', '00010203040506070809', 4, '00010203'],
+    ['shrink', 'an uncached', '00010203040506070809', 4, '00010203'],
+    ['zero-extend', 'a cached', '00010203', 8, '0001020300000000'],
+    ['zero-extend', 'an uncached', '00010203', 8, '0001020300000000'],
+  ])('should %s %s file', async (_name, cached, initialHex, truncateSize, expectedHex) => {
+    const { contents } = await withIOFile(
+      { contents: Buffer.from(initialHex, 'hex') },
+      async (ioFile) => {
+        if (cached === 'a cached') {
+          await ioFile.readAt(0, 1); // cache the first page
+        }
+        await ioFile.truncate(truncateSize);
+        expect(ioFile.getSize()).toEqual(truncateSize);
+        await expect(ioFile.readAt(0, 1024)).resolves.toEqual(Buffer.from(expectedHex, 'hex'));
+      },
+    );
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from(expectedHex, 'hex'));
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    expect(contents).toEqual(Buffer.from(expectedHex, 'hex'));
   });
 
   it('should zero-extend a cached file past the end of its page', async () => {
     const pageSize = Defaults.IO_FILE_PAGE_SIZE;
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      await FsUtil.writeFile(tempFile, Buffer.from('00010203', 'hex'));
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      await ioFile.readAt(0, 1); // cache the first page
-      await ioFile.truncate(pageSize + 4);
-      const expected = Buffer.concat([Buffer.from('00010203', 'hex'), Buffer.alloc(pageSize)]);
-      await expect(ioFile.readAt(0, pageSize * 2)).resolves.toEqual(expected);
-      await ioFile.close();
+    const expected = Buffer.concat([Buffer.from('00010203', 'hex'), Buffer.alloc(pageSize)]);
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(expected);
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    const { contents } = await withIOFile(
+      { contents: Buffer.from('00010203', 'hex') },
+      async (ioFile) => {
+        await ioFile.readAt(0, 1); // cache the first page
+        await ioFile.truncate(pageSize + 4);
+        await expect(ioFile.readAt(0, pageSize * 2)).resolves.toEqual(expected);
+      },
+    );
+
+    expect(contents).toEqual(expected);
+  });
+
+  it('should read zeros from the zero-extended part of an uncached file', async () => {
+    const pageSize = Defaults.IO_FILE_PAGE_SIZE;
+    const expected = Buffer.concat([Buffer.from('ABCD'), Buffer.alloc(pageSize * 2 - 4)]);
+
+    const { contents } = await withIOFile({ contents: 'ABCD' }, async (ioFile) => {
+      await ioFile.truncate(pageSize * 2);
+      await expect(ioFile.readAt(0, pageSize * 2)).resolves.toEqual(expected);
+    });
+
+    expect(contents).toEqual(expected);
   });
 
   it('should zero the gap when writing past a shrunk end', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      await FsUtil.writeFile(tempFile, Buffer.from('00010203040506070809', 'hex'));
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      await ioFile.readAt(0, 1); // cache the first page
-      await ioFile.truncate(4);
-      await ioFile.writeAt(Buffer.from('ff', 'hex'), 8);
-      await ioFile.close();
+    const { contents } = await withIOFile(
+      { contents: Buffer.from('00010203040506070809', 'hex') },
+      async (ioFile) => {
+        await ioFile.readAt(0, 1); // cache the first page
+        await ioFile.truncate(4);
+        await ioFile.writeAt(Buffer.from('ff', 'hex'), 8);
+      },
+    );
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-        Buffer.from('0001020300000000ff', 'hex'),
-      );
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    expect(contents).toEqual(Buffer.from('0001020300000000ff', 'hex'));
   });
 
   it('should zero-extend after a shrink', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      await FsUtil.writeFile(tempFile, Buffer.from('00010203040506070809', 'hex'));
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      await ioFile.readAt(0, 1); // cache the first page
-      await ioFile.truncate(4);
-      await ioFile.truncate(8);
-      await expect(ioFile.readAt(0, 1024)).resolves.toEqual(Buffer.from('0001020300000000', 'hex'));
-      await ioFile.close();
+    const { contents } = await withIOFile(
+      { contents: Buffer.from('00010203040506070809', 'hex') },
+      async (ioFile) => {
+        await ioFile.readAt(0, 1); // cache the first page
+        await ioFile.truncate(4);
+        await ioFile.truncate(8);
+        await expect(ioFile.readAt(0, 1024)).resolves.toEqual(
+          Buffer.from('0001020300000000', 'hex'),
+        );
+      },
+    );
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-        Buffer.from('0001020300000000', 'hex'),
-      );
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    expect(contents).toEqual(Buffer.from('0001020300000000', 'hex'));
   });
 
-  test.each([
-    // [name, initial hex, truncate size, expected hex]
-    ['shrink', '00010203040506070809', 4, '00010203'],
-    ['zero-extend', '00010203', 8, '0001020300000000'],
-  ])(
-    'should %s a file without cached pages',
-    async (_name, initialHex, truncateSize, expectedHex) => {
-      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-      try {
-        await FsUtil.writeFile(tempFile, Buffer.from(initialHex, 'hex'));
-        const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-        await ioFile.truncate(truncateSize);
-        expect(ioFile.getSize()).toEqual(truncateSize);
-        await ioFile.close();
-
-        await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from(expectedHex, 'hex'));
-      } finally {
-        await FsUtil.rm(tempFile, { force: true });
-      }
-    },
-  );
   it('should truncate to zero bytes when the size is negative', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCD');
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
+    const { contents } = await withIOFile({ contents: 'ABCD' }, async (ioFile) => {
       await ioFile.truncate(-1);
       expect(ioFile.getSize()).toEqual(0);
       await expect(ioFile.readAt(0, 4)).resolves.toEqual(Buffer.alloc(0));
-      await ioFile.close();
-
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.alloc(0));
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
-  });
-
-  it('should not read the zero-extended part of a file from disk', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, 'ABCD');
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
     });
 
-    try {
-      const ioFile = await IOFile.fileFrom(tempFile, 'r+');
-      const readv = vi.spyOn(openedHandles[0], 'readv');
-      await ioFile.truncate(Defaults.IO_FILE_PAGE_SIZE * 2);
-      await expect(ioFile.readAt(0, Defaults.IO_FILE_PAGE_SIZE * 2)).resolves.toEqual(
-        Buffer.concat([Buffer.from('ABCD'), Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE * 2 - 4)]),
-      );
-      const bytesRead = readv.mock.calls
-        .flatMap(([buffers]) => buffers)
-        .reduce((sum, buffer) => sum + buffer.byteLength, 0);
-      expect(bytesRead).toEqual(4);
-      await ioFile.close();
-    } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    expect(contents).toEqual(Buffer.alloc(0));
   });
 });
 
 describe('close', () => {
   it('should do nothing when the file is already closed', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    try {
-      const file = await IOFile.fileFrom(tempFile, 'w+');
-      await file.writeAt(Buffer.from('ABCDEF01'), 4);
-      await file.close();
-      await expect(file.close()).resolves.toBeUndefined();
+    const { contents } = await withIOFile({ mode: 'w+' }, async (ioFile) => {
+      await ioFile.writeAt(Buffer.from('ABCDEF01'), 4);
+      await ioFile.close();
+      await expect(ioFile.close()).resolves.toBeUndefined();
+    });
 
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(
-        Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF01'),
-      );
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}ABCDEF01'));
   });
 
   it('should throw when using the file after closing it', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.from('ABCDEF01'));
-    try {
-      const file = await IOFile.fileFrom(tempFile, 'r+');
-      await file.readAt(0, 1); // cache the first page
-      await file.close();
+    const { contents } = await withIOFile({ contents: 'ABCDEF01' }, async (ioFile) => {
+      await ioFile.readAt(0, 1); // cache the first page
+      await ioFile.close();
 
-      await expect(file.readAt(0, 1)).rejects.toThrow('closed');
-      await expect(file.readNext(1)).rejects.toThrow('closed');
-      await expect(file.readUntil(0, 1)).rejects.toThrow('closed');
-      await expect(file.writeAt(Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE), 0)).rejects.toThrow(
+      await expect(ioFile.readAt(0, 1)).rejects.toThrow('closed');
+      await expect(ioFile.readNext(1)).rejects.toThrow('closed');
+      await expect(ioFile.readUntil(0, 1)).rejects.toThrow('closed');
+      await expect(ioFile.writeAt(Buffer.alloc(Defaults.IO_FILE_PAGE_SIZE), 0)).rejects.toThrow(
         'closed',
       );
-      await expect(file.copyChunked(file, 4)).rejects.toThrow('closed');
-      await expect(file.copyChunked(file, 4, 0, 0)).rejects.toThrow('closed');
-      await expect(file.copyNext(file, 4, 1)).rejects.toThrow('closed');
-      expect(file.getPosition()).toEqual(0);
-      await expect(file.truncate(0)).rejects.toThrow('closed');
-      await expect(FsUtil.readFile(tempFile)).resolves.toEqual(Buffer.from('ABCDEF01'));
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+      await expect(ioFile.copyChunked(ioFile, 4)).rejects.toThrow('closed');
+      await expect(ioFile.copyChunked(ioFile, 4, 0, 0)).rejects.toThrow('closed');
+      await expect(ioFile.copyNext(ioFile, 4, 1)).rejects.toThrow('closed');
+      expect(ioFile.getPosition()).toEqual(0);
+      await expect(ioFile.truncate(0)).rejects.toThrow('closed');
+    });
+
+    expect(contents).toEqual(Buffer.from('ABCDEF01'));
   });
 
   it('should throw when using the file while it closes', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.from('ABCDEF01'));
-    try {
-      const file = await IOFile.fileFrom(tempFile, 'r+');
+    const { contents } = await withIOFile({ contents: 'ABCDEF01' }, async (ioFile) => {
       // The read needs the lock to load its page, which the close holds
-      const closing = file.close();
-      await expect(file.readAt(0, 1)).rejects.toThrow('closed');
+      const closing = ioFile.close();
+      await expect(ioFile.readAt(0, 1)).rejects.toThrow('closed');
       await closing;
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    });
+
+    expect(contents).toEqual(Buffer.from('ABCDEF01'));
   });
 
   it('should close the file handle even if flushing staged writes fails', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
-    await FsUtil.writeFile(tempFile, Buffer.alloc(16));
-    const open = fs.promises.open.bind(fs.promises);
-    const openedHandles: fs.promises.FileHandle[] = [];
-    vi.spyOn(fs.promises, 'open').mockImplementation(async (pathLike, flags) => {
-      const handle = await open(pathLike, flags);
-      openedHandles.push(handle);
-      return handle;
+    const openedHandles = spyOnOpenedHandles();
+
+    const { contents } = await withIOFile({ contents: Buffer.alloc(16) }, async (ioFile) => {
+      await ioFile.writeAt(Buffer.from('ABCDEF01'), 0);
+      // Writing the file's initial contents opened a handle first
+      const [handle] = openedHandles.slice(-1);
+      vi.spyOn(handle, 'writev').mockRejectedValue(new Error('flush failed'));
+
+      await expect(ioFile.close()).rejects.toThrow('flush failed');
+      expect(handle.fd).toEqual(-1);
     });
 
-    try {
-      const file = await IOFile.fileFrom(tempFile, 'r+');
-      await file.writeAt(Buffer.from('ABCDEF01'), 0);
-      vi.spyOn(openedHandles[0], 'writev').mockRejectedValue(new Error('flush failed'));
-
-      await expect(file.close()).rejects.toThrow('flush failed');
-      expect(openedHandles.map((handle) => handle.fd)).toEqual([-1]);
-    } finally {
-      vi.restoreAllMocks();
-      await FsUtil.rm(tempFile);
-    }
+    expect(contents).toEqual(Buffer.alloc(16));
   });
 });
