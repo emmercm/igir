@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
@@ -5,6 +8,7 @@ import type FileFactory from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import ArchiveFile from '../../models/files/archives/archiveFile.js';
 import type Options from '../../models/options.js';
+import { LinkMode } from '../../models/options.js';
 import type ROMWithFiles from '../../models/romWithFiles.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
 import ArrayUtil from '../../utils/arrayUtil.js';
@@ -37,8 +41,6 @@ export default class CandidateArchiveFileHasher extends Module {
   /**
    * Hash the {@link ArchiveFile}s.
    */
-  // TODO(cememr): this is unnecessary work for files that will be renamed and not copied; we
-  //  probably want to delete this file and let CandidateWriter handle things
   async hash(dat: DAT, candidates: WriteCandidate[]): Promise<WriteCandidate[]> {
     if (candidates.length === 0) {
       this.prefixedLogger.trace(`${dat.getName()}: no candidates to hash ArchiveFiles for`);
@@ -49,6 +51,12 @@ export default class CandidateArchiveFileHasher extends Module {
       this.prefixedLogger.trace(
         `${dat.getName()}: not testing or overwriting invalid files, no need`,
       );
+      return candidates;
+    }
+
+    // Hard links and symlinks are tested by inode and target, not by contents
+    if (this.options.shouldLink() && this.options.getLinkMode() !== LinkMode.REFLINK) {
+      this.prefixedLogger.trace(`${dat.getName()}: linking, no need`);
       return candidates;
     }
 
@@ -87,9 +95,16 @@ export default class CandidateArchiveFileHasher extends Module {
       candidates.map(async (candidate) => {
         // A WriteCandidate with multiple ROMs with have duplicate input files, so we de-duplicate them for semaphore
         // efficiency, and to provide a more accurate progress bar
-        const uniqueInputArchiveFiles = candidate
-          .getRomsWithFiles()
-          .filter((rwf) => this.romWithFilesNeedsProcessing(rwf))
+        const romsWithFilesToHash: ROMWithFiles[] = [];
+        for (const romWithFiles of candidate.getRomsWithFiles()) {
+          if (
+            this.romWithFilesNeedsProcessing(romWithFiles) &&
+            !(await this.willBeRenamed(romWithFiles))
+          ) {
+            romsWithFilesToHash.push(romWithFiles);
+          }
+        }
+        const uniqueInputArchiveFiles = romsWithFilesToHash
           .map((rwf) => rwf.getInputFile())
           .filter((inputFile): inputFile is ArchiveFile => inputFile instanceof ArchiveFile)
           .filter(ArrayUtil.filterUniqueMapped((inputFile) => inputFile.getFilePath()));
@@ -156,6 +171,33 @@ export default class CandidateArchiveFileHasher extends Module {
         return candidate.withRomsWithFiles(hashedRomsWithFiles);
       }),
     );
+  }
+
+  /**
+   * A move into a new path on the same file system is a rename, which isn't tested, so the archive's
+   * checksums aren't needed. An output that already exists is tested against them, so it is hashed.
+   */
+  private async willBeRenamed(romWithFiles: ROMWithFiles): Promise<boolean> {
+    if (!this.options.shouldMove()) {
+      return false;
+    }
+    const outputPath = romWithFiles.getOutputFile().getFilePath();
+    if (await FsUtil.exists(outputPath)) {
+      return false;
+    }
+    let outputDir = path.dirname(outputPath);
+    while (!(await FsUtil.exists(outputDir)) && path.dirname(outputDir) !== outputDir) {
+      outputDir = path.dirname(outputDir);
+    }
+    try {
+      const [inputStats, outputStats] = await Promise.all([
+        fs.promises.stat(romWithFiles.getInputFile().getFilePath()),
+        fs.promises.stat(outputDir),
+      ]);
+      return inputStats.dev === outputStats.dev;
+    } catch {
+      return false;
+    }
   }
 
   private romWithFilesNeedsProcessing(romWithFiles: ROMWithFiles): boolean {
