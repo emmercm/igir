@@ -93,11 +93,11 @@ export default class APSGBAPatch extends Patch {
       const xorData = await patchIOFile.readNext(64 * 1024);
 
       const sourceData = await sourceIOFile.readAt(offset, xorData.length);
-      const targetData = Buffer.allocUnsafe(xorData.length);
-      for (const [idx, xorDatum] of xorData.entries()) {
-        targetData[idx] = (idx < sourceData.length ? sourceData[idx] : 0x00) ^ xorDatum;
+      // Bytes past the end of the source are 0x00, so they're left as the XOR data
+      for (const [i, sourceDatum] of sourceData.entries()) {
+        xorData[i] ^= sourceDatum;
       }
-      await targetIOFile.writeAt(targetData, offset);
+      await targetIOFile.writeAt(xorData, offset);
 
       if (callback === undefined) {
         continue;

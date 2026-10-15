@@ -9,36 +9,25 @@ import Patch from './patch.js';
 type PMSRReader = Pick<IOFile, 'getPosition' | 'getSize' | 'readNext'>;
 
 /**
- * Reads forward through a part of a Yay0-compressed file, throwing if the file ends first.
+ * Reads forward through a part of a Yay0-compressed file.
  */
 class Yay0Cursor {
   private readonly ioFile: IOFile;
   private position: number;
-  private readonly eofException: () => IgirException;
 
-  constructor(ioFile: IOFile, position: number, eofException: () => IgirException) {
+  constructor(ioFile: IOFile, position: number) {
     this.ioFile = ioFile;
     this.position = position;
-    this.eofException = eofException;
   }
 
   /**
-   * Read the next byte, throwing if the file ends first.
+   * Read the next {@link size} bytes, or fewer if the file ends first.
+   * @returns the bytes read
    */
-  async readUInt8(): Promise<number> {
-    const value = await this.ioFile.readAt(this.position, 1);
-    if (value.length === 0) {
-      throw this.eofException();
-    }
-    this.position += 1;
-    return value.readUInt8();
-  }
-
-  /**
-   * Read the next big-endian 16-bit integer, throwing if the file ends first.
-   */
-  async readUInt16BE(): Promise<number> {
-    return ((await this.readUInt8()) << 8) | (await this.readUInt8());
+  async read(size: number): Promise<Buffer> {
+    const data = await this.ioFile.readAt(this.position, size);
+    this.position += data.length;
+    return data;
   }
 }
 
@@ -51,6 +40,7 @@ class Yay0Reader implements PMSRReader {
   private static readonly HEADER_SIZE = 16;
   // Links can copy from at most 0x1000 bytes back
   private static readonly WINDOW_SIZE = 0x10_00;
+  private static readonly LINK_SIZE = 2;
 
   static readonly FILE_SIGNATURE = Buffer.from('Yay0');
 
@@ -62,10 +52,17 @@ class Yay0Reader implements PMSRReader {
   private readonly window = Buffer.alloc(Yay0Reader.WINDOW_SIZE);
 
   private position = 0;
-  private command = 0;
-  private commandMask = 0;
   private copyDistance = 0;
   private copyRemaining = 0;
+
+  // The current command byte, which has a bit per token: 1 for a literal byte, 0 for a link
+  private command = 0;
+  private commandMask = 0;
+  // The current command byte's links and literal-stream bytes, read all at once
+  private commandLinks: Buffer = Buffer.alloc(0);
+  private commandLinksOffset = 0;
+  private commandLiterals: Buffer = Buffer.alloc(0);
+  private commandLiteralsOffset = 0;
 
   private constructor(
     patchIOFile: IOFile,
@@ -75,9 +72,9 @@ class Yay0Reader implements PMSRReader {
     invalidException: () => IgirException,
   ) {
     this.decompressedSize = decompressedSize;
-    this.commands = new Yay0Cursor(patchIOFile, Yay0Reader.HEADER_SIZE, invalidException);
-    this.links = new Yay0Cursor(patchIOFile, linkOffset, invalidException);
-    this.literals = new Yay0Cursor(patchIOFile, literalOffset, invalidException);
+    this.commands = new Yay0Cursor(patchIOFile, Yay0Reader.HEADER_SIZE);
+    this.links = new Yay0Cursor(patchIOFile, linkOffset);
+    this.literals = new Yay0Cursor(patchIOFile, literalOffset);
     this.invalidException = invalidException;
   }
 
@@ -115,46 +112,119 @@ class Yay0Reader implements PMSRReader {
   async readNext(size: number): Promise<Buffer> {
     const result = Buffer.allocUnsafe(Math.min(size, this.decompressedSize - this.position));
 
-    for (let resultOffset = 0; resultOffset < result.length; resultOffset += 1) {
-      let value: number;
-      if (this.copyRemaining === 0 && (await this.nextCommandIsLiteral())) {
-        value = await this.literals.readUInt8();
-      } else {
-        if (this.copyRemaining === 0) {
-          await this.startCopy();
+    let resultOffset = 0;
+    while (resultOffset < result.length) {
+      if (this.copyRemaining === 0) {
+        if (this.commandMask === 0) {
+          await this.readCommand();
         }
-        value = this.window.readUInt8((this.position - this.copyDistance) % Yay0Reader.WINDOW_SIZE);
-        this.copyRemaining -= 1;
+        if ((this.command & this.commandMask) === 0) {
+          this.commandMask >>= 1;
+          this.startCopy();
+        } else {
+          resultOffset += this.copyLiterals(result, resultOffset);
+          continue;
+        }
       }
 
-      result.writeUInt8(value, resultOffset);
-      this.window.writeUInt8(value, this.position % Yay0Reader.WINDOW_SIZE);
-      this.position += 1;
+      // Copy no further than the window wraps, and no further than the copy's distance, as a copy
+      // longer than its distance repeats the bytes it has just written
+      const copyStart = (this.position - this.copyDistance) % Yay0Reader.WINDOW_SIZE;
+      const copySize = Math.min(
+        this.copyRemaining,
+        result.length - resultOffset,
+        this.copyDistance,
+        Yay0Reader.WINDOW_SIZE - copyStart,
+      );
+      this.window.copy(result, resultOffset, copyStart, copyStart + copySize);
+      this.recordOutput(result, resultOffset, copySize);
+      this.copyRemaining -= copySize;
+      resultOffset += copySize;
     }
 
     return result;
   }
 
-  private async nextCommandIsLiteral(): Promise<boolean> {
-    if (this.commandMask === 0) {
-      this.command = await this.commands.readUInt8();
-      this.commandMask = 0x80;
+  /**
+   * Read the next command byte, along with all of its links and literal-stream bytes. Tokens past
+   * the end of the decompressed data are padding, so their links and literal-stream bytes can be
+   * missing, and they're only found to be missing if they're used.
+   */
+  private async readCommand(): Promise<void> {
+    const command = await this.commands.read(1);
+    if (command.length === 0) {
+      throw this.invalidException();
+    }
+    this.command = command.readUInt8();
+    this.commandMask = 0x80;
+
+    let literalCount = 0;
+    for (let mask = 0x80; mask > 0; mask >>= 1) {
+      if (this.command & mask) {
+        literalCount += 1;
+      }
+    }
+    this.commandLinks = await this.links.read((8 - literalCount) * Yay0Reader.LINK_SIZE);
+    this.commandLinksOffset = 0;
+
+    // A link with a length of 0 takes its length from the literal stream
+    let longLinkCount = 0;
+    for (let i = 0; i + 1 < this.commandLinks.length; i += Yay0Reader.LINK_SIZE) {
+      if (this.commandLinks.readUInt8(i) >> 4 === 0) {
+        longLinkCount += 1;
+      }
+    }
+    this.commandLiterals = await this.literals.read(literalCount + longLinkCount);
+    this.commandLiteralsOffset = 0;
+  }
+
+  /**
+   * Copy the current command byte's next run of consecutive literal bytes, up to the end of
+   * {@link result}.
+   * @returns the number of bytes copied
+   */
+  private copyLiterals(result: Buffer, resultOffset: number): number {
+    let literalCount = 0;
+    while (
+      this.commandMask > 0 &&
+      (this.command & this.commandMask) !== 0 &&
+      literalCount < result.length - resultOffset
+    ) {
+      literalCount += 1;
+      this.commandMask >>= 1;
     }
 
-    const isLiteral = (this.command & this.commandMask) !== 0;
-    this.commandMask >>= 1;
-    return isLiteral;
+    if (this.commandLiteralsOffset + literalCount > this.commandLiterals.length) {
+      throw this.invalidException();
+    }
+    this.commandLiterals.copy(
+      result,
+      resultOffset,
+      this.commandLiteralsOffset,
+      this.commandLiteralsOffset + literalCount,
+    );
+    this.commandLiteralsOffset += literalCount;
+    this.recordOutput(result, resultOffset, literalCount);
+    return literalCount;
   }
 
   /**
    * Start copying a run of previously decompressed bytes.
    */
-  private async startCopy(): Promise<void> {
-    const link = await this.links.readUInt16BE();
+  private startCopy(): void {
+    if (this.commandLinksOffset + Yay0Reader.LINK_SIZE > this.commandLinks.length) {
+      throw this.invalidException();
+    }
+    const link = this.commandLinks.readUInt16BE(this.commandLinksOffset);
+    this.commandLinksOffset += Yay0Reader.LINK_SIZE;
     const distance = (link & 0x0f_ff) + 1;
     let length = link >> 12;
     if (length === 0) {
-      length = (await this.literals.readUInt8()) + 0x10;
+      if (this.commandLiteralsOffset >= this.commandLiterals.length) {
+        throw this.invalidException();
+      }
+      length = this.commandLiterals.readUInt8(this.commandLiteralsOffset) + 0x10;
+      this.commandLiteralsOffset += 1;
     }
     length += 2;
 
@@ -163,6 +233,19 @@ class Yay0Reader implements PMSRReader {
     }
     this.copyDistance = distance;
     this.copyRemaining = length;
+  }
+
+  /**
+   * Record the {@link size} decompressed bytes at {@link offset} of {@link output} in the window,
+   * for later links to copy from.
+   */
+  private recordOutput(output: Buffer, offset: number, size: number): void {
+    const windowStart = this.position % Yay0Reader.WINDOW_SIZE;
+    const firstSize = Math.min(size, Yay0Reader.WINDOW_SIZE - windowStart);
+    output.copy(this.window, windowStart, offset, offset + firstSize);
+    // A run that wraps around the window continues at its start
+    output.copy(this.window, 0, offset + firstSize, offset + size);
+    this.position += size;
   }
 }
 
