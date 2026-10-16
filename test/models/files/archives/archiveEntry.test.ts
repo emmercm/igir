@@ -907,6 +907,34 @@ describe('createReadStream', () => {
       expect(contents).toBeTruthy();
     });
   });
+
+  test.each(
+    archiveEntries.filter((file) => file.getSize() > 0).map((file) => [file.toString(), file]),
+  )('should read byte ranges of archived files: %s', async (_, archiveEntry) => {
+    const contents = await archiveEntry.createReadStream(
+      async (readable) => await bufferUtil.fromReadable(readable),
+    );
+
+    for (const { start, end } of [
+      { start: 0, end: 15 },
+      { start: 3, end: 18 },
+      { start: 0, end: contents.length - 1 },
+      { start: contents.length - 1, end: contents.length + 100 },
+    ]) {
+      const range = await archiveEntry.createReadStream(
+        async (readable) => await bufferUtil.fromReadable(readable),
+        start,
+        end,
+      );
+      const expected = contents.subarray(start, end + 1);
+      expect({ start, end, length: range.length, equal: range.equals(expected) }).toEqual({
+        start,
+        end,
+        length: expected.length,
+        equal: true,
+      });
+    }
+  });
 });
 
 describe('withPatch', () => {
