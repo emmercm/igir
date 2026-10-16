@@ -10,7 +10,7 @@ import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
-import type { ArchiveEntryLocation } from '../archive.js';
+import type { ArchiveEntryRef } from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import type { ChdListedFile, ChdListing } from './chd.js';
 import Chd from './chd.js';
@@ -56,7 +56,7 @@ export default class ChdBinCue extends Chd {
    * Stream one entry: the TOC text, or the track the entry's index names.
    */
   private async streamFile(
-    { entryPath, entryIndex }: ArchiveEntryLocation,
+    { entryPath, entryIndex }: ArchiveEntryRef,
     highWaterMark: number,
   ): Promise<stream.Readable> {
     if (entryPath.toLowerCase().endsWith('.cue')) {
@@ -77,12 +77,15 @@ export default class ChdBinCue extends Chd {
    * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback.
    */
   override async extractEntryToStream<T>(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
     end?: number,
   ): Promise<T> {
-    const sourceStream = await this.streamFile(location, Chd.getStreamChunkSize(start, end));
+    const sourceStream = await this.streamFile(
+      entryRef,
+      Chd.getStreamChunkSize(start, end, entryRef.size),
+    );
     return await Chd.pipelineRange(sourceStream, callback, start, end);
   }
 
@@ -133,7 +136,7 @@ export default class ChdBinCue extends Chd {
           inputFilename: this.getFilePath(),
           mode: 'cuebin',
           trackIndex: file.trackIndex,
-          highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+          highWaterMark: Chd.getStreamChunkSize(0, undefined, file.size),
         });
         let lastProgress = 0;
         const checksums = await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {

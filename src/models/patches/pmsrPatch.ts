@@ -49,7 +49,8 @@ class Yay0Reader implements PMSRReader {
   private readonly links: Yay0Cursor;
   private readonly literals: Yay0Cursor;
   private readonly invalidException: () => IgirException;
-  private readonly window = Buffer.alloc(Yay0Reader.WINDOW_SIZE);
+  // Links can't reach back before the first byte, so only bytes already written are ever copied
+  private readonly window = Buffer.allocUnsafe(Yay0Reader.WINDOW_SIZE);
 
   private position = 0;
   private copyDistance = 0;

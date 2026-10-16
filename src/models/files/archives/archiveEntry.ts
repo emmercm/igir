@@ -17,11 +17,11 @@ import FileChecksums, { ChecksumBitmask, ChecksumPropsWithSize } from '../fileCh
 import type IOFile from '../ioFile.js';
 import ROMHeader from '../romHeader.js';
 import ROMPadding from '../romPadding.js';
-import type { ArchiveEntryLocation } from './archive.js';
+import type { ArchiveEntryRef } from './archive.js';
 import Archive from './archive.js';
 
 export interface ArchiveEntryProps<A extends Archive>
-  extends Omit<FileProps, 'filePath'>, ArchiveEntryLocation {
+  extends Omit<FileProps, 'filePath'>, ArchiveEntryRef {
   readonly archive: A;
 }
 
@@ -224,12 +224,12 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   private static async calculateEntryChecksums(
     archive: Archive,
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     checksumBitmask: number,
     fileHeader?: ROMHeader,
   ): Promise<ChecksumPropsWithSize> {
     return await archive.extractEntryToStream(
-      location,
+      entryRef,
       async (readable) => await FileChecksums.hashStream(readable, checksumBitmask),
       fileHeader?.getDataOffsetBytes() ?? 0,
     );
@@ -237,11 +237,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   private static async extractEntryToFile(
     archive: Archive,
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await archive.extractEntryToFile(location, extractedFilePath, callback);
+    await archive.extractEntryToFile(entryRef, extractedFilePath, callback);
   }
 
   /**
@@ -264,10 +264,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   private static async extractEntryToTempFile<T>(
     archive: Archive,
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
-    return await archive.extractEntryToTempFile(location, callback);
+    return await archive.extractEntryToTempFile(entryRef, callback);
   }
 
   /**

@@ -5,6 +5,7 @@ import path from 'node:path';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
+import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/models/files/archives/archiveFile.js';
@@ -597,6 +598,45 @@ describe('createReadStream', () => {
     }
     await FsUtil.rm(temp, { recursive: true });
   });
+
+  it('should read no more than the file size at a time', async () => {
+    const file = await File.fileOf({ filePath: './test/fixtures/roms/raw/trimmed.3ds' });
+
+    const highWaterMark = await file.createReadStream((readable) => readable.readableHighWaterMark);
+
+    expect(highWaterMark).toEqual(520);
+  });
+});
+
+describe('createStreamFromFile', () => {
+  const filePath = './test/fixtures/roms/raw/trimmed.3ds';
+
+  it.each([
+    ['no size', undefined, undefined, undefined, Defaults.FILE_READING_CHUNK_SIZE],
+    ['a placeholder size', 0, undefined, undefined, Defaults.FILE_READING_CHUNK_SIZE],
+    ['the file size', 520, undefined, undefined, 520],
+    ['the file size and a start', 520, 100, undefined, 420],
+    ['the file size and an end', 520, 0, 99, 100],
+  ])(
+    'should pick the highWaterMark for %s',
+    async (
+      _,
+      size: number | undefined,
+      start: number | undefined,
+      end: number | undefined,
+      expected,
+    ) => {
+      const highWaterMark = await File.createStreamFromFile(
+        filePath,
+        (readable) => readable.readableHighWaterMark,
+        size,
+        start,
+        end,
+      );
+
+      expect(highWaterMark).toEqual(expected);
+    },
+  );
 });
 
 describe('withPatch', () => {
