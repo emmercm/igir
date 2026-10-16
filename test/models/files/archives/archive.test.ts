@@ -230,6 +230,57 @@ describe('getArchiveEntries', () => {
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
     }
   });
+
+  test.each([
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', (filePath: string): Archive => new Gzip(filePath)],
+    ['./test/fixtures/roms/rar/onetwothree.rar', (filePath: string): Archive => new Rar(filePath)],
+    ['./test/fixtures/roms/zip/onetwothree.zip', (filePath: string): Archive => new Zip(filePath)],
+  ] satisfies [string, (filePath: string) => Archive][])(
+    'should report progress up to the total without reading entries: %s',
+    async (filePath, archiveFactory) => {
+      const progressCalls: [number, number | undefined][] = [];
+      const entries = await archiveFactory(filePath).getArchiveEntries(
+        ChecksumBitmask.CRC32,
+        (progress, total) => {
+          progressCalls.push([progress, total]);
+        },
+      );
+
+      const entrySizes = entries.map((entry) => entry.getSize());
+      const total = entrySizes.reduce((sum, size) => sum + size, 0);
+      expect(progressCalls).toEqual([
+        [0, total],
+        ...entrySizes.map((_, idx): [number, undefined] => [
+          entrySizes.slice(0, idx + 1).reduce((sum, size) => sum + size, 0),
+          undefined,
+        ]),
+      ]);
+    },
+  );
+
+  test.each([
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', (filePath: string): Archive => new Gzip(filePath)],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', (filePath: string): Archive => new Rar(filePath)],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', (filePath: string): Archive => new Zip(filePath)],
+  ] satisfies [string, (filePath: string) => Archive][])(
+    'should report progress up to the total without double counting when reading entries: %s',
+    async (filePath, archiveFactory) => {
+      const progressCalls: [number, number | undefined][] = [];
+      const entries = await archiveFactory(filePath).getArchiveEntries(
+        ChecksumBitmask.CRC32 | ChecksumBitmask.SHA1,
+        (progress, total) => {
+          progressCalls.push([progress, total]);
+        },
+      );
+
+      expect(entries).toHaveLength(1);
+      const size = entries[0].getSize();
+      expect(progressCalls).toEqual([
+        [0, size],
+        [size, undefined],
+      ]);
+    },
+  );
 });
 
 describe('extractEntryToFile', () => {

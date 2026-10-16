@@ -32,7 +32,7 @@ export default class ROMHeader {
     SMC_GAME_DOCTOR_2: new ROMHeader(0, '47414D4520444F43544F522053462033', 512, '.smc', '.sfc'),
   };
 
-  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMHeader.HEADERS).reduce(
+  static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMHeader.HEADERS).reduce(
     (max, fileHeader) =>
       Math.max(max, fileHeader.headerOffsetBytes + fileHeader.headerValue.length / 2),
     0,

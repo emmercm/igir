@@ -875,7 +875,7 @@ export default class FileSignature {
     );
   });
 
-  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileSignature.SIGNATURES_UNSORTED)
+  static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileSignature.SIGNATURES_UNSORTED)
     .flatMap((romSignature) => romSignature.signaturePieces)
     .reduce(
       (max, signaturePiece) =>
@@ -941,12 +941,9 @@ export default class FileSignature {
     readable: stream.Readable,
     callback?: FsReadCallback,
   ): Promise<FileSignature | undefined> {
-    if (callback) {
-      callback(0, this.MAX_HEADER_LENGTH_BYTES);
-    }
     const fileHeader = await this.readHeaderBuffer(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
     if (callback) {
-      callback(fileHeader.length, fileHeader.length);
+      callback(fileHeader.length);
     }
 
     for (const romSignature of this.SIGNATURES) {

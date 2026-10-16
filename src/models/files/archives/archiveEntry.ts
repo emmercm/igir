@@ -10,9 +10,7 @@ import {
 
 import IgirException from '../../../exceptions/igirException.js';
 import { FsReadCallback } from '../../../streams/fsReadTransform.js';
-import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
-import StreamUtil from '../../../utils/streamUtil.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumPropsWithSize } from '../fileChecksums.js';
@@ -273,22 +271,15 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   /**
-   * Invoke the callback with a readable stream of this entry's bytes, optionally starting at a
-   * byte offset.
+   * Invoke the callback with a readable stream of this entry's bytes, optionally bounded by
+   * start/end byte offsets (both inclusive).
    */
   override async createReadStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
+    end?: number,
   ): Promise<T> {
-    if (start > 0) {
-      return await this.archive.extractEntryToStream(
-        this,
-        async (readable) =>
-          await StreamUtil.pipelineSafe(readable, new SkipBytesTransform(start), callback),
-      );
-    }
-
-    return await this.archive.extractEntryToStream(this, callback);
+    return await this.archive.extractEntryToStream(this, callback, start, end);
   }
 
   override withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {

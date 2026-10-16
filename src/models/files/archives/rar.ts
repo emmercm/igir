@@ -112,14 +112,19 @@ export default class Rar extends Archive {
             async (readable) => {
               return await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
                 overallProgress = overallProgress - lastProgress + progress;
-                if (!callback) {
-                  return;
-                }
-                callback(overallProgress);
                 lastProgress = progress;
+                if (callback) {
+                  callback(overallProgress);
+                }
               });
             },
           );
+        } else {
+          // The file header's CRC32 is used, so there's nothing to read
+          overallProgress += fileHeader.unpSize;
+          if (callback) {
+            callback(overallProgress);
+          }
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
@@ -129,7 +134,7 @@ export default class Rar extends Archive {
           );
         }
 
-        const entry = await ArchiveEntry.entryOf(
+        return await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: fileHeader.name,
@@ -139,11 +144,6 @@ export default class Rar extends Archive {
           },
           checksumBitmask,
         );
-        overallProgress += fileHeader.unpSize;
-        if (callback) {
-          callback(overallProgress);
-        }
-        return entry;
       },
     );
   }

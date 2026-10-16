@@ -38,18 +38,22 @@ export default {
       }
     }
 
-    // Catch failures on either stream
-    // Use a resolve() instead of reject() so we can keep `NodeJS.ErrnoException` typed
-    const piped = Promise.withResolvers<NodeJS.ErrnoException | null | undefined>();
-    stream.pipeline(source, transform, (err) => {
-      piped.resolve(err);
+    // Wire the streams together, which also destroys the other stream when either one fails
+    stream.pipeline(source, transform, () => {
+      // This isn't awaited, because stream.pipeline() never calls back when the source is
+      // destroyed after it has reached its end but before it emitted 'end'. Each stream's own
+      // failures are caught below instead.
     });
 
-    // Catch failures in the source's own destroy(), required for Node.js 22 stream.pipeline()
+    // Catch failures on either stream, including in the source's own destroy()
     // Use a resolve() instead of reject() so we can keep `NodeJS.ErrnoException` typed
     const sourceFinished = Promise.withResolvers<NodeJS.ErrnoException | null | undefined>();
-    const cleanupFinished = stream.finished(source, (err) => {
+    const cleanupSourceFinished = stream.finished(source, (err) => {
       sourceFinished.resolve(err);
+    });
+    const transformFinished = Promise.withResolvers<NodeJS.ErrnoException | null | undefined>();
+    const cleanupTransformFinished = stream.finished(transform, (err) => {
+      transformFinished.resolve(err);
     });
 
     let result: T;
@@ -58,16 +62,18 @@ export default {
     } catch (error) {
       transform.destroy();
       source.destroy();
-      await piped.promise;
       await sourceFinished.promise;
-      cleanupFinished();
+      await transformFinished.promise;
+      cleanupSourceFinished();
+      cleanupTransformFinished();
       throw error;
     }
     transform.destroy();
     source.destroy();
 
-    const errors = [await piped.promise, await sourceFinished.promise];
-    cleanupFinished();
+    const errors = [await sourceFinished.promise, await transformFinished.promise];
+    cleanupSourceFinished();
+    cleanupTransformFinished();
     for (const error of errors) {
       if (error !== null && error !== undefined && !ABANDONED_CODES.has(error.code ?? '')) {
         throw error;

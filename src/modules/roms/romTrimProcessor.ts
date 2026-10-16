@@ -142,8 +142,11 @@ export default class ROMTrimProcessor extends Module {
       }
     }
 
-    const paddings = await this.fileFactory.paddingsFrom(inputFile, (progress) => {
+    const paddings = await this.fileFactory.paddingsFrom(inputFile, (progress, total) => {
       progressBar.setCompleted(progress);
+      if (total !== undefined) {
+        progressBar.setTotal(total);
+      }
     });
     if (paddings.length === 0) {
       // This file isn't trimmed

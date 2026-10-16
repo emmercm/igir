@@ -296,6 +296,8 @@ export default class FileCache {
       async () => {
         const header = await file.createReadStream(
           async (readable) => await ROMHeader.headerFromFileStream(readable),
+          0,
+          ROMHeader.MAX_HEADER_LENGTH_BYTES - 1,
         );
         return header?.getName();
       },
@@ -312,8 +314,16 @@ export default class FileCache {
       ValueType.FILE_SIGNATURE,
       FileSignature.SIGNATURES.length,
       async () => {
+        const start = 0;
+        const end = FileSignature.MAX_HEADER_LENGTH_BYTES - 1;
+        if (callback) {
+          // Only the leading bytes are read, not the whole file
+          callback(0, Math.min(end + 1, file.getSize()) - start);
+        }
         const signature = await file.createReadStream(
           async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
+          start,
+          end,
         );
         return signature?.getName();
       },
