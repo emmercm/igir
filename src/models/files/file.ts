@@ -434,14 +434,15 @@ export default class File implements FileProps {
   }
 
   /**
-   * Invoke the callback with a readable stream of this file's bytes, optionally starting at a
-   * byte offset.
+   * Invoke the callback with a readable stream of this file's bytes, optionally bounded by
+   * start/end byte offsets (both inclusive).
    */
   async createReadStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
+    end?: number,
   ): Promise<T> {
-    return await File.createStreamFromFile(this.getFilePath(), callback, start);
+    return await File.createStreamFromFile(this.getFilePath(), callback, start, end);
   }
 
   /**

@@ -103,7 +103,8 @@ export default class ROMPadding implements ROMPaddingProps {
     }
 
     if (callback !== undefined) {
-      callback(0, paddedSize);
+      // The padding is generated, only the file's own bytes are read
+      callback(0, file.getSize());
     }
 
     return await file.createReadStream(async (readable) => {

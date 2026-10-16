@@ -63,6 +63,24 @@ function chunkThen(after: 'end' | 'error' | 'destroy' | 'stall'): stream.Readabl
 }
 
 /**
+ * A readable that has already reached its end, with more buffered than a destination will take,
+ * so 'end' can't be emitted until something reads the rest.
+ */
+function endedWithUnreadBuffer(): stream.Readable {
+  const readable = new stream.Readable({
+    read(): void {
+      // Everything was pushed up front
+    },
+  });
+  for (let i = 0; i < 20; i++) {
+    readable.push(Buffer.alloc(1024));
+  }
+  // eslint-disable-next-line unicorn/no-null
+  readable.push(null);
+  return readable;
+}
+
+/**
  * A readable whose own teardown fails, the way a subprocess exiting non-zero on close does.
  */
 function failingTeardown(): stream.Readable {
@@ -258,6 +276,30 @@ describe('pipelineSafe', () => {
       expect(source.listenerCount('error')).toBeGreaterThan(0);
       return await readOne(readable);
     });
+  });
+
+  it('resolves when the source has ended but the callback stops short of the end', async () => {
+    // A source destroyed without an error after reaching its end, but before emitting 'end',
+    // leaves stream.pipeline() waiting forever for an 'end' that never comes
+    const source = endedWithUnreadBuffer();
+
+    await expect(
+      StreamUtil.pipelineSafe(source, new stream.PassThrough({ highWaterMark: 16 }), readOne),
+    ).resolves.toEqual('bailed after 1024');
+    expect(source.destroyed).toEqual(true);
+  });
+
+  it('rejects when the source has ended but the callback throws', async () => {
+    await expect(
+      StreamUtil.pipelineSafe(
+        endedWithUnreadBuffer(),
+        new stream.PassThrough({ highWaterMark: 16 }),
+        async (readable) => {
+          await readOne(readable);
+          throw new Error('callback failed');
+        },
+      ),
+    ).rejects.toThrow('callback failed');
   });
 
   it('tears down every source when used repeatedly', async () => {

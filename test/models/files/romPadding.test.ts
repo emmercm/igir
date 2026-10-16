@@ -31,6 +31,20 @@ describe('paddingsFromFile', () => {
     expect(new Set(paddings.map((padding) => padding.getCrc32())).size).toEqual(paddings.length);
   });
 
+  it('reports progress against the number of bytes read, not the padded size', async () => {
+    const file = await File.fileOf({ filePath: TRIMMED_ROM }, ChecksumBitmask.CRC32);
+
+    const progressCalls: [number, number | undefined][] = [];
+    await ROMPadding.paddingsFromFile(file, (progress, total) => {
+      progressCalls.push([progress, total]);
+    });
+
+    expect(progressCalls).toEqual([
+      [0, 520],
+      [520, undefined],
+    ]);
+  });
+
   it('destroys every padded stream when hashing one of them fails', async () => {
     // Promise.all() abandons the other streams the moment it rejects, so without an explicit
     // teardown they are left un-destroyed holding their buffered chunks
