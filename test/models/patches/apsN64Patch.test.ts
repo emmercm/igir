@@ -44,6 +44,11 @@ describe('createPatchedFile', () => {
 
   test.each([
     ['bad header', `4150533131${'00'.repeat(52)}10000000`, /APS \(N64\) patch header is invalid/],
+    // An RLE record at 0x08 of byte cc, cut short before its size
+    ['an RLE record cut short', `${SIMPLE}100000000800000000cc`, /APS \(N64\) patch is truncated/],
+    // A record at 0x02 of 2 bytes, cut short after 1
+    ['a record cut short', `${SIMPLE}100000000200000002aa`, /APS \(N64\) patch is truncated/],
+    ['a record offset cut short', `${SIMPLE}10000000020000`, /APS \(N64\) patch is truncated/],
   ])('should throw on %s', async (_name, patchHex, expectedError) => {
     await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).rejects.toThrow(
       expectedError,

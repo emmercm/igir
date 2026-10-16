@@ -21,6 +21,7 @@ export default defineConfig({
     reporters: ['verbose'],
     watch: false,
     passWithNoTests: true,
+    setupFiles: ['test/setup.ts'],
 
     maxWorkers: '75%',
     testTimeout:

@@ -1,5 +1,5 @@
 import DPSPatch from '../../../src/models/patches/dpsPatch.js';
-import { applyPatch, INPUT16, parsePatch } from './patchTestUtil.js';
+import { applyPatch, INPUT16, parsePatch, patterned } from './patchTestUtil.js';
 
 const patchFrom = DPSPatch.patchFrom.bind(DPSPatch);
 const FILE_NAME = 'patch 00000000.dps';
@@ -44,6 +44,39 @@ describe('createPatchedFile', () => {
   ])('should apply: %s', async (_name, patchHex, expectedHex) => {
     await expect(applyPatch(patchFrom, FILE_NAME, patchHex, INPUT16)).resolves.toEqual(
       Buffer.from(expectedHex, 'hex'),
+    );
+  });
+
+  it('should apply records larger than a chunk', async () => {
+    const source = patterned(150_000);
+    const inputOffset = 10_000;
+    const inputLength = 100_000;
+    const enclosedData = patterned(70_000, 50);
+
+    const uint32 = (value: number): Buffer => {
+      const buffer = Buffer.alloc(4);
+      buffer.writeUInt32LE(value);
+      return buffer;
+    };
+    const patch = Buffer.concat([
+      Buffer.from(HEADER, 'hex'),
+      uint32(source.length),
+      // Mode 0: copy from the input
+      Buffer.of(0),
+      uint32(0),
+      uint32(inputOffset),
+      uint32(inputLength),
+      // Mode 1: enclosed data
+      Buffer.of(1),
+      uint32(inputLength),
+      uint32(enclosedData.length),
+      enclosedData,
+    ]);
+
+    await expect(
+      applyPatch(patchFrom, FILE_NAME, patch.toString('hex'), source.toString('hex')),
+    ).resolves.toEqual(
+      Buffer.concat([source.subarray(inputOffset, inputOffset + inputLength), enclosedData]),
     );
   });
 
