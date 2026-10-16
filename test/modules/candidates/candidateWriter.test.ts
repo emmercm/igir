@@ -491,6 +491,8 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
 
         // Then all matched input files were queued for deletion...
         expect(results.moved.length).toBeGreaterThan(0);
+        // ...each game once, however many files it has
+        expect(new Set(results.moved).size).toEqual(results.moved.length);
         // ...and nonmatch.rom was not one of them
         expect(
           results.moved.flatMap((c) =>
@@ -2252,8 +2254,10 @@ describe('renamed files', () => {
         );
 
         expect(fileSpy).toHaveBeenCalledTimes(1);
-        expect(fileSpy.mock.calls[0][0].getFilePath()).toContain(outputTemp);
-        expect(fileSpy.mock.calls[0][0].getCrc32()).toBeDefined();
+        const file = fileSpy.mock.calls.at(0)?.at(0);
+        assert.ok(file !== undefined);
+        expect(file.getFilePath()).toContain(outputTemp);
+        expect(file.getCrc32()).toBeDefined();
         expect(archiveSpy).not.toHaveBeenCalled();
       } finally {
         vi.restoreAllMocks();
@@ -2276,11 +2280,15 @@ describe('renamed files', () => {
         );
 
         expect(fileSpy).toHaveBeenCalledTimes(1);
-        expect(fileSpy.mock.calls[0][0].getFilePath()).toContain(outputTemp);
+        const file = fileSpy.mock.calls.at(0)?.at(0);
+        assert.ok(file !== undefined);
+        expect(file.getFilePath()).toContain(outputTemp);
         expect(archiveSpy).toHaveBeenCalledTimes(1);
-        const [archive, archiveEntries] = archiveSpy.mock.calls[0];
+        const call = archiveSpy.mock.calls.at(0);
+        assert.ok(call !== undefined);
+        const [archive, archiveEntries] = call;
         expect(archive).toBeInstanceOf(Zip);
-        expect(archive.getFilePath()).toEqual(fileSpy.mock.calls[0][0].getFilePath());
+        expect(archive.getFilePath()).toEqual(file.getFilePath());
         expect(archiveEntries.map((entry) => entry.getCrc32())).toEqual(['b22c9747']);
       } finally {
         vi.restoreAllMocks();
