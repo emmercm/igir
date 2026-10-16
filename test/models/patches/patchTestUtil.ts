@@ -1,4 +1,5 @@
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 import Temp from '../../../src/globals/temp.js';
 import File from '../../../src/models/files/file.js';
@@ -70,4 +71,41 @@ export async function applyPatch(
     await patch.createPatchedFile(await File.fileOf({ filePath: inputPath }), outputPath);
     return await FsUtil.readFile(outputPath);
   });
+}
+
+/**
+ * Bytes that differ from their neighbors and are never 0x00, so misplaced copies are caught.
+ */
+export function patterned(size: number, seed = 0): Buffer {
+  return Buffer.from(Array.from({ length: size }, (_value, idx) => ((idx + seed) % 255) + 1));
+}
+
+/**
+ * Encode a UPS/BPS-style variable-length unsigned integer.
+ */
+export function encodeUpsUint(value: number): Buffer {
+  const bytes: number[] = [];
+  let remaining = value;
+  let isLastByte = false;
+  while (!isLastByte) {
+    const bits = remaining % 128;
+    remaining = Math.floor(remaining / 128);
+    isLastByte = remaining === 0;
+    if (isLastByte) {
+      bytes.push(0x80 | bits);
+    } else {
+      bytes.push(bits);
+      remaining -= 1;
+    }
+  }
+  return Buffer.from(bytes);
+}
+
+/**
+ * Encode a little-endian CRC32, as UPS and BPS patches store it.
+ */
+export function encodeCrc32(data: Buffer): Buffer {
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32LE(zlib.crc32(data));
+  return crc;
 }

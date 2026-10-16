@@ -46,7 +46,12 @@ export default class Defaults {
   static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
 
   /**
-   * Max size of file contents to store in memory vs. temp files.
+   * Size of each page of an IOFile's in-memory cache of its contents.
    */
-  static readonly MAX_MEMORY_FILE_SIZE = 64 * 1024 * 1024; // 64MiB
+  static readonly IO_FILE_PAGE_SIZE = 64 * 1024; // 64KiB
+
+  /**
+   * Max size of each IOFile's in-memory cache of its contents.
+   */
+  static readonly MAX_IO_FILE_CACHE_SIZE = 4 * 1024 * 1024; // 4MiB
 }

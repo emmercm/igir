@@ -30,6 +30,7 @@ export default eslintConfig.defineConfig([
       'addons/*/deps/**',
       'addons/*/build/**',
       'addons/*/addon-*/**',
+      'coverage/**',
       'dist/**',
       'site/**',
     ],
@@ -188,6 +189,7 @@ export default eslintConfig.defineConfig([
       'jsdoc/require-param': 'off',
       'jsdoc/require-returns': 'off',
       'jsdoc/no-blank-blocks': 'error',
+      // TODO(cemmer): 'jsdoc/tag-lines': ['error', 'never', { startLines: 1 }],
 
       // ***** Promises *****
 
