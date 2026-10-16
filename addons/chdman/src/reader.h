@@ -2,10 +2,12 @@
 
 #include <napi.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 
@@ -69,6 +71,7 @@ static Napi::Value CopyToBuffer(Napi::Env env, const uint8_t* data, size_t lengt
  * Runs one read() on the thread pool: fills memory from a Source's Produce(), then tells the Reader
  * the read is done and settles the read's promise. Source and Reader must provide:
  *   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
+ *   std::optional<uint64_t> Source::Remaining() const;      // main thread, between reads
  *   void   Reader::FinishRead();                             // main thread, after Execute()
  *
  * Under Emscripten, it fills scratch memory and resolves with a copy, because emnapi frees a Buffer's
@@ -283,8 +286,18 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         deferred.Reject(Napi::RangeError::New(env, "maxBytes is too large").Value());
         return deferred.Promise();
     }
+    // Once the Source knows how many bytes it has left, a read allocates no more memory than that,
+    // and the read at the end allocates none at all. The last read's worker is done with the
+    // Source by now, so its state is safe to read here.
+    auto const requestedBytes = static_cast<size_t>(requested);
+    uint64_t const remaining = source_->Remaining().value_or(requestedBytes);
+    if (remaining == 0) {
+        deferred.Resolve(env.Null());
+        return deferred.Promise();
+    }
+    auto const maxBytes = static_cast<size_t>(std::min<uint64_t>(requestedBytes, remaining));
     try {
-        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, static_cast<size_t>(requested));
+        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, maxBytes);
     } catch (const Napi::Error& e) {
         deferred.Reject(e.Value());
         return deferred.Promise();

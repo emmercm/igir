@@ -85,6 +85,12 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
      */
     bool TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled);
 
+    /**
+     * The bytes left of the entry's declared size, or nothing until the Pump has read that size,
+     * when the format records none, or once the entry has outgrown it
+     */
+    [[nodiscard]] std::optional<uint64_t> Remaining() const;
+
     /** Releases the lent memory; only while nothing is lent, or after the Pump is cancelled. */
     void ReleaseLent();
 
@@ -93,6 +99,12 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
 
     std::shared_ptr<Pump> pump_;
     size_t chunkBytes_ = kDefaultChunkBytes;
+
+    // The bytes lent for the read in flight, at most chunkBytes_
+    size_t lentBytes_ = 0;
+
+    // The bytes every read so far has resolved with
+    uint64_t delivered_ = 0;
 
 #ifdef __EMSCRIPTEN__
     // The memory lent to the producer for each read, which the read copies into

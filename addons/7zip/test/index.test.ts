@@ -1142,6 +1142,89 @@ describe('openEntryReader', () => {
     });
   });
 
+  it.each([2500, 3000])(
+    'should allocate only the bytes left for the final chunk of a %d-byte entry',
+    async (size) => {
+      await withTempDir(async (directory) => {
+        const archive = path.join(directory, 'sized.zip');
+        const contents = crypto.randomBytes(size);
+        await writeStoredZipEntries(archive, [{ entryName: 'a.bin', contents }]);
+
+        const chunks = await collectChunks(
+          sevenZip.openEntryReader({
+            inputFilename: archive,
+            format: SevenZipFormat.ZIP,
+            entryPath: 'a.bin',
+            highWaterMark: 1000,
+          }),
+        );
+        expect(Buffer.concat(chunks)).toEqual(contents);
+        const finalChunk = chunks.at(-1);
+        expect({ length: finalChunk?.length, allocated: finalChunk?.buffer.byteLength }).toEqual({
+          length: size % 1000 || 1000,
+          allocated: size % 1000 || 1000,
+        });
+      });
+    },
+  );
+
+  it('should keep reading an entry that outgrows the size it declared when opened', async () => {
+    // A split set's size is summed from its volumes when it is opened, but each volume is then
+    // copied to its end, so a volume that grows after that emits more than was declared
+    await withTempDir(async (directory) => {
+      for (const volume of ['copy.7z.001', 'copy.7z.002', 'copy.7z.003']) {
+        await FsUtil.copyFile(
+          path.join(FIXTURE_DIR, 'split', volume),
+          path.join(directory, volume),
+        );
+      }
+      const appended = crypto.randomBytes(2500);
+
+      const readable = sevenZip.openEntryReader({
+        inputFilename: path.join(directory, 'copy.7z.001'),
+        format: SevenZipFormat.SPLIT,
+        entryPath: 'copy.7z',
+        highWaterMark: 1000,
+      });
+      const chunks: Buffer[] = [];
+      for await (const chunk of readable) {
+        chunks.push(chunk as Buffer);
+        if (chunks.length === 1) {
+          // The set is open once the first chunk has arrived, and the producer is still in
+          // the first volume
+          await fs.promises.appendFile(path.join(directory, 'copy.7z.003'), appended);
+        }
+      }
+
+      expect(Buffer.concat(chunks)).toEqual(
+        Buffer.concat([await FsUtil.readFile(SPLIT_JOINED), appended]),
+      );
+    });
+  });
+
+  it('should reject an entry that fails its CRC check after its final chunk', async () => {
+    await withTempDir(async (directory) => {
+      const archive = path.join(directory, 'mismatched.zip');
+      const contents = crypto.randomBytes(4096);
+      // The same length as the headers claim, but not the bytes they checksum, so every chunk
+      // is emitted before the CRC check fails
+      const writtenContents = Buffer.from(contents);
+      writtenContents[0] ^= 0xff;
+      await writeStoredZipEntries(archive, [{ entryName: 'a.bin', contents, writtenContents }]);
+
+      await expect(
+        drain(
+          sevenZip.openEntryReader({
+            inputFilename: archive,
+            format: SevenZipFormat.ZIP,
+            entryPath: 'a.bin',
+            highWaterMark: 1000,
+          }),
+        ),
+      ).rejects.toThrow(/it failed its CRC check/);
+    });
+  });
+
   it('should reject a bzip2 download cut off partway through', async () => {
     await withTempDir(async (directory) => {
       const truncated = path.join(directory, 'truncated.bz2');

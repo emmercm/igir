@@ -818,6 +818,28 @@ describe('openReader', () => {
     },
   );
 
+  it.each(ALL_FIXTURES)(
+    'should allocate only the bytes left for the final chunk of $label',
+    async (fixture) => {
+      const readable = maxcso.openReader({
+        inputFilename: fixture.archivePath,
+        highWaterMark: 3000,
+      });
+      // Only the final chunk is kept
+      let finalChunk: Buffer | undefined;
+      for await (const chunk of readable) {
+        if (!Buffer.isBuffer(chunk)) {
+          throw new TypeError('expected a Buffer chunk');
+        }
+        finalChunk = chunk;
+      }
+      expect({ length: finalChunk?.length, allocated: finalChunk?.buffer.byteLength }).toEqual({
+        length: PAYLOAD_SIZE % 3000,
+        allocated: PAYLOAD_SIZE % 3000,
+      });
+    },
+  );
+
   it('should emit one byte at a time out of a block larger than the high-water mark', async () => {
     const readable = maxcso.openReader({
       inputFilename: path.join(FIXTURE_DIR, '256k-block-size', 'cso1-zlib.cso'),
