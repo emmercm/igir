@@ -488,6 +488,8 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
 
         // Then all matched input files were queued for deletion...
         expect(results.moved.length).toBeGreaterThan(0);
+        // ...each game once, however many files it has
+        expect(new Set(results.moved).size).toEqual(results.moved.length);
         // ...and nonmatch.rom was not one of them
         expect(
           results.moved.flatMap((c) =>
