@@ -5,7 +5,7 @@ import stream from 'node:stream';
 import maxcso from '../../../../../addons/maxcso/index.js';
 import FsReadTransform, { type FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FileChecksums from '../../fileChecksums.js';
-import type { ArchiveEntryLocation } from '../archive.js';
+import type { ArchiveEntryRef } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -46,7 +46,7 @@ export default abstract class Maxcso extends Archive {
     // Compute every requested checksum in a single decompression pass. A decode error on a
     // corrupt block surfaces as a stream error, which is the integrity check.
     const checksums = await this.extractEntryToStream(
-      { entryPath: '' },
+      { entryPath: '', size: info.uncompressedSize },
       async (readable) => await FileChecksums.hashStream(readable, checksumBitmask, callback),
     );
 
@@ -69,14 +69,14 @@ export default abstract class Maxcso extends Archive {
    * entry path is not needed to resolve it.
    */
   override async extractEntryToStream<T>(
-    _location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
     end?: number,
   ): Promise<T> {
     const sourceStream: stream.Readable = maxcso.openReader({
       inputFilename: this.getFilePath(),
-      highWaterMark: Archive.getStreamChunkSize(start, end),
+      highWaterMark: Archive.getStreamChunkSize(start, end, entryRef.size),
     });
     return await Archive.pipelineRange(sourceStream, callback, start, end);
   }
@@ -85,11 +85,11 @@ export default abstract class Maxcso extends Archive {
    * Extract the disc image to the given path as an uncompressed ISO.
    */
   async extractEntryToFile(
-    _location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
+    await this.extractEntryToStream(entryRef, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);

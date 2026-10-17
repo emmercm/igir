@@ -56,6 +56,15 @@ class RawSource {
         return n;
     }
 
+    /**
+     * The bytes left to emit, or nothing before the first Produce() has opened the CHD. Zero
+     * exactly when Produce() would emit nothing.
+     */
+    [[nodiscard]] std::optional<uint64_t> Remaining() const {
+        if (!opened_) return std::nullopt;
+        return total_ - pos_;
+    }
+
    private:
     std::string input_;
     bool opened_ = false;

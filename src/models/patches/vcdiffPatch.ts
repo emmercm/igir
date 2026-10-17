@@ -636,7 +636,8 @@ class VcdiffHeader {
 
   private static getDefaultCodeTableString(): Buffer {
     if (this.defaultCodeTableString === undefined) {
-      const codeTableString = Buffer.alloc(CODE_TABLE_STRING_SIZE);
+      // Every entry has two instructions, so every byte is written below
+      const codeTableString = Buffer.allocUnsafe(CODE_TABLE_STRING_SIZE);
       for (const [index, entry] of this.DEFAULT_CODE_TABLE.entries()) {
         for (const [slot, instruction] of entry.entries()) {
           codeTableString.writeUInt8(instruction.type, slot * CODE_TABLE_ENTRIES + index);

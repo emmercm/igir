@@ -107,7 +107,9 @@ export default class LzDictionary {
       this.dictionarySize,
       Math.max(INITIAL_CAPACITY, this.buffer.length * 2),
     );
-    const buffer = new Uint8Array(capacity);
+    // Matches can't reach back past what has been written since the last reset, so the bytes past
+    // the write position are never read before they're written
+    const buffer = Buffer.allocUnsafe(capacity);
     buffer.set(this.buffer.subarray(0, this.bufferPosition));
     this.buffer = buffer;
   }

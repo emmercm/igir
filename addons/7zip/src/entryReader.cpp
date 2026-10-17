@@ -1,5 +1,6 @@
 #include "entryReader.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -201,6 +202,9 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         deferred.Resolve(env.Null());
         return true;
     }
+    // Only the final chunk comes back short
+    bool const isShort = length < lentBytes_;
+    delivered_ += length;
 
 #ifdef __EMSCRIPTEN__
     // The slot has handed the scratch memory back. Copied before settling, so
@@ -213,11 +217,11 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
     Napi::Buffer<uint8_t> const buffer = lent_.Value();
     lent_.Reset();
     *settled = true;
-    if (length == buffer.Length()) {
+    if (!isShort) {
         deferred.Resolve(buffer);
     } else {
-        // Only the final chunk comes back short. A view rather than a copy, at
-        // the cost of pinning the unused tail until the view is collected.
+        // A view rather than a copy, at the cost of pinning the unused tail
+        // until the view is collected
         deferred.Resolve(
             buffer.Get("subarray")
                 .As<Napi::Function>()
@@ -250,20 +254,30 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
             settled = true;
             deferred.Reject(Napi::Error::New(env, "the entry reader was never opened").Value());
         } else {
+            // Once the producer has finished, nothing is left to decode, so nothing is lent: the
+            // slot reports the end, or the producer's failure, without a buffer
+            if (!pump_->Done()) {
+                // No more than the entry has left, so that its final chunk allocates only what it
+                // fills. The declared size is untrusted, so once it is reached the read lends one
+                // byte rather than none: an entry longer than declared still has somewhere to go,
+                // instead of blocking the producer for good.
+                lentBytes_ =
+                    static_cast<size_t>(std::clamp<uint64_t>(Remaining().value_or(chunkBytes_), 1, chunkBytes_));
 #ifdef __EMSCRIPTEN__
-            // Allocated once and reused, since reads are one at a time
-            if (!scratch_) {
-                // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
-                scratch_ = std::make_unique_for_overwrite<uint8_t[]>(chunkBytes_);
-            }
-            pump_->Lend(scratch_.get(), chunkBytes_);
+                // Allocated once and reused, since reads are one at a time
+                if (!scratch_) {
+                    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+                    scratch_ = std::make_unique_for_overwrite<uint8_t[]>(chunkBytes_);
+                }
+                pump_->Lend(scratch_.get(), lentBytes_);
 #else
-            // Referenced before it is lent, so that V8 cannot collect it while
-            // the producer holds its address
-            Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, chunkBytes_);
-            lent_ = Napi::Persistent(buffer);
-            pump_->Lend(buffer.Data(), buffer.Length());
+                // Referenced before it is lent, so that V8 cannot collect it while
+                // the producer holds its address
+                Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, lentBytes_);
+                lent_ = Napi::Persistent(buffer);
+                pump_->Lend(buffer.Data(), buffer.Length());
 #endif
+            }
             if (!TrySettle(env, deferred, &settled)) {
                 // The producer has not filled the buffer yet, which is the
                 // common case, since it only starts once the buffer is lent.
@@ -319,6 +333,14 @@ void EntryReader::OnProducerReady(Napi::Env env) {
         }
     }
     ReleasePending(env);
+}
+
+std::optional<uint64_t> EntryReader::Remaining() const {
+    std::optional<uint64_t> const size = pump_->DeclaredSize();
+    if (!size.has_value() || delivered_ > *size) {
+        return std::nullopt;
+    }
+    return *size - delivered_;
 }
 
 void EntryReader::ReleaseLent() {

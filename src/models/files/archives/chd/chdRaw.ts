@@ -5,7 +5,7 @@ import chdman, { CHDType } from '../../../../../addons/chdman/index.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
-import type { ArchiveEntryLocation } from '../archive.js';
+import type { ArchiveEntryRef } from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
 
@@ -82,14 +82,14 @@ export default class ChdRaw extends Chd {
    * resolve it.
    */
   override async extractEntryToStream<T>(
-    _location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
     end?: number,
   ): Promise<T> {
     const sourceStream: stream.Readable = chdman.openRawReader({
       inputFilename: this.getFilePath(),
-      highWaterMark: Chd.getStreamChunkSize(start, end),
+      highWaterMark: Chd.getStreamChunkSize(start, end, entryRef.size),
     });
     return await Chd.pipelineRange(sourceStream, callback, start, end);
   }

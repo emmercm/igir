@@ -156,6 +156,25 @@ describe('openReader', () => {
     );
   });
 
+  it('should allocate only the bytes left for the final chunk', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: 100_000,
+    });
+    // Only the final chunk is kept
+    let finalChunk: Buffer | undefined;
+    for await (const chunk of readable) {
+      if (!Buffer.isBuffer(chunk)) {
+        throw new TypeError('expected a Buffer chunk');
+      }
+      finalChunk = chunk;
+    }
+    expect({ length: finalChunk?.length, allocated: finalChunk?.buffer.byteLength }).toEqual({
+      length: GAMECUBE_ISO_SIZE % 100_000,
+      allocated: GAMECUBE_ISO_SIZE % 100_000,
+    });
+  });
+
   it('should reject on a missing file', async () => {
     const readable = dolphin.openReader({
       inputFilename: `${path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz')}.missing`,

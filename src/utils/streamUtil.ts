@@ -9,6 +9,23 @@ const ABANDONED_CODES = new Set(['ERR_STREAM_PREMATURE_CLOSE', 'ABORT_ERR']);
 
 export default {
   /**
+   * Pick the chunk size to read the {@link start} to {@link end} byte range (both inclusive) of a
+   * {@link size}-byte source with, so that no read allocates more memory than the source can fill.
+   * A {@link size} of zero or less is treated as unknown, as some sizes are only placeholders.
+   * @returns the chunk size, in bytes
+   */
+  getChunkSize(start = 0, end?: number, size?: number): number {
+    let chunkSize = Defaults.FILE_READING_CHUNK_SIZE;
+    if (size !== undefined && size > 0) {
+      chunkSize = Math.min(chunkSize, size - start);
+    }
+    if (end !== undefined) {
+      chunkSize = Math.min(chunkSize, end - start + 1);
+    }
+    return Math.max(1, chunkSize);
+  },
+
+  /**
    * Read `source` through an optional `transform`, invoke the callback with the resulting stream,
    * and tear both streams down once the callback is finished with them.
    *

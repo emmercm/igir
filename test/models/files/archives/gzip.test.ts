@@ -29,6 +29,38 @@ function v7Tar(fileName: string, data: Buffer): Buffer {
   return Buffer.concat([header, body, Buffer.alloc(1024)]);
 }
 
+/**
+ * Write a gzip of {@link size} bytes, which compress to a few hundred bytes, to a temp file.
+ * @returns the temp file's path
+ */
+async function writeGzip(size: number): Promise<string> {
+  await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
+  const tempFile = `${await FsUtil.mktemp(path.join(Temp.getTempDir(), 'sized'))}.gz`;
+  const data = Buffer.from(Array.from({ length: size }, (_, index) => (index * index) % 251));
+  await FsUtil.writeFile(tempFile, zlib.gzipSync(data));
+  return tempFile;
+}
+
+/**
+ * Record the read streams' highWaterMarks and the gunzip streams' chunk sizes that get created.
+ * @returns the recorded sizes, in the order the streams were created
+ */
+function spyOnChunkSizes(): { readHighWaterMarks: unknown[]; gunzipChunkSizes: unknown[] } {
+  const readHighWaterMarks: unknown[] = [];
+  const createReadStream = fs.createReadStream.bind(fs);
+  vi.spyOn(fs, 'createReadStream').mockImplementation((filePath, options) => {
+    readHighWaterMarks.push(typeof options === 'object' ? options.highWaterMark : undefined);
+    return createReadStream(filePath, options);
+  });
+  const gunzipChunkSizes: unknown[] = [];
+  const createGunzip = zlib.createGunzip.bind(zlib);
+  vi.spyOn(zlib, 'createGunzip').mockImplementation((options) => {
+    gunzipChunkSizes.push(options?.chunkSize);
+    return createGunzip(options);
+  });
+  return { readHighWaterMarks, gunzipChunkSizes };
+}
+
 describe('getArchiveEntries', () => {
   it('should not parse a plain gzipped file as a tar', async () => {
     const tarSpy = vi.spyOn(Tar.prototype, 'getArchiveEntries');
@@ -124,6 +156,24 @@ describe('getArchiveEntries', () => {
     },
   );
 
+  it('should read and decompress no more than the file holds at a time', async () => {
+    const tempFile = await writeGzip(10_000);
+    const compressedSize = await FsUtil.size(tempFile);
+    const chunkSizes = spyOnChunkSizes();
+    try {
+      await new Gzip(tempFile).getArchiveEntries(ChecksumBitmask.SHA1);
+
+      // The tar probe's chunks are sized to its range, and the hash's to the file's sizes
+      expect(chunkSizes).toEqual({
+        readHighWaterMarks: [compressedSize, compressedSize],
+        gunzipChunkSizes: [4096, 10_001],
+      });
+    } finally {
+      vi.restoreAllMocks();
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
   it('should read a gzipped v7 tar, which has no ustar magic, as a tar', async () => {
     await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
     const tempFile = `${await FsUtil.mktemp(path.join(Temp.getTempDir(), 'v7'))}.tar.gz`;
@@ -136,4 +186,39 @@ describe('getArchiveEntries', () => {
       await FsUtil.rm(tempFile, { force: true });
     }
   });
+});
+
+describe('extractEntryToFile', () => {
+  it.each([
+    ['the trailer size', 10_000, 10_000, (): number => 10_001],
+    // A multi-member gzip's trailer only holds the last member's size, which can be tiny
+    [
+      'an understated trailer size',
+      10_000,
+      1,
+      (compressedSize: number): number => compressedSize + 1,
+    ],
+    ['a size smaller than zlib allows', 10, 10, (): number => 64],
+  ])(
+    'should read and decompress no more than the file holds at a time, for %s',
+    async (_, dataSize, size, getExpectedGunzipChunkSize) => {
+      const tempFile = await writeGzip(dataSize);
+      const compressedSize = await FsUtil.size(tempFile);
+      const extractedFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'extracted'));
+      const chunkSizes = spyOnChunkSizes();
+      try {
+        await new Gzip(tempFile).extractEntryToFile({ entryPath: '', size }, extractedFile);
+
+        expect(chunkSizes).toEqual({
+          readHighWaterMarks: [compressedSize],
+          gunzipChunkSizes: [getExpectedGunzipChunkSize(compressedSize)],
+        });
+        await expect(FsUtil.size(extractedFile)).resolves.toEqual(dataSize);
+      } finally {
+        vi.restoreAllMocks();
+        await FsUtil.rm(tempFile, { force: true });
+        await FsUtil.rm(extractedFile, { force: true });
+      }
+    },
+  );
 });

@@ -24,7 +24,7 @@ import { ZipFormat } from '../../options.js';
 import type File from '../file.js';
 import type { ChecksumProps } from '../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
-import type { ArchiveEntryLocation } from './archive.js';
+import type { ArchiveEntryRef } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -139,7 +139,7 @@ export default class Zip extends Archive {
    * Extract the named entry from the ZIP to the given file path.
    */
   async extractEntryToFile(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
@@ -148,7 +148,7 @@ export default class Zip extends Archive {
       await FsUtil.mkdir(extractedDir, { recursive: true });
     }
 
-    await this.extractEntryToStream(location, async (readable) => {
+    await this.extractEntryToStream(entryRef, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -162,7 +162,7 @@ export default class Zip extends Archive {
    * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
    */
   override async extractEntryToStream<T>(
-    { entryPath }: ArchiveEntryLocation,
+    { entryPath }: ArchiveEntryRef,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
     end?: number,

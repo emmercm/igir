@@ -2,8 +2,10 @@ import crypto from 'node:crypto';
 import events from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import type stream from 'node:stream';
 import worker_threads from 'node:worker_threads';
 
+import Temp from '../../../src/globals/temp.js';
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import chdman, {
@@ -554,6 +556,22 @@ async function expectTracks(fixture: Fixture, highWaterMark?: number): Promise<v
 }
 
 /**
+ * @returns the length of the final chunk {@link readable} emits, and the size of the memory behind it
+ */
+async function readFinalChunk(
+  readable: stream.Readable,
+): Promise<{ length?: number; allocated?: number }> {
+  let finalChunk: Buffer | undefined;
+  for await (const chunk of readable) {
+    if (!Buffer.isBuffer(chunk)) {
+      throw new TypeError('expected a Buffer chunk');
+    }
+    finalChunk = chunk;
+  }
+  return { length: finalChunk?.length, allocated: finalChunk?.buffer.byteLength };
+}
+
+/**
  * @returns the size and SHA-1 of the logical image of {@link inputPath}, streamed by the addon
  */
 async function readRaw(inputPath: string, highWaterMark?: number): Promise<Digest> {
@@ -563,6 +581,148 @@ async function readRaw(inputPath: string, highWaterMark?: number): Promise<Diges
     ),
   );
 }
+
+/**
+ * Run `callback` against a temporary directory that is removed afterwards,
+ * however it finishes.
+ */
+async function withTempDir<T>(callback: (directory: string) => Promise<T> | T): Promise<T> {
+  if (!(await FsUtil.exists(Temp.getTempDir()))) {
+    await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
+  }
+  const directory = await FsUtil.mkdtemp(Temp.getTempDir());
+  try {
+    return await callback(directory);
+  } finally {
+    await FsUtil.rm(directory, { recursive: true, force: true });
+  }
+}
+
+// A v3 CD-ROM CHD of a 30-frame MODE1 track and a 30-frame AUDIO track, whose metadata is rewritten
+const CRAFTED_CD_BASE = findFixture('legacy/cd-v3.chd');
+
+/**
+ * One entry of a CHD's metadata chain.
+ */
+interface CraftedMetadata {
+  tag: string;
+  data: Buffer;
+}
+
+/**
+ * One track of old-style (`CHCD`) CD-ROM metadata.
+ */
+interface OldCdTrack {
+  trackType: number;
+  dataSize: number;
+  frames: number;
+}
+
+// The tracks of CRAFTED_CD_BASE: CD_TRACK_MODE1 and CD_TRACK_AUDIO
+const CRAFTED_CD_TRACKS: OldCdTrack[] = [
+  { trackType: 0, dataSize: 2048, frames: 30 },
+  { trackType: 7, dataSize: 2352, frames: 30 },
+];
+
+/**
+ * Old-style CD-ROM metadata is a track count, then 99 tracks of six little-endian words each: the
+ * track type, subcode type, data size, subcode size, frames, and padding frames.
+ * @returns old-style metadata declaring {@link trackCount} tracks, of which {@link tracks} are filled in
+ */
+function encodeOldCdMetadata(trackCount: number, tracks: OldCdTrack[]): Buffer {
+  const data = Buffer.alloc((1 + 99 * 6) * 4);
+  data.writeUInt32LE(trackCount, 0);
+  for (const [index, track] of tracks.entries()) {
+    const offset = 4 + index * 24;
+    data.writeUInt32LE(track.trackType, offset);
+    // CD_SUB_NONE
+    data.writeUInt32LE(2, offset + 4);
+    data.writeUInt32LE(track.dataSize, offset + 8);
+    data.writeUInt32LE(0, offset + 12);
+    data.writeUInt32LE(track.frames, offset + 16);
+    data.writeUInt32LE((4 - (track.frames % 4)) % 4, offset + 20);
+  }
+  return data;
+}
+
+/**
+ * Write a copy of {@link CRAFTED_CD_BASE} whose metadata chain is replaced by {@link entries},
+ * appended after its hunks.
+ * @returns the path of the written CHD
+ */
+async function writeCraftedCdChd(directory: string, entries: CraftedMetadata[]): Promise<string> {
+  const chd = await fs.promises.readFile(CRAFTED_CD_BASE.inputPath);
+  // The v3 header's big-endian offset of the first metadata entry
+  chd.writeBigUInt64BE(BigInt(chd.length), 36);
+  const parts: Buffer[] = [chd];
+  let offset = chd.length;
+  for (const [index, entry] of entries.entries()) {
+    // A metadata entry header: its tag, flags and length, and the offset of the next entry
+    const header = Buffer.alloc(16);
+    header.write(entry.tag, 0, 'latin1');
+    header.writeUInt32BE(entry.data.length, 4);
+    const next = offset + header.length + entry.data.length;
+    header.writeBigUInt64BE(index + 1 < entries.length ? BigInt(next) : 0n, 8);
+    parts.push(header, entry.data);
+    offset = next;
+  }
+  const filePath = path.join(directory, 'crafted.chd');
+  await fs.promises.writeFile(filePath, Buffer.concat(parts));
+  return filePath;
+}
+
+// CD-ROM metadata that MAME parses without validating, each of which must be refused rather than
+// crash the process (too many tracks), read past its metadata (truncated), spin through 2^32 frames
+// without emitting anything (zero data size), or overflow a frame buffer (oversized data size)
+const MALFORMED_CD_METADATA: { description: string; entries: CraftedMetadata[]; error: string }[] =
+  [
+    {
+      description: 'old-style metadata with more tracks than a CD holds',
+      entries: [{ tag: 'CHCD', data: encodeOldCdMetadata(1000, CRAFTED_CD_TRACKS) }],
+      error: 'CHD CD-ROM metadata has too many tracks',
+    },
+    {
+      description: 'truncated old-style metadata',
+      entries: [{ tag: 'CHCD', data: encodeOldCdMetadata(2, CRAFTED_CD_TRACKS).subarray(0, 4) }],
+      error: 'CHD CD-ROM metadata is truncated',
+    },
+    {
+      description: 'old-style metadata with a zero data size and 2^32-1 frames',
+      entries: [
+        {
+          tag: 'CHCD',
+          data: encodeOldCdMetadata(2, [
+            { trackType: 0, dataSize: 0, frames: 0xff_ff_ff_ff },
+            CRAFTED_CD_TRACKS[1],
+          ]),
+        },
+      ],
+      error: 'CHD track 1 has an invalid data size of 0 bytes',
+    },
+    {
+      description: 'old-style metadata with a data size larger than a CD frame',
+      entries: [
+        {
+          tag: 'CHCD',
+          data: encodeOldCdMetadata(2, [
+            { trackType: 0, dataSize: 4096, frames: 30 },
+            CRAFTED_CD_TRACKS[1],
+          ]),
+        },
+      ],
+      error: 'CHD track 1 has an invalid data size of 4096 bytes',
+    },
+    {
+      description: 'new-style metadata that skips track 1',
+      entries: [
+        {
+          tag: 'CHTR',
+          data: Buffer.from('TRACK:2 TYPE:MODE1 SUBTYPE:NONE FRAMES:30\0', 'latin1'),
+        },
+      ],
+      error: 'CHD track 1 has an invalid data size of 0 bytes',
+    },
+  ];
 
 describe('info', () => {
   it('should have fixtures to test', () => {
@@ -650,6 +810,41 @@ describe('listCdBinCueTracks', () => {
     ).rejects.toThrow(/cannot be extracted as cue\/bin/);
   });
 
+  it('should list old-style CD-ROM metadata the same as the new-style metadata it encodes', async () => {
+    const expected = await chdman.listCdBinCueTracks({
+      inputFilename: CRAFTED_CD_BASE.inputPath,
+      binNamePattern: 'crafted (Track %t).bin',
+      cueName: 'crafted.cue',
+    });
+    await withTempDir(async (directory) => {
+      const inputFilename = await writeCraftedCdChd(directory, [
+        { tag: 'CHCD', data: encodeOldCdMetadata(2, CRAFTED_CD_TRACKS) },
+      ]);
+      await expect(
+        chdman.listCdBinCueTracks({
+          inputFilename,
+          binNamePattern: 'crafted (Track %t).bin',
+          cueName: 'crafted.cue',
+        }),
+      ).resolves.toEqual(expected);
+    });
+  });
+
+  it.each(MALFORMED_CD_METADATA)(
+    'should reject a CHD with $description',
+    async ({ entries, error }) => {
+      await withTempDir(async (directory) => {
+        await expect(
+          chdman.listCdBinCueTracks({
+            inputFilename: await writeCraftedCdChd(directory, entries),
+            binNamePattern: 'crafted (Track %t).bin',
+            cueName: 'crafted.cue',
+          }),
+        ).rejects.toThrow(error);
+      });
+    },
+  );
+
   it('should reject on a missing file', async () => {
     await expect(
       chdman.listCdBinCueTracks({
@@ -665,6 +860,21 @@ describe('listGdRomTracks', () => {
   it.each(GDI_FIXTURES)(
     "should list $inputPath with chdman's gdi text and track sizes",
     expectListing,
+  );
+
+  it.each(MALFORMED_CD_METADATA)(
+    'should reject a CHD with $description',
+    async ({ entries, error }) => {
+      await withTempDir(async (directory) => {
+        await expect(
+          chdman.listGdRomTracks({
+            inputFilename: await writeCraftedCdChd(directory, entries),
+            trackBaseName: 'track',
+            gdiName: 'crafted.gdi',
+          }),
+        ).rejects.toThrow(error);
+      });
+    },
   );
 
   it('should reject on a missing file', async () => {
@@ -690,6 +900,37 @@ describe('openTrackReader', () => {
     'should stream $fixture.inputPath with a high-water mark of $highWaterMark byte-identically',
     async ({ fixture, highWaterMark }) => {
       await expectTracks(fixture, highWaterMark);
+    },
+  );
+
+  it.each([MIXED_PREGAP, GD_ROM])(
+    'should allocate only the bytes left for the final chunk of every track of $inputPath',
+    async (fixture) => {
+      // One byte short of a CD frame, so the final chunk of every track falls mid-frame
+      const highWaterMark = 2351;
+      const expected = await readExpectedDisc(fixture);
+      const listing = await listTracks(fixture, expected.tocName);
+      const finalChunks = [];
+      for (const track of listing.tracks) {
+        finalChunks.push(
+          await readFinalChunk(
+            chdman.openTrackReader({
+              inputFilename: fixture.inputPath,
+              mode: path.basename(fixture.inputPath).startsWith('gd-')
+                ? TrackReaderMode.GDI
+                : TrackReaderMode.CUEBIN,
+              trackIndex: track.index,
+              highWaterMark,
+            }),
+          ),
+        );
+      }
+      const finalChunkSizes = listing.tracks.map(
+        (track) => track.size % highWaterMark || highWaterMark,
+      );
+      expect(finalChunks).toEqual(
+        finalChunkSizes.map((size) => ({ length: size, allocated: size })),
+      );
     },
   );
 
@@ -737,6 +978,40 @@ describe('openTrackReader', () => {
       );
       await expect(read).rejects.toThrow(RangeError);
       await expect(read).rejects.toThrow('track index out of range');
+    },
+  );
+
+  it('should stream old-style CD-ROM metadata the same as the new-style metadata it encodes', async () => {
+    const readTracks = async (inputFilename: string): Promise<Digest[]> =>
+      await Promise.all(
+        [0, 1].map(async (trackIndex) =>
+          computeDigest(
+            await BufferUtil.fromReadable(
+              chdman.openTrackReader({ inputFilename, mode: TrackReaderMode.CUEBIN, trackIndex }),
+            ),
+          ),
+        ),
+      );
+    const expected = await readTracks(CRAFTED_CD_BASE.inputPath);
+    await withTempDir(async (directory) => {
+      const inputFilename = await writeCraftedCdChd(directory, [
+        { tag: 'CHCD', data: encodeOldCdMetadata(2, CRAFTED_CD_TRACKS) },
+      ]);
+      await expect(readTracks(inputFilename)).resolves.toEqual(expected);
+    });
+  });
+
+  it.each(MALFORMED_CD_METADATA)(
+    'should reject reading a CHD with $description',
+    async ({ entries, error }) => {
+      await withTempDir(async (directory) => {
+        const readable = chdman.openTrackReader({
+          inputFilename: await writeCraftedCdChd(directory, entries),
+          mode: TrackReaderMode.CUEBIN,
+          trackIndex: 0,
+        });
+        await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(error);
+      });
     },
   );
 
@@ -791,6 +1066,15 @@ describe('openRawReader', () => {
       );
     },
   );
+
+  it('should allocate only the bytes left for the final chunk', async () => {
+    const highWaterMark = 3000;
+    const { size } = await readExpectedImage(HARD_DISK);
+    const finalChunkSize = size % highWaterMark || highWaterMark;
+    await expect(
+      readFinalChunk(chdman.openRawReader({ inputFilename: HARD_DISK.inputPath, highWaterMark })),
+    ).resolves.toEqual({ length: finalChunkSize, allocated: finalChunkSize });
+  });
 
   it('should stream multiple raw readers over the same CHD in parallel', async () => {
     const image = await readExpectedImage(HARD_DISK);

@@ -195,6 +195,22 @@ export default class LocalFileHeader extends FileRecord {
   }
 
   /**
+   * Pick the decompressor's output chunk size, so that it doesn't allocate more memory than this
+   * file's uncompressed bytes can fill.
+   * @returns the chunk size, in bytes, or undefined to use zlib's default
+   */
+  private decompressorChunkSize(highWaterMark?: number): number | undefined {
+    if (highWaterMark === undefined) {
+      return undefined;
+    }
+    return Math.max(
+      zlib.constants.Z_MIN_CHUNK,
+      // One byte more than the output, so zlib doesn't allocate a second buffer just to finish
+      Math.min(highWaterMark, this.uncompressedSizeResolved() + 1),
+    );
+  }
+
+  /**
    * Return this file's uncompressed/decompressed stream.
    */
   uncompressedStream(highWaterMark?: number): stream.Readable {
@@ -205,7 +221,7 @@ export default class LocalFileHeader extends FileRecord {
       case CompressionMethod.DEFLATE: {
         return StreamUtil.withTransforms(
           this.compressedStream(highWaterMark),
-          zlib.createInflateRaw({ chunkSize: highWaterMark }),
+          zlib.createInflateRaw({ chunkSize: this.decompressorChunkSize(highWaterMark) }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }
@@ -213,7 +229,7 @@ export default class LocalFileHeader extends FileRecord {
       case CompressionMethod.ZSTD: {
         return StreamUtil.withTransforms(
           this.compressedStream(highWaterMark),
-          zlib.createZstdDecompress({ chunkSize: highWaterMark }),
+          zlib.createZstdDecompress({ chunkSize: this.decompressorChunkSize(highWaterMark) }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }
