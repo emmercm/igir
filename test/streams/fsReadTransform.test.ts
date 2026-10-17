@@ -15,13 +15,17 @@ async function run(chunks: Buffer[]): Promise<{ output: Buffer[]; progress: numb
       progress.push(bytesRead);
     }),
     async (readable) => {
+      // Collect 'data' events rather than async-iterating, because Node.js v22's async iterator
+      // reads every buffered chunk at once, merging them into one
       const outputChunks: Buffer[] = [];
-      for await (const chunk of readable) {
+      readable.on('data', (chunk: unknown) => {
         if (!Buffer.isBuffer(chunk)) {
-          throw new TypeError('expected a Buffer chunk');
+          readable.destroy(new TypeError('expected a Buffer chunk'));
+          return;
         }
         outputChunks.push(chunk);
-      }
+      });
+      await stream.promises.finished(readable);
       return outputChunks;
     },
   );

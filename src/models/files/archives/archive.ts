@@ -11,8 +11,8 @@ import File from '../file.js';
 import type ArchiveEntry from './archiveEntry.js';
 
 /**
- * A reference to one entry in its {@link Archive}, with what the archive needs to extract it: the
- * path it was listed under, and optionally the position it was listed at and its uncompressed size.
+ * A reference to a {@link ArchiveEntry} in a {@link Archive}, with enough information to extract
+ * that entry. This is required to prevent a circular dependency between those two classes.
  */
 export interface ArchiveEntryRef {
   readonly entryPath: string;
