@@ -56,7 +56,8 @@ interface SevenZipNativeEntry extends Omit<SevenZipEntry, 'crc32'> {
  */
 interface NativeEntryReader {
   read: () => Promise<Buffer | null>;
-  close: () => void;
+  // Resolves once every file the archive opened is closed
+  close: () => Promise<void>;
 }
 
 export interface ListEntriesOptions {
@@ -182,70 +183,76 @@ function formatIndex(format: SevenZipFormat): number {
 }
 
 /**
- * Wrap a native 7-Zip entry reader in a {@link stream.Readable}. The reader is
- * closed when the stream ends, errors, or is destroyed. Callers must consume the
- * stream to its end or call `destroy()` so the native reader is released.
+ * Turn a thrown value into an {@link Error}.
+ * @returns the value, or an Error describing it
+ */
+function toError(thrown: unknown): Error {
+  return thrown instanceof Error ? thrown : new Error(String(thrown));
+}
+
+/**
+ * Wrap a native 7-Zip entry reader in a {@link stream.Readable} that closes the
+ * archive as Node.js' fs.ReadStream closes its file descriptor: in `destroy()`,
+ * which the stream calls by itself once it has ended or failed, and only after
+ * any read still running has finished. `'close'` is emitted only once every
+ * file the archive opened is closed, and a stream destroyed before its first
+ * read has opened nothing to close. Callers must consume the stream to its end
+ * or call `destroy()` so the native reader is released.
  */
 function readableFromReader(
   openReader: (chunkBytes: number) => NativeEntryReader,
   highWaterMark?: number,
 ): stream.Readable {
+  // Opened by the first read, so that it's asked for exactly the chunk size the stream wants
   let reader: NativeEntryReader | undefined;
-  const openOnce = (chunkBytes: number): NativeEntryReader => {
-    reader ??= openReader(chunkBytes);
-    return reader;
-  };
-
-  let isClosed = false;
-  const closeOnce = (): void => {
-    if (isClosed) {
-      return;
-    }
-    isClosed = true;
-    // `reader` is undefined when the stream was destroyed before the first read,
-    // or when the factory threw: either way nothing was opened to release.
-    reader?.close();
-  };
-
+  // The read in flight, which destroy() waits for before closing the reader
+  let reading: ReturnType<NativeEntryReader['read']> | undefined;
   return new stream.Readable({
-    // `undefined` is not "no opinion" to every stream option, but it is to this
-    // one: Readable falls back to its own default, which is the point.
     highWaterMark,
     async read(): Promise<void> {
+      let chunk: Buffer | null;
       try {
-        if (isClosed) {
-          // eslint-disable-next-line unicorn/no-null
-          this.push(null);
-          return;
-        }
-        // Read off the stream rather than the option, so that the addon is
-        // asked for exactly what the stream wants whether or not a caller named
-        // a size.
-        const chunk = await openOnce(this.readableHighWaterMark).read();
-        if (chunk === null || chunk.length === 0) {
-          closeOnce();
-          // eslint-disable-next-line unicorn/no-null
-          this.push(null);
-        } else {
-          this.push(chunk);
-        }
+        reader ??= openReader(this.readableHighWaterMark);
+        reading = reader.read();
+        chunk = await reading;
       } catch (error) {
-        try {
-          closeOnce();
-        } catch {
-          /* ignored: reporting the original failure matters more */
+        reading = undefined;
+        // Once destroyed, destroy() reports the error instead
+        if (!this.destroyed) {
+          this.destroy(toError(error));
         }
-        this.destroy(error instanceof Error ? error : new Error(String(error)));
+        return;
+      }
+      reading = undefined;
+      // A chunk that arrives once destroyed is dropped
+      if (this.destroyed) {
+        return;
+      }
+      if (chunk === null || chunk.length === 0) {
+        // eslint-disable-next-line unicorn/no-null
+        this.push(null);
+      } else {
+        this.push(chunk);
       }
     },
     destroy(error, callback): void {
-      try {
-        closeOnce();
-      } catch {
-        /* ignored: releasing the reader is best-effort, and `error` is
-           reported either way */
-      }
-      callback(error);
+      // As fs.ReadStream does, an error closing is reported over the one destroyed with, and that
+      // one over an error from the read in flight
+      const pending = reading;
+      void (async (): Promise<void> => {
+        let result = error;
+        try {
+          await pending;
+        } catch (readError) {
+          result ??= toError(readError);
+        }
+        try {
+          await reader?.close();
+        } catch (closeError) {
+          result = toError(closeError);
+        }
+        callback(result);
+      })();
     },
   });
 }

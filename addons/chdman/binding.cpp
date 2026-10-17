@@ -19,6 +19,7 @@
 #include "chdcodec.h"
 #include "path.h"
 #include "src/addon.h"
+#include "src/chdOpen.h"
 #include "strformat.h"
 
 // ---- chdman raw logical reader ----
@@ -37,7 +38,7 @@ class RawSource {
     /** Emit up to maxBytes of this CHD's logical bytes starting at pos_. Runs on the worker thread. */
     size_t Produce(uint8_t* out, size_t maxBytes) {
         if (!opened_) {
-            std::error_condition const err = chd_.open(input_, false, nullptr);
+            std::error_condition const err = OpenChdForReading(chd_, input_);
             if (err) {
                 throw std::runtime_error("failed to open CHD: " + err.message());
             }

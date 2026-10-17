@@ -9,6 +9,7 @@ import zlib from 'node:zlib';
 import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import isFileOpen from '../../../test/utils/isFileOpen.js';
 import sevenZip, { SevenZipFormat } from '../index.js';
 
 gracefulFs.gracefulify(fs);
@@ -228,6 +229,89 @@ async function withLargeArchive(callback: (archivePath: string) => Promise<void>
   });
 }
 
+/**
+ * Copy {@link sources} into {@link directory}, keeping their names, so that a test checks the
+ * handles of files that no other test, and no other process, has open.
+ * @returns the paths of the copies, in the same order
+ */
+async function copyInto(directory: string, sources: string[]): Promise<string[]> {
+  return await Promise.all(
+    sources.map(async (source) => {
+      const copy = path.join(directory, path.basename(source));
+      await FsUtil.copyFile(source, copy);
+      return copy;
+    }),
+  );
+}
+
+/**
+ * Destroy {@link readable}, with {@link error} if one is given, and record the events it emits from
+ * then on, until it closes.
+ * @returns the names of the events, in the order they were emitted
+ */
+async function eventsAfterDestroy(readable: stream.Readable, error?: Error): Promise<string[]> {
+  const emitted: string[] = [];
+  const closed = new Promise<void>((resolve) => {
+    for (const name of ['data', 'end', 'error', 'close']) {
+      readable.on(name, () => {
+        emitted.push(name);
+        if (name === 'close') {
+          resolve();
+        }
+      });
+    }
+  });
+  readable.destroy(error);
+  await closed;
+  return emitted;
+}
+
+/**
+ * @returns the files of {@link filePaths} that are still open, in the same order
+ */
+async function openFiles(filePaths: string[]): Promise<string[]> {
+  const openPaths = await Promise.all(
+    filePaths.map(async (filePath) => ((await isFileOpen(filePath)) ? filePath : undefined)),
+  );
+  return openPaths.filter((filePath) => filePath !== undefined);
+}
+
+/**
+ * Write {@link volume}'s own bytes back over it through a handle opened for writing, which only
+ * succeeds while every other handle to it shares writes.
+ */
+async function rewriteInPlace(volume: string): Promise<void> {
+  const contents = await FsUtil.readFile(volume);
+  const handle = await fs.promises.open(volume, 'r+');
+  try {
+    await handle.write(contents, 0, contents.length, 0);
+  } finally {
+    await handle.close();
+  }
+}
+
+// Every volume of SPLIT_FIRST_VOLUME's set, with the volume the set is opened from
+const SPLIT_SET = {
+  label: 'a split set',
+  format: SevenZipFormat.SPLIT,
+  volumes: ['copy.7z.001', 'copy.7z.002', 'copy.7z.003'].map((volume) =>
+    path.join(FIXTURE_DIR, 'split', volume),
+  ),
+  openedVolume: path.basename(SPLIT_FIRST_VOLUME),
+  entryPath: 'copy.7z',
+};
+
+// Every disk of SPANNED_LAST_DISK's zip, with the disk the zip is opened from
+const SPANNED_SET = {
+  label: 'a multi-disk zip',
+  format: SevenZipFormat.ZIP,
+  volumes: ['spanned.z01', 'spanned.z02', 'spanned.zip'].map((volume) =>
+    path.join(FIXTURE_DIR, 'spanned', volume),
+  ),
+  openedVolume: path.basename(SPANNED_LAST_DISK),
+  entryPath: 'first.bin',
+};
+
 // Node's crypto has no 'crc32' digest, but zlib.crc32() has been available
 // since Node v20.15.0, comfortably below this package's engines floor.
 function crc32Hex(buffer: Buffer): string {
@@ -358,69 +442,87 @@ describe('listEntries', () => {
   });
 
   it.each(MULTI_ENTRY_ARCHIVES)(
-    'should list the four entries in $label',
+    'should list the four entries in $label, then release it',
     async ({ format, archivePath }) => {
-      const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
-      expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
-      expect(entries.map((entry) => entry.size)).toEqual([1024, 2048, 3072, 4096]);
-      // Compared as arrays rather than collapsed with every(), so a failure
-      // names the entry that disagreed instead of reporting `false !== true`.
-      expect(entries.map((entry) => /^[\da-f]{8}$/.test(entry.crc32 ?? ''))).toEqual([
-        true,
-        true,
-        true,
-        true,
-      ]);
-      expect(entries.map((entry) => entry.isDirectory)).toEqual([false, false, false, false]);
-      expect(entries.map((entry) => entry.isEncrypted)).toEqual([false, false, false, false]);
-      // The archive's own item indices. They happen to match this array's
-      // positions here because no entry is filtered out, which is exactly why
-      // the directory case below is worth its own assertion.
-      expect(entries.map((entry) => entry.entryIndex)).toEqual([0, 1, 2, 3]);
+      await withTempDir(async (directory) => {
+        const [inputFilename] = await copyInto(directory, [archivePath]);
+        const entries = await sevenZip.listEntries({ inputFilename, format });
+        expect(await openFiles([inputFilename])).toEqual([]);
+        expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
+        expect(entries.map((entry) => entry.size)).toEqual([1024, 2048, 3072, 4096]);
+        // Compared as arrays rather than collapsed with every(), so a failure
+        // names the entry that disagreed instead of reporting `false !== true`.
+        expect(entries.map((entry) => /^[\da-f]{8}$/.test(entry.crc32 ?? ''))).toEqual([
+          true,
+          true,
+          true,
+          true,
+        ]);
+        expect(entries.map((entry) => entry.isDirectory)).toEqual([false, false, false, false]);
+        expect(entries.map((entry) => entry.isEncrypted)).toEqual([false, false, false, false]);
+        // The archive's own item indices. They happen to match this array's
+        // positions here because no entry is filtered out, which is exactly why
+        // the directory case below is worth its own assertion.
+        expect(entries.map((entry) => entry.entryIndex)).toEqual([0, 1, 2, 3]);
+      });
     },
   );
 
   it.each(SINGLE_STREAM_ARCHIVES)(
-    'should list one nameless entry in $label',
+    'should list one nameless entry in $label, then release it',
     async ({ format, archivePath }) => {
-      const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
-      expect(entries.length).toEqual(1);
-      // These fixtures record no name or CRC32. LZMA86 additionally records
-      // the uncompressed size in its header.
-      expect(entries[0].entryPath).toBeUndefined();
-      // Undefined, not 0: these formats record no length, and 0 is a real
-      // length an empty member could legitimately have.
-      expect(entries[0].size).toEqual(
-        format === SevenZipFormat.LZMA86 ? SINGLE_STREAM_SIZE : undefined,
-      );
-      expect(entries[0].crc32).toBeUndefined();
-      expect(entries[0].isDirectory).toEqual(false);
-      expect(entries[0].isEncrypted).toEqual(false);
-      expect(entries[0].entryIndex).toEqual(0);
+      await withTempDir(async (directory) => {
+        const [inputFilename] = await copyInto(directory, [archivePath]);
+        const entries = await sevenZip.listEntries({ inputFilename, format });
+        expect(await openFiles([inputFilename])).toEqual([]);
+        expect(entries.length).toEqual(1);
+        // These fixtures record no name or CRC32. LZMA86 additionally records
+        // the uncompressed size in its header.
+        expect(entries[0].entryPath).toBeUndefined();
+        // Undefined, not 0: these formats record no length, and 0 is a real
+        // length an empty member could legitimately have.
+        expect(entries[0].size).toEqual(
+          format === SevenZipFormat.LZMA86 ? SINGLE_STREAM_SIZE : undefined,
+        );
+        expect(entries[0].crc32).toBeUndefined();
+        expect(entries[0].isDirectory).toEqual(false);
+        expect(entries[0].isEncrypted).toEqual(false);
+        expect(entries[0].entryIndex).toEqual(0);
+      });
     },
   );
 
-  it('should find the rest of a split set from the first volume alone', async () => {
-    const entries = await sevenZip.listEntries({
-      inputFilename: SPLIT_FIRST_VOLUME,
-      format: SevenZipFormat.SPLIT,
+  it('should find the rest of a split set from the first volume alone, then release every volume', async () => {
+    await withTempDir(async (directory) => {
+      const copies = await copyInto(directory, SPLIT_SET.volumes);
+      const entries = await sevenZip.listEntries({
+        inputFilename: path.join(directory, SPLIT_SET.openedVolume),
+        format: SPLIT_SET.format,
+      });
+      expect(entries.map((entry) => entry.entryPath)).toEqual(['copy.7z']);
+      expect(entries.map((entry) => entry.size)).toEqual([await FsUtil.size(SPLIT_JOINED)]);
+      expect(await openFiles(copies)).toEqual([]);
     });
-    expect(entries.map((entry) => entry.entryPath)).toEqual(['copy.7z']);
-    expect(entries.map((entry) => entry.size)).toEqual([await FsUtil.size(SPLIT_JOINED)]);
   });
 
-  it('should find the earlier disks of a multi-disk zip from the last alone', async () => {
-    const entries = await sevenZip.listEntries({
-      inputFilename: SPANNED_LAST_DISK,
-      format: SevenZipFormat.ZIP,
+  it('should find the earlier disks of a multi-disk zip from the last alone, then release every disk', async () => {
+    await withTempDir(async (directory) => {
+      const copies = await copyInto(directory, SPANNED_SET.volumes);
+      const entries = await sevenZip.listEntries({
+        inputFilename: path.join(directory, SPANNED_SET.openedVolume),
+        format: SPANNED_SET.format,
+      });
+      expect(entries.map((entry) => entry.entryPath)).toEqual(
+        SPANNED_ENTRIES.map((entry) => entry.entryPath),
+      );
+      expect(entries.map((entry) => entry.size)).toEqual(
+        SPANNED_ENTRIES.map((entry) => entry.size),
+      );
+      expect(entries.map((entry) => entry.crc32)).toEqual(
+        SPANNED_ENTRIES.map((entry) => entry.crc32),
+      );
+      expect(await openFiles(copies)).toEqual([]);
     });
-    expect(entries.map((entry) => entry.entryPath)).toEqual(
-      SPANNED_ENTRIES.map((entry) => entry.entryPath),
-    );
-    expect(entries.map((entry) => entry.size)).toEqual(SPANNED_ENTRIES.map((entry) => entry.size));
-    expect(entries.map((entry) => entry.crc32)).toEqual(
-      SPANNED_ENTRIES.map((entry) => entry.crc32),
-    );
   });
 
   it('should open a single-volume zip that carries the span marker', async () => {
@@ -470,7 +572,7 @@ describe('listEntries', () => {
       invalidMessage: /is not a valid zip archive/,
     },
   ])('$format', ({ format, invalidMessage }) => {
-    it.each([0, 4096])('should throw on %s random bytes', async (size) => {
+    it.each([0, 4096])('should throw on %s random bytes, then release them', async (size) => {
       await withTempDir(async (directory) => {
         const garbage = path.join(directory, 'garbage');
         await FsUtil.writeFile(garbage, crypto.randomBytes(size));
@@ -478,24 +580,26 @@ describe('listEntries', () => {
         await expect(sevenZip.listEntries({ inputFilename: garbage, format })).rejects.toThrow(
           invalidMessage,
         );
+        expect(await openFiles([garbage])).toEqual([]);
       });
     });
   });
 
-  it('should list many archives at once, more than the thread pool has threads', async () => {
-    const listings = await Promise.all(
-      Array.from(
-        { length: 32 },
-        async () =>
-          await sevenZip.listEntries({
-            inputFilename: SEVEN_ZIP_ARCHIVE,
-            format: SevenZipFormat.SEVEN_ZIP,
-          }),
-      ),
-    );
-    for (const entries of listings) {
-      expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
-    }
+  it('should list many archives at once, more than the thread pool has threads, then release them', async () => {
+    await withTempDir(async (directory) => {
+      const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
+      const listings = await Promise.all(
+        Array.from(
+          { length: 32 },
+          async () =>
+            await sevenZip.listEntries({ inputFilename, format: SevenZipFormat.SEVEN_ZIP }),
+        ),
+      );
+      expect(listings.map((entries) => entries.map((entry) => entry.entryPath))).toEqual(
+        Array.from({ length: 32 }, () => ['1kb', '2kb', '3kb', '4kb']),
+      );
+      expect(await openFiles([inputFilename])).toEqual([]);
+    });
   });
 
   it('should keep listing after many listings of missing files fail at once', async () => {
@@ -518,7 +622,7 @@ describe('listEntries', () => {
     expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
   });
 
-  it('should reject a 7z download cut off partway through', async () => {
+  it('should reject a 7z download cut off partway through, then release it', async () => {
     await withTempDir(async (directory) => {
       const truncated = path.join(directory, 'truncated.7z');
       const whole = await FsUtil.readFile(SEVEN_ZIP_ARCHIVE);
@@ -526,6 +630,7 @@ describe('listEntries', () => {
       await expect(
         sevenZip.listEntries({ inputFilename: truncated, format: SevenZipFormat.SEVEN_ZIP }),
       ).rejects.toThrow(/is not a valid 7z archive/);
+      expect(await openFiles([truncated])).toEqual([]);
     });
   });
 
@@ -641,20 +746,20 @@ describe('listEntries', () => {
 
 describe('openEntryReader', () => {
   it.each(MULTI_ENTRY_ARCHIVES)(
-    'should extract every entry of $label intact',
+    'should extract every entry of $label intact, then release it',
     async ({ format, archivePath }) => {
-      const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
-      for (const entry of entries) {
-        const extracted = await drain(
-          sevenZip.openEntryReader({
-            inputFilename: archivePath,
-            format,
-            entryPath: entry.entryPath,
-          }),
-        );
-        expect(extracted.length).toEqual(entry.size);
-        expect(crc32Hex(extracted)).toEqual(entry.crc32);
-      }
+      await withTempDir(async (directory) => {
+        const [inputFilename] = await copyInto(directory, [archivePath]);
+        const entries = await sevenZip.listEntries({ inputFilename, format });
+        for (const entry of entries) {
+          const extracted = await drain(
+            sevenZip.openEntryReader({ inputFilename, format, entryPath: entry.entryPath }),
+          );
+          expect(extracted.length).toEqual(entry.size);
+          expect(crc32Hex(extracted)).toEqual(entry.crc32);
+          expect(await openFiles([inputFilename])).toEqual([]);
+        }
+      });
     },
   );
 
@@ -718,61 +823,75 @@ describe('openEntryReader', () => {
       rejectMessage: /no entry was named, and the archive holds 4 entries rather than one/,
     },
   ])(
-    'should reject an entry the archive does not have, given $label',
+    'should reject an entry the archive does not have, given $label, then release it',
     async ({ options, rejectMessage }) => {
-      await expect(
-        drain(
-          sevenZip.openEntryReader({
-            inputFilename: SEVEN_ZIP_ARCHIVE,
-            format: SevenZipFormat.SEVEN_ZIP,
-            ...options,
-          }),
-        ),
-      ).rejects.toThrow(rejectMessage);
+      await withTempDir(async (directory) => {
+        const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
+        await expect(
+          drain(
+            sevenZip.openEntryReader({
+              inputFilename,
+              format: SevenZipFormat.SEVEN_ZIP,
+              ...options,
+            }),
+          ),
+        ).rejects.toThrow(rejectMessage);
+        expect(await openFiles([inputFilename])).toEqual([]);
+      });
     },
   );
 
   it.each(SINGLE_STREAM_ARCHIVES)(
-    'should extract the stream of $label intact',
+    'should extract the stream of $label intact, then release it',
     async ({ format, archivePath }) => {
-      const extracted = await drain(
-        sevenZip.openEntryReader({ inputFilename: archivePath, format }),
-      );
-      expect(extracted.length).toEqual(SINGLE_STREAM_SIZE);
-      expect(crc32Hex(extracted)).toEqual(SINGLE_STREAM_CRC32);
+      await withTempDir(async (directory) => {
+        const [inputFilename] = await copyInto(directory, [archivePath]);
+        const extracted = await drain(sevenZip.openEntryReader({ inputFilename, format }));
+        expect(extracted.length).toEqual(SINGLE_STREAM_SIZE);
+        expect(crc32Hex(extracted)).toEqual(SINGLE_STREAM_CRC32);
+        expect(await openFiles([inputFilename])).toEqual([]);
+      });
     },
   );
 
-  it('should join a split set back into the original bytes', async () => {
-    const extracted = await drain(
-      sevenZip.openEntryReader({
-        inputFilename: SPLIT_FIRST_VOLUME,
-        format: SevenZipFormat.SPLIT,
-        entryPath: 'copy.7z',
-      }),
-    );
-    expect(extracted.equals(await FsUtil.readFile(SPLIT_JOINED))).toEqual(true);
+  it('should join a split set back into the original bytes, then release every volume', async () => {
+    await withTempDir(async (directory) => {
+      const copies = await copyInto(directory, SPLIT_SET.volumes);
+      const extracted = await drain(
+        sevenZip.openEntryReader({
+          inputFilename: path.join(directory, SPLIT_SET.openedVolume),
+          format: SPLIT_SET.format,
+          entryPath: SPLIT_SET.entryPath,
+        }),
+      );
+      expect(extracted.equals(await FsUtil.readFile(SPLIT_JOINED))).toEqual(true);
+      expect(await openFiles(copies)).toEqual([]);
+    });
   });
 
-  it('should extract both entries across the disks of a multi-disk zip', async () => {
-    const extracted = await Promise.all(
-      SPANNED_ENTRIES.map(
-        async ({ entryPath }) =>
-          await drain(
-            sevenZip.openEntryReader({
-              inputFilename: SPANNED_LAST_DISK,
-              format: SevenZipFormat.ZIP,
-              entryPath,
-            }),
-          ),
-      ),
-    );
-    expect(extracted.map((buffer) => buffer.length)).toEqual(
-      SPANNED_ENTRIES.map((entry) => entry.size),
-    );
-    expect(extracted.map((buffer) => crc32Hex(buffer))).toEqual(
-      SPANNED_ENTRIES.map((entry) => entry.crc32),
-    );
+  it('should extract both entries across the disks of a multi-disk zip, then release every disk', async () => {
+    await withTempDir(async (directory) => {
+      const copies = await copyInto(directory, SPANNED_SET.volumes);
+      const extracted = await Promise.all(
+        SPANNED_ENTRIES.map(
+          async ({ entryPath }) =>
+            await drain(
+              sevenZip.openEntryReader({
+                inputFilename: path.join(directory, SPANNED_SET.openedVolume),
+                format: SPANNED_SET.format,
+                entryPath,
+              }),
+            ),
+        ),
+      );
+      expect(extracted.map((buffer) => buffer.length)).toEqual(
+        SPANNED_ENTRIES.map((entry) => entry.size),
+      );
+      expect(extracted.map((buffer) => crc32Hex(buffer))).toEqual(
+        SPANNED_ENTRIES.map((entry) => entry.crc32),
+      );
+      expect(await openFiles(copies)).toEqual([]);
+    });
   });
 
   it('should drain an entry many times the read-ahead byte-exactly', async () => {
@@ -838,7 +957,7 @@ describe('openEntryReader', () => {
     ).rejects.toThrow('chunkBytes is too large');
   });
 
-  it('should close promptly while the producer is blocked waiting for a buffer', async () => {
+  it('should hold the archive open while the producer is blocked waiting for a buffer, and release it before emitting close when destroyed', async () => {
     await withLargeArchive(async (largeArchive) => {
       const readable = sevenZip.openEntryReader({
         inputFilename: largeArchive,
@@ -846,25 +965,33 @@ describe('openEntryReader', () => {
         entryPath: 'stored.bin',
       });
       expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
+      expect(await openFiles([largeArchive])).toEqual([largeArchive]);
 
+      const closed = events.once(readable, 'close');
       readable.destroy();
-      await events.once(readable, 'close');
+      await closed;
       expect(readable.destroyed).toEqual(true);
+      expect(await openFiles([largeArchive])).toEqual([]);
     });
   });
 
-  it('should keep serving new streams after earlier ones are abandoned', async () => {
+  it('should keep serving new streams while more than the thread pool are abandoned at different points, and release them once destroyed', async () => {
     await withLargeArchive(async (largeArchive) => {
-      const abandoned: stream.Readable[] = [];
-      for (let i = 0; i < 8; i++) {
-        const readable = sevenZip.openEntryReader({
+      // More readers than the thread pool has threads, each holding its producer blocked on
+      // backpressure, so extraction occupying pool threads would starve the later opens
+      const abandoned = Array.from({ length: 16 }, () =>
+        sevenZip.openEntryReader({
           inputFilename: largeArchive,
           format: SevenZipFormat.ZIP,
           entryPath: 'stored.bin',
-        });
-        abandoned.push(readable);
-        const first = await readable[Symbol.asyncIterator]().next();
-        expect(first.done).toEqual(false);
+          highWaterMark: 4096,
+        }),
+      );
+      for (const [index, readable] of abandoned.entries()) {
+        const iterator = readable[Symbol.asyncIterator]();
+        for (let chunks = 0; chunks < 1 + (index % 4); chunks++) {
+          expect((await iterator.next()).done).toEqual(false);
+        }
       }
 
       const extracted = await drain(
@@ -878,10 +1005,12 @@ describe('openEntryReader', () => {
 
       await Promise.all(
         abandoned.map(async (readable) => {
+          const closed = events.once(readable, 'close');
           readable.destroy();
-          await events.once(readable, 'close');
+          await closed;
         }),
       );
+      expect(await openFiles([largeArchive])).toEqual([]);
     });
   });
 
@@ -908,7 +1037,7 @@ describe('openEntryReader', () => {
     },
   );
 
-  it('should reject a file that is not an archive through the stream', async () => {
+  it('should reject a file that is not an archive through the stream, then release it', async () => {
     await withTempDir(async (directory) => {
       const garbage = path.join(directory, 'garbage');
       await FsUtil.writeFile(garbage, crypto.randomBytes(4096));
@@ -922,58 +1051,41 @@ describe('openEntryReader', () => {
           }),
         ),
       ).rejects.toThrow(/is not a valid 7z archive/);
+      expect(await openFiles([garbage])).toEqual([]);
     });
   });
 
-  it('should close cleanly when destroyed before the archive has opened', async () => {
-    const readables = Array.from({ length: 16 }, () =>
-      sevenZip.openEntryReader({
-        inputFilename: SEVEN_ZIP_ARCHIVE,
-        format: SevenZipFormat.SEVEN_ZIP,
-        entryPath: '4kb',
-      }),
-    );
-    await Promise.all(
-      readables.map(async (readable) => {
-        // Starts the first read, and so the open, without waiting for either
-        readable.resume();
-        readable.destroy();
-        await events.once(readable, 'close');
-        expect(readable.destroyed).toEqual(true);
-      }),
-    );
-
-    // Nothing the abandoned opens left behind stops a later reader
-    const extracted = await drain(
-      sevenZip.openEntryReader({
-        inputFilename: SEVEN_ZIP_ARCHIVE,
-        format: SevenZipFormat.SEVEN_ZIP,
-        entryPath: '4kb',
-      }),
-    );
-    expect(extracted.length).toEqual(4096);
-  });
-
-  it('should extract more entries at once than the thread pool has threads', async () => {
-    // Every reader holds its producer blocked on backpressure until it is
-    // read, so extraction occupying pool threads would starve the later opens
-    await withLargeArchive(async (largeArchive) => {
+  it('should close cleanly and release the archive when destroyed before it has opened', async () => {
+    await withTempDir(async (directory) => {
+      const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
       const readables = Array.from({ length: 16 }, () =>
         sevenZip.openEntryReader({
-          inputFilename: largeArchive,
-          format: SevenZipFormat.ZIP,
-          entryPath: 'stored.bin',
+          inputFilename,
+          format: SevenZipFormat.SEVEN_ZIP,
+          entryPath: '4kb',
         }),
       );
-      for (const readable of readables) {
-        expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
-      }
       await Promise.all(
         readables.map(async (readable) => {
+          // Starts the first read, and so the open, without waiting for either
+          readable.resume();
+          const closed = events.once(readable, 'close');
           readable.destroy();
-          await events.once(readable, 'close');
+          await closed;
+          expect(readable.destroyed).toEqual(true);
         }),
       );
+      expect(await openFiles([inputFilename])).toEqual([]);
+
+      // Nothing the abandoned opens left behind stops a later reader
+      const extracted = await drain(
+        sevenZip.openEntryReader({
+          inputFilename,
+          format: SevenZipFormat.SEVEN_ZIP,
+          entryPath: '4kb',
+        }),
+      );
+      expect(extracted.length).toEqual(4096);
     });
   });
 
@@ -1081,7 +1193,7 @@ describe('openEntryReader', () => {
     },
   );
 
-  it('should reject an entry whose compressed data is corrupt', async () => {
+  it('should reject an entry whose compressed data is corrupt, then release it', async () => {
     await withTempDir(async (directory) => {
       const corrupt = path.join(directory, 'corrupt.7z');
       const whole = Buffer.from(await FsUtil.readFile(SEVEN_ZIP_ARCHIVE));
@@ -1105,6 +1217,7 @@ describe('openEntryReader', () => {
             }),
           ),
         ).rejects.toThrow(/its compressed data is corrupt|it failed its CRC check/);
+        expect(await openFiles([corrupt])).toEqual([]);
       }
     });
   });
@@ -1202,7 +1315,52 @@ describe('openEntryReader', () => {
     });
   });
 
-  it('should reject an entry that fails its CRC check after its final chunk', async () => {
+  it.each([
+    {
+      label: 'renamed',
+      change: async (volume: string): Promise<void> => {
+        await fs.promises.rename(volume, `${volume}.renamed`);
+      },
+    },
+    {
+      label: 'deleted',
+      change: async (volume: string): Promise<void> => {
+        await fs.promises.rm(volume);
+      },
+    },
+    {
+      label: 'rewritten in place',
+      change: rewriteInPlace,
+    },
+  ])('should keep reading a split set whose volumes are $label while open', async ({ change }) => {
+    // Every volume is opened along with the set, so each is read through its open handle
+    await withTempDir(async (directory) => {
+      const volumes = await copyInto(directory, SPLIT_SET.volumes);
+
+      const readable = sevenZip.openEntryReader({
+        inputFilename: path.join(directory, SPLIT_SET.openedVolume),
+        format: SPLIT_SET.format,
+        entryPath: SPLIT_SET.entryPath,
+        highWaterMark: 1000,
+      });
+      const chunks: Buffer[] = [];
+      for await (const chunk of readable) {
+        if (!Buffer.isBuffer(chunk)) {
+          throw new TypeError('expected a Buffer chunk');
+        }
+        chunks.push(chunk);
+        if (chunks.length === 1) {
+          for (const volume of volumes) {
+            await change(volume);
+          }
+        }
+      }
+
+      expect(Buffer.concat(chunks)).toEqual(await FsUtil.readFile(SPLIT_JOINED));
+    });
+  });
+
+  it('should reject an entry that fails its CRC check after its final chunk, then release it', async () => {
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'mismatched.zip');
       const contents = crypto.randomBytes(4096);
@@ -1222,10 +1380,11 @@ describe('openEntryReader', () => {
           }),
         ),
       ).rejects.toThrow(/it failed its CRC check/);
+      expect(await openFiles([archive])).toEqual([]);
     });
   });
 
-  it('should reject a bzip2 download cut off partway through', async () => {
+  it('should reject a bzip2 download cut off partway through, then release it', async () => {
     await withTempDir(async (directory) => {
       const truncated = path.join(directory, 'truncated.bz2');
       const whole = await FsUtil.readFile(BZIP2_ARCHIVE);
@@ -1240,6 +1399,7 @@ describe('openEntryReader', () => {
       await expect(
         drain(sevenZip.openEntryReader({ inputFilename: truncated, format: SevenZipFormat.BZIP2 })),
       ).rejects.toThrow(/the archive ends before the entry does, so it is truncated/);
+      expect(await openFiles([truncated])).toEqual([]);
     });
   });
 
@@ -1314,16 +1474,81 @@ describe('openEntryReader', () => {
     30_000,
   );
 
+  it.each([SPLIT_SET, SPANNED_SET])(
+    'should release every volume of $label once destroyed mid-read',
+    async ({ format, volumes, openedVolume, entryPath }) => {
+      await withTempDir(async (directory) => {
+        const copies = await copyInto(directory, volumes);
+        const readable = sevenZip.openEntryReader({
+          inputFilename: path.join(directory, openedVolume),
+          format,
+          entryPath,
+          highWaterMark: 1000,
+        });
+        expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
+
+        const closed = events.once(readable, 'close');
+        readable.destroy();
+        await closed;
+        expect(await openFiles(copies)).toEqual([]);
+      });
+    },
+  );
+
+  it('should release the archive when destroyed before reading, emitting what fs.ReadStream does', async () => {
+    await withTempDir(async (directory) => {
+      const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
+      const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
+      expect(expected).toEqual(['close']);
+
+      const readable = sevenZip.openEntryReader({
+        inputFilename,
+        format: SevenZipFormat.SEVEN_ZIP,
+        entryPath: '4kb',
+      });
+      expect(await eventsAfterDestroy(readable)).toEqual(expected);
+      expect(await openFiles([inputFilename])).toEqual([]);
+    });
+  });
+
+  it('should release the archive when destroyed with a read in flight, reporting the error as fs.ReadStream does', async () => {
+    await withTempDir(async (directory) => {
+      const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
+      const error = new Error('destroyed');
+      // Flowing, so each stream has its next read in flight whenever a chunk arrives
+      const fileStream = fs.createReadStream(inputFilename, { highWaterMark: 1 });
+      await events.once(fileStream.resume(), 'data');
+      const expected = await eventsAfterDestroy(fileStream, error);
+      // The chunk that the read in flight returns is dropped
+      expect(expected).toEqual(['error', 'close']);
+
+      const readable = sevenZip.openEntryReader({
+        inputFilename,
+        format: SevenZipFormat.SEVEN_ZIP,
+        entryPath: '4kb',
+        highWaterMark: 1,
+      });
+      await events.once(readable.resume(), 'data');
+      expect(await eventsAfterDestroy(readable, error)).toEqual(expected);
+      expect(readable.errored).toEqual(error);
+      expect(await openFiles([inputFilename])).toEqual([]);
+    });
+  });
+
   // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
   // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
   // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
   // to be fixed by https://github.com/oven-sh/bun/pull/40249
   it.skipIf(process.versions.bun)(
-    'should terminate workers with pending native reads and listings',
+    'should terminate workers with pending native reads and listings, releasing the archive',
     async () => {
-      for (let i = 0; i < 20; i++) {
-        const worker = new worker_threads.Worker(
-          `const { parentPort, workerData } = require('node:worker_threads');
+      await withTempDir(async (directory) => {
+        const [archivePath] = await copyInto(directory, [
+          path.join(FIXTURE_DIR, 'one-large-file', '7z-lz4-level1-non-solid.7z'),
+        ]);
+        for (let i = 0; i < 20; i++) {
+          const worker = new worker_threads.Worker(
+            `const { parentPort, workerData } = require('node:worker_threads');
            import(workerData.indexUrl).then(({ default: sevenZip, SevenZipFormat }) => {
              const options = { inputFilename: workerData.archivePath, format: SevenZipFormat.SEVEN_ZIP };
              for (let j = 0; j < 8; j++) {
@@ -1336,22 +1561,26 @@ describe('openEntryReader', () => {
              parentPort.postMessage('ready');
              setInterval(() => {}, 1000);
            });`,
-          {
-            eval: true,
-            workerData: {
-              indexUrl: new URL('../index.ts', import.meta.url).href,
-              archivePath: path.resolve(FIXTURE_DIR, 'one-large-file/7z-lz4-level1-non-solid.7z'),
+            {
+              eval: true,
+              workerData: {
+                indexUrl: new URL('../index.ts', import.meta.url).href,
+                archivePath: path.resolve(archivePath),
+              },
             },
-          },
-        );
-        try {
-          await events.once(worker, 'message');
-          // Vary when the worker terminates relative to its opens and reads
-          await new Promise((resolve) => setTimeout(resolve, i % 5));
-        } finally {
-          await worker.terminate();
+          );
+          try {
+            await events.once(worker, 'message');
+            // Vary when the worker terminates relative to its opens and reads
+            await new Promise((resolve) => setTimeout(resolve, i % 5));
+          } finally {
+            await worker.terminate();
+          }
+          // Terminating waits for the worker's environment to tear down, which waits for every
+          // producer it started to exit
+          expect(await openFiles([archivePath])).toEqual([]);
         }
-      }
+      });
     },
     30_000,
   );

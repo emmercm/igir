@@ -121,8 +121,13 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
                 entryIndex, Registry(env), [bridge]() { bridge->signal->Notify(); },
                 [bridge]() {
-                    // Pool or producer thread, exactly once. Close the signal
-                    // after pending delivery; teardown may close it independently.
+                    // Pool or producer thread, exactly once, after the archive
+                    // and every volume it opened are closed. Recorded before
+                    // the notification, so the callback it wakes sees it, and
+                    // the signal closes after that delivery; teardown may close
+                    // it independently.
+                    bridge->exited.store(true, std::memory_order_release);
+                    bridge->signal->Notify();
                     bridge->signal->Release();
                 });
 
@@ -308,6 +313,11 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
 }
 
 void EntryReader::OnProducerReady(Napi::Env env) {
+    if (!closeWaiters_.empty()) {
+        // close() settled any parked read already, so the only thing left to wait for is the exit
+        FinishClose(env);
+        return;
+    }
     if (!pending_.has_value()) {
         // close() settled the read before the notification arrived. Nothing to
         // do; the producer is already unwinding.
@@ -360,8 +370,26 @@ void EntryReader::ReleasePending(Napi::Env env) {
     Unref();
 }
 
-void EntryReader::Close(const Napi::CallbackInfo& info) {
+void EntryReader::FinishClose(Napi::Env env) {
+    if (!bridge_->exited.load(std::memory_order_acquire)) {
+        return;
+    }
+    // Copied out before the references are released, which may destroy `this`
+    std::vector<Napi::Promise::Deferred> const waiters = std::exchange(closeWaiters_, {});
+    bridge_->signal->Unref(env);
+    Unref();
+    for (const Napi::Promise::Deferred& waiter : waiters) {
+        waiter.Resolve(env.Undefined());
+    }
+}
+
+Napi::Value EntryReader::Close(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
+    Napi::Promise::Deferred const closed = Napi::Promise::Deferred::New(env);
+
+    // Whether `closed` is settled, or will be by FinishClose(), so the catch-all below settles it
+    // at most once
+    bool settled = false;
     try {
         closed_ = true;
         if (pump_) {
@@ -378,17 +406,36 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
         // Drops this side's reference to the producer without waiting for it. The
         // producer holds the other one and unwinds on its own time.
         pump_.reset();
+
+        if (!bridge_ || bridge_->exited.load(std::memory_order_acquire)) {
+            // Nothing was ever started, or the producer has already closed everything
+            settled = true;
+            closed.Resolve(env.Undefined());
+        } else {
+            closeWaiters_.push_back(closed);
+            settled = true;
+            if (closeWaiters_.size() == 1) {
+                // Held until the producer's exit notification, so that neither the object nor the
+                // signal that delivers it goes away first, and so that the loop stays alive for it
+                Ref();
+                bridge_->signal->Ref(env);
+            }
+        }
+
         if (pending.has_value()) {
             // The caller asked for the rest of the entry and then said it did
             // not want it: the end of the stream, not a failure. It has to be
             // settled here rather than left to the producer, whose notification
-            // we have just stopped listening for.
+            // now only reports its exit.
             pending->Resolve(env.Null());
             ReleasePending(env);
         }
     } catch (...) {
-        Napi::Error::New(env, "failed to close the entry reader").ThrowAsJavaScriptException();
+        if (!settled) {
+            closed.Reject(Napi::Error::New(env, "failed to close the entry reader").Value());
+        }
     }
+    return closed.Promise();
 }
 
 }  // namespace sevenzip

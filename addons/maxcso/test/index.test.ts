@@ -1,6 +1,7 @@
 import events from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import type stream from 'node:stream';
 import worker_threads from 'node:worker_threads';
 import zlib from 'node:zlib';
 
@@ -8,6 +9,7 @@ import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import isFileOpen from '../../../test/utils/isFileOpen.js';
 import maxcso, { MaxcsoFormat } from '../index.js';
 
 gracefulFs.gracefulify(fs);
@@ -143,6 +145,39 @@ async function withTempDir<T>(callback: (directory: string) => Promise<T> | T): 
   } finally {
     await FsUtil.rm(directory, { recursive: true, force: true });
   }
+}
+
+/**
+ * Copy `source` into `directory`, keeping its name, so that a test checks the handles of a file
+ * that no other test, and no other process, has open.
+ * @returns the path of the copy
+ */
+async function copyInto(directory: string, source: string): Promise<string> {
+  const copy = path.join(directory, path.basename(source));
+  await fs.promises.copyFile(source, copy);
+  return copy;
+}
+
+/**
+ * Destroy {@link readable}, with {@link error} if one is given, and record the events it emits from
+ * then on, until it closes.
+ * @returns the names of the events, in the order they were emitted
+ */
+async function eventsAfterDestroy(readable: stream.Readable, error?: Error): Promise<string[]> {
+  const emitted: string[] = [];
+  const closed = new Promise<void>((resolve) => {
+    for (const name of ['data', 'end', 'error', 'close']) {
+      readable.on(name, () => {
+        emitted.push(name);
+        if (name === 'close') {
+          resolve();
+        }
+      });
+    }
+  });
+  readable.destroy(error);
+  await closed;
+  return emitted;
 }
 
 /**
@@ -706,14 +741,21 @@ describe('info', () => {
     expect(DAX_NC_AREA_FIXTURES).toHaveLength(1);
   });
 
-  it.each(ALL_FIXTURES)('should read the header of $label', async (fixture) => {
-    await expect(maxcso.info({ inputFilename: fixture.archivePath })).resolves.toEqual({
-      inputFile: fixture.archivePath,
-      format: fixture.format,
-      uncompressedSize: PAYLOAD_SIZE,
-      blockSize: fixture.blockSize,
-    });
-  });
+  it.each(ALL_FIXTURES)(
+    'should read the header of $label, then release the file',
+    async (fixture) => {
+      await withTempDir(async (directory) => {
+        const inputFilename = await copyInto(directory, fixture.archivePath);
+        await expect(maxcso.info({ inputFilename })).resolves.toEqual({
+          inputFile: inputFilename,
+          format: fixture.format,
+          uncompressedSize: PAYLOAD_SIZE,
+          blockSize: fixture.blockSize,
+        });
+        expect(await isFileOpen(inputFilename)).toEqual(false);
+      });
+    },
+  );
 
   it('should reject a missing file', async () => {
     await expect(
@@ -721,11 +763,15 @@ describe('info', () => {
     ).rejects.toThrow('failed to open the file');
   });
 
-  it.each(OPEN_CORRUPTIONS)('should reject $label', async ({ fixture, mutate, error }) => {
-    await withMutatedFixture(fixture, mutate, async (filePath) => {
-      await expect(maxcso.info({ inputFilename: filePath })).rejects.toThrow(error);
-    });
-  });
+  it.each(OPEN_CORRUPTIONS)(
+    'should reject $label, then release the file',
+    async ({ fixture, mutate, error }) => {
+      await withMutatedFixture(fixture, mutate, async (filePath) => {
+        await expect(maxcso.info({ inputFilename: filePath })).rejects.toThrow(error);
+        expect(await isFileOpen(filePath)).toEqual(false);
+      });
+    },
+  );
 
   it.each(DECODE_CORRUPTIONS)(
     'should read the header of a file with $label',
@@ -768,12 +814,17 @@ describe('info', () => {
 });
 
 describe('openReader', () => {
-  it.each(ALL_FIXTURES)('should decompress $label byte-exact', async (fixture) => {
-    const output = await BufferUtil.fromReadable(
-      maxcso.openReader({ inputFilename: fixture.archivePath }),
-    );
-    expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
-  });
+  it.each(ALL_FIXTURES)(
+    'should decompress $label byte-exact, then release the file',
+    async (fixture) => {
+      await withTempDir(async (directory) => {
+        const inputFilename = await copyInto(directory, fixture.archivePath);
+        const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename }));
+        expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
+        expect(await isFileOpen(inputFilename)).toEqual(false);
+      });
+    },
+  );
 
   it.each(ALL_FIXTURES)(
     'should decompress $label byte-exact with a 300000-byte high-water mark',
@@ -890,12 +941,13 @@ describe('openReader', () => {
   });
 
   it.each([...OPEN_CORRUPTIONS, ...DECODE_CORRUPTIONS])(
-    'should reject $label',
+    'should reject $label, then release the file',
     async ({ fixture, mutate, error }) => {
       await withMutatedFixture(fixture, mutate, async (filePath) => {
         await expect(
           BufferUtil.fromReadable(maxcso.openReader({ inputFilename: filePath })),
         ).rejects.toThrow(error);
+        expect(await isFileOpen(filePath)).toEqual(false);
       });
     },
   );
@@ -1011,29 +1063,42 @@ describe('openReader', () => {
     });
   });
 
-  it('should close when destroyed in the middle of a stream', async () => {
-    const readable = maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 4096 });
-    expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
-    readable.destroy();
-    await events.once(readable, 'close');
-    expect(readable.destroyed).toEqual(true);
+  it('should hold the file open mid-stream, and release it before emitting close when destroyed', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, CSO1_ZLIB);
+      const readable = maxcso.openReader({ inputFilename, highWaterMark: 4096 });
+      expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
+      expect(await isFileOpen(inputFilename)).toEqual(true);
+
+      const closed = events.once(readable, 'close');
+      readable.destroy();
+      await closed;
+      expect(readable.destroyed).toEqual(true);
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
   });
 
-  it('should close cleanly when destroyed before the first read settles', async () => {
-    const readables = Array.from({ length: 16 }, () =>
-      maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 4096 }),
-    );
-    await Promise.all(
-      readables.map(async (readable) => {
-        // Starts the first read, and so the lazy open, without waiting for it
-        readable.resume();
-        readable.destroy();
-        await events.once(readable, 'close');
-        expect(readable.destroyed).toEqual(true);
-      }),
-    );
-    const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: CSO1_ZLIB }));
-    expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
+  it('should close cleanly and release the file when destroyed before the first read settles', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, CSO1_ZLIB);
+      const readables = Array.from({ length: 16 }, () =>
+        maxcso.openReader({ inputFilename, highWaterMark: 4096 }),
+      );
+      await Promise.all(
+        readables.map(async (readable) => {
+          // Starts the first read, and so the lazy open, without waiting for it
+          readable.resume();
+          const closed = events.once(readable, 'close');
+          readable.destroy();
+          await closed;
+          expect(readable.destroyed).toEqual(true);
+        }),
+      );
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+
+      const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename }));
+      expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
+    });
   });
 
   it('should keep serving readers after many failed opens at once', async () => {
@@ -1052,18 +1117,31 @@ describe('openReader', () => {
     expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
   });
 
-  it('should not let abandoned streams block new ones', async () => {
-    const abandoned = Array.from({ length: 8 }, () =>
-      maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 4096 }),
-    );
-    for (const readable of abandoned) {
-      expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
-    }
-    const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: ZSO_LZ4 }));
-    expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
-    for (const readable of abandoned) {
-      readable.destroy();
-    }
+  it('should not let streams abandoned at different points block new ones, and release them once destroyed', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, CSO1_ZLIB);
+      const abandoned = await Promise.all(
+        Array.from({ length: 16 }, async (_value, index) => {
+          const readable = maxcso.openReader({ inputFilename, highWaterMark: 4096 });
+          const iterator = readable[Symbol.asyncIterator]();
+          for (let chunks = 0; chunks < 1 + (index % 4); chunks++) {
+            expect((await iterator.next()).done).toEqual(false);
+          }
+          return readable;
+        }),
+      );
+      const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: ZSO_LZ4 }));
+      expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
+
+      await Promise.all(
+        abandoned.map(async (readable) => {
+          const closed = events.once(readable, 'close');
+          readable.destroy();
+          await closed;
+        }),
+      );
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
   });
 
   it('should serve more concurrent readers than the libuv threadpool has threads', async () => {
@@ -1081,16 +1159,49 @@ describe('openReader', () => {
     }
   }, 30_000);
 
+  it('should release the file when destroyed before reading, emitting what fs.ReadStream does', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, CSO1_ZLIB);
+      const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
+      expect(expected).toEqual(['close']);
+
+      const readable = maxcso.openReader({ inputFilename });
+      expect(await eventsAfterDestroy(readable)).toEqual(expected);
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
+  });
+
+  it('should release the file when destroyed with a read in flight, reporting the error as fs.ReadStream does', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, CSO1_ZLIB);
+      const error = new Error('destroyed');
+      // Flowing, so each stream has its next read in flight whenever a chunk arrives
+      const fileStream = fs.createReadStream(inputFilename, { highWaterMark: 1 });
+      await events.once(fileStream.resume(), 'data');
+      const expected = await eventsAfterDestroy(fileStream, error);
+      // The chunk that the read in flight returns is dropped
+      expect(expected).toEqual(['error', 'close']);
+
+      const readable = maxcso.openReader({ inputFilename, highWaterMark: 1 });
+      await events.once(readable.resume(), 'data');
+      expect(await eventsAfterDestroy(readable, error)).toEqual(expected);
+      expect(readable.errored).toEqual(error);
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
+  });
+
   // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
   // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
   // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
   // to be fixed by https://github.com/oven-sh/bun/pull/40249
   it.skipIf(process.versions.bun)(
-    'should terminate workers with pending native reads and info calls',
+    'should terminate workers with pending native reads and info calls, releasing the file',
     async () => {
-      for (let i = 0; i < 20; i++) {
-        const worker = new worker_threads.Worker(
-          `const { parentPort, workerData } = require('node:worker_threads');
+      await withTempDir(async (directory) => {
+        const archivePath = path.resolve(await copyInto(directory, CSO1_ZLIB));
+        for (let i = 0; i < 20; i++) {
+          const worker = new worker_threads.Worker(
+            `const { parentPort, workerData } = require('node:worker_threads');
          import(workerData.indexUrl).then(({ default: maxcso }) => {
            for (let j = 0; j < 32; j++) {
              maxcso
@@ -1102,22 +1213,25 @@ describe('openReader', () => {
            parentPort.postMessage('ready');
            setInterval(() => {}, 1000);
          });`,
-          {
-            eval: true,
-            workerData: {
-              indexUrl: new URL('../index.ts', import.meta.url).href,
-              archivePath: path.resolve(FIXTURE_DIR, 'default-block-size', 'cso1-zlib.cso'),
+            {
+              eval: true,
+              workerData: {
+                indexUrl: new URL('../index.ts', import.meta.url).href,
+                archivePath,
+              },
             },
-          },
-        );
-        try {
-          await events.once(worker, 'message');
-          // Vary when the worker terminates relative to its reads
-          await new Promise((resolve) => setTimeout(resolve, i % 5));
-        } finally {
-          await worker.terminate();
+          );
+          try {
+            await events.once(worker, 'message');
+            // Vary when the worker terminates relative to its reads
+            await new Promise((resolve) => setTimeout(resolve, i % 5));
+          } finally {
+            await worker.terminate();
+          }
+          // Terminating waits for the worker's environment to tear down, which frees every reader
+          expect(await isFileOpen(archivePath)).toEqual(false);
         }
-      }
+      });
     },
     30_000,
   );

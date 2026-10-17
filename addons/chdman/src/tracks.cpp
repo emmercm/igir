@@ -18,6 +18,7 @@
 #include "addon.h"
 #include "cdrom.h"
 #include "chd.h"
+#include "chdOpen.h"
 #include "chdcodec.h"
 #include "path.h"
 #include "strformat.h"
@@ -301,7 +302,7 @@ static bool BuildListing(const std::string& inputPath, int mode,
                          std::string& tocTextOut, std::vector<TrackOut>& tracksOut,
                          std::string& errorOut) {
   chd_file chd;
-  std::error_condition err = chd.open(inputPath, false, nullptr);
+  std::error_condition err = OpenChdForReading(chd, inputPath);
   if (err) {
     errorOut = "failed to open CHD: " + err.message();
     return false;
@@ -523,7 +524,7 @@ class TrackSource {
      * the worker thread.
      */
     void Open() {
-        std::error_condition const err = chd_.open(input_, false, nullptr);
+        std::error_condition const err = OpenChdForReading(chd_, input_);
         if (err) {
             throw std::runtime_error("failed to open CHD: " + err.message());
         }
