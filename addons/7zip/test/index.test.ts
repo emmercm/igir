@@ -178,7 +178,7 @@ const LARGE_CONTENTS = crypto.randomBytes(8 * 1024 * 1024);
 
 /**
  * Every chunk the stream emitted, in order. Kept separate from {@link drain}
- * because the sizes are themselves a contract -- see the high-watermark tests.
+ * because the sizes are themselves a contract -- see the highWaterMark tests.
  */
 async function collectChunks(readable: stream.Readable): Promise<Buffer[]> {
   const chunks: Buffer[] = [];
@@ -917,11 +917,11 @@ describe('openEntryReader', () => {
 
   it.each([
     {
-      label: 'an explicit high-water mark',
+      label: 'an explicit highWaterMark',
       highWaterMark: 128 * 1024,
     },
     {
-      label: "Node's own default high-water mark",
+      label: "Node's own default highWaterMark",
       highWaterMark: undefined,
     },
   ])('should emit exactly $label until the entry runs out', async ({ highWaterMark }) => {
@@ -944,7 +944,7 @@ describe('openEntryReader', () => {
     });
   });
 
-  it('should reject a high-water mark past 64 MiB', async () => {
+  it('should reject a highWaterMark past 64 MiB', async () => {
     await expect(
       collectChunks(
         sevenZip.openEntryReader({
@@ -1448,9 +1448,9 @@ describe('openEntryReader', () => {
       //
       // LZMA2's decoder writes up to 1 MiB into the output sink per call, far
       // more than one lent buffer holds, so a single decoder call fills a
-      // buffer and then parks in Write() waiting for the next, while a
-      // consumer that had already been told there was nothing to read parks
-      // waiting to be woken. If that wake-up were sent only once Write()
+      // buffer and then is suspended in Write() waiting for the next, while a
+      // consumer that had already been told there was nothing to read is
+      // paused waiting to be woken. If that wake-up were sent only once Write()
       // returned -- which on this path it never does -- the two threads would
       // wait on each other forever.
       //
@@ -1495,7 +1495,7 @@ describe('openEntryReader', () => {
     },
   );
 
-  it('should release the archive when destroyed before reading, emitting what fs.ReadStream does', async () => {
+  it('should release the archive when destroyed before reading, emitting the same events as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
       const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
@@ -1511,7 +1511,7 @@ describe('openEntryReader', () => {
     });
   });
 
-  it('should release the archive when destroyed with a read in flight, reporting the error as fs.ReadStream does', async () => {
+  it('should release the archive when destroyed with a read in flight, reporting the same error as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
       const error = new Error('destroyed');

@@ -21,7 +21,7 @@ export interface ArchiveEntryRef {
    */
   readonly entryIndex?: number;
   /**
-   * The entry's uncompressed size in bytes, if known, which bounds the chunks read from it.
+   * The entry's uncompressed size in bytes, if known.
    */
   readonly size?: number;
 }
@@ -30,7 +30,7 @@ export interface ArchiveEntryRef {
  * Base class for an archive file format, providing entry enumeration and extraction.
  */
 export default abstract class Archive {
-  // A reasonable high watermark minimum, but still above zlib's minimum chunk size of 64 bytes
+  // A reasonable minimum chunk size, but still above zlib's minimum of 64 bytes
   private static readonly MIN_STREAM_CHUNK_SIZE = 4 * 1024;
 
   private readonly filePath: string;

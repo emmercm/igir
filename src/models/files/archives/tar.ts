@@ -141,7 +141,7 @@ export default class Tar extends Archive {
     } catch (error) {
       // abort() is what nerfs and destroys the parser's decompressor, whose zlib binding
       // readStream.destroy() below leaves open because pipe() doesn't propagate destroy()
-      // downstream. It emits 'error', which the already-settled `parsed` above ignores.
+      // downstream. It emits 'error', which the already-finished `parsed` above ignores.
       writeStream.abort(error instanceof Error ? error : new Error(String(error)));
       throw error;
     } finally {

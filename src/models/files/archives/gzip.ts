@@ -218,7 +218,7 @@ export default class Gzip extends Archive {
 
   /**
    * Pick the chunk sizes to read and decompress the {@link start} to {@link end} byte range (both
-   * inclusive) with, so that neither allocates more memory than the file can fill.
+   * inclusive) with, so that neither allocates more memory than necessary.
    * @returns the read stream's and the gunzip stream's chunk sizes, in bytes
    */
   private async getChunkSizes(

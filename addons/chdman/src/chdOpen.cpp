@@ -29,7 +29,7 @@
 namespace {
 
 // Caps each OS read: ReadFile takes a 32-bit length and macOS rejects a pread longer than INT_MAX,
-// so a longer read returns short, as core_file's does
+// so a longer read returns short (like MAME's core_file)
 constexpr std::size_t kMaxReadBytes = std::size_t{1} << 30U;
 
 // The size of the buffer small reads are served from, the same as core_file's. CHD headers and
@@ -189,9 +189,9 @@ class SharedFile final : public util::random_read_write {
     }
 
     /**
-     * Read at `offset` without moving the current position, reading nothing at the end. As
-     * core_file does, what the buffer holds is served from it, and a small remainder is read
-     * through it, while a large one is read directly.
+     * Read at `offset` without moving the current position, reading nothing at the end. What the
+     * buffer holds is served from it, and a small remainder is read through it, while a large one
+     * is read directly (like MAME's core_file).
      */
     std::error_condition read_some_at(std::uint64_t offset, void* buffer, std::size_t length,
                                       std::size_t& actual) noexcept override {

@@ -191,13 +191,11 @@ function toError(thrown: unknown): Error {
 }
 
 /**
- * Wrap a native 7-Zip entry reader in a {@link stream.Readable} that closes the
- * archive as Node.js' fs.ReadStream closes its file descriptor: in `destroy()`,
- * which the stream calls by itself once it has ended or failed, and only after
- * any read still running has finished. `'close'` is emitted only once every
- * file the archive opened is closed, and a stream destroyed before its first
- * read has opened nothing to close. Callers must consume the stream to its end
- * or call `destroy()` so the native reader is released.
+ * Wrap a native 7-Zip entry reader in a {@link stream.Readable}. The stream closes the archive in
+ * `destroy()`, which it calls once it has ended or failed, after any read in flight finishes, and
+ * emits `'close'` only once every file the archive opened is closed (like Node.js fs.ReadStream).
+ * A stream destroyed before its first read has opened nothing to close. Callers must consume the
+ * stream to its end or call `destroy()` so the native reader is released.
  */
 function readableFromReader(
   openReader: (chunkBytes: number) => NativeEntryReader,
@@ -236,8 +234,8 @@ function readableFromReader(
       }
     },
     destroy(error, callback): void {
-      // As fs.ReadStream does, an error closing is reported over the one destroyed with, and that
-      // one over an error from the read in flight
+      // Reports an error closing over the one destroyed with, and that one over an error from the
+      // read in flight (like Node.js fs.ReadStream)
       const pending = reading;
       void (async (): Promise<void> => {
         let result = error;

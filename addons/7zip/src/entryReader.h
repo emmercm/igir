@@ -18,7 +18,7 @@ namespace sevenzip {
  * Each read lends the producer a fresh JavaScript buffer to fill and resolves
  * with it once it is full, without blocking the event loop. Under Emscripten,
  * each read lends reused scratch memory instead and resolves with a copy of it.
- * A read parks until the producer wakes it through AsyncSignal; only the
+ * A read pauses until the producer wakes it through AsyncSignal; only the
  * producer may block, while no buffer is lent.
  */
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
@@ -60,14 +60,14 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     Napi::Value Read(const Napi::CallbackInfo& info);
 
     /**
-     * Idempotently cancels, settles a parked read with end-of-stream, and returns a promise that
-     * resolves once the producer has closed every file the archive opened, as Node.js' own
-     * fs.close() resolves only once the descriptor is closed.
+     * Idempotently cancels, resolves a paused read with end-of-stream, and returns a promise that
+     * resolves once the producer has closed every file the archive opened (like Node.js
+     * fs.close()).
      */
     Napi::Value Close(const Napi::CallbackInfo& info);
 
     /**
-     * Retries a parked read, or settles a pending close once the producer has exited, on the event
+     * Retries a paused read, or resolves a pending close once the producer has exited, on the event
      * loop; public for the native callback, not the JavaScript surface.
      */
     void OnProducerReady(Napi::Env env);
@@ -92,11 +92,11 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     };
 
     /**
-     * Attempts one nonblocking pump read and settles `deferred` when possible.
-     * Returns false and rearms notification while pending; sets `settled` to
-     * prevent callers from settling the promise twice.
+     * Attempts one nonblocking pump read and resolves or rejects `deferred` when
+     * possible. Returns false and rearms notification while pending; sets
+     * `finished` to prevent callers from resolving or rejecting the promise twice.
      */
-    bool TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled);
+    bool TryFinishRead(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* finished);
 
     /**
      * The bytes left of the entry's declared size, or nothing until the Pump has read that size,
@@ -107,7 +107,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     /** Releases the lent memory; only while nothing is lent, or after the Pump is cancelled. */
     void ReleaseLent();
 
-    /** Releases a parked read's object and loop references; must be last because it may destroy `this`. */
+    /** Releases a paused read's object and loop references; must be last because it may destroy `this`. */
     void ReleasePending(Napi::Env env);
 
     /**

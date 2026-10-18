@@ -201,11 +201,10 @@ function toError(thrown: unknown): Error {
 }
 
 /**
- * Wrap a native CHD reader in a {@link stream.Readable} that closes the CHD as Node.js'
- * fs.ReadStream closes its file descriptor: in `destroy()`, which the stream calls by itself once
- * it has ended or failed, and only after any read still running has finished. `'close'` is
- * emitted only once the CHD is closed. Callers must consume the stream to its end or call
- * `destroy()` so the native reader is released.
+ * Wrap a native CHD reader in a {@link stream.Readable}. The stream closes the CHD in `destroy()`,
+ * which it calls once it has ended or failed, after any read in flight finishes, and emits
+ * `'close'` only once the CHD is closed (like Node.js fs.ReadStream). Callers must consume the
+ * stream to its end or call `destroy()` so the native reader is released.
  */
 function readableFromReader(reader: NativeTrackReader, highWaterMark?: number): stream.Readable {
   // The read in flight, which destroy() waits for before closing the reader
@@ -238,8 +237,8 @@ function readableFromReader(reader: NativeTrackReader, highWaterMark?: number): 
       }
     },
     destroy(error, callback): void {
-      // As fs.ReadStream does, an error closing is reported over the one destroyed with, and that
-      // one over an error from the read in flight
+      // Reports an error closing over the one destroyed with, and that one over an error from the
+      // read in flight (like Node.js fs.ReadStream)
       const pending = reading;
       void (async (): Promise<void> => {
         let result = error;

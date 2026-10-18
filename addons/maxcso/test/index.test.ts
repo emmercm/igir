@@ -104,14 +104,14 @@ const DAX_ZLIB = path.join(FIXTURE_DIR, 'default-block-size', 'dax-zlib.dax');
 const DAX_NC_AREAS = path.join(FIXTURE_DIR, 'dax-nc-areas', 'dax-zlib-nc-areas.dax');
 
 /**
- * A high-water mark that isn't a multiple of any block size. The reader reads its index this many
+ * A highWaterMark that isn't a multiple of any block size. The reader reads its index this many
  * bytes at a time, 37 CSO entries or 75 DAX frame sizes, which is fewer than the 2 KiB and 16 KiB
  * block size fixtures and the DAX fixtures have, so reading them moves through the index.
  */
 const SMALL_HIGH_WATER_MARK = 150;
 
 /**
- * High-water marks to read unusual files with: one that reads less than a block from the file at a
+ * highWaterMark values to read unusual files with: one that reads less than a block from the file at a
  * time, and one that reads more. At 300,000 bytes, a reader holds its read buffer, output chunk,
  * and a block of decoded bytes, each at most 300,000 bytes, and index windows no larger than those
  * files' few-KiB indexes. That's under 1 MiB, and the tests read one file at a time.
@@ -827,7 +827,7 @@ describe('openReader', () => {
   );
 
   it.each(ALL_FIXTURES)(
-    'should decompress $label byte-exact with a 300000-byte high-water mark',
+    'should decompress $label byte-exact with a 300000-byte highWaterMark',
     async (fixture) => {
       const output = await BufferUtil.fromReadable(
         maxcso.openReader({ inputFilename: fixture.archivePath, highWaterMark: 300_000 }),
@@ -837,7 +837,7 @@ describe('openReader', () => {
   );
 
   it.each(ALL_FIXTURES)(
-    `should decompress $label byte-exact with a ${SMALL_HIGH_WATER_MARK}-byte high-water mark`,
+    `should decompress $label byte-exact with a ${SMALL_HIGH_WATER_MARK}-byte highWaterMark`,
     async (fixture) => {
       const output = await BufferUtil.fromReadable(
         maxcso.openReader({
@@ -891,7 +891,7 @@ describe('openReader', () => {
     },
   );
 
-  it('should emit one byte at a time out of a block larger than the high-water mark', async () => {
+  it('should emit one byte at a time out of a block larger than the highWaterMark', async () => {
     const readable = maxcso.openReader({
       inputFilename: path.join(FIXTURE_DIR, '256k-block-size', 'cso1-zlib.cso'),
       highWaterMark: 1,
@@ -910,13 +910,13 @@ describe('openReader', () => {
     expect(firstMismatch(Buffer.concat(chunks), PAYLOAD.subarray(0, 20_000))).toEqual(-1);
   });
 
-  it('should reject a high-water mark of zero', async () => {
+  it('should reject a highWaterMark of zero', async () => {
     await expect(
       BufferUtil.fromReadable(maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 0 })),
     ).rejects.toThrow('maxBytes must be a positive number');
   });
 
-  it('should reject a high-water mark past 64 MiB', async () => {
+  it('should reject a highWaterMark past 64 MiB', async () => {
     await expect(
       BufferUtil.fromReadable(
         maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 64 * 1024 * 1024 + 1 }),
@@ -924,7 +924,7 @@ describe('openReader', () => {
     ).rejects.toThrow('maxBytes is too large');
   });
 
-  it('should reject a high-water mark past the largest request', async () => {
+  it('should reject a highWaterMark past the largest request', async () => {
     await expect(
       BufferUtil.fromReadable(
         maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: Number.MAX_SAFE_INTEGER * 2 }),
@@ -957,7 +957,7 @@ describe('openReader', () => {
       HIGH_WATER_MARKS.map((highWaterMark) => ({ ...corruption, highWaterMark })),
     ),
   )(
-    'should reject $label with a $highWaterMark-byte high-water mark',
+    'should reject $label with a $highWaterMark-byte highWaterMark',
     async ({ fixture, mutate, error, highWaterMark }) => {
       await withMutatedFixture(fixture, mutate, async (filePath) => {
         await expect(
@@ -1025,7 +1025,7 @@ describe('openReader', () => {
       HIGH_WATER_MARKS.map((highWaterMark) => ({ ...acceptance, highWaterMark })),
     ),
   )(
-    'should decompress $label with a $highWaterMark-byte high-water mark',
+    'should decompress $label with a $highWaterMark-byte highWaterMark',
     async ({ fixture, mutate, output, highWaterMark }) => {
       await withMutatedFixture(fixture, mutate, async (filePath) => {
         const actual = await BufferUtil.fromReadable(
@@ -1078,7 +1078,7 @@ describe('openReader', () => {
     });
   });
 
-  it('should close cleanly and release the file when destroyed before the first read settles', async () => {
+  it('should close cleanly and release the file when destroyed before the first read finishes', async () => {
     await withTempDir(async (directory) => {
       const inputFilename = await copyInto(directory, CSO1_ZLIB);
       const readables = Array.from({ length: 16 }, () =>
@@ -1159,7 +1159,7 @@ describe('openReader', () => {
     }
   }, 30_000);
 
-  it('should release the file when destroyed before reading, emitting what fs.ReadStream does', async () => {
+  it('should release the file when destroyed before reading, emitting the same events as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const inputFilename = await copyInto(directory, CSO1_ZLIB);
       const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
@@ -1171,7 +1171,7 @@ describe('openReader', () => {
     });
   });
 
-  it('should release the file when destroyed with a read in flight, reporting the error as fs.ReadStream does', async () => {
+  it('should release the file when destroyed with a read in flight, reporting the same error as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const inputFilename = await copyInto(directory, CSO1_ZLIB);
       const error = new Error('destroyed');

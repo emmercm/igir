@@ -507,8 +507,8 @@ export default class File implements FileProps {
 
   /**
    * Open a file path as a readable stream and invoke the callback with it, optionally bounded
-   * by start/end byte offsets. The file's {@link size}, when known, keeps reads from allocating
-   * more memory than the file can fill.
+   * by start/end byte offsets. Reads are sized from the file's {@link size}, when known, so that
+   * they don't allocate more memory than necessary.
    */
   static async createStreamFromFile<T>(
     filePath: fs.PathLike,

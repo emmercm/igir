@@ -1002,7 +1002,7 @@ describe('openTrackReader', () => {
   );
 
   it.each(expandHighWaterMarks([MIXED_PREGAP, GD_ROM]))(
-    'should stream $fixture.inputPath with a high-water mark of $highWaterMark byte-identically',
+    'should stream $fixture.inputPath with a highWaterMark of $highWaterMark byte-identically',
     async ({ fixture, highWaterMark }) => {
       await expectTracks(fixture, highWaterMark);
     },
@@ -1155,7 +1155,7 @@ describe('openTrackReader', () => {
     });
   });
 
-  it('should release the CHD when destroyed before reading, emitting what fs.ReadStream does', async () => {
+  it('should release the CHD when destroyed before reading, emitting the same events as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const { inputPath: inputFilename } = await copyFixtureInto(directory, MIXED_PREGAP);
       const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
@@ -1171,7 +1171,7 @@ describe('openTrackReader', () => {
     });
   });
 
-  it('should release the CHD when destroyed with a read in flight, reporting the error as fs.ReadStream does', async () => {
+  it('should release the CHD when destroyed with a read in flight, reporting the same error as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const { inputPath: inputFilename } = await copyFixtureInto(directory, FRAME_STRADDLES_READ);
       const error = new Error('destroyed');
@@ -1226,7 +1226,7 @@ describe('openRawReader', () => {
       findFixture('layouts/raw-unit2448.chd'),
     ]),
   )(
-    'should stream $fixture.inputPath with a high-water mark of $highWaterMark byte-identically',
+    'should stream $fixture.inputPath with a highWaterMark of $highWaterMark byte-identically',
     async ({ fixture, highWaterMark }) => {
       await expect(readRaw(fixture.inputPath, highWaterMark)).resolves.toEqual(
         await readExpectedImage(fixture),
@@ -1338,7 +1338,7 @@ describe('openRawReader', () => {
       highWaterMark: Number.MAX_SAFE_INTEGER * 2,
       error: 'maxBytes is too large',
     },
-  ])('should reject a high-water mark $label', async ({ highWaterMark, error }) => {
+  ])('should reject a highWaterMark $label', async ({ highWaterMark, error }) => {
     await expect(readRaw(HARD_DISK.inputPath, highWaterMark)).rejects.toThrow(error);
   });
 

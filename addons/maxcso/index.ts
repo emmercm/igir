@@ -95,10 +95,9 @@ function toError(thrown: unknown): Error {
 }
 
 /**
- * Wrap a native maxcso reader in a {@link stream.Readable} that closes the file as Node.js'
- * fs.ReadStream closes its file descriptor: in `destroy()`, which the stream calls by itself once
- * it has ended or failed, and only after any read still running has finished. `'close'` is
- * emitted only once the file is closed.
+ * Wrap a native maxcso reader in a {@link stream.Readable}. The stream closes the file in
+ * `destroy()`, which it calls once it has ended or failed, after any read in flight finishes, and
+ * emits `'close'` only once the file is closed (like Node.js fs.ReadStream).
  */
 function readableFromReader(reader: NativeReader, highWaterMark?: number): stream.Readable {
   // The read in flight, which destroy() waits for before closing the reader
@@ -131,8 +130,8 @@ function readableFromReader(reader: NativeReader, highWaterMark?: number): strea
       }
     },
     destroy(error, callback): void {
-      // As fs.ReadStream does, an error closing is reported over the one destroyed with, and that
-      // one over an error from the read in flight
+      // Reports an error closing over the one destroyed with, and that one over an error from the
+      // read in flight (like Node.js fs.ReadStream)
       const pending = reading;
       void (async (): Promise<void> => {
         let result = error;

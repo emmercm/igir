@@ -255,7 +255,7 @@ describe('openReader', () => {
     });
   });
 
-  it('should close cleanly and release the file when destroyed before the first read settles', async () => {
+  it('should close cleanly and release the file when destroyed before the first read finishes', async () => {
     await withTempDir(async (directory) => {
       const inputFilename = await copyInto(directory, '240pSuite-Wii-1.20.lzma.wia');
       await Promise.all(
@@ -288,7 +288,7 @@ describe('openReader', () => {
     });
   });
 
-  it('should reject a high-water mark of zero instead of ending early', async () => {
+  it('should reject a highWaterMark of zero instead of ending early', async () => {
     const readable = dolphin.openReader({
       inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
       highWaterMark: 0,
@@ -296,7 +296,7 @@ describe('openReader', () => {
     await expect(readable.toArray()).rejects.toThrow('maxBytes must be a positive number');
   });
 
-  it('should reject a high-water mark past 64 MiB', async () => {
+  it('should reject a highWaterMark past 64 MiB', async () => {
     const readable = dolphin.openReader({
       inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
       highWaterMark: 64 * 1024 * 1024 + 1,
@@ -304,7 +304,7 @@ describe('openReader', () => {
     await expect(readable.toArray()).rejects.toThrow('maxBytes is too large');
   });
 
-  it('should reject a high-water mark past the largest request', async () => {
+  it('should reject a highWaterMark past the largest request', async () => {
     const readable = dolphin.openReader({
       inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
       highWaterMark: Number.MAX_SAFE_INTEGER * 2,
@@ -312,7 +312,7 @@ describe('openReader', () => {
     await expect(readable.toArray()).rejects.toThrow('maxBytes is too large');
   });
 
-  it('should release the file when destroyed before reading, emitting what fs.ReadStream does', async () => {
+  it('should release the file when destroyed before reading, emitting the same events as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const inputFilename = await copyInto(directory, '240pSuite-GameCube-1.20.gcz');
       const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
@@ -324,7 +324,7 @@ describe('openReader', () => {
     });
   });
 
-  it('should release the file when destroyed with a read in flight, reporting the error as fs.ReadStream does', async () => {
+  it('should release the file when destroyed with a read in flight, reporting the same error as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const inputFilename = await copyInto(directory, '240pSuite-GameCube-1.20.bzip2.rvz');
       const error = new Error('destroyed');

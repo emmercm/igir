@@ -35,9 +35,9 @@ static void QueueWorker(Args&&... args) {
 }
 
 /**
- * Drops a Source's last reference on the thread pool, so that its CHD closes there, as Node.js'
- * own fs.close() does, then tells the Reader it has closed. It is queued only once no read worker
- * holds the Source, so the reference it drops is the last one. Reader must provide:
+ * Drops a Source's last reference on the thread pool, so that its CHD closes there (like Node.js
+ * fs.close()), then tells the Reader it has closed. It is queued only once no read worker holds
+ * the Source, so the reference it drops is the last one. Reader must provide:
  *   void Reader::FinishClose();  // main thread, after Execute()
  */
 template <typename Reader, typename Source>
@@ -78,7 +78,7 @@ static Napi::Value CopyToBuffer(Napi::Env env, const uint8_t* data, size_t lengt
 
 /**
  * Runs one read() on the thread pool: fills memory from a Source's Produce(), then tells the Reader
- * the read is done and settles the read's promise. Source and Reader must provide:
+ * the read is done and resolves or rejects its promise. Source and Reader must provide:
  *   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
  *   std::optional<uint64_t> Source::Remaining() const;      // main thread, between reads
  *   void   Reader::FinishRead();                             // main thread, after Execute()
@@ -213,7 +213,7 @@ class ReadWorker : public Napi::AsyncWorker {
  * freed only once neither does. Produce() never runs on a freed Source, even if the reader is
  * closed or destroyed mid-read. close() waits for the read in flight, then frees the Source on the
  * thread pool; only a reader garbage collected without close() frees its Source on the main
- * thread, as Node.js does for a FileHandle that was never closed.
+ * thread (like a Node.js FileHandle that was never closed).
  */
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
@@ -237,9 +237,9 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     Napi::Value Read(const Napi::CallbackInfo& info);
 
     /**
-     * Close the CHD on the thread pool, and return a promise that resolves once it is closed, as
-     * Node.js' own fs.close() resolves only once the descriptor is closed. A read worker in flight
-     * holds the CHD too, so closing waits for it to finish first.
+     * Close the CHD on the thread pool, and return a promise that resolves once it is closed
+     * (like Node.js fs.close()). A read worker in flight holds the CHD too, so closing waits for it
+     * to finish first.
      */
     Napi::Value Close(const Napi::CallbackInfo& info) {
         Napi::Env const env = info.Env();
@@ -256,7 +256,7 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
             return closed.Promise();
         }
         if (closeWaiters_.size() > 1) {
-            // Already closing; this promise settles with the first
+            // Already closing; this promise resolves with the first
             return closed.Promise();
         }
 

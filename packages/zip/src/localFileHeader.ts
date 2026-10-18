@@ -195,8 +195,8 @@ export default class LocalFileHeader extends FileRecord {
   }
 
   /**
-   * Pick the decompressor's output chunk size, so that it doesn't allocate more memory than this
-   * file's uncompressed bytes can fill.
+   * Pick the decompressor's output chunk size from this file's uncompressed size, so that it
+   * doesn't allocate more memory than necessary.
    * @returns the chunk size, in bytes, or undefined to use zlib's default
    */
   private decompressorChunkSize(highWaterMark?: number): number | undefined {

@@ -57,7 +57,7 @@ describe('PadEndTransform', () => {
   });
 
   it('does not buffer the whole padding while nothing is reading it', async () => {
-    // The padded size can be many times the high watermark, so emitting all the padding at once
+    // The padded size can be many times the highWaterMark, so emitting all the padding at once
     // would hold it in memory without bound
     const paddedSize = 64 * Defaults.FILE_READING_CHUNK_SIZE;
     const transform = new PadEndTransform(paddedSize, 0x00);
@@ -69,7 +69,7 @@ describe('PadEndTransform', () => {
     await tick();
 
     // push() only reports a full buffer after the chunk that filled it, so the buffer can overshoot
-    // the high watermark by up to one chunk, but it must not grow with the padded size
+    // the highWaterMark by up to one chunk, but it must not grow with the padded size
     expect(transform.readableLength).toBeLessThanOrEqual(
       transform.readableHighWaterMark + Defaults.FILE_READING_CHUNK_SIZE,
     );

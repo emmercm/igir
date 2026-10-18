@@ -10,7 +10,7 @@ const ABANDONED_CODES = new Set(['ERR_STREAM_PREMATURE_CLOSE', 'ABORT_ERR']);
 export default {
   /**
    * Pick the chunk size to read the {@link start} to {@link end} byte range (both inclusive) of a
-   * {@link size}-byte source with, so that no read allocates more memory than the source can fill.
+   * {@link size}-byte source with, so that no read allocates more memory than necessary.
    * A {@link size} of zero or less is treated as unknown, as some sizes are only placeholders.
    * @returns the chunk size, in bytes
    */
@@ -116,7 +116,7 @@ export default {
     // The source is only destroyed once every output has been destroyed, otherwise one consumer
     // finishing early would truncate every other consumer
     let liveOutputs = count;
-    // The source is paused while any output is above its high watermark, otherwise the slowest
+    // The source is paused while any output is above its highWaterMark, otherwise the slowest
     // consumer would cause the source to be buffered in memory without bound
     let pausedOutputs = 0;
 
