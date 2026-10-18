@@ -102,6 +102,30 @@ function failingTeardown(): stream.Readable {
   return readable;
 }
 
+describe('getChunkSize', () => {
+  const chunkSize = Defaults.FILE_READING_CHUNK_SIZE;
+
+  it.each([
+    ['no size or end', undefined, undefined, undefined, chunkSize],
+    ['a zero size', 0, undefined, 0, chunkSize],
+    ['a negative size', 0, undefined, -1, chunkSize],
+    ['a size larger than one chunk', 0, undefined, chunkSize * 4, chunkSize],
+    ['a size smaller than one chunk', 0, undefined, 1000, 1000],
+    ['a tiny size', 0, undefined, 10, 10],
+    ['a start within the size', 100, undefined, 1000, 900],
+    ['a start at the size', 1000, undefined, 1000, 1],
+    ['an end before the size', 0, 499, 1000, 500],
+    ['an end past the size', 0, 4999, 1000, 1000],
+    ['an end with no size', 100, 599, undefined, 500],
+    ['an end larger than one chunk', 0, chunkSize * 4, undefined, chunkSize],
+  ])(
+    'should pick the chunk size for %s',
+    (_, start: number | undefined, end: number | undefined, size: number | undefined, expected) => {
+      expect(StreamUtil.getChunkSize(start, end, size)).toEqual(expected);
+    },
+  );
+});
+
 describe('pipelineSafe', () => {
   const readAll = async (readable: stream.Readable): Promise<string> =>
     (await BufferUtil.fromReadable(readable)).toString();

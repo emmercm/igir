@@ -9,6 +9,23 @@ const ABANDONED_CODES = new Set(['ERR_STREAM_PREMATURE_CLOSE', 'ABORT_ERR']);
 
 export default {
   /**
+   * Pick the chunk size to read the {@link start} to {@link end} byte range (both inclusive) of a
+   * {@link size}-byte source with, so that no read allocates more memory than necessary.
+   * A {@link size} of zero or less is treated as unknown, as some sizes are only placeholders.
+   * @returns the chunk size, in bytes
+   */
+  getChunkSize(start = 0, end?: number, size?: number): number {
+    let chunkSize = Defaults.FILE_READING_CHUNK_SIZE;
+    if (size !== undefined && size > 0) {
+      chunkSize = Math.min(chunkSize, size - start);
+    }
+    if (end !== undefined) {
+      chunkSize = Math.min(chunkSize, end - start + 1);
+    }
+    return Math.max(1, chunkSize);
+  },
+
+  /**
    * Read `source` through an optional `transform`, invoke the callback with the resulting stream,
    * and tear both streams down once the callback is finished with them.
    *
@@ -99,7 +116,7 @@ export default {
     // The source is only destroyed once every output has been destroyed, otherwise one consumer
     // finishing early would truncate every other consumer
     let liveOutputs = count;
-    // The source is paused while any output is above its high watermark, otherwise the slowest
+    // The source is paused while any output is above its highWaterMark, otherwise the slowest
     // consumer would cause the source to be buffered in memory without bound
     let pausedOutputs = 0;
 

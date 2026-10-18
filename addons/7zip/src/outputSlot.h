@@ -66,6 +66,13 @@ class OutputSlot {
     void Finish();
 
     /**
+     * Reports whether the producer has finished or the slot was aborted, so that nothing lent
+     * would be filled, without blocking. Consumer only; a false while the producer holds the lock,
+     * or just before it finishes, only costs a lend that comes back unused.
+     */
+    [[nodiscard]] bool Done();
+
+    /**
      * Stops and unblocks the producer and makes later reads report end-of-stream; safe from any thread.
      *
      * Once it returns, the producer will not touch the lent buffer again, so

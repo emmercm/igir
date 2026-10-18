@@ -134,7 +134,7 @@ export default class FileCache {
         const checksums = await FileChecksums.hashFile(
           filePath,
           checksumBitmask,
-          undefined,
+          stats.size,
           undefined,
           callback,
         );

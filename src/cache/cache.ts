@@ -7,6 +7,7 @@ import { E_CANCELED, Mutex } from 'async-mutex';
 
 import KeyedMutex from '../async/keyedMutex.js';
 import Timer from '../async/timer.js';
+import Defaults from '../globals/defaults.js';
 import FsUtil from '../utils/fsUtil.js';
 
 export interface CacheProps {
@@ -264,8 +265,8 @@ export default class Cache<V> {
     try {
       const chunks: Buffer[] = [];
       await stream.promises.pipeline(
-        fs.createReadStream(this.filePath),
-        zlib.createGunzip(),
+        fs.createReadStream(this.filePath, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+        zlib.createGunzip({ chunkSize: Defaults.FILE_READING_CHUNK_SIZE }),
         new stream.Writable({
           write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
             chunks.push(chunk);
@@ -347,8 +348,8 @@ export default class Cache<V> {
           // Validate the file was written correctly; gunzip will throw if the archive is missing
           // its trailer (file is truncated) or if the CRC32 doesn't match (which shouldn't happen)
           await stream.promises.pipeline(
-            fs.createReadStream(tempFile),
-            zlib.createGunzip(),
+            fs.createReadStream(tempFile, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+            zlib.createGunzip({ chunkSize: Defaults.FILE_READING_CHUNK_SIZE }),
             new stream.Writable({
               write: (_chunk, _enc, cb): void => {
                 cb();

@@ -9,7 +9,7 @@ import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
 import FileChecksums from '../fileChecksums.js';
-import type { ArchiveEntryLocation } from './archive.js';
+import type { ArchiveEntryRef } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -141,7 +141,7 @@ export default class Tar extends Archive {
     } catch (error) {
       // abort() is what nerfs and destroys the parser's decompressor, whose zlib binding
       // readStream.destroy() below leaves open because pipe() doesn't propagate destroy()
-      // downstream. It emits 'error', which the already-settled `parsed` above ignores.
+      // downstream. It emits 'error', which the already-finished `parsed` above ignores.
       writeStream.abort(error instanceof Error ? error : new Error(String(error)));
       throw error;
     } finally {
@@ -153,7 +153,7 @@ export default class Tar extends Archive {
    * Extract the named entry from the tar archive to the given file path.
    */
   async extractEntryToFile(
-    { entryPath }: ArchiveEntryLocation,
+    { entryPath }: ArchiveEntryRef,
     extractedFilePath: string,
   ): Promise<void> {
     await tar.extract(

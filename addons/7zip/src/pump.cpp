@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "7zip/Archive/IArchive.h"
+#include "7zip/PropID.h"
 #include "Common/MyCom.h"
 #include "errors.h"
 #include "extraction.h"
@@ -172,6 +173,8 @@ void Pump::Cancel() noexcept {
 
 void Pump::Lend(uint8_t* data, size_t capacity) { slot_.Lend(data, capacity); }
 
+bool Pump::Done() { return slot_.Done(); }
+
 void Pump::SetError(std::string message) {
     std::scoped_lock const lock(errorMutex_);
     if (error_.empty()) {
@@ -241,7 +244,14 @@ bool Pump::Open() {
     }
 
     // ResolveEntryIndex() reports why when it fails
-    return ResolveEntryIndex(*opened_.archive, &resolvedIndex_) == S_OK && !abort_.load(std::memory_order_relaxed);
+    if (ResolveEntryIndex(*opened_.archive, &resolvedIndex_) != S_OK) {
+        return false;
+    }
+    uint64_t size = 0;
+    if (GetUInt64Prop(*opened_.archive, resolvedIndex_, kpidSize, &size)) {
+        declaredSize_.store(size, std::memory_order_relaxed);
+    }
+    return !abort_.load(std::memory_order_relaxed);
 }
 
 void Pump::Extract() {
@@ -272,6 +282,14 @@ void Pump::Extract() {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ +
                  "': " + OperationResultMessage(raw->OpResult()));
     }
+}
+
+std::optional<uint64_t> Pump::DeclaredSize() const noexcept {
+    uint64_t const size = declaredSize_.load(std::memory_order_relaxed);
+    if (size == kUnknownSize) {
+        return std::nullopt;
+    }
+    return size;
 }
 
 OutputSlot::Status Pump::TryRead(size_t* length) {

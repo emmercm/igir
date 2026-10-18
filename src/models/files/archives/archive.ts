@@ -1,7 +1,6 @@
 import path from 'node:path';
 import type { Readable } from 'node:stream';
 
-import Defaults from '../../../globals/defaults.js';
 import Temp from '../../../globals/temp.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import LimitBytesTransform from '../../../streams/limitBytesTransform.js';
@@ -12,22 +11,26 @@ import File from '../file.js';
 import type ArchiveEntry from './archiveEntry.js';
 
 /**
- * Where an entry lives inside its {@link Archive}: the path it was listed under, and optionally
- * the position it was listed at.
+ * A reference to a {@link ArchiveEntry} in a {@link Archive}, with enough information to extract
+ * that entry. This is required to prevent a circular dependency between those two classes.
  */
-export interface ArchiveEntryLocation {
+export interface ArchiveEntryRef {
   readonly entryPath: string;
   /**
    * The entry's position in the archive's own item table, as the archive itself orders it.
    */
   readonly entryIndex?: number;
+  /**
+   * The entry's uncompressed size in bytes, if known.
+   */
+  readonly size?: number;
 }
 
 /**
  * Base class for an archive file format, providing entry enumeration and extraction.
  */
 export default abstract class Archive {
-  // A reasonable high watermark minimum, but still above zlib's minimum chunk size of 64 bytes
+  // A reasonable minimum chunk size, but still above zlib's minimum of 64 bytes
   private static readonly MIN_STREAM_CHUNK_SIZE = 4 * 1024;
 
   private readonly filePath: string;
@@ -69,7 +72,7 @@ export default abstract class Archive {
   ): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void>;
@@ -79,13 +82,13 @@ export default abstract class Archive {
    * path, then clean up the file.
    */
   async extractEntryToTempFile<T>(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
     const tempFile = await FsUtil.mktemp(
       path.join(
         Temp.getTempDir(),
-        FsUtil.makeLegal(path.basename(location.entryPath) || path.parse(this.getFilePath()).name),
+        FsUtil.makeLegal(path.basename(entryRef.entryPath) || path.parse(this.getFilePath()).name),
       ),
     );
 
@@ -95,7 +98,7 @@ export default abstract class Archive {
     }
 
     try {
-      await this.extractEntryToFile(location, tempFile);
+      await this.extractEntryToFile(entryRef, tempFile);
       return await callback(tempFile);
     } finally {
       await FsUtil.rm(tempFile, { force: true });
@@ -109,30 +112,33 @@ export default abstract class Archive {
    * The stream is bounded by the {@link start} and {@link end} byte offsets (both inclusive).
    */
   async extractEntryToStream<T>(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
     end?: number,
   ): Promise<T> {
     return await this.extractEntryToTempFile(
-      location,
-      async (tempFile) => await File.createStreamFromFile(tempFile, callback, start, end),
+      entryRef,
+      async (tempFile) =>
+        await File.createStreamFromFile(tempFile, callback, entryRef.size, start, end),
     );
   }
 
   /**
    * Pick the chunk size to read and decompress an entry's {@link start} to {@link end} byte range
-   * (both inclusive) with. A short range, such as a header probe, gets a smaller chunk size so it
-   * doesn't decompress far past its end.
+   * (both inclusive) with, from a source stream of the entry's {@link size} bytes. A short range,
+   * such as a header probe, gets a smaller chunk size so it doesn't decompress far past its end.
    * @returns the chunk size, in bytes
    */
-  protected static getStreamChunkSize(start: number, end?: number): number {
+  protected static getStreamChunkSize(start: number, end?: number, size?: number): number {
+    // The source stream starts at the entry's first byte, even when the range starts later
+    const chunkSize = StreamUtil.getChunkSize(0, undefined, size);
     if (end === undefined) {
-      return Defaults.FILE_READING_CHUNK_SIZE;
+      return chunkSize;
     }
 
     return Math.min(
-      Defaults.FILE_READING_CHUNK_SIZE,
+      chunkSize,
       Math.max(
         this.MIN_STREAM_CHUNK_SIZE,
         // The 4x here is a guess at how much a highly-compressible file might be compressed
