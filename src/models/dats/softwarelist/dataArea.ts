@@ -15,7 +15,13 @@ export default class DataArea {
 
   @Expose()
   @Type(() => ROM)
-  @Transform(({ value }: { value: undefined | ROM | ROM[] }) => value ?? [])
+  // A <rom> without a name (loadflag="continue", "reload", "fill", …) loads part of the ROM before
+  // it again at another offset; it isn't a file of its own
+  @Transform(({ value }: { value: undefined | ROM | ROM[] }) =>
+    (value === undefined ? [] : [value].flat()).filter(
+      (rom) => (rom as Partial<ROM>).name !== undefined,
+    ),
+  )
   readonly rom: ROM | ROM[];
 
   constructor(rom: ROM | ROM[]) {
