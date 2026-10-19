@@ -152,9 +152,7 @@ export default class FileSignature {
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     tar1: new FileSignature('.tar', [{ offset: 257, value: Buffer.from('ustar\u{0}00') }]),
-    tar2: new FileSignature('.tar', [
-      { offset: 257, value: Buffer.from('ustar\u{20}\u{20}\u{0}') },
-    ]),
+    tar2: new FileSignature('.tar', [{ offset: 257, value: Buffer.from('ustar  \u{0}') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     xar: new FileSignature('.xar', [{ value: Buffer.from('xar!') }]),
@@ -615,19 +613,19 @@ export default class FileSignature {
     vff: new FileSignature('.vff', [{ value: Buffer.from('VFF ') }]),
     // @see http://wiibrew.org/wiki/WAD_files
     wad_installable_ib: new FileSignature('.wad', [
-      { value: Buffer.from('\u{0}\u{0}\u{0}\u{20}') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0} ') }, // header size
       { offset: 0x04, value: Buffer.from('ib') },
       { offset: 0x06, value: Buffer.from('\u{0}\u{0}') }, // WAD version
       { offset: 0x0c, value: Buffer.from('\u{0}\u{0}\u{0}\u{0}') }, // reserved
     ]),
     wad_installable_is: new FileSignature('.wad', [
-      { value: Buffer.from('\u{0}\u{0}\u{0}\u{20}') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0} ') }, // header size
       { offset: 0x04, value: Buffer.from('Is') },
       { offset: 0x06, value: Buffer.from('\u{0}\u{0}') }, // WAD version
       { offset: 0x0c, value: Buffer.from('\u{0}\u{0}\u{0}\u{0}') }, // reserved
     ]),
     wad_backup: new FileSignature('.wad', [
-      { value: Buffer.from('\u{0}\u{0}\u{0}\u{70}') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0}p') }, // header size
       { offset: 0x04, value: Buffer.from('Bk') },
       { offset: 0x06, value: Buffer.from('\u{0}\u{1}') }, // WAD version
       { offset: 0x6e, value: Buffer.from('\u{0}\u{0}') }, // reserved
@@ -643,7 +641,7 @@ export default class FileSignature {
     // Note: .wua doesn't appear to have any consistent signature
     wud: new FileSignature('.wud', [{ value: Buffer.from('WUP-') }]),
     // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25-L26
-    wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\u{2E}\u{D0}\u{99}\u{10}') }]),
+    wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0.\u{D0}\u{99}\u{10}') }]),
 
     // Philips - CD-i
     // @see https://www.icdia.co.uk/docs/GRNBK/BY_NUMBER/chap3

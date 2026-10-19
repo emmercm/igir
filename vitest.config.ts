@@ -9,6 +9,7 @@ const isDocker =
     fs.readFileSync('/proc/self/cgroup', 'utf8').includes('docker') ||
     fs.readFileSync('/proc/self/mountinfo', 'utf8').includes('/docker/containers/'));
 
+// eslint-disable-next-line unicorn/no-top-level-side-effects
 export default defineConfig({
   test: {
     globals: true,

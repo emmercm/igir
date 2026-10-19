@@ -219,6 +219,7 @@ function withUInt32(offset: number, value: number): (bytes: Buffer) => Buffer {
   };
 }
 
+// eslint-disable-next-line unicorn/no-unnecessary-parameters
 function withUInt64(offset: number, value: number): (bytes: Buffer) => Buffer {
   return (bytes) => {
     const copy = Buffer.from(bytes);
