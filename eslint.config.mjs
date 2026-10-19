@@ -23,6 +23,7 @@ import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImpo
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// eslint-disable-next-line unicorn/no-top-level-side-effects
 export default eslintConfig.defineConfig([
   {
     ignores: [
@@ -236,6 +237,7 @@ export default eslintConfig.defineConfig([
       'unicorn/max-nested-calls': 'off',
       'unicorn/name-replacements': 'off',
       'unicorn/no-array-reduce': 'off',
+      'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
       'unicorn/no-await-expression-member': 'off',
       'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
       'unicorn/no-hex-escape': 'off',

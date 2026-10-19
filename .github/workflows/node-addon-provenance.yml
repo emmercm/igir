@@ -172,9 +172,20 @@ jobs:
           )
           prebuild_paths=':(glob)addons/*/addon-*/**'
 
-          # The prebuilds are stale if no commit changed them after the last source change
+          # The prebuilds are stale if no commit changed them after the last source change. A merge
+          #   from the base branch is reported by `git log` as a source change when the base branch
+          #   changed sources, so first check if the pull request's sources and prebuilds are
+          #   identical to the base branch's, in which case there is nothing to rebuild. This
+          #   compares against the base commit itself, not the merge base, so that it doesn't
+          #   depend on which merge base is chosen. Prebuilds are compared so that prebuilds built
+          #   from source changes that were later reverted are still stale. They need their own
+          #   diff, because the `exclude` pathspec in source_paths would exclude them.
           stale=false
-          last_source="$(git -C "${repo_dir}" log -1 --format=%H "${BASE_SHA}..${HEAD_SHA}" -- "${source_paths[@]}")"
+          last_source=""
+          if ! git -C "${repo_dir}" diff --quiet "${BASE_SHA}" "${HEAD_SHA}" -- "${source_paths[@]}" \
+            || ! git -C "${repo_dir}" diff --quiet "${BASE_SHA}" "${HEAD_SHA}" -- "${prebuild_paths}"; then
+            last_source="$(git -C "${repo_dir}" log -1 --format=%H "${BASE_SHA}..${HEAD_SHA}" -- "${source_paths[@]}")"
+          fi
           if [[ -n "${last_source}" ]]; then
             echo "Last native addon source change: ${last_source}"
             if [[ -z "$(git -C "${repo_dir}" log -1 --format=%H "${last_source}..${HEAD_SHA}" -- "${prebuild_paths}")" ]]; then
