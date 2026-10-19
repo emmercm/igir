@@ -13,7 +13,7 @@ import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import type { ChecksumProps } from '../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
-import type { ArchiveEntryLocation } from './archive.js';
+import type { ArchiveEntryRef } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -39,8 +39,11 @@ export default class Rar extends Archive {
     }
 
     const buffer = await fs.promises.readFile(UNRAR_WASM_PATH);
-    this.wasmBinary = new ArrayBuffer(buffer.byteLength);
-    new Uint8Array(this.wasmBinary).set(buffer);
+    // Node reads the file into memory of exactly its size, which can be used as-is
+    this.wasmBinary =
+      buffer.byteOffset === 0 && buffer.byteLength === buffer.buffer.byteLength
+        ? buffer.buffer
+        : buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     return this.wasmBinary;
   }
 
@@ -108,18 +111,23 @@ export default class Rar extends Archive {
         ) {
           let lastProgress = 0;
           checksums = await this.extractEntryToStream(
-            { entryPath: fileHeader.name },
+            { entryPath: fileHeader.name, size: fileHeader.unpSize },
             async (readable) => {
               return await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
                 overallProgress = overallProgress - lastProgress + progress;
-                if (!callback) {
-                  return;
-                }
-                callback(overallProgress);
                 lastProgress = progress;
+                if (callback) {
+                  callback(overallProgress);
+                }
               });
             },
           );
+        } else {
+          // The file header's CRC32 is used, so there's nothing to read
+          overallProgress += fileHeader.unpSize;
+          if (callback) {
+            callback(overallProgress);
+          }
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
@@ -129,7 +137,7 @@ export default class Rar extends Archive {
           );
         }
 
-        const entry = await ArchiveEntry.entryOf(
+        return await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: fileHeader.name,
@@ -139,11 +147,6 @@ export default class Rar extends Archive {
           },
           checksumBitmask,
         );
-        overallProgress += fileHeader.unpSize;
-        if (callback) {
-          callback(overallProgress);
-        }
-        return entry;
       },
     );
   }
@@ -152,7 +155,7 @@ export default class Rar extends Archive {
    * Extract the named entry from the RAR archive to the given file path.
    */
   async extractEntryToFile(
-    { entryPath }: ArchiveEntryLocation,
+    { entryPath }: ArchiveEntryRef,
     extractedFilePath: string,
   ): Promise<void> {
     /**

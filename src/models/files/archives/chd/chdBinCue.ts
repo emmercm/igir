@@ -7,12 +7,10 @@ import chdman, { CHDType } from '../../../../../addons/chdman/index.js';
 import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
-import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
-import StreamUtil from '../../../../utils/streamUtil.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
-import type { ArchiveEntryLocation } from '../archive.js';
+import type { ArchiveEntryRef } from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import type { ChdListedFile, ChdListing } from './chd.js';
 import Chd from './chd.js';
@@ -57,10 +55,10 @@ export default class ChdBinCue extends Chd {
   /**
    * Stream one entry: the TOC text, or the track the entry's index names.
    */
-  private async streamFile({
-    entryPath,
-    entryIndex,
-  }: ArchiveEntryLocation): Promise<stream.Readable> {
+  private async streamFile(
+    { entryPath, entryIndex }: ArchiveEntryRef,
+    highWaterMark: number,
+  ): Promise<stream.Readable> {
     if (entryPath.toLowerCase().endsWith('.cue')) {
       return stream.Readable.from(Buffer.from((await this.getListing()).tocText));
     }
@@ -71,7 +69,7 @@ export default class ChdBinCue extends Chd {
       inputFilename: this.getFilePath(),
       mode: 'cuebin',
       trackIndex: entryIndex,
-      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+      highWaterMark,
     });
   }
 
@@ -79,18 +77,16 @@ export default class ChdBinCue extends Chd {
    * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback.
    */
   override async extractEntryToStream<T>(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
+    end?: number,
   ): Promise<T> {
-    const sourceStream = await this.streamFile(location);
-    // A non-zero start offset (e.g. a detected ROM header) must skip that many
-    // leading bytes of the forward-only stream.
-    return await StreamUtil.pipelineSafe(
-      sourceStream,
-      start > 0 ? new SkipBytesTransform(start) : undefined,
-      callback,
+    const sourceStream = await this.streamFile(
+      entryRef,
+      Chd.getStreamChunkSize(start, end, entryRef.size),
     );
+    return await Chd.pipelineRange(sourceStream, callback, start, end);
   }
 
   /**
@@ -140,7 +136,7 @@ export default class ChdBinCue extends Chd {
           inputFilename: this.getFilePath(),
           mode: 'cuebin',
           trackIndex: file.trackIndex,
-          highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+          highWaterMark: Chd.getStreamChunkSize(0, undefined, file.size),
         });
         let lastProgress = 0;
         const checksums = await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {

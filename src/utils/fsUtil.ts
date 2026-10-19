@@ -12,6 +12,7 @@ import Defaults from '../globals/defaults.js';
 import gracefulFs from '../polyfill/gracefulFs.js';
 import type { FsReadCallback } from '../streams/fsReadTransform.js';
 import FsReadTransform from '../streams/fsReadTransform.js';
+import StreamUtil from './streamUtil.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
 // eslint-disable-next-line unicorn/no-top-level-side-effects
@@ -107,7 +108,10 @@ export default class FsUtil {
    * is writable.
    */
   static async copyFile(src: string, dest: string, callback?: FsReadCallback): Promise<void> {
-    if (!(await this.exists(src))) {
+    let srcSize: number;
+    try {
+      srcSize = (await fs.promises.stat(src)).size;
+    } catch {
       throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
     }
     const destDir = path.dirname(dest);
@@ -118,7 +122,7 @@ export default class FsUtil {
     const didDestPreviouslyExist = await this.exists(dest);
 
     const readStream = fs.createReadStream(src, {
-      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+      highWaterMark: StreamUtil.getChunkSize(0, undefined, srcSize),
     });
     const writeStream = fs.createWriteStream(dest);
     if (callback) {

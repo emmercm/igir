@@ -32,13 +32,13 @@ async function applyToInput(
     const patch = patchFrom(file);
 
     const inputPath = path.join(tempDir, 'input.z64');
-    const inputFile = await IOFile.fileOfSize(inputPath, 'r+', SOURCE_SIZE);
+    const inputIOFile = await IOFile.fileOfSize(inputPath, 'r+', SOURCE_SIZE);
     try {
       for (const [offset, hex] of INPUT_WRITES) {
-        await inputFile.writeAt(Buffer.from(hex, 'hex'), offset);
+        await inputIOFile.writeAt(Buffer.from(hex, 'hex'), offset);
       }
     } finally {
-      await inputFile.close();
+      await inputIOFile.close();
     }
 
     const outputPath = path.join(tempDir, 'output.z64');
@@ -58,9 +58,9 @@ async function findMismatchedChunks(
   expectedWrites: [number, string][],
 ): Promise<number[]> {
   const mismatches: number[] = [];
-  const actualFile = await IOFile.fileFrom(filePath, 'r');
+  const actualIOFile = await IOFile.fileFrom(filePath, 'r');
   try {
-    expect(actualFile.getSize()).toEqual(expectedSize);
+    expect(actualIOFile.getSize()).toEqual(expectedSize);
 
     for (let position = 0; position < expectedSize; position += Defaults.FILE_READING_CHUNK_SIZE) {
       const length = Math.min(Defaults.FILE_READING_CHUNK_SIZE, expectedSize - position);
@@ -74,12 +74,12 @@ async function findMismatchedChunks(
         }
       }
 
-      if (!(await actualFile.readAt(position, length)).equals(expected)) {
+      if (!(await actualIOFile.readAt(position, length)).equals(expected)) {
         mismatches.push(position);
       }
     }
   } finally {
-    await actualFile.close();
+    await actualIOFile.close();
   }
   return mismatches;
 }
@@ -146,6 +146,50 @@ describe('createPatchedFile', () => {
       });
     },
   );
+
+  it('should apply: Yay0 compressed with links that wrap around the window', async () => {
+    // 4,000 literals, then a link whose destination wraps around the 0x1000-byte window, then a
+    // link whose source wraps around it
+    const recordSize = 4000 - 16 + 273 + 273;
+    const literalData = Buffer.alloc(4000);
+    // One record, at offset 0x10
+    Buffer.from('504d53520000000100000010', 'hex').copy(literalData);
+    literalData.writeUInt32BE(recordSize, 12);
+    for (let i = 16; i < literalData.length; i += 1) {
+      literalData[i] = (i * 7) % 251;
+    }
+
+    const decompressed = Buffer.alloc(16 + recordSize);
+    literalData.copy(decompressed);
+    let position = literalData.length;
+    for (const distance of [200, 300]) {
+      for (let i = 0; i < 273; i += 1) {
+        decompressed[position] = decompressed[position - distance];
+        position += 1;
+      }
+    }
+
+    const commands = Buffer.alloc(504);
+    commands.fill(0xff, 0, 500);
+    // Two long-form links of 0xff + 0x12 bytes each, with distances of 200 and 300
+    const links = Buffer.from('00c7012b', 'hex');
+    const literals = Buffer.concat([literalData, Buffer.from('ffff', 'hex')]);
+    const header = Buffer.alloc(16);
+    Buffer.from('Yay0').copy(header);
+    header.writeUInt32BE(decompressed.length, 4);
+    header.writeUInt32BE(header.length + commands.length, 8);
+    header.writeUInt32BE(header.length + commands.length + links.length, 12);
+    const patchHex = Buffer.concat([header, commands, links, literals]).toString('hex');
+
+    await applyToInput(patchHex, async (outputPath) => {
+      await expect(
+        findMismatchedChunks(outputPath, SOURCE_SIZE, [
+          ...INPUT_WRITES,
+          [0x10, decompressed.subarray(16).toString('hex')],
+        ]),
+      ).resolves.toEqual([]);
+    });
+  });
 
   test.each([
     ['bad header', '504d535800000000', /PMSR patch header is invalid/],

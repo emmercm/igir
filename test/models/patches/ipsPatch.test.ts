@@ -31,6 +31,8 @@ describe('createPatchedFile', () => {
       '504154434800000400000003cc454f46',
       '00010203cccccc0708090a0b0c0d0e0f',
     ],
+    // An RLE record cut short before its byte writes nothing
+    ['rle cut short', 'patch 00000000.ips', '504154434800000400000003', INPUT16],
     ['grow', 'patch 00000000.ips', '50415443480000100002eeff454f46', `${INPUT16}eeff`],
     [
       'no eof',
@@ -120,14 +122,9 @@ describe('createPatchedFile', () => {
     Buffer.from(INPUT16, 'hex').copy(expected);
     expected[0x1_00_00_00] = 0xaa;
 
-    const actual = await applyPatch(
-      patchFrom,
-      'patch 00000000.ips32',
-      '4950533332010000000001aa45454f46',
-      INPUT16,
-    );
-    // Compare the buffers directly, a 16 MiB hex string is slow to build and to diff
-    expect(actual.equals(expected)).toEqual(true);
+    await expect(
+      applyPatch(patchFrom, 'patch 00000000.ips32', '4950533332010000000001aa45454f46', INPUT16),
+    ).resolves.toEqual(expected);
   });
 
   test.each([['patch 00000000.ips', '5041544358454f46', /IPS patch header is invalid/]])(

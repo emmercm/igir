@@ -18,15 +18,13 @@ import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../streams/fsReadTransform.js';
-import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
-import StreamUtil from '../../../utils/streamUtil.js';
 import type { ZipFormatValue } from '../../options.js';
 import { ZipFormat } from '../../options.js';
 import type File from '../file.js';
 import type { ChecksumProps } from '../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
-import type { ArchiveEntryLocation } from './archive.js';
+import type { ArchiveEntryRef } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -108,6 +106,12 @@ export default class Zip extends Archive {
           } finally {
             entryStream.destroy();
           }
+        } else {
+          // The central directory's CRC32 is used, so there's nothing to read
+          overallProgress += entryFile.uncompressedSizeResolved();
+          if (callback) {
+            callback(overallProgress);
+          }
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
@@ -135,7 +139,7 @@ export default class Zip extends Archive {
    * Extract the named entry from the ZIP to the given file path.
    */
   async extractEntryToFile(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
@@ -144,7 +148,7 @@ export default class Zip extends Archive {
       await FsUtil.mkdir(extractedDir, { recursive: true });
     }
 
-    await this.extractEntryToStream(location, async (readable) => {
+    await this.extractEntryToStream(entryRef, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -158,9 +162,10 @@ export default class Zip extends Archive {
    * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
    */
   override async extractEntryToStream<T>(
-    { entryPath }: ArchiveEntryLocation,
+    { entryPath }: ArchiveEntryRef,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
+    end?: number,
   ): Promise<T> {
     // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
     const entries = await this.zipReader.centralDirectoryFileHeaders();
@@ -175,17 +180,13 @@ export default class Zip extends Archive {
 
     let sourceStream: stream.Readable;
     try {
-      sourceStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
+      sourceStream = await entry.uncompressedStream(Archive.getStreamChunkSize(start, end));
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
         cause: error,
       });
     }
-    return await StreamUtil.pipelineSafe(
-      sourceStream,
-      start > 0 ? new SkipBytesTransform(start) : undefined,
-      callback,
-    );
+    return await Archive.pipelineRange(sourceStream, callback, start, end);
   }
 
   /**

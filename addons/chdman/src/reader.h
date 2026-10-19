@@ -2,12 +2,15 @@
 
 #include <napi.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 // ---- shared pull-reader scaffolding ----
 
@@ -32,23 +35,31 @@ static void QueueWorker(Args&&... args) {
 }
 
 /**
- * Drops a Source's last reference on the thread pool, so that its CHD closes there, as Node.js'
- * own fs.close() does. A read worker in flight may hold the other reference, in which case it
- * drops the last one at the end of its own Execute(), also on the thread pool.
+ * Drops a Source's last reference on the thread pool, so that its CHD closes there (like Node.js
+ * fs.close()), then tells the Reader it has closed. It is queued only once no read worker holds
+ * the Source, so the reference it drops is the last one. Reader must provide:
+ *   void Reader::FinishClose();  // main thread, after Execute()
  */
-template <typename Source>
+template <typename Reader, typename Source>
 class CloseWorker : public Napi::AsyncWorker {
    public:
     /** Transfers source ownership to the close worker until its pool-thread execution. */
-    CloseWorker(Napi::Env env, std::shared_ptr<Source> source) : Napi::AsyncWorker(env), source_(std::move(source)) {}
+    CloseWorker(Napi::Env env, std::shared_ptr<Reader*> reader, std::shared_ptr<Source> source)
+        : Napi::AsyncWorker(env), reader_(std::move(reader)), source_(std::move(source)) {}
 
     /** Release the Source. Runs on the worker thread. */
     void Execute() override { source_.reset(); }
 
-    /** Nothing to settle: close() does not report its outcome */
-    void OnOK() override {}
+    /** Tell the reader the CHD is closed, unless it was destroyed */
+    void OnOK() override {
+        if (*reader_ != nullptr) {
+            (*reader_)->FinishClose();  // may release the reader
+        }
+    }
 
    private:
+    // Cleared by the reader's destructor
+    std::shared_ptr<Reader*> reader_;
     std::shared_ptr<Source> source_;
 };
 
@@ -67,8 +78,9 @@ static Napi::Value CopyToBuffer(Napi::Env env, const uint8_t* data, size_t lengt
 
 /**
  * Runs one read() on the thread pool: fills memory from a Source's Produce(), then tells the Reader
- * the read is done and settles the read's promise. Source and Reader must provide:
+ * the read is done and resolves or rejects its promise. Source and Reader must provide:
  *   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
+ *   std::optional<uint64_t> Source::Remaining() const;      // main thread, between reads
  *   void   Reader::FinishRead();                             // main thread, after Execute()
  *
  * Under Emscripten, it fills scratch memory and resolves with a copy, because emnapi frees a Buffer's
@@ -199,9 +211,9 @@ class ReadWorker : public Napi::AsyncWorker {
  *
  * Safety invariant: the reader and the read worker in flight each hold the Source, so it is
  * freed only once neither does. Produce() never runs on a freed Source, even if the reader is
- * closed or destroyed mid-read. close() and the read worker both drop their references on the
+ * closed or destroyed mid-read. close() waits for the read in flight, then frees the Source on the
  * thread pool; only a reader garbage collected without close() frees its Source on the main
- * thread, as Node.js does for a FileHandle that was never closed.
+ * thread (like a Node.js FileHandle that was never closed).
  */
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
@@ -225,28 +237,59 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     Napi::Value Read(const Napi::CallbackInfo& info);
 
     /**
-     * Release this reader's hold on the CHD, on the thread pool. A read worker in flight holds
-     * it too, so the CHD closes once the worker thread is done with it.
+     * Close the CHD on the thread pool, and return a promise that resolves once it is closed
+     * (like Node.js fs.close()). A read worker in flight holds the CHD too, so closing waits for it
+     * to finish first.
      */
-    void Close(const Napi::CallbackInfo& info) {
-        if (!source_) {
-            return;
+    Napi::Value Close(const Napi::CallbackInfo& info) {
+        Napi::Env const env = info.Env();
+        Napi::Promise::Deferred const closed = Napi::Promise::Deferred::New(env);
+        if (!source_ && closeWaiters_.empty()) {
+            // Never opened, or already closed
+            closed.Resolve(env.Undefined());
+            return closed.Promise();
         }
-        // Moved out first, so that the worker's reference is never the last one while this
-        // reader's is still being dropped here on the main thread
-        std::shared_ptr<Source> source = std::move(source_);
         try {
-            QueueWorker<CloseWorker<Source>>(info.Env(), std::move(source));
-        } catch (...) {  // NOLINT(bugprone-empty-catch)
-            // The worker could not be created or queued, so the CHD closes here instead, on the
-            // main thread, when `source` goes out of scope
+            closeWaiters_.push_back(closed);
+        } catch (...) {
+            closed.Reject(Napi::Error::New(env, "failed to close the reader").Value());
+            return closed.Promise();
         }
+        if (closeWaiters_.size() > 1) {
+            // Already closing; this promise resolves with the first
+            return closed.Promise();
+        }
+
+        // Held until FinishClose(), so that the object outlives the close worker that reports to it
+        this->Ref();
+        closing_ = std::move(source_);
+        if (!reading_) {
+            StartClose(env);
+        }
+        return closed.Promise();
     }
 
-    /** Mark the read as done. Called on the main thread by the read worker after Execute has returned. */
+    /**
+     * Mark the read as done, and start a close that was waiting for it. Called on the main thread
+     * by the read worker after Execute has returned, which dropped its reference to the Source.
+     */
     void FinishRead() {
         reading_ = false;
+        if (closing_) {
+            StartClose(this->Env());
+        }
         this->Unref();  // balances the Ref() taken in Read(); may allow GC of this object
+    }
+
+    /** Resolve every close() waiting on the CHD. Called on the main thread by the close worker. */
+    void FinishClose() {
+        // Copied out before the reference is released, which may allow GC of this object
+        std::vector<Napi::Promise::Deferred> const waiters = std::exchange(closeWaiters_, {});
+        Napi::Env const env = this->Env();
+        this->Unref();  // balances the Ref() taken in Close()
+        for (const Napi::Promise::Deferred& waiter : waiters) {
+            waiter.Resolve(env.Undefined());
+        }
     }
 
    protected:
@@ -254,9 +297,31 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     std::shared_ptr<Source> source_;
 
    private:
-    // Shared with every read worker so they know whether this reader still exists
+    /** Queue the close worker for the Source that Close() set aside, once no read worker holds it */
+    void StartClose(Napi::Env env) {
+        // Moved out first, so that the worker's reference is never the last one while this
+        // reader's is still being dropped here on the main thread
+        std::shared_ptr<Source> source = std::move(closing_);
+        try {
+            QueueWorker<CloseWorker<ReaderBase, Source>>(env, self_, std::move(source));
+        } catch (...) {
+            // The worker could not be created or queued, so the CHD closes here instead, on the
+            // main thread
+            source.reset();
+            FinishClose();
+        }
+    }
+
+    // Shared with every read and close worker so they know whether this reader still exists
     std::shared_ptr<ReaderBase*> self_;
     bool reading_ = false;
+
+    // The Source that Close() took from source_, held until the read in flight is done with it
+    std::shared_ptr<Source> closing_;
+
+    // Every close() still waiting for the CHD to close. Each call gets its own promise, because a
+    // promise value is only valid within the call that created it.
+    std::vector<Napi::Promise::Deferred> closeWaiters_;
 };
 
 template <typename Derived, typename Source>
@@ -283,8 +348,18 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         deferred.Reject(Napi::RangeError::New(env, "maxBytes is too large").Value());
         return deferred.Promise();
     }
+    // Once the Source knows how many bytes it has left, a read allocates no more memory than that,
+    // and the read at the end allocates none at all. The last read's worker is done with the
+    // Source by now, so its state is safe to read here.
+    auto const requestedBytes = static_cast<size_t>(requested);
+    uint64_t const remaining = source_->Remaining().value_or(requestedBytes);
+    if (remaining == 0) {
+        deferred.Resolve(env.Null());
+        return deferred.Promise();
+    }
+    auto const maxBytes = static_cast<size_t>(std::min<uint64_t>(requestedBytes, remaining));
     try {
-        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, static_cast<size_t>(requested));
+        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, maxBytes);
     } catch (const Napi::Error& e) {
         deferred.Reject(e.Value());
         return deferred.Promise();

@@ -1,5 +1,7 @@
 import stream from 'node:stream';
 
+import Defaults from '../globals/defaults.js';
+
 export type FsReadCallback = (progress: number, total?: number) => void;
 
 /**
@@ -10,7 +12,7 @@ export default class FsReadTransform extends stream.Transform {
   private progress = 0;
 
   constructor(fsReadCallback: FsReadCallback) {
-    super();
+    super({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
     this.fsReadCallback = fsReadCallback;
   }
 

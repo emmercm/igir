@@ -28,13 +28,13 @@ Not all patch types are created equal. Here are some tables of some existing for
 
 **Common patch types:**
 
-| Type                 | Supported                        | CRC32 in patch contents | Notes                                                                                                                                                                                                                                                                        |
-|----------------------|----------------------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `.bps`               | ✅                               | ✅                      |                                                                                                                                                                                                                                                                              |
-| `.ips`               | ✅ IPS, IPS32                    | ❌                      |                                                                                                                                                                                                                                                                              |
-| `.ppf`               | ✅ v2, v3                        | ❌                      |                                                                                                                                                                                                                                                                              |
-| `.ups`               | ✅                               | ✅                      | ⚠️ UPS patches read and write files byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`.                                                                        |
-| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                      | ⚠️ VCDIFF patches read and write files byte-by-byte during `COPY` instructions, usually making them slow and inefficient.<br>⚠️ [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, so many patches are likely to be unsupported. |
+| Type                 | Supported                            | CRC32 in patch contents | Notes                                                                                                    |
+|----------------------|--------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------|
+| `.bps`               | ✅                                   | ✅                      |                                                                                                          |
+| `.ips`               | ✅ IPS, IPS32                        | ❌                      |                                                                                                          |
+| `.ppf`               | ✅ v2, v3                            | ❌                      |                                                                                                          |
+| `.ups`               | ✅                                   | ✅                      | The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`. |
+| `.vcdiff`, `.xdelta` | ⚠️ (LZMA secondary compression only) | ❌                      |                                                                                                          |
 
 **Uncommon patch types:**
 

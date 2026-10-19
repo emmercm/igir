@@ -83,6 +83,12 @@ void OutputSlot::Finish() {
     FlushReady(lock);
 }
 
+bool OutputSlot::Done() {
+    // Like TryTake(), never waits on the producer from the event loop. Busy reads as not done.
+    const std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
+    return lock.owns_lock() && (finished_ || aborted_);
+}
+
 void OutputSlot::Abort() noexcept {
     try {
         std::unique_lock<std::mutex> lock(mutex_);

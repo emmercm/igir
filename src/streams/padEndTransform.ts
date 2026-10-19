@@ -55,7 +55,7 @@ export default class PadEndTransform extends stream.Transform {
 
   /**
    * Emit padding until `push()` reports that the read buffer is full, then stop until
-   * {@link PadEndTransform._read} calls back. The padded size can be many times the high watermark,
+   * {@link PadEndTransform._read} calls back. The padded size can be many times the highWaterMark,
    * so emitting all of it at once would buffer it in memory without bound.
    */
   private pushPadding(): void {

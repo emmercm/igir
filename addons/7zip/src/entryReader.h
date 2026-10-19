@@ -2,8 +2,10 @@
 
 #include <napi.h>
 
+#include <atomic>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "asyncSignal.h"
 #include "pump.h"
@@ -16,7 +18,7 @@ namespace sevenzip {
  * Each read lends the producer a fresh JavaScript buffer to fill and resolves
  * with it once it is full, without blocking the event loop. Under Emscripten,
  * each read lends reused scratch memory instead and resolves with a copy of it.
- * A read parks until the producer wakes it through AsyncSignal; only the
+ * A read pauses until the producer wakes it through AsyncSignal; only the
  * producer may block, while no buffer is lent.
  */
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
@@ -57,10 +59,17 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
      */
     Napi::Value Read(const Napi::CallbackInfo& info);
 
-    /** Idempotently cancels without waiting, settles a parked read with end-of-stream, and releases references. */
-    void Close(const Napi::CallbackInfo& info);
+    /**
+     * Idempotently cancels, resolves a paused read with end-of-stream, and returns a promise that
+     * resolves once the producer has closed every file the archive opened (like Node.js
+     * fs.close()).
+     */
+    Napi::Value Close(const Napi::CallbackInfo& info);
 
-    /** Retries a parked read on the event loop; public for the native callback, not the JavaScript surface. */
+    /**
+     * Retries a paused read, or resolves a pending close once the producer has exited, on the event
+     * loop; public for the native callback, not the JavaScript surface.
+     */
     void OnProducerReady(Napi::Env env);
 
    private:
@@ -76,23 +85,45 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
         // on that one thread, so a reader that is gone is simply seen as null
         // rather than raced with
         EntryReader* reader = nullptr;
+
+        // Set by the producer once it has closed every file and will touch nothing else, before
+        // the notification that reports it; read on the event loop thread
+        std::atomic<bool> exited{false};
     };
 
     /**
-     * Attempts one nonblocking pump read and settles `deferred` when possible.
-     * Returns false and rearms notification while pending; sets `settled` to
-     * prevent callers from settling the promise twice.
+     * Attempts one nonblocking pump read and resolves or rejects `deferred` when
+     * possible. Returns false and rearms notification while pending; sets
+     * `finished` to prevent callers from resolving or rejecting the promise twice.
      */
-    bool TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled);
+    bool TryFinishRead(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* finished);
+
+    /**
+     * The bytes left of the entry's declared size, or nothing until the Pump has read that size,
+     * when the format records none, or once the entry has outgrown it
+     */
+    [[nodiscard]] std::optional<uint64_t> Remaining() const;
 
     /** Releases the lent memory; only while nothing is lent, or after the Pump is cancelled. */
     void ReleaseLent();
 
-    /** Releases a parked read's object and loop references; must be last because it may destroy `this`. */
+    /** Releases a paused read's object and loop references; must be last because it may destroy `this`. */
     void ReleasePending(Napi::Env env);
+
+    /**
+     * Resolves every close() waiting on the producer, if it has exited, and releases their object
+     * and loop references; must be last because it may destroy `this`.
+     */
+    void FinishClose(Napi::Env env);
 
     std::shared_ptr<Pump> pump_;
     size_t chunkBytes_ = kDefaultChunkBytes;
+
+    // The bytes lent for the read in flight, at most chunkBytes_
+    size_t lentBytes_ = 0;
+
+    // The bytes every read so far has resolved with
+    uint64_t delivered_ = 0;
 
 #ifdef __EMSCRIPTEN__
     // The memory lent to the producer for each read, which the read copies into
@@ -103,7 +134,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // The buffer lent to the producer for the read in flight, held so that V8
     // cannot collect it while the producer is writing into it. Released only
     // once the slot has handed it back, or after the Pump is cancelled.
-    Napi::Reference<Napi::Buffer<uint8_t>> lent_;
+    Napi::Reference<Napi::Buffer<uint8_t> > lent_;
 #endif
     Napi::ObjectReference readFailure_;
     std::shared_ptr<Bridge> bridge_;
@@ -111,6 +142,10 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // The one outstanding read, if it could not be answered immediately. Also
     // the "a read is in flight" flag, since there is only ever one.
     std::optional<Napi::Promise::Deferred> pending_;
+
+    // Every close() still waiting for the producer to exit. Each call gets its own promise, because
+    // a promise value is only valid within the call that created it.
+    std::vector<Napi::Promise::Deferred> closeWaiters_;
 
     // False until the constructor has run to completion. Its argument checks
     // report a TypeError and return, leaving no Pump and no bridge; a caller

@@ -1,35 +1,31 @@
+import type { PathLike } from 'node:fs';
+
+import { XzStreamDecoder } from '../../../packages/xz/index.js';
 import IgirException from '../../exceptions/igirException.js';
+import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
 
+/** xdelta3's secondary compressor IDs */
 const VcdiffSecondaryCompression = {
-  NONE: 0,
   DJW_STATIC_HUFFMAN: 1,
   LZMA: 2,
   FGK_ADAPTIVE_HUFFMAN: 16,
 } as const;
-type VcdiffSecondaryCompressionKey = keyof typeof VcdiffSecondaryCompression;
-type VcdiffSecondaryCompressionValue =
-  (typeof VcdiffSecondaryCompression)[VcdiffSecondaryCompressionKey];
-const VcdiffSecondaryCompressionInverted = Object.fromEntries(
-  Object.entries(VcdiffSecondaryCompression).map(([key, value]) => [value, key]),
-) as Record<VcdiffSecondaryCompressionValue, VcdiffSecondaryCompressionKey>;
 
 const VcdiffHdrIndicator = {
   DECOMPRESS: 0x01,
   CODETABLE: 0x02,
   APPHEADER: 0x04,
 } as const;
-// type VcdiffHdrIndicatorValue = (typeof VcdiffHdrIndicator)[keyof typeof VcdiffHdrIndicator];
 
 const VcdiffWinIndicator = {
   SOURCE: 0x01,
   TARGET: 0x02,
   ADLER32: 0x04,
 } as const;
-type VcdiffWinIndicatorValue = (typeof VcdiffWinIndicator)[keyof typeof VcdiffWinIndicator];
 
 const VcdiffDeltaIndicator = {
   DATACOMP: 0x01,
@@ -40,8 +36,7 @@ const VcdiffDeltaIndicator = {
 const VcdiffCopyAddressMode = {
   SELF: 0,
   HERE: 1,
-  // s_near "near modes"
-  // s_same "same modes"
+  // modes 2..s_near+1 are "near" modes, then s_same "same" modes (RFC 3284 section 5.3)
 };
 type VcdiffCopyAddressModeValue =
   (typeof VcdiffCopyAddressMode)[keyof typeof VcdiffCopyAddressMode];
@@ -53,11 +48,380 @@ const VcdiffInstruction = {
   COPY: 3,
 } as const;
 type VcdiffInstructionValue = (typeof VcdiffInstruction)[keyof typeof VcdiffInstruction];
+const VCDIFF_INSTRUCTION_VALUES: readonly VcdiffInstructionValue[] =
+  Object.values(VcdiffInstruction);
 
 interface VcdiffDeltaInstruction {
   type: VcdiffInstructionValue;
   size: number;
   mode: VcdiffCopyAddressModeValue;
+}
+
+/** The parts of {@link IOFile} that reading a VCDIFF delta's header and windows uses */
+type VcdiffPatchFile = Pick<
+  IOFile,
+  | 'getPathLike'
+  | 'getPosition'
+  | 'getSize'
+  | 'readNext'
+  | 'peekNext'
+  | 'skipNext'
+  | 'readAt'
+  | 'copyRange'
+>;
+
+/** The parts of {@link IOFile} that applying a VCDIFF window to a source and target uses */
+type VcdiffWindowFile = Pick<IOFile, 'writeAt' | 'copyRange'>;
+
+/**
+ * Read a VCDIFF variable-length unsigned integer from a buffer starting at the given offset,
+ * returning the value and the new offset past the encoded bytes. Doesn't detect truncation: a
+ * value cut off by the end of the buffer is returned partially decoded.
+ */
+function readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
+  let num = 0;
+
+  let lastOffset = offset;
+  while (lastOffset < buffer.length) {
+    const bits = buffer.readUInt8(lastOffset);
+    lastOffset += 1;
+    // Multiply rather than shift, as bitwise operators only work on 32-bit integers
+    num = num * 128 + (bits & 0x7f);
+    if (!(bits & 0x80)) {
+      // high bit clear: this was the last byte
+      break;
+    }
+  }
+
+  return [num, lastOffset];
+}
+
+/**
+ * Enough bytes, at 7 bits each, for any VCDIFF integer up to 64 bits, the largest that xdelta3
+ * encodes
+ */
+const VCDIFF_UINT_READ_AHEAD_SIZE = 10;
+
+/**
+ * Decode the VCDIFF variable-length unsigned integer at the start of `data`, which holds up to
+ * {@link VCDIFF_UINT_READ_AHEAD_SIZE} bytes read ahead, throwing if it doesn't end within them.
+ * @returns the value and the number of bytes it was encoded in
+ */
+function decodeVcdiffUint(data: Buffer, pathLike: PathLike): [number, number] {
+  const [num, size] = readVcdiffUintFromBuffer(data);
+  if (size === 0 || data.readUInt8(size - 1) & 0x80) {
+    throw new IgirException(
+      `Vcdiff patch is truncated or has an invalid integer: ${pathLike.toString()}`,
+    );
+  }
+  return [num, size];
+}
+
+/**
+ * Read exactly the next `size` bytes of the patch, advancing the read position, throwing if the
+ * patch ends first.
+ */
+async function readVcdiffBytes(patchIOFile: VcdiffPatchFile, size: number): Promise<Buffer> {
+  const data = await patchIOFile.readNext(size);
+  if (data.length !== size) {
+    throw new IgirException(`Vcdiff patch is truncated: ${patchIOFile.getPathLike().toString()}`);
+  }
+  return data;
+}
+
+/**
+ * Read the next byte of the patch, advancing the read position, throwing if the patch ends first.
+ */
+async function readVcdiffByte(patchIOFile: VcdiffPatchFile): Promise<number> {
+  return (await readVcdiffBytes(patchIOFile, 1)).readUInt8();
+}
+
+/**
+ * Read a VCDIFF variable-length unsigned integer, advancing the read position past the encoded
+ * value, throwing if the patch ends first.
+ */
+async function readVcdiffUint(patchIOFile: VcdiffPatchFile): Promise<number> {
+  // Read ahead rather than byte-by-byte, encoded values are usually only a few bytes
+  const data = await patchIOFile.peekNext(VCDIFF_UINT_READ_AHEAD_SIZE);
+  const [num, size] = decodeVcdiffUint(data, patchIOFile.getPathLike());
+  patchIOFile.skipNext(size);
+  return num;
+}
+
+/**
+ * xdelta3's XD3_HARDMAXWINSIZE, "a safety mechanism to protect decoders against malicious files"
+ */
+const VCDIFF_HARD_MAX_WINDOW_SIZE = 1 << 26;
+
+const CODE_TABLE_ENTRIES = 256;
+// RFC 3284 section 7: inst1, inst2, size1, size2, mode1, mode2
+const CODE_TABLE_STRING_SIZE = 6 * CODE_TABLE_ENTRIES;
+
+/**
+ * An in-memory {@link VcdiffPatchFile} and {@link VcdiffWindowFile} over a buffer, for the nested
+ * delta that encodes an application-defined code table, and for decompressed sections.
+ */
+class VcdiffBuffer implements VcdiffPatchFile, VcdiffWindowFile {
+  readonly buffer: Buffer;
+
+  private readonly pathLike: PathLike;
+
+  private position = 0;
+
+  constructor(buffer: Buffer, pathLike: PathLike) {
+    this.buffer = buffer;
+    this.pathLike = pathLike;
+  }
+
+  /**
+   * Get the path of the patch this buffer came from, for error messages.
+   */
+  getPathLike(): PathLike {
+    return this.pathLike;
+  }
+
+  /**
+   * Returns true if the read position has reached the end of the buffer.
+   */
+  isEOF(): boolean {
+    return this.position >= this.buffer.length;
+  }
+
+  getPosition(): number {
+    return this.position;
+  }
+
+  getSize(): number {
+    return this.buffer.length;
+  }
+
+  /**
+   * Read up to the next `maxSize` bytes (fewer at the end of the buffer), advancing the read
+   * position by `maxSize`.
+   */
+  async readNext(maxSize: number): Promise<Buffer> {
+    const result = await this.peekNext(maxSize);
+    this.position += maxSize;
+    return result;
+  }
+
+  /**
+   * Read up to the next `maxSize` bytes (fewer at the end of the buffer), without advancing the
+   * read position.
+   */
+  async peekNext(maxSize: number): Promise<Buffer> {
+    return await this.readAt(this.position, maxSize);
+  }
+
+  /**
+   * Advance the read position by `size` bytes.
+   */
+  skipNext(size: number): void {
+    this.position += size;
+  }
+
+  /**
+   * Read up to `maxSize` bytes starting at `position` (fewer at the end of the buffer), without
+   * advancing the read position.
+   */
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async readAt(position: number, maxSize: number): Promise<Buffer> {
+    this.assertPosition(position);
+    return this.buffer.subarray(position, position + maxSize);
+  }
+
+  /**
+   * Write `buffer` at `position`, throwing if it doesn't fit.
+   */
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async writeAt(buffer: Buffer, position: number): Promise<number> {
+    this.assertPosition(position);
+    if (position + buffer.length > this.buffer.length) {
+      throw new IgirException(
+        `Vcdiff code table delta writes past ${this.buffer.length} bytes: ${this.pathLike.toString()}`,
+      );
+    }
+    return buffer.copy(this.buffer, position);
+  }
+
+  /**
+   * Copy the region [`sourceStart`, `sourceEnd`) of this buffer to `targetIOFile` starting at
+   * `targetStart`, as if a byte at a time, so a copy within this buffer can read bytes it wrote
+   * earlier in the same copy. Stops early if this buffer ends before `sourceEnd`.
+   */
+  async copyRange(
+    targetIOFile: Pick<IOFile, 'writeAt'>,
+    targetStart: number,
+    sourceStart: number,
+    sourceEnd: number,
+  ): Promise<number> {
+    this.assertPosition(sourceStart);
+    this.assertPosition(targetStart);
+    const size = Math.min(sourceEnd, this.buffer.length) - sourceStart;
+    if (size <= 0) {
+      return 0;
+    }
+
+    const distance = targetStart - sourceStart;
+    if (targetIOFile !== this || distance <= 0 || distance >= size) {
+      // Nothing this copy writes is read back, so copy it all at once
+      return await targetIOFile.writeAt(
+        this.buffer.subarray(sourceStart, sourceStart + size),
+        targetStart,
+      );
+    }
+
+    // The source overlaps the target, so the target repeats the first `distance` source bytes.
+    // Each step copies everything written so far, which is a whole number of repeats, doubling
+    // the step size every time.
+    let copied = 0;
+    while (copied < size) {
+      const stepSize = Math.min(distance + copied, size - copied);
+      copied += await this.writeAt(
+        this.buffer.subarray(sourceStart, sourceStart + stepSize),
+        targetStart + copied,
+      );
+    }
+    return copied;
+  }
+
+  private assertPosition(position: number): void {
+    if (position < 0) {
+      throw new IgirException(
+        `can't use negative position ${position} in Vcdiff patch: ${this.pathLike.toString()}`,
+      );
+    }
+  }
+}
+
+type VcdiffSection = 'data' | 'instructions' | 'addresses';
+
+/** The delta indicator bit that marks each section as secondary-compressed */
+const VcdiffSectionCompressedBit: Record<VcdiffSection, number> = {
+  data: VcdiffDeltaIndicator.DATACOMP,
+  instructions: VcdiffDeltaIndicator.INSTCOMP,
+  addresses: VcdiffDeltaIndicator.ADDRCOMP,
+};
+
+/** The parts of {@link IOFile} that reading a VCDIFF window's section uses */
+type VcdiffSectionFile = Pick<IOFile, 'getPathLike' | 'readAt' | 'copyRange'>;
+
+/**
+ * A read cursor over one section of a VCDIFF window: the region [`start`, `end`) of either the
+ * patch file itself, or of a decompressed section in memory.
+ */
+class VcdiffSectionCursor {
+  private readonly ioFile: VcdiffSectionFile;
+
+  private readonly section: VcdiffSection;
+
+  private readonly start: number;
+
+  private readonly end: number;
+
+  private position: number;
+
+  constructor(ioFile: VcdiffSectionFile, section: VcdiffSection, start: number, end: number) {
+    this.ioFile = ioFile;
+    this.section = section;
+    this.start = start;
+    this.end = end;
+    this.position = start;
+  }
+
+  /**
+   * Returns true if the entire section has been consumed.
+   */
+  isEOF(): boolean {
+    return this.position >= this.end;
+  }
+
+  getProgressPercentage(): number {
+    return (this.position - this.start) / (this.end - this.start);
+  }
+
+  /**
+   * Read and consume the next byte of the section, throwing if the section ends first.
+   */
+  async readByte(): Promise<number> {
+    const data = await this.ioFile.readAt(this.position, Math.min(1, this.end - this.position));
+    if (data.length !== 1) {
+      throw this.endsEarlyError();
+    }
+    this.position += 1;
+    return data.readUInt8();
+  }
+
+  /**
+   * Read and consume the next variable-length unsigned integer of the section, throwing if the
+   * section ends first.
+   */
+  async readUint(): Promise<number> {
+    const data = await this.ioFile.readAt(
+      this.position,
+      Math.min(VCDIFF_UINT_READ_AHEAD_SIZE, this.end - this.position),
+    );
+    const [num, size] = decodeVcdiffUint(data, this.ioFile.getPathLike());
+    this.position += size;
+    return num;
+  }
+
+  /**
+   * Copy and consume the next `size` bytes of the section to `targetIOFile` starting at
+   * `targetStart`, throwing if the section ends first.
+   */
+  async copyTo(
+    targetIOFile: Pick<IOFile, 'writeAt'>,
+    targetStart: number,
+    size: number,
+  ): Promise<void> {
+    if (this.position + size > this.end) {
+      throw this.endsEarlyError();
+    }
+    const copied = await this.ioFile.copyRange(
+      targetIOFile,
+      targetStart,
+      this.position,
+      this.position + size,
+    );
+    if (copied !== size) {
+      throw this.endsEarlyError();
+    }
+    this.position += size;
+  }
+
+  private endsEarlyError(): IgirException {
+    return new IgirException(
+      `Vcdiff window's ${this.section} section ends early: ${this.ioFile.getPathLike().toString()}`,
+    );
+  }
+}
+
+/**
+ * xdelta3's LZMA secondary compression. Each section type is one never-finished xz stream that
+ * continues from window to window, and each compressed section is a VCDIFF integer holding the
+ * decompressed size, followed by that stream's next whole LZMA2 chunks.
+ * @see https://github.com/jmacd/xdelta/blob/v3.2.2/xdelta3/xdelta3-lzma.h
+ */
+class VcdiffSecondaryDecompressor {
+  private readonly decoders: Record<VcdiffSection, XzStreamDecoder> = {
+    data: new XzStreamDecoder(),
+    instructions: new XzStreamDecoder(),
+    addresses: new XzStreamDecoder(),
+  };
+
+  /**
+   * Decompress one window's compressed section, continuing that section type's xz stream.
+   */
+  decompress(section: VcdiffSection, data: Buffer): Buffer {
+    const [size, offset] = readVcdiffUintFromBuffer(data);
+    if (size === 0) {
+      throw new Error('Vcdiff secondary-compressed section has an invalid size of 0');
+    }
+    // NOTE(cemmer): this can't be chunked, the xz decoder needs whole LZMA2 chunks as input and
+    //  produces the whole section as output
+    return this.decoders[section].decode(data.subarray(offset), size);
+  }
 }
 
 /**
@@ -66,6 +430,10 @@ interface VcdiffDeltaInstruction {
  */
 class VcdiffHeader {
   static readonly FILE_SIGNATURE = Buffer.from('d6c3c4', 'hex');
+
+  private static readonly DEFAULT_S_NEAR = 4;
+
+  private static readonly DEFAULT_S_SAME = 3;
 
   private static readonly DEFAULT_CODE_TABLE = ((): VcdiffDeltaInstruction[][] => {
     const entries: VcdiffDeltaInstruction[][] = [
@@ -136,79 +504,221 @@ class VcdiffHeader {
     return entries;
   })();
 
-  readonly secondaryDecompressorId: VcdiffSecondaryCompressionValue;
+  /** RFC 3284 section 7: the default code table as six 256-byte arrays, built on first use */
+  private static defaultCodeTableString?: Buffer;
 
   readonly codeTable: VcdiffDeltaInstruction[][];
 
+  readonly sNear: number;
+
+  readonly sSame: number;
+
+  readonly secondaryDecompressor: VcdiffSecondaryDecompressor | undefined;
+
   constructor(
-    secondaryDecompressorId: VcdiffSecondaryCompressionValue,
     codeTable: VcdiffDeltaInstruction[][],
+    sNear: number,
+    sSame: number,
+    secondaryDecompressor: VcdiffSecondaryDecompressor | undefined,
   ) {
-    this.secondaryDecompressorId = secondaryDecompressorId;
     this.codeTable = codeTable;
+    this.sNear = sNear;
+    this.sSame = sSame;
+    this.secondaryDecompressor = secondaryDecompressor;
   }
 
   /**
    * Read and validate the VCDIFF header from the patch file, advancing the read position past
    * it.
    */
-  static async fromIOFile(patchFile: IOFile): Promise<VcdiffHeader> {
-    const header = await patchFile.readNext(3);
-    if (!header.equals(this.FILE_SIGNATURE)) {
-      await patchFile.close();
-      throw new IgirException(
-        `Vcdiff patch header is invalid: ${patchFile.getPathLike().toString()}`,
+  static async fromPatchFile(patchIOFile: VcdiffPatchFile): Promise<VcdiffHeader> {
+    const hdrIndicator = await this.readIndicator(patchIOFile);
+
+    let secondaryDecompressor: VcdiffSecondaryDecompressor | undefined;
+    if (hdrIndicator & VcdiffHdrIndicator.DECOMPRESS) {
+      const compressorId = await readVcdiffByte(patchIOFile);
+      secondaryDecompressor = this.secondaryDecompressorOf(
+        compressorId,
+        patchIOFile.getPathLike().toString(),
       );
     }
-    patchFile.skipNext(1); // version
 
-    const hdrIndicator = (await patchFile.readNext(1)).readUInt8();
-    let secondaryDecompressorId: VcdiffSecondaryCompressionValue = 0;
-    if (hdrIndicator & VcdiffHdrIndicator.DECOMPRESS) {
-      secondaryDecompressorId = (
-        await patchFile.readNext(1)
-      ).readUInt8() as VcdiffSecondaryCompressionValue;
-      if (secondaryDecompressorId) {
-        /**
-         * TODO(cemmer): notes for later on LZMA (the default for the xdelta3 tool):
-         *  - There appears to be a first byte (or more?), and it might be the length of the
-         *    encoded data? Maybe that number is encoded like other numbers are?
-         *  - The XZ data encoded appears to be non-standard, it doesn't have a terminating set of
-         *    bytes "59 5A", only the starting bytes "FD 37 7A 58 5A 00" (after the above number)
-         */
-        await patchFile.close();
-        throw new IgirException(
-          `unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompressionInverted[secondaryDecompressorId]}: ${patchFile.getPathLike().toString()}`,
-        );
-      }
-    }
-
-    const codeTable = this.DEFAULT_CODE_TABLE;
+    let codeTable = this.DEFAULT_CODE_TABLE;
+    let sNear = this.DEFAULT_S_NEAR;
+    let sSame = this.DEFAULT_S_SAME;
     if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
-      const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
-      if (codeTableLength) {
-        await patchFile.close();
+      ({ codeTable, sNear, sSame } = await this.readCodeTable(patchIOFile));
+    }
+
+    await this.skipAppHeader(patchIOFile, hdrIndicator);
+
+    return new VcdiffHeader(codeTable, sNear, sSame, secondaryDecompressor);
+  }
+
+  /**
+   * Read the file signature and version, returning the header indicator byte.
+   */
+  private static async readIndicator(patchIOFile: VcdiffPatchFile): Promise<number> {
+    const header = await patchIOFile.readNext(3);
+    if (!header.equals(this.FILE_SIGNATURE)) {
+      throw new IgirException(
+        `Vcdiff patch header is invalid: ${patchIOFile.getPathLike().toString()}`,
+      );
+    }
+    patchIOFile.skipNext(1); // version
+    return await readVcdiffByte(patchIOFile);
+  }
+
+  private static async skipAppHeader(
+    patchIOFile: VcdiffPatchFile,
+    hdrIndicator: number,
+  ): Promise<void> {
+    if (!(hdrIndicator & VcdiffHdrIndicator.APPHEADER)) {
+      return;
+    }
+
+    const appHeaderLength = await readVcdiffUint(patchIOFile);
+    patchIOFile.skipNext(appHeaderLength);
+  }
+
+  /**
+   * Read an RFC 3284 section 7 application-defined code table: `s_near`, `s_same`, then a
+   * VCDIFF delta that turns the default code table string into the new one.
+   */
+  private static async readCodeTable(
+    patchIOFile: VcdiffPatchFile,
+  ): Promise<Pick<VcdiffHeader, 'codeTable' | 'sNear' | 'sSame'>> {
+    const patchPath = patchIOFile.getPathLike().toString();
+    const codeTableLength = await readVcdiffUint(patchIOFile);
+    if (codeTableLength <= 2) {
+      throw new IgirException(
+        `Vcdiff code table length ${codeTableLength} is invalid: ${patchPath}`,
+      );
+    }
+    const codeTableData = await readVcdiffBytes(patchIOFile, codeTableLength);
+    const sNear = codeTableData.readUInt8(0);
+    const sSame = codeTableData.readUInt8(1);
+
+    const delta = new VcdiffBuffer(codeTableData.subarray(2), patchIOFile.getPathLike());
+    const deltaIndicator = await this.readIndicator(delta);
+    if (deltaIndicator & (VcdiffHdrIndicator.DECOMPRESS | VcdiffHdrIndicator.CODETABLE)) {
+      throw new IgirException(
+        `Vcdiff code table delta can't use secondary compression or another code table: ${patchPath}`,
+      );
+    }
+    await this.skipAppHeader(delta, deltaIndicator);
+
+    const source = new VcdiffBuffer(this.getDefaultCodeTableString(), patchIOFile.getPathLike());
+    const target = new VcdiffBuffer(
+      Buffer.alloc(CODE_TABLE_STRING_SIZE),
+      patchIOFile.getPathLike(),
+    );
+    const copyCache = new VcdiffCache(this.DEFAULT_S_NEAR, this.DEFAULT_S_SAME);
+    let targetWindowPosition = 0;
+    while (!delta.isEOF()) {
+      const window = await VcdiffWindow.fromPatchFile(delta);
+      copyCache.reset();
+      await window.apply(source, target, this.DEFAULT_CODE_TABLE, copyCache, targetWindowPosition);
+      targetWindowPosition += window.deltaEncodingTargetWindowSize;
+    }
+    if (targetWindowPosition !== CODE_TABLE_STRING_SIZE) {
+      throw new IgirException(
+        `Vcdiff code table decodes to ${targetWindowPosition} bytes, expected ${CODE_TABLE_STRING_SIZE}: ${patchPath}`,
+      );
+    }
+
+    return {
+      codeTable: this.parseCodeTable(target.buffer, sNear, sSame, patchPath),
+      sNear,
+      sSame,
+    };
+  }
+
+  private static getDefaultCodeTableString(): Buffer {
+    if (this.defaultCodeTableString === undefined) {
+      // Every entry has two instructions, so every byte is written below
+      const codeTableString = Buffer.allocUnsafe(CODE_TABLE_STRING_SIZE);
+      for (const [index, entry] of this.DEFAULT_CODE_TABLE.entries()) {
+        for (const [slot, instruction] of entry.entries()) {
+          codeTableString.writeUInt8(instruction.type, slot * CODE_TABLE_ENTRIES + index);
+          codeTableString.writeUInt8(instruction.size, (2 + slot) * CODE_TABLE_ENTRIES + index);
+          codeTableString.writeUInt8(instruction.mode, (4 + slot) * CODE_TABLE_ENTRIES + index);
+        }
+      }
+      this.defaultCodeTableString = codeTableString;
+    }
+    return this.defaultCodeTableString;
+  }
+
+  /**
+   * Turn an RFC 3284 section 7 code table string into instructions, validating every type and
+   * COPY mode.
+   */
+  private static parseCodeTable(
+    codeTableString: Buffer,
+    sNear: number,
+    sSame: number,
+    patchPath: string,
+  ): VcdiffDeltaInstruction[][] {
+    const modeCount = 2 + sNear + sSame;
+    const codeTable: VcdiffDeltaInstruction[][] = [];
+    for (let index = 0; index < CODE_TABLE_ENTRIES; index += 1) {
+      const entry: VcdiffDeltaInstruction[] = [];
+      for (let slot = 0; slot <= 1; slot += 1) {
+        const typeByte = codeTableString.readUInt8(slot * CODE_TABLE_ENTRIES + index);
+        const size = codeTableString.readUInt8((2 + slot) * CODE_TABLE_ENTRIES + index);
+        const mode = codeTableString.readUInt8((4 + slot) * CODE_TABLE_ENTRIES + index);
+        const type = VCDIFF_INSTRUCTION_VALUES.find((value) => value === typeByte);
+        if (type === undefined) {
+          throw new IgirException(
+            `Vcdiff code table entry ${index} has an invalid instruction type ${typeByte}: ${patchPath}`,
+          );
+        }
+        if (type === VcdiffInstruction.COPY && mode >= modeCount) {
+          throw new IgirException(
+            `Vcdiff code table entry ${index} has an invalid COPY mode ${mode}: ${patchPath}`,
+          );
+        }
+        entry.push({ type, size, mode });
+      }
+      codeTable.push(entry);
+    }
+    return codeTable;
+  }
+
+  private static secondaryDecompressorOf(
+    compressorId: number,
+    patchPath: string,
+  ): VcdiffSecondaryDecompressor {
+    switch (compressorId) {
+      case VcdiffSecondaryCompression.LZMA: {
+        return new VcdiffSecondaryDecompressor();
+      }
+      case VcdiffSecondaryCompression.DJW_STATIC_HUFFMAN: {
         throw new IgirException(
-          `can't parse Vcdiff application-defined code table: ${patchFile.getPathLike().toString()}`,
+          `Vcdiff secondary compressor DJW (static Huffman) isn't supported: ${patchPath}`,
+        );
+      }
+      case VcdiffSecondaryCompression.FGK_ADAPTIVE_HUFFMAN: {
+        throw new IgirException(
+          `Vcdiff secondary compressor FGK (adaptive Huffman) isn't supported: ${patchPath}`,
+        );
+      }
+      default: {
+        throw new IgirException(
+          `unknown Vcdiff secondary compressor ID ${compressorId}: ${patchPath}`,
         );
       }
     }
-
-    if (hdrIndicator & VcdiffHdrIndicator.APPHEADER) {
-      const appHeaderLength = await Patch.readVcdiffUintFromFile(patchFile);
-      patchFile.skipNext(appHeaderLength);
-    }
-
-    return new VcdiffHeader(secondaryDecompressorId, codeTable);
   }
 }
 
 /**
  * A single delta-encoded window within a VCDIFF patch, holding the adds/runs, instructions,
- * and copy-address sections together with the source segment that they reference.
+ * and copy-address sections, and the size and position of the source segment they reference.
  */
 class VcdiffWindow {
-  readonly winIndicator: VcdiffWinIndicatorValue;
+  readonly winIndicator: number;
 
   readonly sourceSegmentSize: number;
 
@@ -218,92 +728,150 @@ class VcdiffWindow {
 
   private targetWindowOffset = 0;
 
-  private addsAndRunsOffset = 0;
+  private readonly addsAndRuns: VcdiffSectionCursor;
 
-  readonly addsAndRunsData: Buffer;
+  private readonly instructionsAndSizes: VcdiffSectionCursor;
 
-  private instructionsAndSizeOffset = 0;
-
-  readonly instructionsAndSizesData: Buffer;
-
-  private copyAddressesOffset = 0;
-
-  readonly copyAddressesData: Buffer;
+  private readonly copyAddresses: VcdiffSectionCursor;
 
   private constructor(
-    winIndicator: VcdiffWinIndicatorValue,
+    winIndicator: number,
     sourceSegmentSize: number,
     sourceSegmentPosition: number,
     deltaEncodingTargetWindowSize: number,
-    addsAndRunsData: Buffer,
-    instructionsAndSizesData: Buffer,
-    copyAddressesData: Buffer,
+    addsAndRuns: VcdiffSectionCursor,
+    instructionsAndSizes: VcdiffSectionCursor,
+    copyAddresses: VcdiffSectionCursor,
   ) {
     this.winIndicator = winIndicator;
     this.sourceSegmentSize = sourceSegmentSize;
     this.sourceSegmentPosition = sourceSegmentPosition;
     this.deltaEncodingTargetWindowSize = deltaEncodingTargetWindowSize;
-    this.addsAndRunsData = addsAndRunsData;
-    this.instructionsAndSizesData = instructionsAndSizesData;
-    this.copyAddressesData = copyAddressesData;
+    this.addsAndRuns = addsAndRuns;
+    this.instructionsAndSizes = instructionsAndSizes;
+    this.copyAddresses = copyAddresses;
   }
 
   /**
    * Read a single VCDIFF window from the patch file, advancing the read position past it.
    */
-  static async fromIOFile(patchFile: IOFile): Promise<VcdiffWindow> {
-    const winIndicator = (await patchFile.readNext(1)).readUInt8() as VcdiffWinIndicatorValue;
+  static async fromPatchFile(
+    patchIOFile: VcdiffPatchFile,
+    secondaryDecompressor?: VcdiffSecondaryDecompressor,
+  ): Promise<VcdiffWindow> {
+    const winIndicator = await readVcdiffByte(patchIOFile);
     let sourceSegmentSize = 0;
     let sourceSegmentPosition = 0;
     if (winIndicator & (VcdiffWinIndicator.SOURCE | VcdiffWinIndicator.TARGET)) {
-      sourceSegmentSize = await Patch.readVcdiffUintFromFile(patchFile);
-      sourceSegmentPosition = await Patch.readVcdiffUintFromFile(patchFile);
+      sourceSegmentSize = await readVcdiffUint(patchIOFile);
+      sourceSegmentPosition = await readVcdiffUint(patchIOFile);
     }
 
-    await Patch.readVcdiffUintFromFile(patchFile); // delta encoding length
-    const deltaEncodingTargetWindowSize = await Patch.readVcdiffUintFromFile(patchFile);
-    const deltaEncodingIndicator = (await patchFile.readNext(1)).readUInt8();
+    await readVcdiffUint(patchIOFile); // delta encoding length
+    const deltaEncodingTargetWindowSize = await readVcdiffUint(patchIOFile);
+    if (deltaEncodingTargetWindowSize > VCDIFF_HARD_MAX_WINDOW_SIZE) {
+      throw new IgirException(
+        `Vcdiff window target size ${deltaEncodingTargetWindowSize} exceeds the hard window size of ${VCDIFF_HARD_MAX_WINDOW_SIZE}: ${patchIOFile.getPathLike().toString()}`,
+      );
+    }
+    const deltaEncodingIndicator = await readVcdiffByte(patchIOFile);
+    const compressedSections =
+      VcdiffDeltaIndicator.DATACOMP | VcdiffDeltaIndicator.INSTCOMP | VcdiffDeltaIndicator.ADDRCOMP;
+    if (deltaEncodingIndicator & compressedSections && secondaryDecompressor === undefined) {
+      throw new IgirException(
+        `Vcdiff window sets compressed-section bits but the header names no secondary compressor: ${patchIOFile.getPathLike().toString()}`,
+      );
+    }
 
-    const addsAndRunsDataLength = await Patch.readVcdiffUintFromFile(patchFile);
-    const instructionsAndSizesLength = await Patch.readVcdiffUintFromFile(patchFile);
-    const copyAddressesLength = await Patch.readVcdiffUintFromFile(patchFile);
+    const addsAndRunsDataLength = await readVcdiffUint(patchIOFile);
+    const instructionsAndSizesLength = await readVcdiffUint(patchIOFile);
+    const copyAddressesLength = await readVcdiffUint(patchIOFile);
 
     if (winIndicator & VcdiffWinIndicator.ADLER32) {
-      (await patchFile.readNext(4)).readUInt32BE(); // TODO(cemmer): handle
+      await readVcdiffBytes(patchIOFile, 4); // TODO(cemmer): verify the Adler-32 checksum
     }
 
-    const addsAndRunsData = await patchFile.readNext(addsAndRunsDataLength);
-    if (deltaEncodingIndicator & VcdiffDeltaIndicator.DATACOMP) {
-      // TODO(cemmer)
-      throw new IgirException(
-        `unsupported Vcdiff compression of instruction data (DATACOMP): ${patchFile.getPathLike().toString()}`,
-      );
+    const addsAndRunsStart = patchIOFile.getPosition();
+    const instructionsAndSizesStart = addsAndRunsStart + addsAndRunsDataLength;
+    const copyAddressesStart = instructionsAndSizesStart + instructionsAndSizesLength;
+    const sectionsEnd = copyAddressesStart + copyAddressesLength;
+    if (sectionsEnd > patchIOFile.getSize()) {
+      throw new IgirException(`Vcdiff patch is truncated: ${patchIOFile.getPathLike().toString()}`);
     }
 
-    const instructionsAndSizesData = await patchFile.readNext(instructionsAndSizesLength);
-    if (deltaEncodingIndicator & VcdiffDeltaIndicator.INSTCOMP) {
-      // TODO(cemmer)
-      throw new IgirException(
-        `unsupported Vcdiff compression of delta instructions (INSTCOMP): ${patchFile.getPathLike().toString()}`,
-      );
-    }
-
-    const copyAddressesData = await patchFile.readNext(copyAddressesLength);
-    if (deltaEncodingIndicator & VcdiffDeltaIndicator.ADDRCOMP) {
-      // TODO(cemmer)
-      throw new IgirException(
-        `unsupported Vcdiff compression of instruction addresses (ADDRCOMP): ${patchFile.getPathLike().toString()}`,
-      );
-    }
+    const addsAndRuns = await this.openSection(
+      patchIOFile,
+      'data',
+      addsAndRunsStart,
+      instructionsAndSizesStart,
+      deltaEncodingIndicator,
+      secondaryDecompressor,
+    );
+    const instructionsAndSizes = await this.openSection(
+      patchIOFile,
+      'instructions',
+      instructionsAndSizesStart,
+      copyAddressesStart,
+      deltaEncodingIndicator,
+      secondaryDecompressor,
+    );
+    const copyAddresses = await this.openSection(
+      patchIOFile,
+      'addresses',
+      copyAddressesStart,
+      sectionsEnd,
+      deltaEncodingIndicator,
+      secondaryDecompressor,
+    );
+    patchIOFile.skipNext(sectionsEnd - addsAndRunsStart);
 
     return new VcdiffWindow(
       winIndicator,
       sourceSegmentSize,
       sourceSegmentPosition,
       deltaEncodingTargetWindowSize,
-      addsAndRunsData,
-      instructionsAndSizesData,
-      copyAddressesData,
+      addsAndRuns,
+      instructionsAndSizes,
+      copyAddresses,
+    );
+  }
+
+  /**
+   * Open a cursor over the section [`start`, `end`) of the patch file, decompressing it into
+   * memory if `deltaEncodingIndicator` marks it as compressed.
+   */
+  private static async openSection(
+    patchIOFile: VcdiffPatchFile,
+    section: VcdiffSection,
+    start: number,
+    end: number,
+    deltaEncodingIndicator: number,
+    secondaryDecompressor: VcdiffSecondaryDecompressor | undefined,
+  ): Promise<VcdiffSectionCursor> {
+    if (
+      !(deltaEncodingIndicator & VcdiffSectionCompressedBit[section]) ||
+      secondaryDecompressor === undefined
+    ) {
+      return new VcdiffSectionCursor(patchIOFile, section, start, end);
+    }
+
+    // NOTE(cemmer): compressed sections are read whole, rather than through a cursor over the
+    //  patch file, because they need to be decompressed whole (see VcdiffSecondaryDecompressor)
+    const data = await patchIOFile.readAt(start, end - start);
+    let decompressed: Buffer;
+    try {
+      decompressed = secondaryDecompressor.decompress(section, data);
+    } catch (error) {
+      throw new IgirException(
+        `can't decompress Vcdiff ${section} section: ${error instanceof Error ? error.message : String(error)}: ${patchIOFile.getPathLike().toString()}`,
+        { cause: error },
+      );
+    }
+    return new VcdiffSectionCursor(
+      new VcdiffBuffer(decompressed, patchIOFile.getPathLike()),
+      section,
+      0,
+      decompressed.length,
     );
   }
 
@@ -311,53 +879,27 @@ class VcdiffWindow {
    * Returns true if the entire instructions-and-sizes section of this window has been consumed.
    */
   isEOF(): boolean {
-    return this.instructionsAndSizeOffset >= this.instructionsAndSizesData.length;
+    return this.instructionsAndSizes.isEOF();
   }
 
   getProgressPercentage(): number {
-    return this.instructionsAndSizeOffset / this.instructionsAndSizesData.length;
+    return this.instructionsAndSizes.getProgressPercentage();
   }
 
   /**
-   * Read and consume the next instruction-code-table index from the instructions stream.
-   */
-  readInstructionIndex(): number {
-    const instructionCodeIdx = this.instructionsAndSizesData.readUInt8(
-      this.instructionsAndSizeOffset,
-    );
-    this.instructionsAndSizeOffset += 1;
-    return instructionCodeIdx;
-  }
-
-  /**
-   * Read and consume the next variable-length size value from the instructions stream.
-   */
-  readInstructionSize(): number {
-    const [size, instructionsAndSizeOffset] = Patch.readVcdiffUintFromBuffer(
-      this.instructionsAndSizesData,
-      this.instructionsAndSizeOffset,
-    );
-    this.instructionsAndSizeOffset = instructionsAndSizeOffset;
-    return size;
-  }
-
-  /**
-   * Apply a VCDIFF ADD instruction, writing the next `size` bytes from this window's data
+   * Apply a VCDIFF ADD instruction, copying the next `size` bytes from this window's data
    * section into the target file at the current window position.
    */
   async writeAddData(
-    targetFile: IOFile,
+    targetIOFile: VcdiffWindowFile,
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
-    // Read
-    const data = this.addsAndRunsData.subarray(
-      this.addsAndRunsOffset,
-      this.addsAndRunsOffset + size,
+    await this.addsAndRuns.copyTo(
+      targetIOFile,
+      targetWindowPosition + this.targetWindowOffset,
+      size,
     );
-    this.addsAndRunsOffset += size;
-    // Write
-    await targetFile.writeAt(data, targetWindowPosition + this.targetWindowOffset);
     this.targetWindowOffset += size;
   }
 
@@ -366,21 +908,21 @@ class VcdiffWindow {
    * window's data section into the target file at the current window position.
    */
   async writeRunData(
-    targetFile: IOFile,
+    targetIOFile: VcdiffWindowFile,
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
-    // Read
-    const data = Buffer.from(
-      this.addsAndRunsData
-        .subarray(this.addsAndRunsOffset, this.addsAndRunsOffset + 1)
-        .toString('hex')
-        .repeat(size),
-      'hex',
+    // Runs can be as large as the target window, so write them a chunk at a time
+    const chunk = Buffer.alloc(
+      Math.min(size, Defaults.FILE_READING_CHUNK_SIZE),
+      await this.addsAndRuns.readByte(),
     );
-    this.addsAndRunsOffset += 1;
-    // Write
-    await targetFile.writeAt(data, targetWindowPosition + this.targetWindowOffset);
+    for (let written = 0; written < size; written += chunk.length) {
+      await targetIOFile.writeAt(
+        chunk.subarray(0, size - written),
+        targetWindowPosition + this.targetWindowOffset + written,
+      );
+    }
     this.targetWindowOffset += size;
   }
 
@@ -389,42 +931,84 @@ class VcdiffWindow {
    * already-written target window into the target file at the current window position.
    */
   async writeCopyData(
-    sourceFile: IOFile,
-    targetFile: IOFile,
+    sourceIOFile: VcdiffWindowFile,
+    targetIOFile: VcdiffWindowFile,
     targetWindowPosition: number,
     size: number,
     copyCache: VcdiffCache,
     mode: VcdiffCopyAddressModeValue,
   ): Promise<void> {
-    const [addr, copyAddressesOffset] = copyCache.decode(
-      this.copyAddressesData,
-      this.copyAddressesOffset,
+    const addr = await copyCache.decode(
+      this.copyAddresses,
       this.sourceSegmentSize + this.targetWindowOffset,
       mode,
     );
-    this.copyAddressesOffset = copyAddressesOffset;
 
-    /**
-     * NOTE(cemmer): this has to write byte-by-byte because it may read-after-write with
-     *  the target file.
-     */
-    for (let byteNum = 0; byteNum < size; byteNum += 1) {
-      let byte: Buffer;
-      if (addr < this.sourceSegmentSize) {
-        if (this.winIndicator & VcdiffWinIndicator.SOURCE) {
-          byte = await sourceFile.readAt(this.sourceSegmentPosition + addr + byteNum, 1);
-        } else {
-          byte = await targetFile.readAt(this.sourceSegmentPosition + addr + byteNum, 1);
-        }
-      } else {
-        byte = await targetFile.readAt(
-          targetWindowPosition + (addr - this.sourceSegmentSize) + byteNum,
-          1,
-        );
+    let copyIOFile = targetIOFile;
+    let copyPosition = targetWindowPosition + (addr - this.sourceSegmentSize);
+    if (addr < this.sourceSegmentSize) {
+      if (this.winIndicator & VcdiffWinIndicator.SOURCE) {
+        copyIOFile = sourceIOFile;
       }
-      await targetFile.writeAt(byte, targetWindowPosition + this.targetWindowOffset + byteNum);
+      copyPosition = this.sourceSegmentPosition + addr;
     }
+    await copyIOFile.copyRange(
+      targetIOFile,
+      targetWindowPosition + this.targetWindowOffset,
+      copyPosition,
+      copyPosition + size,
+    );
     this.targetWindowOffset += size;
+  }
+
+  /**
+   * Apply every instruction in this window, writing the target window at
+   * `targetWindowPosition`.
+   */
+  async apply(
+    sourceIOFile: VcdiffWindowFile,
+    targetIOFile: VcdiffWindowFile,
+    codeTable: VcdiffDeltaInstruction[][],
+    copyCache: VcdiffCache,
+    targetWindowPosition: number,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    while (!this.isEOF()) {
+      if (callback !== undefined) {
+        callback(this.getProgressPercentage());
+      }
+
+      const instructionCodeIdx = await this.instructionsAndSizes.readByte();
+
+      for (let i = 0; i <= 1; i += 1) {
+        const instruction = codeTable[instructionCodeIdx][i];
+        if (instruction.type === VcdiffInstruction.NOOP) {
+          continue;
+        }
+
+        let { size } = instruction;
+        if (!size) {
+          size = await this.instructionsAndSizes.readUint();
+        }
+
+        if (instruction.type === VcdiffInstruction.ADD) {
+          await this.writeAddData(targetIOFile, targetWindowPosition, size);
+        } else if (instruction.type === VcdiffInstruction.RUN) {
+          await this.writeRunData(targetIOFile, targetWindowPosition, size);
+        } else if (instruction.type === VcdiffInstruction.COPY) {
+          await this.writeCopyData(
+            sourceIOFile,
+            targetIOFile,
+            targetWindowPosition,
+            size,
+            copyCache,
+            instruction.mode,
+          );
+        } else {
+          throw new IgirException(`Vcdiff instruction ${instruction.type} isn't supported`);
+        }
+      }
+    }
   }
 }
 
@@ -470,48 +1054,29 @@ class VcdiffCache {
   }
 
   /**
-   * Decode a copy address from the buffer at the given offset under the given address mode,
-   * returning the resolved address and the new offset past the encoded bytes.
+   * Read and decode the next copy address from the addresses section under the given address
+   * mode.
    */
-  decode(
-    copyAddressesData: Buffer,
-    copyAddressesOffset: number,
+  async decode(
+    copyAddresses: VcdiffSectionCursor,
     here: number,
     mode: VcdiffCopyAddressModeValue,
-  ): [number, number] {
+  ): Promise<number> {
     let addr: number;
-    let readValue: number;
-    let copyAddressesOffsetAfter = copyAddressesOffset;
-
     if (mode === VcdiffCopyAddressMode.SELF) {
-      [readValue, copyAddressesOffsetAfter] = Patch.readVcdiffUintFromBuffer(
-        copyAddressesData,
-        copyAddressesOffset,
-      );
-      addr = readValue;
+      addr = await copyAddresses.readUint();
     } else if (mode === VcdiffCopyAddressMode.HERE) {
-      [readValue, copyAddressesOffsetAfter] = Patch.readVcdiffUintFromBuffer(
-        copyAddressesData,
-        copyAddressesOffset,
-      );
-      addr = here - readValue;
+      addr = here - (await copyAddresses.readUint());
     } else if (mode >= 2 && mode <= this.sNear + 1) {
-      const m = mode - 2;
-      [readValue, copyAddressesOffsetAfter] = Patch.readVcdiffUintFromBuffer(
-        copyAddressesData,
-        copyAddressesOffset,
-      );
-      addr = this.near[m] + readValue;
+      addr = this.near[mode - 2] + (await copyAddresses.readUint());
     } else {
-      const m = mode - (2 + this.sNear);
-      readValue = copyAddressesData.readUInt8(copyAddressesOffset);
-      copyAddressesOffsetAfter += 1;
-      addr = this.same[m * 256 + readValue];
+      const sameMode = mode - (2 + this.sNear);
+      addr = this.same[sameMode * 256 + (await copyAddresses.readByte())];
     }
 
     this.update(addr);
 
-    return [addr, copyAddressesOffsetAfter];
+    return addr;
   }
 }
 
@@ -525,7 +1090,8 @@ export default class VcdiffPatch extends Patch {
   static readonly FILE_SIGNATURE = VcdiffHeader.FILE_SIGNATURE;
 
   /**
-   * Parse a .vcdiff/.xdelta patch file and return a {@link VcdiffPatch}.
+   * Create a {@link VcdiffPatch} for a .vcdiff/.xdelta file, taking the source ROM's CRC from the
+   * file name.
    */
   static patchFrom(file: File): VcdiffPatch {
     const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
@@ -540,14 +1106,14 @@ export default class VcdiffPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToIOFile(async (patchFile) => {
-      const copyCache = new VcdiffCache();
-      const header = await VcdiffHeader.fromIOFile(patchFile);
+    await this.getFile().extractToIOFile(async (patchIOFile) => {
+      const header = await VcdiffHeader.fromPatchFile(patchIOFile);
+      const copyCache = new VcdiffCache(header.sNear, header.sSame);
 
       await VcdiffPatch.writeOutputFile(
         inputRomFile,
         outputRomPath,
-        patchFile,
+        patchIOFile,
         header,
         copyCache,
         callback,
@@ -558,58 +1124,57 @@ export default class VcdiffPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await inputRomFile.extractToIOFile(async (sourceFile) => {
+    await inputRomFile.extractToIOFile(async (sourceIOFile) => {
       // The target windows write every output byte, so the output starts empty. The source's
-      // size is only a hint for whether to build the output in memory or on disk.
-      const targetFile = await IOFile.fileFrom(outputRomPath, 'w+', sourceFile.getSize());
+      // size is only an estimate; the output is truncated to its real size once patched.
+      const targetIOFile = await IOFile.fileFrom(outputRomPath, 'w+', sourceIOFile.getSize());
 
       try {
-        await this.applyPatch(patchFile, sourceFile, targetFile, header, copyCache, callback);
+        await this.applyPatch(patchIOFile, sourceIOFile, targetIOFile, header, copyCache, callback);
       } finally {
-        await targetFile.close();
+        await targetIOFile.close();
       }
     });
   }
 
   private static async applyPatch(
-    patchFile: IOFile,
-    sourceFile: IOFile,
-    targetFile: IOFile,
+    patchIOFile: IOFile,
+    sourceIOFile: IOFile,
+    targetIOFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
     callback?: FsReadCallback,
   ): Promise<void> {
     let targetWindowPosition = 0;
 
-    while (!patchFile.isEOF()) {
-      const windowStartOffset = patchFile.getPosition();
-      const window = await VcdiffWindow.fromIOFile(patchFile);
-      const windowEndOffset = patchFile.getPosition();
+    while (!patchIOFile.isEOF()) {
+      const windowStartOffset = patchIOFile.getPosition();
+      const window = await VcdiffWindow.fromPatchFile(patchIOFile, header.secondaryDecompressor);
+      const windowEndOffset = patchIOFile.getPosition();
       copyCache.reset();
 
-      const startPercentage = windowStartOffset / patchFile.getSize();
-      const windowSizePercentage = (windowEndOffset - windowStartOffset) / patchFile.getSize();
+      const startPercentage = windowStartOffset / patchIOFile.getSize();
+      const windowSizePercentage = (windowEndOffset - windowStartOffset) / patchIOFile.getSize();
       const patchWindowCallback =
         callback === undefined
           ? undefined
           : (((windowProgressPercentage: number): void => {
               const progressPercentage =
                 startPercentage + windowSizePercentage * windowProgressPercentage;
-              callback(Math.floor(progressPercentage * targetFile.getSize()));
+              callback(Math.floor(progressPercentage * targetIOFile.getSize()));
             }) satisfies FsReadCallback);
 
-      await this.applyPatchWindow(
-        sourceFile,
-        targetFile,
-        header,
+      await window.apply(
+        sourceIOFile,
+        targetIOFile,
+        header.codeTable,
         copyCache,
         targetWindowPosition,
-        window,
         patchWindowCallback,
       );
 
@@ -617,53 +1182,6 @@ export default class VcdiffPatch extends Patch {
     }
 
     // The output is exactly as long as every target window combined, not the source-size hint
-    await targetFile.truncate(targetWindowPosition);
-  }
-
-  private static async applyPatchWindow(
-    sourceFile: IOFile,
-    targetFile: IOFile,
-    header: VcdiffHeader,
-    copyCache: VcdiffCache,
-    targetWindowPosition: number,
-    window: VcdiffWindow,
-    callback?: FsReadCallback,
-  ): Promise<void> {
-    while (!window.isEOF()) {
-      if (callback !== undefined) {
-        callback(window.getProgressPercentage());
-      }
-
-      const instructionCodeIdx = window.readInstructionIndex();
-
-      for (let i = 0; i <= 1; i += 1) {
-        const instruction = header.codeTable[instructionCodeIdx][i];
-        if (instruction.type === VcdiffInstruction.NOOP) {
-          continue;
-        }
-
-        let { size } = instruction;
-        if (!size) {
-          size = window.readInstructionSize();
-        }
-
-        if (instruction.type === VcdiffInstruction.ADD) {
-          await window.writeAddData(targetFile, targetWindowPosition, size);
-        } else if (instruction.type === VcdiffInstruction.RUN) {
-          await window.writeRunData(targetFile, targetWindowPosition, size);
-        } else if (instruction.type === VcdiffInstruction.COPY) {
-          await window.writeCopyData(
-            sourceFile,
-            targetFile,
-            targetWindowPosition,
-            size,
-            copyCache,
-            instruction.mode,
-          );
-        } else {
-          throw new IgirException(`Vcdiff instruction ${instruction.type} isn't supported`);
-        }
-      }
-    }
+    await targetIOFile.truncate(targetWindowPosition);
   }
 }

@@ -1,4 +1,5 @@
 import IgirException from '../../exceptions/igirException.js';
+import Defaults from '../../globals/defaults.js';
 import IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
@@ -53,70 +54,70 @@ export default class NinjaPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.getFile().extractToIOFile(async (patchFile) => {
-      const header = await patchFile.readNext(5);
+    await this.getFile().extractToIOFile(async (patchIOFile) => {
+      const header = await patchIOFile.readNext(5);
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
         throw new IgirException(`NINJA patch header is invalid: ${this.getFile().toString()}`);
       }
-      const version = Math.trunc(Number((await patchFile.readNext(1)).toString()));
+      const version = Math.trunc(Number((await patchIOFile.readNext(1)).toString()));
       if (version !== 2) {
         throw new IgirException(`NINJA v${version} isn't supported: ${this.getFile().toString()}`);
       }
 
-      patchFile.skipNext(1); // encoding
-      patchFile.skipNext(84); // author
-      patchFile.skipNext(11); // version
-      patchFile.skipNext(256); // title
-      patchFile.skipNext(48); // genre
-      patchFile.skipNext(48); // language
-      patchFile.skipNext(8); // date
-      patchFile.skipNext(512); // website
-      patchFile.skipNext(1074); // info
+      patchIOFile.skipNext(1); // encoding
+      patchIOFile.skipNext(84); // author
+      patchIOFile.skipNext(11); // version
+      patchIOFile.skipNext(256); // title
+      patchIOFile.skipNext(48); // genre
+      patchIOFile.skipNext(48); // language
+      patchIOFile.skipNext(8); // date
+      patchIOFile.skipNext(512); // website
+      patchIOFile.skipNext(1074); // info
 
-      await this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await this.writeOutputFile(inputRomFile, outputRomPath, patchIOFile, callback);
     });
   }
 
   private async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: IOFile,
+    patchIOFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
+    const targetIOFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      while (!patchFile.isEOF()) {
-        await this.applyCommand(patchFile, targetFile);
+      while (!patchIOFile.isEOF()) {
+        await this.applyCommand(patchIOFile, targetIOFile);
 
         if (callback === undefined) {
           continue;
         }
-        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-        callback(Math.floor(progressPercentage * targetFile.getSize()));
+        const progressPercentage = patchIOFile.getPosition() / patchIOFile.getSize();
+        callback(Math.floor(progressPercentage * targetIOFile.getSize()));
       }
     } finally {
-      await targetFile.close();
+      await targetIOFile.close();
     }
   }
 
-  private async applyCommand(patchFile: IOFile, targetFile: IOFile): Promise<void> {
-    const command = (await patchFile.readNext(1)).readUInt8() as NinjaCommandValue;
+  private async applyCommand(patchIOFile: IOFile, targetIOFile: IOFile): Promise<void> {
+    const command = (await patchIOFile.readNext(1)).readUInt8() as NinjaCommandValue;
 
     if (command === NinjaCommand.TERMINATE) {
       // Nothing
     } else if (command === NinjaCommand.OPEN) {
-      await this.applyCommandOpen(patchFile, targetFile);
+      await this.applyCommandOpen(patchIOFile, targetIOFile);
     } else if (command === NinjaCommand.XOR) {
-      await NinjaPatch.applyCommandXor(patchFile, targetFile);
+      await NinjaPatch.applyCommandXor(patchIOFile, targetIOFile);
     } else {
       throw new IgirException(`Ninja command ${command} isn't supported`);
     }
   }
 
-  private async applyCommandOpen(patchFile: IOFile, targetFile: IOFile): Promise<void> {
-    const multiFile = (await patchFile.readNext(1)).readUInt8();
+  private async applyCommandOpen(patchIOFile: IOFile, targetIOFile: IOFile): Promise<void> {
+    const multiFile = (await patchIOFile.readNext(1)).readUInt8();
     if (multiFile > 0) {
       throw new IgirException(
         `Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`,
@@ -124,62 +125,92 @@ export default class NinjaPatch extends Patch {
     }
 
     const fileNameLength =
-      multiFile > 0 ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile) : 0;
-    patchFile.skipNext(fileNameLength); // file name
-    const fileType = (await patchFile.readNext(1)).readUInt8() as NinjaFileTypeValue;
+      multiFile > 0 ? (await patchIOFile.readNext(multiFile)).readUIntLE(0, multiFile) : 0;
+    patchIOFile.skipNext(fileNameLength); // file name
+    const fileType = (await patchIOFile.readNext(1)).readUInt8() as NinjaFileTypeValue;
     if (fileType > 0) {
       throw new IgirException(
         `unsupported NINJA file type ${NinjaFileTypeInverted[fileType]}: ${this.getFile().toString()}`,
       );
     }
-    const sourceFileSizeLength = (await patchFile.readNext(1)).readUInt8();
-    const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength)).readUIntLE(
+    const sourceFileSizeLength = (await patchIOFile.readNext(1)).readUInt8();
+    const sourceFileSize = (await patchIOFile.readNext(sourceFileSizeLength)).readUIntLE(
       0,
       sourceFileSizeLength,
     );
-    const modifiedFileSizeLength = (await patchFile.readNext(1)).readUInt8();
-    const modifiedFileSize = (await patchFile.readNext(modifiedFileSizeLength)).readUIntLE(
+    const modifiedFileSizeLength = (await patchIOFile.readNext(1)).readUInt8();
+    const modifiedFileSize = (await patchIOFile.readNext(modifiedFileSizeLength)).readUIntLE(
       0,
       modifiedFileSizeLength,
     );
-    patchFile.skipNext(16); // source MD5
-    patchFile.skipNext(16); // modified MD5
+    patchIOFile.skipNext(16); // source MD5
+    patchIOFile.skipNext(16); // modified MD5
 
     if (sourceFileSize === modifiedFileSize) {
       return;
     }
-    patchFile.skipNext(1); // "M" or "A"
-    const overflowSizeLength = (await patchFile.readNext(1)).readUInt8();
+    patchIOFile.skipNext(1); // "M" or "A"
+    const overflowSizeLength = (await patchIOFile.readNext(1)).readUInt8();
     const overflowSize =
       overflowSizeLength > 0
-        ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
+        ? (await patchIOFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
         : 0;
-    const overflow =
-      overflowSize > 0 ? await patchFile.readNext(overflowSize) : Buffer.alloc(overflowSize);
-    for (let i = 0; i < overflow.length; i += 1) {
-      overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
-    }
     if (modifiedFileSize > sourceFileSize) {
-      await targetFile.writeAt(overflow, targetFile.getSize());
+      await NinjaPatch.appendOverflow(patchIOFile, targetIOFile, overflowSize);
     } else {
-      await targetFile.truncate(modifiedFileSize);
+      await targetIOFile.truncate(modifiedFileSize);
+      patchIOFile.skipNext(overflowSize);
     }
   }
 
-  private static async applyCommandXor(patchFile: IOFile, targetFile: IOFile): Promise<void> {
-    const offsetLength = (await patchFile.readNext(1)).readUInt8();
-    const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
-    targetFile.seek(offset);
-
-    const lengthLength = (await patchFile.readNext(1)).readUInt8();
-    const length = (await patchFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
-    const sourceData = await targetFile.readNext(length);
-
-    const xorData = await patchFile.readNext(length);
-    const targetData = Buffer.allocUnsafe(length);
-    for (let i = 0; i < length; i += 1) {
-      targetData[i] = (i < sourceData.length ? sourceData[i] : 0x00) ^ xorData[i];
+  /**
+   * Append the {@link overflowSize} bytes of overflow data at the patch's read position to the
+   * target, a chunk at a time, advancing the patch's read position past them.
+   */
+  private static async appendOverflow(
+    patchIOFile: IOFile,
+    targetIOFile: IOFile,
+    overflowSize: number,
+  ): Promise<void> {
+    let read = 0;
+    while (read < overflowSize) {
+      const chunkSize = Math.min(overflowSize - read, Defaults.FILE_READING_CHUNK_SIZE);
+      const overflow = await patchIOFile.readNext(chunkSize);
+      read += chunkSize;
+      for (let i = 0; i < overflow.length; i += 1) {
+        overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
+      }
+      await targetIOFile.writeAt(overflow, targetIOFile.getSize());
+      if (overflow.length < chunkSize) {
+        // The patch ended early, skip what's left of the overflow
+        patchIOFile.skipNext(overflowSize - read);
+        break;
+      }
     }
-    await targetFile.writeAt(targetData, offset);
+  }
+
+  private static async applyCommandXor(patchIOFile: IOFile, targetIOFile: IOFile): Promise<void> {
+    const offsetLength = (await patchIOFile.readNext(1)).readUInt8();
+    const offset = (await patchIOFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
+    targetIOFile.seek(offset);
+
+    const lengthLength = (await patchIOFile.readNext(1)).readUInt8();
+    const length = (await patchIOFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
+    for (let xored = 0; xored < length; xored += Defaults.FILE_READING_CHUNK_SIZE) {
+      const chunkSize = Math.min(length - xored, Defaults.FILE_READING_CHUNK_SIZE);
+      const sourceData = await targetIOFile.readAt(offset + xored, chunkSize);
+      const xorData = await patchIOFile.readNext(chunkSize);
+      // Bytes past the end of the patch are 0x00, so the whole chunk is still written
+      const targetData =
+        xorData.length === chunkSize
+          ? xorData
+          : Buffer.concat([xorData, Buffer.alloc(chunkSize - xorData.length)]);
+      // Bytes past the end of the target are 0x00, so they're left as the XOR data
+      for (const [i, sourceDatum] of sourceData.entries()) {
+        targetData[i] ^= sourceDatum;
+      }
+      await targetIOFile.writeAt(targetData, offset + xored);
+    }
+    targetIOFile.skipNext(length);
   }
 }

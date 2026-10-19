@@ -3,12 +3,9 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import dolphinTool from '../../../../../addons/dolphin-tool/index.js';
-import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
-import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
-import StreamUtil from '../../../../utils/streamUtil.js';
 import FileChecksums from '../../fileChecksums.js';
-import type { ArchiveEntryLocation } from '../archive.js';
+import type { ArchiveEntryRef } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -45,7 +42,7 @@ export default abstract class Dolphin extends Archive {
     // Compute every requested checksum in a single decompression pass. A decode error on a
     // corrupt block surfaces as a stream error, which is the integrity check.
     const checksums = await this.extractEntryToStream(
-      { entryPath: '' },
+      { entryPath: '', size: info.decompressedSize },
       async (readable) => await FileChecksums.hashStream(readable, checksumBitmask, callback),
     );
 
@@ -68,31 +65,23 @@ export default abstract class Dolphin extends Archive {
    * entry path is not needed to resolve it.
    */
   override async extractEntryToStream<T>(
-    _location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
+    end?: number,
   ): Promise<T> {
     const sourceStream: stream.Readable = dolphinTool.openReader({
       inputFilename: this.getFilePath(),
-      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+      highWaterMark: Archive.getStreamChunkSize(start, end, entryRef.size),
     });
-    // A non-zero start offset (e.g. a detected ROM header) must skip that many
-    // leading bytes of the forward-only stream.
-    return await StreamUtil.pipelineSafe(
-      sourceStream,
-      start > 0 ? new SkipBytesTransform(start) : undefined,
-      callback,
-    );
+    return await Archive.pipelineRange(sourceStream, callback, start, end);
   }
 
   /**
    * Extract the disc image to the given path as an uncompressed ISO.
    */
-  async extractEntryToFile(
-    _location: ArchiveEntryLocation,
-    extractedFilePath: string,
-  ): Promise<void> {
-    await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
+  async extractEntryToFile(entryRef: ArchiveEntryRef, extractedFilePath: string): Promise<void> {
+    await this.extractEntryToStream(entryRef, async (readable) => {
       await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
     });
   }

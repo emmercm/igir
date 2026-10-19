@@ -11,10 +11,8 @@ import sevenZip from '../../../../../addons/7zip/index.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../../streams/fsReadTransform.js';
-import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../../utils/fsUtil.js';
-import StreamUtil from '../../../../utils/streamUtil.js';
-import type { ArchiveEntryLocation } from '../archive.js';
+import type { ArchiveEntryRef } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -87,7 +85,7 @@ export default abstract class SevenZipLib extends Archive {
    * Extract the named entry from the archive to the given file path.
    */
   async extractEntryToFile(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
@@ -96,7 +94,7 @@ export default abstract class SevenZipLib extends Archive {
       await FsUtil.mkdir(extractedDir, { recursive: true });
     }
 
-    await this.extractEntryToStream(location, async (readable) => {
+    await this.extractEntryToStream(entryRef, async (readable) => {
       // The addon defers opening the archive until the stream is first read, so cause it to open.
       // We do this so any immediate issue with the input will throw before we create the output.
       await events.once(readable, 'readable');
@@ -114,21 +112,18 @@ export default abstract class SevenZipLib extends Archive {
    * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
    */
   override async extractEntryToStream<T>(
-    { entryPath, entryIndex }: ArchiveEntryLocation,
+    { entryPath, entryIndex, size }: ArchiveEntryRef,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
+    end?: number,
   ): Promise<T> {
     const sourceStream = sevenZip.openEntryReader({
       inputFilename: this.getFilePath(),
       format: this.getSevenZipFormat(),
       entryPath: this.hasMeaningfulEntryPaths() ? entryPath : undefined,
       entryIndex,
-      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+      highWaterMark: Archive.getStreamChunkSize(start, end, size),
     });
-    return await StreamUtil.pipelineSafe(
-      sourceStream,
-      start > 0 ? new SkipBytesTransform(start) : undefined,
-      callback,
-    );
+    return await Archive.pipelineRange(sourceStream, callback, start, end);
   }
 }

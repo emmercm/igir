@@ -1,6 +1,7 @@
 #include <napi.h>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -17,9 +18,61 @@
 #include "addon.h"
 #include "cdrom.h"
 #include "chd.h"
+#include "chdOpen.h"
 #include "chdcodec.h"
 #include "path.h"
 #include "strformat.h"
+
+/**
+ * The reason MAME can't safely read this CHD's oldest CD-ROM metadata, or an empty string if it
+ * can. That entry is only parsed when no track has newer metadata, and MAME takes its track count
+ * from the file unchecked: the cdrom_file constructor then indexes its fixed-size track array with
+ * it, and the parser reads a fixed number of words however short the entry is. So this has to run
+ * before a cdrom_file is constructed. Returned rather than thrown, like cuebin_underflow_error().
+ */
+static std::string OldMetadataError(chd_file& chd) {
+    std::string metadata;
+    for (chd_metadata_tag const tag :
+         {CDROM_TRACK_METADATA_TAG, CDROM_TRACK_METADATA2_TAG, GDROM_OLD_METADATA_TAG, GDROM_TRACK_METADATA_TAG}) {
+        if (!chd.read_metadata(tag, 0, metadata)) {
+            return {};
+        }
+    }
+    std::vector<uint8_t> oldMetadata;
+    if (chd.read_metadata(CDROM_OLD_METADATA_TAG, 0, oldMetadata)) {
+        // MAME reports the missing entry itself
+        return {};
+    }
+    if (oldMetadata.size() < size_t{cdrom_file::METADATA_WORDS} * sizeof(uint32_t)) {
+        return "CHD CD-ROM metadata is truncated";
+    }
+    // MAME reads the count in the host's byte order, and byte-swaps the whole entry when that
+    // count is too large
+    uint32_t count = 0;
+    std::memcpy(&count, oldMetadata.data(), sizeof(count));
+    if (count > cdrom_file::MAX_TRACKS && swapendian_int32(count) > cdrom_file::MAX_TRACKS) {
+        return "CHD CD-ROM metadata has too many tracks";
+    }
+    return {};
+}
+
+/**
+ * The reason a track in `toc` can't be read safely, or an empty string if all of them can. MAME
+ * doesn't check the oldest metadata's data sizes, and newer metadata that skips a track number
+ * leaves that track's size at zero. A track that holds no bytes per frame would have a read walk
+ * every one of its frames without emitting anything, and read_data() writes up to
+ * MAX_SECTOR_DATA bytes per frame.
+ */
+static std::string TrackSizeError(const cdrom_file::toc& toc) {
+    for (uint32_t track = 0; track < toc.numtrks; ++track) {
+        uint32_t const datasize = toc.tracks[track].datasize;
+        if (datasize == 0 || datasize > cdrom_file::MAX_SECTOR_DATA) {
+            return "CHD track " + std::to_string(track + 1) + " has an invalid data size of " +
+                   std::to_string(datasize) + " bytes";
+        }
+    }
+    return {};
+}
 
 // ===== BEGIN ported from deps/mame/src/tools/chdman.cpp @ MAME 0.289 (submodule tag mame0289) =====
 // Re-port when bumping the MAME submodule: diff each sub-block against the cited
@@ -249,13 +302,21 @@ static bool BuildListing(const std::string& inputPath, int mode,
                          std::string& tocTextOut, std::vector<TrackOut>& tracksOut,
                          std::string& errorOut) {
   chd_file chd;
-  std::error_condition err = chd.open(inputPath, false, nullptr);
+  std::error_condition err = OpenChdForReading(chd, inputPath);
   if (err) {
     errorOut = "failed to open CHD: " + err.message();
     return false;
   }
+  // Not in upstream: reject metadata MAME would read out of bounds, or tracks a read can't
+  // make progress through
+  errorOut = OldMetadataError(chd);
+  if (!errorOut.empty())
+    return false;
   cdrom_file cdrom(&chd);
   cdrom_file::toc toc = cdrom.get_toc();
+  errorOut = TrackSizeError(toc);
+  if (!errorOut.empty())
+    return false;
   const bool isGdrom = cdrom.is_gdrom();
   if (mode == MODE_CUEBIN && isGdrom)
     apply_gdrom_cuebin_toc_adjustment(toc);
@@ -451,15 +512,25 @@ class TrackSource {
      */
     size_t Produce(uint8_t* out, size_t maxBytes);
 
+    /**
+     * The bytes left to emit, or nothing before the first Produce() has opened the track. Zero
+     * exactly when Produce() would emit nothing.
+     */
+    [[nodiscard]] std::optional<uint64_t> Remaining() const;
+
    private:
     /**
      * Open the track, throwing std::out_of_range for a track index the CHD doesn't have. Runs on
      * the worker thread.
      */
     void Open() {
-        std::error_condition const err = chd_.open(input_, false, nullptr);
+        std::error_condition const err = OpenChdForReading(chd_, input_);
         if (err) {
             throw std::runtime_error("failed to open CHD: " + err.message());
+        }
+        std::string const oldMetadata = OldMetadataError(chd_);
+        if (!oldMetadata.empty()) {
+            throw std::runtime_error(oldMetadata);
         }
         try {
             cdrom_ = std::make_unique<cdrom_file>(&chd_);
@@ -477,6 +548,10 @@ class TrackSource {
         if (trackIndex_ < 0 || std::cmp_greater_equal(trackIndex_, toc_.numtrks)) {
             throw std::out_of_range("track index out of range");
         }
+        std::string const trackSize = TrackSizeError(toc_);
+        if (!trackSize.empty()) {
+            throw std::runtime_error(trackSize);
+        }
         chdVersion_ = chd_.version();
         const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
         const std::string underflow = cuebin_underflow_error(t, trackIndex_);
@@ -484,6 +559,8 @@ class TrackSource {
             throw std::runtime_error(underflow);
         }
         actualframes_ = port_actual_frames(t);
+        // The leading frames pulled from the previous track, at that track's data size
+        splitCount_ = trackIndex_ > 0 ? std::min(t.splitframes, actualframes_) : 0;
         opened_ = true;
     }
 
@@ -498,8 +575,12 @@ class TrackSource {
     std::unique_ptr<cdrom_file> cdrom_;
     cdrom_file::toc toc_{};
     uint32_t actualframes_ = 0;
+    uint32_t splitCount_ = 0;
     uint32_t frame_ = 0;
-    std::vector<uint8_t> frameBuf_;
+    // Sized for the most read_data() can write for any track, of which the frame's own data size
+    // is the first frameBufLen_ bytes
+    std::array<uint8_t, cdrom_file::MAX_SECTOR_DATA> frameBuf_{};
+    size_t frameBufLen_ = 0;
     size_t frameBufPos_ = 0;
 };
 
@@ -513,11 +594,11 @@ size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
     // frame_ is bumped when a frame is loaded, so the final frame's bytes can still be
     // buffered after frame_ reaches actualframes_. Keep draining frameBuf_ on leftover
     // bytes too, else a read(maxBytes) boundary mid-frame would drop that tail.
-    while (written < maxBytes && (frameBufPos_ < frameBuf_.size() || frame_ < actualframes_)) {
-        if (frameBufPos_ >= frameBuf_.size()) {
+    while (written < maxBytes && (frameBufPos_ < frameBufLen_ || frame_ < actualframes_)) {
+        if (frameBufPos_ >= frameBufLen_) {
             int trk = 0;
             int frameofs = 0;
-            if (trackIndex_ > 0 && frame_ < t.splitframes) {
+            if (frame_ < splitCount_) {
                 // pull data from previous track, the reverse of how splitframes is used
                 // when making the GD-ROM CHDs
                 trk = trackIndex_ - 1;
@@ -529,12 +610,13 @@ size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
             }
             const cdrom_file::track_info& st = toc_.tracks[trk];
 
-            // A whole frame that fits is read straight into `out`, and only one that doesn't
+            // A frame is read straight into `out` when it has room for all read_data() can write,
+            // which a malformed TOC can make more than this track's data size, and otherwise
             // goes through frameBuf_
-            bool const direct = maxBytes - written >= st.datasize;
+            bool const direct = maxBytes - written >= frameBuf_.size();
             uint8_t* frame = out + written;
             if (!direct) {
-                frameBuf_.resize(st.datasize);
+                frameBufLen_ = st.datasize;
                 frame = frameBuf_.data();
             }
             std::memset(frame, 0, st.datasize);
@@ -562,13 +644,24 @@ size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
             }
             frameBufPos_ = 0;
         }
-        size_t const avail = frameBuf_.size() - frameBufPos_;
+        size_t const avail = frameBufLen_ - frameBufPos_;
         size_t const n = std::min(maxBytes - written, avail);
         std::memcpy(out + written, frameBuf_.data() + frameBufPos_, n);
         frameBufPos_ += n;
         written += n;
     }
     return written;
+}
+
+std::optional<uint64_t> TrackSource::Remaining() const {
+    if (!opened_) return std::nullopt;
+    // Counted from the state Produce() walks: the buffered tail of the last frame, then the frames
+    // still to load at the data size Produce() reads them at
+    uint64_t const buffered = frameBufLen_ > frameBufPos_ ? frameBufLen_ - frameBufPos_ : 0;
+    uint32_t const splitLeft = splitCount_ > frame_ ? splitCount_ - frame_ : 0;
+    uint32_t const ownLeft = actualframes_ - std::max(frame_, splitCount_);
+    uint64_t const splitBytes = splitLeft > 0 ? uint64_t{splitLeft} * toc_.tracks[trackIndex_ - 1].datasize : 0;
+    return buffered + splitBytes + (uint64_t{ownLeft} * toc_.tracks[trackIndex_].datasize);
 }
 
 Napi::Function TrackReader::GetClass(Napi::Env env) {
