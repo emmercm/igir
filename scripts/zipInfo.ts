@@ -108,6 +108,7 @@ function toYaml(value: YamlValue, indent: number): string {
  * Read a region of the file, capped at MAX_REGION_BYTES, and describe it.
  */
 async function describeRegion(
+  // eslint-disable-next-line unicorn/no-unnecessary-parameters
   fileHandle: fs.promises.FileHandle,
   offset: number,
   length: number,

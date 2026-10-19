@@ -78,6 +78,7 @@ type VcdiffWindowFile = Pick<IOFile, 'writeAt' | 'copyRange'>;
  * returning the value and the new offset past the encoded bytes. Doesn't detect truncation: a
  * value cut off by the end of the buffer is returned partially decoded.
  */
+// eslint-disable-next-line unicorn/no-unnecessary-parameters
 function readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
   let num = 0;
 

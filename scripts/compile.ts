@@ -189,6 +189,7 @@ const bunBuildConfig = {
     },
   ],
 } satisfies Bun.BuildConfig;
+// eslint-disable-next-line unicorn/no-unsafe-json-serialization
 logger.info(JSON.stringify(bunBuildConfig, undefined, 2));
 const result = await Bun.build(bunBuildConfig);
 

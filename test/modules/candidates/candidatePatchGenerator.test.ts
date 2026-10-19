@@ -49,13 +49,11 @@ function getPatchedCandidates(candidates: WriteCandidate[]): PatchedCandidate[] 
         if (patch === undefined) {
           return [];
         }
-        return [
-          {
-            gameName: candidate.getGame().getName(),
-            inputFileName: path.basename(romWithFiles.getInputFile().getFilePath()),
-            patchFileName: path.basename(patch.getFile().getFilePath()),
-          },
-        ];
+        return {
+          gameName: candidate.getGame().getName(),
+          inputFileName: path.basename(romWithFiles.getInputFile().getFilePath()),
+          patchFileName: path.basename(patch.getFile().getFilePath()),
+        };
       }),
     )
     .toSorted((one, two) => one.patchFileName.localeCompare(two.patchFileName));
