@@ -11,6 +11,7 @@ import FsUtil from '../../../../src/utils/fsUtil.js';
 /**
  * A one-file tar in the original v7 format, which has no "ustar" magic, only a header checksum.
  */
+// eslint-disable-next-line unicorn/no-unnecessary-parameters
 function v7Tar(fileName: string, data: Buffer): Buffer {
   const header = Buffer.alloc(512);
   header.write(fileName, 0, 'ascii');
