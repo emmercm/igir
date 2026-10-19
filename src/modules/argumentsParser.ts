@@ -1233,7 +1233,7 @@ export default class ArgumentsParser {
       })
 
       .wrap(ArgumentsParser.getHelpWidth(argv))
-      .version(false)
+      .version(Package.VERSION)
 
       // NOTE(cemmer): the .epilogue() renders after .example() but I want them switched
       /* eslint-disable unicorn/no-incorrect-template-string-interpolation */
@@ -1314,6 +1314,11 @@ Example use cases:
         group: groupHelpDebug,
         alias: 'h',
         description: 'Show help',
+        type: 'boolean',
+      })
+      .option('version', {
+        group: groupHelpDebug,
+        description: 'Show version number',
         type: 'boolean',
       })
       .fail((msg, err, _yargs) => {

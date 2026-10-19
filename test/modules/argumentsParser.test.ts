@@ -5345,4 +5345,12 @@ describe('options', () => {
     expect(argumentsParser.parse(['--help']).getHelp()).toEqual(true);
     expect(argumentsParser.parse(['--help', '100']).getHelp()).toEqual(true);
   });
+
+  it('should parse "version"', () => {
+    expect(argumentsParser.parse(['--version']).getVersion()).toEqual(true);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--version']).getVersion(),
+    ).toEqual(true);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getVersion()).toEqual(false);
+  });
 });

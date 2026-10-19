@@ -292,6 +292,7 @@ Help & debug options:
   -v, --verbose    Enable verbose logging, can specify up to three times (-vvv)        [count]
       --debug-log  Generate a debug log file to attach to bug reports                 [string]
   -h, --help       Show help                                                         [boolean]
+      --version    Show version number                                               [boolean]
 
 ----------------------------------------------------------------------------------------------
 
