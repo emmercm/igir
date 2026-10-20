@@ -24,7 +24,6 @@ import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImpo
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// eslint-disable-next-line unicorn/no-top-level-side-effects
 export default eslintConfig.defineConfig([
   {
     ignores: [

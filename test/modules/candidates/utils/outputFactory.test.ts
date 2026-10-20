@@ -1557,9 +1557,9 @@ describe('should respect "--fix-extension" when raw-copying archives', () => {
 describe('outputTokens.json', () => {
   it('should adhere to its schema', () => {
     const ajv = new Ajv();
-    const validate = ajv.compile(outputTokensSchema);
-    const isValid = validate(outputTokensData);
-    expect(validate.errors).toBeNull();
+    const isValidFunc = ajv.compile(outputTokensSchema);
+    const isValid = isValidFunc(outputTokensData);
+    expect(isValidFunc.errors).toBeNull();
     expect(isValid).toBe(true);
   });
 });

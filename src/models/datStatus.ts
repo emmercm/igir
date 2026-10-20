@@ -343,9 +343,9 @@ export default class DATStatus {
 
   private static getAllowedTypes(options: Options): ROMTypeValue[] {
     return [
-      !options.getOnlyBios() && !options.getOnlyDevice() && !options.getOnlyRetail()
-        ? ROMType.GAME
-        : undefined,
+      options.getOnlyBios() || options.getOnlyDevice() || options.getOnlyRetail()
+        ? undefined
+        : ROMType.GAME,
       options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyDevice())
         ? ROMType.BIOS
         : undefined,
