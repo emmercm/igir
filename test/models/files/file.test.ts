@@ -21,6 +21,7 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import bufferUtil from '../../../src/utils/bufferUtil.js';
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('fileOf', () => {
@@ -45,7 +46,7 @@ describe('fileOf', () => {
 describe('getFilePath', () => {
   it('should return an absolute path', async () => {
     const file = await File.fileOf({ filePath: path.join('some', 'path') });
-    expect(file.getFilePath()).toEqual(path.resolve('some', 'path'));
+    expect(file.getFilePath()).toEqual(PathUtil.resolve('some', 'path'));
   });
 });
 
@@ -88,7 +89,7 @@ describe('getSize', () => {
         await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
         const tempLink = await FsUtil.mktemp(path.join(tempDir, 'link'));
-        await FsUtil.symlink(path.resolve(tempFile), tempLink);
+        await FsUtil.symlink(PathUtil.resolve(tempFile), tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);

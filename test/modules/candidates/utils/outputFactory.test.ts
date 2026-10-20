@@ -26,6 +26,7 @@ import Options, {
 import outputTokensData from '../../../../src/modules/candidates/utils/consoleTokens.json' with { type: 'json' };
 import outputTokensSchema from '../../../../src/modules/candidates/utils/consoleTokens.schema.json' with { type: 'json' };
 import OutputFactory from '../../../../src/modules/candidates/utils/outputFactory.js';
+import PathUtil from '../../../../src/utils/pathUtil.js';
 
 const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new Game({ name: 'Dummy Game' });
@@ -85,9 +86,9 @@ test.each(['copy', 'move'])('should echo the option with no arguments: %s', asyn
 
 describe('token replacement', () => {
   test.each([
-    ['dats/mame2003-plus.xml', path.resolve('foo', 'mame2003-plus', 'bar', 'Dummy.rom')],
-    ['dats/No-Intro.dat', path.resolve('foo', 'No-Intro', 'bar', 'Dummy.rom')],
-    ['dats/no-extension', path.resolve('foo', 'no-extension', 'bar', 'Dummy.rom')],
+    ['dats/mame2003-plus.xml', PathUtil.resolve('foo', 'mame2003-plus', 'bar', 'Dummy.rom')],
+    ['dats/No-Intro.dat', PathUtil.resolve('foo', 'No-Intro', 'bar', 'Dummy.rom')],
+    ['dats/no-extension', PathUtil.resolve('foo', 'no-extension', 'bar', 'Dummy.rom')],
   ])('should replace {datFileName} for a raw DAT: %s', async (datPath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: 'foo/{datFileName}/bar' });
     const dat = new LogiqxDAT({
@@ -106,8 +107,8 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['mame2003-plus.xml', path.resolve('foo', 'mame2003-plus', 'bar', 'Dummy.rom')],
-    ['subdir/No-Intro.dat', path.resolve('foo', 'No-Intro', 'bar', 'Dummy.rom')],
+    ['mame2003-plus.xml', PathUtil.resolve('foo', 'mame2003-plus', 'bar', 'Dummy.rom')],
+    ['subdir/No-Intro.dat', PathUtil.resolve('foo', 'No-Intro', 'bar', 'Dummy.rom')],
   ])('should replace {datFileName} for an archived DAT: %s', async (entryPath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: 'foo/{datFileName}/bar' });
     const dat = new LogiqxDAT({
@@ -131,8 +132,8 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['foo/{datName}/bar', path.resolve('foo', 'DAT _ Name', 'bar', 'Dummy.rom')],
-    ['foo/{datDescription}/bar', path.resolve('foo', 'DAT _ Description', 'bar', 'Dummy.rom')],
+    ['foo/{datName}/bar', PathUtil.resolve('foo', 'DAT _ Name', 'bar', 'Dummy.rom')],
+    ['foo/{datDescription}/bar', PathUtil.resolve('foo', 'DAT _ Description', 'bar', 'Dummy.rom')],
   ])('should replace {dat*}: %s', async (output, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({
@@ -150,8 +151,8 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['foo/{datVersion}/bar', path.resolve('foo', '1.2 _ 3', 'bar', 'Dummy.rom')],
-    ['foo/{datDate}/bar', path.resolve('foo', '2026_10_07', 'bar', 'Dummy.rom')],
+    ['foo/{datVersion}/bar', PathUtil.resolve('foo', '1.2 _ 3', 'bar', 'Dummy.rom')],
+    ['foo/{datDate}/bar', PathUtil.resolve('foo', '2026_10_07', 'bar', 'Dummy.rom')],
   ])('should replace {datVersion} and {datDate}: %s', async (output, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({
@@ -181,9 +182,9 @@ describe('token replacement', () => {
   );
 
   test.each([
-    ['root/{region}', 'USA', path.resolve('root', 'USA', 'Dummy.rom')],
-    ['root/{region}', 'WORLD', path.resolve('root', 'WORLD', 'Dummy.rom')],
-    ['root/{region}', 'EUR', path.resolve('root', 'EUR', 'Dummy.rom')],
+    ['root/{region}', 'USA', PathUtil.resolve('root', 'USA', 'Dummy.rom')],
+    ['root/{region}', 'WORLD', PathUtil.resolve('root', 'WORLD', 'Dummy.rom')],
+    ['root/{region}', 'EUR', PathUtil.resolve('root', 'EUR', 'Dummy.rom')],
   ])('should replace {region}: %s', async (output, region, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
@@ -196,8 +197,8 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{language}', 'EN', path.resolve('root', 'EN', 'Dummy.rom')],
-    ['root/{language}', 'JP', path.resolve('root', 'JP', 'Dummy.rom')],
+    ['root/{language}', 'EN', PathUtil.resolve('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'JP', PathUtil.resolve('root', 'JP', 'Dummy.rom')],
   ])('should replace {language}: %s', async (output, language, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
@@ -210,8 +211,8 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{genre}', 'Platform', path.resolve('root', 'Platform', 'Dummy.rom')],
-    ['root/{genre}', 'Sports', path.resolve('root', 'Sports', 'Dummy.rom')],
+    ['root/{genre}', 'Platform', PathUtil.resolve('root', 'Platform', 'Dummy.rom')],
+    ['root/{genre}', 'Sports', PathUtil.resolve('root', 'Sports', 'Dummy.rom')],
   ])('should replace {genre}: %s', async (output, genre, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
@@ -224,9 +225,9 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{category}', 'Applications', path.resolve('root', 'Applications', 'Dummy.rom')],
-    ['root/{category}', 'Games', path.resolve('root', 'Games', 'Dummy.rom')],
-    ['root/{category}', 'Multimedia', path.resolve('root', 'Multimedia', 'Dummy.rom')],
+    ['root/{category}', 'Applications', PathUtil.resolve('root', 'Applications', 'Dummy.rom')],
+    ['root/{category}', 'Games', PathUtil.resolve('root', 'Games', 'Dummy.rom')],
+    ['root/{category}', 'Multimedia', PathUtil.resolve('root', 'Multimedia', 'Dummy.rom')],
   ])('should replace {category}: %s', async (output, category, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
@@ -283,13 +284,13 @@ describe('token replacement', () => {
       dummyRom,
       await dummyRom.toFile(),
     );
-    expect(outputPath.dir).toEqual(path.resolve(expectedPath));
+    expect(outputPath.dir).toEqual(PathUtil.resolve(expectedPath));
   });
 
   test.each([
-    ['{inputDirname}', 'game.rom', path.resolve('game.rom')],
-    ['{inputDirname}', 'roms/game.rom', path.resolve('roms', 'game.rom')],
-    ['{inputDirname}', 'roms/subdir/game.rom', path.resolve('roms', 'subdir', 'game.rom')],
+    ['{inputDirname}', 'game.rom', PathUtil.resolve('game.rom')],
+    ['{inputDirname}', 'roms/game.rom', PathUtil.resolve('roms', 'game.rom')],
+    ['{inputDirname}', 'roms/subdir/game.rom', PathUtil.resolve('roms', 'subdir', 'game.rom')],
   ])('should replace {input*}: %s', async (output, filePath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const rom = new ROM({ name: path.basename(filePath), size: 0, crc32: '' });
@@ -305,10 +306,10 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['{outputBasename}', 'game.rom', path.resolve('game.rom', 'game.rom')],
-    ['{outputBasename}', 'roms/subdir/game.rom', path.resolve('game.rom', 'game.rom')],
-    ['{outputName}.{outputExt}', 'game.rom', path.resolve('game.rom', 'game.rom')],
-    ['{outputName}.{outputExt}', 'roms/subdir/game.rom', path.resolve('game.rom', 'game.rom')],
+    ['{outputBasename}', 'game.rom', PathUtil.resolve('game.rom', 'game.rom')],
+    ['{outputBasename}', 'roms/subdir/game.rom', PathUtil.resolve('game.rom', 'game.rom')],
+    ['{outputName}.{outputExt}', 'game.rom', PathUtil.resolve('game.rom', 'game.rom')],
+    ['{outputName}.{outputExt}', 'roms/subdir/game.rom', PathUtil.resolve('game.rom', 'game.rom')],
   ])('should replace {output*}: %s', async (output, filePath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const rom = new ROM({ name: path.basename(filePath), size: 0, crc32: '' });
@@ -345,7 +346,7 @@ describe('token replacement', () => {
         ['Sony - PlayStation', 'psx'],
       ])('should replace {es} for the DAT name: %s', async (datName, expectedDirName) => {
         await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
-          path.resolve(expectedDirName, 'Dummy.rom'),
+          PathUtil.resolve(expectedDirName, 'Dummy.rom'),
         );
       });
 
@@ -388,7 +389,7 @@ describe('token replacement', () => {
         'should replace %s for the arcade DAT name: %s',
         async (datName, outputToken, expectedDirName) => {
           await expect(getConsolePath(outputToken, datName, 'Dummy.rom')).resolves.toEqual(
-            path.resolve(expectedDirName, 'Dummy.rom'),
+            PathUtil.resolve(expectedDirName, 'Dummy.rom'),
           );
         },
       );
@@ -422,7 +423,7 @@ describe('token replacement', () => {
         ['FinalBurn Alpha - Arcade Games', ['finalburn', 'fba']],
       ])('should replace {retronas} for the DAT name: %s', async (datName, expectedDirNames) => {
         await expect(getConsolePath('{retronas}', datName, 'Dummy.rom')).resolves.toEqual(
-          path.resolve(...expectedDirNames, 'Dummy.rom'),
+          PathUtil.resolve(...expectedDirNames, 'Dummy.rom'),
         );
       });
 
@@ -437,7 +438,7 @@ describe('token replacement', () => {
         'should replace {romm} across a No-Intro separator: %s',
         async (datName, expectedDirName) => {
           await expect(getConsolePath('{romm}', datName, 'Dummy.rom')).resolves.toEqual(
-            path.resolve(expectedDirName, 'Dummy.rom'),
+            PathUtil.resolve(expectedDirName, 'Dummy.rom'),
           );
         },
       );
@@ -592,7 +593,7 @@ describe('token replacement', () => {
         'should replace %s for the file extension: %s',
         async (outputToken, romFilename, expectedDirName) => {
           await expect(getConsolePath(outputToken, '', romFilename)).resolves.toEqual(
-            path.resolve(expectedDirName, romFilename),
+            PathUtil.resolve(expectedDirName, romFilename),
           );
         },
       );
@@ -607,7 +608,7 @@ describe('token replacement', () => {
         'should replace {retronas} for the file extension: %s',
         async (romFilename, expectedDirNames) => {
           await expect(getConsolePath('{retronas}', '', romFilename)).resolves.toEqual(
-            path.resolve(...expectedDirNames, romFilename),
+            PathUtil.resolve(...expectedDirNames, romFilename),
           );
         },
       );
@@ -623,7 +624,7 @@ describe('token replacement', () => {
         async (romFilename, expectedDirName) => {
           await expect(
             getConsolePath('{es}', 'Some Unknown Collection', romFilename),
-          ).resolves.toEqual(path.resolve(expectedDirName, romFilename));
+          ).resolves.toEqual(PathUtil.resolve(expectedDirName, romFilename));
         },
       );
     });
@@ -643,7 +644,7 @@ describe('token replacement', () => {
         'should prefer the DAT name over the file extension: %s',
         async (datName, romFilename, expectedDirName) => {
           await expect(getConsolePath('{es}', datName, romFilename)).resolves.toEqual(
-            path.resolve(expectedDirName, romFilename),
+            PathUtil.resolve(expectedDirName, romFilename),
           );
         },
       );
@@ -723,7 +724,7 @@ describe('token replacement', () => {
         'should prefer the more specific console for %s and the DAT name: %s',
         async (outputToken, datName, expectedDirName) => {
           await expect(getConsolePath(outputToken, datName, 'Dummy.rom')).resolves.toEqual(
-            path.resolve(expectedDirName, 'Dummy.rom'),
+            PathUtil.resolve(expectedDirName, 'Dummy.rom'),
           );
         },
       );
@@ -756,7 +757,7 @@ describe('token replacement', () => {
         'should prefer the console over the arcade fallback: %s',
         async (datName, expectedDirName) => {
           await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
-            path.resolve(expectedDirName, 'Dummy.rom'),
+            PathUtil.resolve(expectedDirName, 'Dummy.rom'),
           );
         },
       );
@@ -781,7 +782,7 @@ describe('token replacement', () => {
           const jelosPath = await getConsolePath('{jelos}', datName, romFilename);
           const rocknixPath = await getConsolePath('{rocknix}', datName, romFilename);
 
-          expect(jelosPath).toEqual(path.resolve(expectedDirName, romFilename));
+          expect(jelosPath).toEqual(PathUtil.resolve(expectedDirName, romFilename));
           expect(jelosPath).toEqual(rocknixPath);
         },
       );
@@ -917,7 +918,7 @@ describe('token replacement', () => {
         'should mis-sort 32X DATs that also name the Mega Drive: %s',
         async (datName, expectedDirName) => {
           await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
-            path.resolve(expectedDirName, 'Dummy.rom'),
+            PathUtil.resolve(expectedDirName, 'Dummy.rom'),
           );
         },
       );
@@ -927,9 +928,9 @@ describe('token replacement', () => {
 
 describe('should respect "--dir-dat-mirror"', () => {
   test.each([
-    ['dats/test.dat', path.resolve(os.devNull, 'file.rom')],
-    ['dats/subdir/test.dat', path.resolve(os.devNull, 'subdir', 'file.rom')],
-    ['dats/sub/dir/test.dat', path.resolve(os.devNull, 'sub', 'dir', 'file.rom')],
+    ['dats/test.dat', PathUtil.resolve(os.devNull, 'file.rom')],
+    ['dats/subdir/test.dat', PathUtil.resolve(os.devNull, 'subdir', 'file.rom')],
+    ['dats/sub/dir/test.dat', PathUtil.resolve(os.devNull, 'sub', 'dir', 'file.rom')],
   ])('option is true: %s', async (datPath, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
@@ -950,8 +951,8 @@ describe('should respect "--dir-dat-mirror"', () => {
 
 describe('should respect "--dir-mirror"', () => {
   test.each([
-    ['roms/file.rom', path.resolve(os.devNull, 'file.rom')],
-    ['roms/subdir/file.rom', path.resolve(os.devNull, 'subdir', 'file.rom')],
+    ['roms/file.rom', PathUtil.resolve(os.devNull, 'file.rom')],
+    ['roms/subdir/file.rom', PathUtil.resolve(os.devNull, 'subdir', 'file.rom')],
   ])('option is true: %s', async (filePath, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
@@ -971,7 +972,7 @@ describe('should respect "--dir-mirror"', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([['roms/subdir/file.rom', path.resolve(os.devNull, 'file.rom')]])(
+  test.each([['roms/subdir/file.rom', PathUtil.resolve(os.devNull, 'file.rom')]])(
     'option is false: %s',
     async (filePath, expectedPath) => {
       const options = new Options({ commands: ['copy'], output: os.devNull, dirMirror: false });
@@ -991,8 +992,8 @@ describe('should respect "--dir-mirror"', () => {
 
 describe('should respect "--dir-dat-name"', () => {
   test.each([
-    [undefined, path.resolve(os.devNull, 'Dummy.rom')],
-    ['name', path.resolve(os.devNull, 'name', 'Dummy.rom')],
+    [undefined, PathUtil.resolve(os.devNull, 'Dummy.rom')],
+    ['name', PathUtil.resolve(os.devNull, 'name', 'Dummy.rom')],
   ])('option is true: %s', async (datName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: true });
     const dat = new LogiqxDAT({
@@ -1009,7 +1010,7 @@ describe('should respect "--dir-dat-name"', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([['name', path.resolve(os.devNull, 'Dummy.rom')]])(
+  test.each([['name', PathUtil.resolve(os.devNull, 'Dummy.rom')]])(
     'option is false: %s',
     async (datName, expectedPath) => {
       const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: false });
@@ -1031,8 +1032,8 @@ describe('should respect "--dir-dat-name"', () => {
 
 describe('should respect "--dir-dat-description"', () => {
   test.each([
-    [undefined, path.resolve(os.devNull, 'Dummy.rom')],
-    ['description', path.resolve(os.devNull, 'description', 'Dummy.rom')],
+    [undefined, PathUtil.resolve(os.devNull, 'Dummy.rom')],
+    ['description', PathUtil.resolve(os.devNull, 'description', 'Dummy.rom')],
   ])('option is true: %s', async (datDescription, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
@@ -1053,7 +1054,7 @@ describe('should respect "--dir-dat-description"', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([['description', path.resolve(os.devNull, 'Dummy.rom')]])(
+  test.each([['description', PathUtil.resolve(os.devNull, 'Dummy.rom')]])(
     'option is false: %s',
     async (datDescription, expectedPath) => {
       const options = new Options({
@@ -1084,15 +1085,15 @@ describe('should respect "--dir-letter"', () => {
       [1, '', os.devNull],
       [2, '', os.devNull],
       [999, '', os.devNull],
-      [1, 'file.rom', path.resolve(os.devNull, 'F', 'file.rom')],
-      [3, 'file.rom', path.resolve(os.devNull, 'FIL', 'file.rom')],
-      [10, 'file.rom', path.resolve(os.devNull, 'FILEAAAAAA', 'file.rom')],
-      [1, '007.rom', path.resolve(os.devNull, '#', '007.rom')],
-      [2, '007.rom', path.resolve(os.devNull, '##', '007.rom')],
-      [10, '007.rom', path.resolve(os.devNull, '###AAAAAAA', '007.rom')],
-      [1, '🙂.rom', path.resolve(os.devNull, '#', '🙂.rom')],
-      [3, '🙂.rom', path.resolve(os.devNull, '##A', '🙂.rom')],
-      [10, '🙂.rom', path.resolve(os.devNull, '##AAAAAAAA', '🙂.rom')],
+      [1, 'file.rom', PathUtil.resolve(os.devNull, 'F', 'file.rom')],
+      [3, 'file.rom', PathUtil.resolve(os.devNull, 'FIL', 'file.rom')],
+      [10, 'file.rom', PathUtil.resolve(os.devNull, 'FILEAAAAAA', 'file.rom')],
+      [1, '007.rom', PathUtil.resolve(os.devNull, '#', '007.rom')],
+      [2, '007.rom', PathUtil.resolve(os.devNull, '##', '007.rom')],
+      [10, '007.rom', PathUtil.resolve(os.devNull, '###AAAAAAA', '007.rom')],
+      [1, '🙂.rom', PathUtil.resolve(os.devNull, '#', '🙂.rom')],
+      [3, '🙂.rom', PathUtil.resolve(os.devNull, '##A', '🙂.rom')],
+      [10, '🙂.rom', PathUtil.resolve(os.devNull, '##AAAAAAAA', '🙂.rom')],
     ])('option is true: %s', async (dirLetterCount, romName, expectedPath) => {
       const options = new Options({
         commands: ['copy'],
@@ -1112,7 +1113,7 @@ describe('should respect "--dir-letter"', () => {
       expect(outputPath.format()).toEqual(expectedPath);
     });
 
-    test.each([['🙂.rom', path.resolve(os.devNull, '🙂.rom')]])(
+    test.each([['🙂.rom', PathUtil.resolve(os.devNull, '🙂.rom')]])(
       'option is false: %s',
       async (romName, expectedPath) => {
         const options = new Options({ commands: ['copy'], output: os.devNull, dirLetter: false });
@@ -1158,7 +1159,7 @@ describe('should respect "--dir-letter"', () => {
 
       expect(
         outputPaths.every(
-          (outputPath) => outputPath.dir === path.resolve(options.getOutput(), 'A'),
+          (outputPath) => outputPath.dir === PathUtil.resolve(options.getOutput(), 'A'),
         ),
       ).toEqual(true);
     });
@@ -1197,7 +1198,7 @@ describe('should respect "--dir-game-subdir"', () => {
       dummyRom,
       await dummyRom.toFile(),
     );
-    expect(outputPath.format()).toEqual(path.resolve(os.devNull, 'Dummy.rom'));
+    expect(outputPath.format()).toEqual(PathUtil.resolve(os.devNull, 'Dummy.rom'));
   });
 
   test.each(
@@ -1207,14 +1208,14 @@ describe('should respect "--dir-game-subdir"', () => {
           new Game({
             name: 'game',
           }),
-          path.resolve(os.devNull, 'Dummy.rom'),
+          PathUtil.resolve(os.devNull, 'Dummy.rom'),
         ],
         [
           new Game({
             name: 'game',
             roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
           }),
-          path.resolve(os.devNull, 'Dummy.rom'),
+          PathUtil.resolve(os.devNull, 'Dummy.rom'),
         ],
         [
           new Game({
@@ -1224,7 +1225,7 @@ describe('should respect "--dir-game-subdir"', () => {
               new ROM({ name: 'two.rom', size: 0, crc32: '' }),
             ],
           }),
-          path.resolve(os.devNull, 'game', 'Dummy.rom'),
+          PathUtil.resolve(os.devNull, 'game', 'Dummy.rom'),
         ],
       ] satisfies [Game, string][]
     ).map(([game, expectedPath]) => [game.getName(), game, expectedPath]),
@@ -1276,7 +1277,7 @@ describe('should respect "--dir-game-subdir"', () => {
       dummyRom,
       await dummyRom.toFile(),
     );
-    expect(outputPath.format()).toEqual(path.resolve(os.devNull, 'game', 'Dummy.rom'));
+    expect(outputPath.format()).toEqual(PathUtil.resolve(os.devNull, 'game', 'Dummy.rom'));
   });
 });
 
@@ -1322,7 +1323,7 @@ describe('should respect "--merge-discs"', () => {
         }),
       );
       expect(outputPath.format()).toEqual(
-        path.resolve(os.devNull, 'Metal Gear Solid (USA)', rom.getName()),
+        PathUtil.resolve(os.devNull, 'Metal Gear Solid (USA)', rom.getName()),
       );
     }
   });
@@ -1354,7 +1355,7 @@ describe('should respect "--merge-discs"', () => {
         }),
       );
       expect(outputPath.format()).toEqual(
-        path.resolve(os.devNull, 'Metal Gear Solid (USA)', rom.getName()),
+        PathUtil.resolve(os.devNull, 'Metal Gear Solid (USA)', rom.getName()),
       );
     }
   });
@@ -1438,7 +1439,7 @@ describe('should respect "--merge-discs"', () => {
 
         // Every track of this disc collapses to exactly one output file named after the disc
         expect([...outputPaths]).toEqual([
-          path.resolve(
+          PathUtil.resolve(
             os.devNull,
             'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)[!]',
             `${subGame.getName()}.chd`,
@@ -1468,7 +1469,7 @@ describe('should respect "--fix-extension" when raw-copying archives', () => {
     async (fixExtension, commands, dat) => {
       const options = new Options({ commands, output: os.devNull, fixExtension, dat });
       await expect(getOutputPath(options, new Zip('game.bin'))).resolves.toEqual(
-        path.resolve(os.devNull, 'Game (USA).zip'),
+        PathUtil.resolve(os.devNull, 'Game (USA).zip'),
       );
     },
   );
@@ -1482,7 +1483,7 @@ describe('should respect "--fix-extension" when raw-copying archives', () => {
     async (fixExtension, commands, dat) => {
       const options = new Options({ commands, output: os.devNull, fixExtension, dat });
       await expect(getOutputPath(options, new Zip('game.bin'))).resolves.toEqual(
-        path.resolve(os.devNull, 'Game (USA).bin'),
+        PathUtil.resolve(os.devNull, 'Game (USA).bin'),
       );
     },
   );
@@ -1504,7 +1505,7 @@ describe('should respect "--fix-extension" when raw-copying archives', () => {
         fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
       });
       await expect(getOutputPath(options, new ArchiveClass(fileName))).resolves.toEqual(
-        path.resolve(os.devNull, expectedBasename),
+        PathUtil.resolve(os.devNull, expectedBasename),
       );
     },
   );
@@ -1546,7 +1547,7 @@ describe('should respect "--fix-extension" when raw-copying archives', () => {
       for (const rom of subGame.getRoms()) {
         const outputPath = OutputFactory.getPath(options, dummyDat, mergedGame, rom, inputFile);
         expect(outputPath.format()).toEqual(
-          path.resolve(os.devNull, 'Game (USA)', `${subGame.getName()}.chd`),
+          PathUtil.resolve(os.devNull, 'Game (USA)', `${subGame.getName()}.chd`),
         );
       }
     }

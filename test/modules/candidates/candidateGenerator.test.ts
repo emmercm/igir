@@ -41,6 +41,7 @@ import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayUtil from '../../../src/utils/arrayUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const gameWithNoRoms = new Game({
@@ -211,7 +212,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
       // prefer plain files unless we're zipping
       [
         'game with one ROM and multiple releases',
-        [command === 'zip' ? `${path.resolve('one.zip')}|one.rom` : path.resolve('1.rom')],
+        [command === 'zip' ? `${PathUtil.resolve('one.zip')}|one.rom` : PathUtil.resolve('1.rom')],
       ],
     ]);
   });
@@ -322,13 +323,13 @@ describe('with ROMs with headers', () => {
       ['game with no ROMs', []],
       [
         'game with one ROM and multiple releases',
-        [`${path.resolve('game with one ROM and multiple releases.zip')}|one.nes`], // respected headerless extension
+        [`${PathUtil.resolve('game with one ROM and multiple releases.zip')}|one.nes`], // respected headerless extension
       ],
       [
         'game with two ROMs (parent)',
         [
-          `${path.resolve('game with two ROMs (parent).zip')}|two.sfc`, // respected headerless extension
-          `${path.resolve('game with two ROMs (parent).zip')}|two.b`, // respected DAT
+          `${PathUtil.resolve('game with two ROMs (parent).zip')}|two.sfc`, // respected headerless extension
+          `${PathUtil.resolve('game with two ROMs (parent).zip')}|two.b`, // respected DAT
         ],
       ],
     ]);
@@ -358,12 +359,12 @@ describe('with ROMs with headers', () => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', [path.resolve('one.nes')]], // respected headerless extension
+      ['game with one ROM and multiple releases', [PathUtil.resolve('one.nes')]], // respected headerless extension
       [
         'game with two ROMs (parent)',
         [
-          path.resolve('game with two ROMs (parent)', 'two.sfc'), // respected headerless extension
-          path.resolve('game with two ROMs (parent)', 'two.b'), // respected DAT
+          PathUtil.resolve('game with two ROMs (parent)', 'two.sfc'), // respected headerless extension
+          PathUtil.resolve('game with two ROMs (parent)', 'two.b'), // respected DAT
         ],
       ],
     ]);
@@ -392,7 +393,7 @@ describe('with ROMs with headers', () => {
     ).toEqual([
       ['game with no ROMs', []],
       // respected headerless extension
-      ['game with one ROM and multiple releases', [path.resolve('one.nes')]],
+      ['game with one ROM and multiple releases', [PathUtil.resolve('one.nes')]],
     ]);
   });
 });
@@ -445,10 +446,10 @@ describe('with different input files for every game ROM', () => {
         ]),
       ).toEqual([
         ['game with no ROMs', []],
-        ['game with one ROM and multiple releases', [path.resolve('one.rom')]],
+        ['game with one ROM and multiple releases', [PathUtil.resolve('one.rom')]],
         [
           'game with two ROMs (parent)',
-          [`${path.resolve('a.rar')}|a.rom`, `${path.resolve('b.rar')}|b.rom`],
+          [`${PathUtil.resolve('a.rar')}|a.rom`, `${PathUtil.resolve('b.rar')}|b.rom`],
         ],
       ]);
     },
@@ -478,7 +479,7 @@ describe('with different input files for every game ROM', () => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', [path.resolve('one.rom')]],
+      ['game with one ROM and multiple releases', [PathUtil.resolve('one.rom')]],
     ]);
   });
 });
@@ -542,16 +543,16 @@ describe('token replacement', () => {
       )
       .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
-      path.resolve('output', 'AUS', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.resolve(
+      PathUtil.resolve('output', 'AUS', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      PathUtil.resolve(
         'output',
         'EUR',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'EUR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.resolve('output', 'USA', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.resolve('output', 'USA', 'Kirby - Canvas Curse (USA).nds'),
-      path.resolve('output', 'USA', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      PathUtil.resolve('output', 'EUR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      PathUtil.resolve('output', 'USA', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      PathUtil.resolve('output', 'USA', 'Kirby - Canvas Curse (USA).nds'),
+      PathUtil.resolve('output', 'USA', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
     ]);
   });
 
@@ -567,38 +568,38 @@ describe('token replacement', () => {
       )
       .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
-      path.resolve(
+      PathUtil.resolve(
         'output',
         'DE',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'DE', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.resolve('output', 'EN', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.resolve(
+      PathUtil.resolve('output', 'DE', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      PathUtil.resolve('output', 'EN', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      PathUtil.resolve(
         'output',
         'EN',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'EN', 'Kirby - Canvas Curse (USA).nds'),
-      path.resolve('output', 'EN', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.resolve(
+      PathUtil.resolve('output', 'EN', 'Kirby - Canvas Curse (USA).nds'),
+      PathUtil.resolve('output', 'EN', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      PathUtil.resolve(
         'output',
         'ES',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'ES', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.resolve(
+      PathUtil.resolve('output', 'ES', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      PathUtil.resolve(
         'output',
         'FR',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'FR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.resolve(
+      PathUtil.resolve('output', 'FR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      PathUtil.resolve(
         'output',
         'IT',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'IT', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      PathUtil.resolve('output', 'IT', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
     ]);
   });
 
@@ -614,14 +615,18 @@ describe('token replacement', () => {
       )
       .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
-      path.resolve(
+      PathUtil.resolve(
         'output',
         'Demo',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'Program', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.resolve('output', 'Retail', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.resolve('output', 'Retail', 'Kirby - Canvas Curse (USA).nds'),
+      PathUtil.resolve(
+        'output',
+        'Program',
+        'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds',
+      ),
+      PathUtil.resolve('output', 'Retail', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      PathUtil.resolve('output', 'Retail', 'Kirby - Canvas Curse (USA).nds'),
     ]);
   });
 
@@ -637,17 +642,17 @@ describe('token replacement', () => {
       )
       .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
-      path.resolve(
+      PathUtil.resolve(
         'output',
         'Applications',
         'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds',
       ),
-      path.resolve(
+      PathUtil.resolve(
         'output',
         'Demos',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.resolve('output', 'Games', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      PathUtil.resolve('output', 'Games', 'Advance Wars - Dual Strike (USA, Australia).nds'),
     ]);
   });
 
@@ -747,7 +752,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       expect(oneRomCandidate).toBeDefined();
       expect(
         oneRomCandidate?.getRomsWithFiles().map((rwf) => rwf.getInputFile().getFilePath()),
-      ).toEqual([path.resolve(gzip.getFilePath())]);
+      ).toEqual([PathUtil.resolve(gzip.getFilePath())]);
     });
   });
 
@@ -892,7 +897,9 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
         for (const [idx, romsWithFile] of romsWithFiles.entries()) {
           const inputFile = romsWithFile.getInputFile();
-          expect(inputFile.getFilePath()).toEqual(path.resolve(datGame.getRoms()[idx].getName()));
+          expect(inputFile.getFilePath()).toEqual(
+            PathUtil.resolve(datGame.getRoms()[idx].getName()),
+          );
         }
       });
 
@@ -1024,7 +1031,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         const inputFile = romWithFiles.getInputFile();
         expect(inputFile.getFilePath()).toEqual(
           romWithFiles.getRom() instanceof Disk
-            ? path.resolve('zzz')
+            ? PathUtil.resolve('zzz')
             : archiveWithDisk.getFilePath(),
         );
       }
@@ -1066,7 +1073,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
         const expectedFilePaths = expectArchivePreferred
           ? datGame.getRoms().map(() => archive.getFilePath())
-          : datGame.getRoms().map((rom) => path.resolve(rom.getName()));
+          : datGame.getRoms().map((rom) => PathUtil.resolve(rom.getName()));
         expect(
           romsWithFiles.map((romWithFiles) => romWithFiles.getInputFile().getFilePath()),
         ).toEqual(expectedFilePaths);
@@ -1182,7 +1189,9 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       candidates[0]
         .getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
-    ).toEqual(files.map((file) => path.resolve(mergedGameName, path.basename(file.getFilePath()))));
+    ).toEqual(
+      files.map((file) => PathUtil.resolve(mergedGameName, path.basename(file.getFilePath()))),
+    );
   });
 
   it('should not consider disc-merged games incomplete when .cue files are unknown in CHDs', async () => {
@@ -1811,29 +1820,29 @@ describe('MAME v0.260', () => {
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
       .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
-      `${path.resolve('2spicy.zip')}|6.0.0009.bin`,
-      `${path.resolve('2spicy.zip')}|6.0.0010.bin`,
-      `${path.resolve('2spicy.zip')}|6.0.0010a.bin`,
-      `${path.resolve('2spicy.zip')}|fpr-24370b.ic6`,
-      `${path.resolve('2spicy.zip')}|vid_bios.u504`,
-      path.resolve('2spicy', 'dvp-0027a.chd'),
-      path.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01.chd'),
-      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hh.hh`,
-      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hl.hl`,
-      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_lh.lh`,
-      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_ll.ll`,
-      `${path.resolve('a51mxr3k.zip')}|jagwave.rom`,
-      path.resolve('a51mxr3k', 'area51mx.chd'),
-      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3h.3h`,
-      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3k.3k`,
-      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3m.3m`,
-      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3p.3p`,
-      `${path.resolve('area51mx.zip')}|jagwave.rom`,
-      path.resolve('area51mx', 'area51mx.chd'),
-      `${path.resolve('jojo.zip')}|jojo_euro.29f400.u2`,
-      path.resolve('jojo', 'cap-jjk-3.chd'),
-      `${path.resolve('jojoa.zip')}|jojo_asia.29f400.u2`,
-      path.resolve('jojoa', 'cap-jjk-3.chd'),
+      `${PathUtil.resolve('2spicy.zip')}|6.0.0009.bin`,
+      `${PathUtil.resolve('2spicy.zip')}|6.0.0010.bin`,
+      `${PathUtil.resolve('2spicy.zip')}|6.0.0010a.bin`,
+      `${PathUtil.resolve('2spicy.zip')}|fpr-24370b.ic6`,
+      `${PathUtil.resolve('2spicy.zip')}|vid_bios.u504`,
+      PathUtil.resolve('2spicy', 'dvp-0027a.chd'),
+      PathUtil.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01.chd'),
+      `${PathUtil.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hh.hh`,
+      `${PathUtil.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hl.hl`,
+      `${PathUtil.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_lh.lh`,
+      `${PathUtil.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_ll.ll`,
+      `${PathUtil.resolve('a51mxr3k.zip')}|jagwave.rom`,
+      PathUtil.resolve('a51mxr3k', 'area51mx.chd'),
+      `${PathUtil.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3h.3h`,
+      `${PathUtil.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3k.3k`,
+      `${PathUtil.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3m.3m`,
+      `${PathUtil.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3p.3p`,
+      `${PathUtil.resolve('area51mx.zip')}|jagwave.rom`,
+      PathUtil.resolve('area51mx', 'area51mx.chd'),
+      `${PathUtil.resolve('jojo.zip')}|jojo_euro.29f400.u2`,
+      PathUtil.resolve('jojo', 'cap-jjk-3.chd'),
+      `${PathUtil.resolve('jojoa.zip')}|jojo_asia.29f400.u2`,
+      PathUtil.resolve('jojoa', 'cap-jjk-3.chd'),
     ]);
   });
 
@@ -1855,29 +1864,29 @@ describe('MAME v0.260', () => {
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
       .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
-      path.resolve('2spicy', '6.0.0009.bin'),
-      path.resolve('2spicy', '6.0.0010.bin'),
-      path.resolve('2spicy', '6.0.0010a.bin'),
-      path.resolve('2spicy', 'dvp-0027a.chd'),
-      path.resolve('2spicy', 'fpr-24370b.ic6'),
-      path.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01.chd'),
-      path.resolve('2spicy', 'vid_bios.u504'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
-      path.resolve('a51mxr3k', 'area51mx.chd'),
-      path.resolve('a51mxr3k', 'jagwave.rom'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
-      path.resolve('area51mx', 'area51mx.chd'),
-      path.resolve('area51mx', 'jagwave.rom'),
-      path.resolve('jojo', 'cap-jjk-3.chd'),
-      path.resolve('jojo', 'jojo_euro.29f400.u2'),
-      path.resolve('jojoa', 'cap-jjk-3.chd'),
-      path.resolve('jojoa', 'jojo_asia.29f400.u2'),
+      PathUtil.resolve('2spicy', '6.0.0009.bin'),
+      PathUtil.resolve('2spicy', '6.0.0010.bin'),
+      PathUtil.resolve('2spicy', '6.0.0010a.bin'),
+      PathUtil.resolve('2spicy', 'dvp-0027a.chd'),
+      PathUtil.resolve('2spicy', 'fpr-24370b.ic6'),
+      PathUtil.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01.chd'),
+      PathUtil.resolve('2spicy', 'vid_bios.u504'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
+      PathUtil.resolve('a51mxr3k', 'area51mx.chd'),
+      PathUtil.resolve('a51mxr3k', 'jagwave.rom'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
+      PathUtil.resolve('area51mx', 'area51mx.chd'),
+      PathUtil.resolve('area51mx', 'jagwave.rom'),
+      PathUtil.resolve('jojo', 'cap-jjk-3.chd'),
+      PathUtil.resolve('jojo', 'jojo_euro.29f400.u2'),
+      PathUtil.resolve('jojoa', 'cap-jjk-3.chd'),
+      PathUtil.resolve('jojoa', 'jojo_asia.29f400.u2'),
     ]);
   });
 
@@ -1900,23 +1909,23 @@ describe('MAME v0.260', () => {
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
       .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
-      path.resolve('2spicy', '6.0.0009.bin'),
-      path.resolve('2spicy', '6.0.0010.bin'),
-      path.resolve('2spicy', '6.0.0010a.bin'),
-      path.resolve('2spicy', 'fpr-24370b.ic6'),
-      path.resolve('2spicy', 'vid_bios.u504'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
-      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
-      path.resolve('a51mxr3k', 'jagwave.rom'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
-      path.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
-      path.resolve('area51mx', 'jagwave.rom'),
-      path.resolve('jojo_asia.29f400.u2'),
-      path.resolve('jojo_euro.29f400.u2'),
+      PathUtil.resolve('2spicy', '6.0.0009.bin'),
+      PathUtil.resolve('2spicy', '6.0.0010.bin'),
+      PathUtil.resolve('2spicy', '6.0.0010a.bin'),
+      PathUtil.resolve('2spicy', 'fpr-24370b.ic6'),
+      PathUtil.resolve('2spicy', 'vid_bios.u504'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
+      PathUtil.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
+      PathUtil.resolve('a51mxr3k', 'jagwave.rom'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
+      PathUtil.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
+      PathUtil.resolve('area51mx', 'jagwave.rom'),
+      PathUtil.resolve('jojo_asia.29f400.u2'),
+      PathUtil.resolve('jojo_euro.29f400.u2'),
     ]);
   });
 });

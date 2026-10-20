@@ -5,6 +5,7 @@ import IgirException from '../../src/exceptions/igirException.js';
 import Temp from '../../src/globals/temp.js';
 import IOFile from '../../src/models/files/ioFile.js';
 import FsUtil, { MoveResult, WalkMode } from '../../src/utils/fsUtil.js';
+import PathUtil from '../../src/utils/pathUtil.js';
 
 if (!(await FsUtil.exists(Temp.getTempDir()))) {
   await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
@@ -539,7 +540,7 @@ describe('isPathTraversal', () => {
 });
 
 describe('isSamba', () => {
-  test.each(['.', os.devNull, 'test', path.resolve('test')])(
+  test.each(['.', os.devNull, 'test', PathUtil.resolve('test')])(
     'should return false: %s',
     (filePath) => {
       expect(FsUtil.isSamba(filePath)).toEqual(false);
@@ -846,7 +847,7 @@ describe('readlink', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.touch(tempFile);
     const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
-    const tempFileAbsolute = path.resolve(tempFile);
+    const tempFileAbsolute = PathUtil.resolve(tempFile);
     await FsUtil.symlink(tempFileAbsolute, tempLink);
 
     const readLink = await FsUtil.readlink(tempLink);
@@ -907,7 +908,7 @@ describe('readlinkSync', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.touch(tempFile);
     const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
-    const tempFileAbsolute = path.resolve(tempFile);
+    const tempFileAbsolute = PathUtil.resolve(tempFile);
     await FsUtil.symlink(tempFileAbsolute, tempLink);
 
     const readLink = FsUtil.readlinkSync(tempLink);
@@ -956,7 +957,7 @@ describe('readlinkResolved', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.touch(tempFile);
     const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
-    const tempFileAbsolute = path.resolve(tempFile);
+    const tempFileAbsolute = PathUtil.resolve(tempFile);
     await FsUtil.symlink(tempFileAbsolute, tempLink);
 
     const readLinkResolved = await FsUtil.readlinkResolved(tempLink);
@@ -976,7 +977,7 @@ describe('readlinkResolved', () => {
 
     const readLinkResolved = await FsUtil.readlinkResolved(tempLink);
     expect(readLinkResolved).not.toEqual(tempFileRelative);
-    expect(readLinkResolved).toEqual(path.resolve(tempFile));
+    expect(readLinkResolved).toEqual(PathUtil.resolve(tempFile));
     expect(path.isAbsolute(readLinkResolved)).toEqual(true);
 
     await FsUtil.rm(tempLink);
@@ -989,7 +990,7 @@ describe('readlinkResolvedSync', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.touch(tempFile);
     const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
-    const tempFileAbsolute = path.resolve(tempFile);
+    const tempFileAbsolute = PathUtil.resolve(tempFile);
     await FsUtil.symlink(tempFileAbsolute, tempLink);
 
     const readLinkResolved = FsUtil.readlinkResolvedSync(tempLink);
@@ -1009,7 +1010,7 @@ describe('readlinkResolvedSync', () => {
 
     const readLinkResolved = FsUtil.readlinkResolvedSync(tempLink);
     expect(readLinkResolved).not.toEqual(tempFileRelative);
-    expect(readLinkResolved).toEqual(path.resolve(tempFile));
+    expect(readLinkResolved).toEqual(PathUtil.resolve(tempFile));
     expect(path.isAbsolute(readLinkResolved)).toEqual(true);
 
     await FsUtil.rm(tempLink);

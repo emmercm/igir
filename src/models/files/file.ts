@@ -13,6 +13,7 @@ import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.j
 import PadEndTransform from '../../streams/padEndTransform.js';
 import BufferUtil from '../../utils/bufferUtil.js';
 import FsUtil from '../../utils/fsUtil.js';
+import PathUtil from '../../utils/pathUtil.js';
 import StreamUtil from '../../utils/streamUtil.js';
 import URLUtil from '../../utils/urlUtil.js';
 import Patch from '../patches/patch.js';
@@ -83,7 +84,7 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     const isUrl = URLUtil.canParse(fileProps.filePath);
 
-    this.filePath = isUrl ? fileProps.filePath : path.resolve(fileProps.filePath);
+    this.filePath = isUrl ? fileProps.filePath : PathUtil.resolve(fileProps.filePath);
     this.size = fileProps.size ?? 0;
     this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');

@@ -14,6 +14,7 @@ import WriteCandidate from '../../src/models/writeCandidate.js';
 import DATDiscMerger from '../../src/modules/dats/datDiscMerger.js';
 import PlaylistCreator from '../../src/modules/playlistCreator.js';
 import FsUtil from '../../src/utils/fsUtil.js';
+import PathUtil from '../../src/utils/pathUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const games: Game[] = [
@@ -333,7 +334,7 @@ describe('when not writing', () => {
       const results = await playlistCreator(options, maybeMergedDat, candidates);
       expect(results).toEqual([
         [
-          path.resolve('input', 'F', 'Final Fantasy VII (USA).m3u'),
+          PathUtil.resolve('input', 'F', 'Final Fantasy VII (USA).m3u'),
           [
             'Final Fantasy VII (USA) (Disc 1)/Final Fantasy VII (USA) (Disc 1).cue',
             'Final Fantasy VII (USA) (Disc 2)/Final Fantasy VII (USA) (Disc 2).cue',
@@ -341,7 +342,7 @@ describe('when not writing', () => {
           ],
         ],
         [
-          path.resolve('input', 'P', 'Panzer Dragoon Saga (USA).m3u'),
+          PathUtil.resolve('input', 'P', 'Panzer Dragoon Saga (USA).m3u'),
           [
             'Panzer Dragoon Saga (USA) (Disc 1)/Panzer Dragoon Saga (USA) (Disc 1).cue',
             'Panzer Dragoon Saga (USA) (Disc 2)/Panzer Dragoon Saga (USA) (Disc 2).cue',
@@ -350,7 +351,7 @@ describe('when not writing', () => {
           ],
         ],
         [
-          path.resolve(
+          PathUtil.resolve(
             'input',
             'R',
             'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u',
@@ -361,7 +362,7 @@ describe('when not writing', () => {
           ],
         ],
         [
-          path.resolve('input', 'S', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
+          PathUtil.resolve('input', 'S', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
           [
             'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].gdi',
             'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].gdi',
@@ -388,7 +389,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
     const results = await playlistCreator(options, maybeMergedDat, candidates);
     expect(results).toEqual([
       [
-        path.resolve('output', 'Final Fantasy VII (USA)', 'Final Fantasy VII (USA).m3u'),
+        PathUtil.resolve('output', 'Final Fantasy VII (USA)', 'Final Fantasy VII (USA).m3u'),
         [
           'Final Fantasy VII (USA) (Disc 1).cue',
           'Final Fantasy VII (USA) (Disc 2).cue',
@@ -396,7 +397,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.resolve('output', 'Panzer Dragoon Saga (USA)', 'Panzer Dragoon Saga (USA).m3u'),
+        PathUtil.resolve('output', 'Panzer Dragoon Saga (USA)', 'Panzer Dragoon Saga (USA).m3u'),
         [
           'Panzer Dragoon Saga (USA) (Disc 1).cue',
           'Panzer Dragoon Saga (USA) (Disc 2).cue',
@@ -405,7 +406,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!]',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u',
@@ -416,7 +417,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)[!]',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u',
@@ -444,7 +445,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
     const results = await playlistCreator(options, maybeMergedDat, candidates);
     expect(results).toEqual([
       [
-        path.resolve('output', 'Final Fantasy VII (USA).m3u'),
+        PathUtil.resolve('output', 'Final Fantasy VII (USA).m3u'),
         [
           'Final Fantasy VII (USA) (Disc 1)/Final Fantasy VII (USA) (Disc 1).cue',
           'Final Fantasy VII (USA) (Disc 2)/Final Fantasy VII (USA) (Disc 2).cue',
@@ -452,7 +453,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.resolve('output', 'Panzer Dragoon Saga (USA).m3u'),
+        PathUtil.resolve('output', 'Panzer Dragoon Saga (USA).m3u'),
         [
           'Panzer Dragoon Saga (USA) (Disc 1)/Panzer Dragoon Saga (USA) (Disc 1).cue',
           'Panzer Dragoon Saga (USA) (Disc 2)/Panzer Dragoon Saga (USA) (Disc 2).cue',
@@ -461,14 +462,17 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.resolve('output', 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u'),
+        PathUtil.resolve(
+          'output',
+          'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u',
+        ),
         [
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!]/Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].gdi',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!]/Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].gdi',
         ],
       ],
       [
-        path.resolve('output', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
+        PathUtil.resolve('output', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
         [
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].gdi',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].gdi',
@@ -492,7 +496,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
     const results = await playlistCreator(options, maybeMergedDat, candidates);
     expect(results).toEqual([
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Final Fantasy VII (USA) (Disc 1)',
           'Final Fantasy VII (USA) (Disc 1).m3u',
@@ -500,7 +504,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Final Fantasy VII (USA) (Disc 1).cue'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Final Fantasy VII (USA) (Disc 2)',
           'Final Fantasy VII (USA) (Disc 2).m3u',
@@ -508,7 +512,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Final Fantasy VII (USA) (Disc 2).cue'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Final Fantasy VII (USA) (Disc 3)',
           'Final Fantasy VII (USA) (Disc 3).m3u',
@@ -516,7 +520,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Final Fantasy VII (USA) (Disc 3).cue'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Panzer Dragoon Saga (USA) (Disc 1)',
           'Panzer Dragoon Saga (USA) (Disc 1).m3u',
@@ -524,7 +528,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Panzer Dragoon Saga (USA) (Disc 1).cue'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Panzer Dragoon Saga (USA) (Disc 2)',
           'Panzer Dragoon Saga (USA) (Disc 2).m3u',
@@ -532,7 +536,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Panzer Dragoon Saga (USA) (Disc 2).cue'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Panzer Dragoon Saga (USA) (Disc 3)',
           'Panzer Dragoon Saga (USA) (Disc 3).m3u',
@@ -540,7 +544,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Panzer Dragoon Saga (USA) (Disc 3).cue'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Panzer Dragoon Saga (USA) (Disc 4)',
           'Panzer Dragoon Saga (USA) (Disc 4).m3u',
@@ -548,7 +552,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Panzer Dragoon Saga (USA) (Disc 4).cue'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial]',
           'Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial].m3u',
@@ -556,7 +560,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial].gdi'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!]',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].m3u',
@@ -564,7 +568,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].gdi'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!]',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].m3u',
@@ -572,7 +576,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].gdi'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].m3u',
@@ -580,7 +584,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].gdi'],
       ],
       [
-        path.resolve(
+        PathUtil.resolve(
           'output',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].m3u',
@@ -588,7 +592,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ['Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].gdi'],
       ],
       [
-        path.resolve('output', 'Steel Reign (USA)', 'Steel Reign (USA).m3u'),
+        PathUtil.resolve('output', 'Steel Reign (USA)', 'Steel Reign (USA).m3u'),
         ['Steel Reign (USA).cue'],
       ],
     ]);
