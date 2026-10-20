@@ -142,7 +142,11 @@
                        "-Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).o", "<(RULE_INPUT_PATH)"],
             "message": "JWasm <(RULE_INPUT_PATH)",
             "process_outputs_as_sources": 1
-          }]
+          }],
+          # JWasm's ELF objects have no .note.GNU-stack section, so without this the linker marks
+          # binding.node as needing an executable stack, which newer glibc refuses to load. 7-Zip's
+          # own makefile links with this too.
+          "link_settings": {"ldflags": ["-Wl,-z,noexecstack"]}
         }]
       ],
       "defines": ["Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0",
