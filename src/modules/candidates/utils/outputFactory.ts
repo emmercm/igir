@@ -499,15 +499,9 @@ export default class OutputFactory {
           // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
-          const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
-            const subPath = filename.replace(/[\\/].+$/, '');
-            if (subPathMap.has(subPath)) {
-              subPathMap.get(subPath)?.push(filename);
-            } else {
-              subPathMap.set(subPath, [filename]);
-            }
-            return subPathMap;
-          }, new Map<string, string[]>());
+          const subPathsToFilenames = Map.groupBy(filenames, (filename) =>
+            filename.replace(/[\\/].+$/, ''),
+          );
           const tuples = [...subPathsToFilenames]
             .toSorted(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
             .map(
@@ -553,15 +547,9 @@ export default class OutputFactory {
         // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
         // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
         // subdir, or just the ROM's basename otherwise.
-        const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
-          const subPath = filename.replace(/[\\/].+$/, '');
-          if (subPathMap.has(subPath)) {
-            subPathMap.get(subPath)?.push(filename);
-          } else {
-            subPathMap.set(subPath, [filename]);
-          }
-          return subPathMap;
-        }, new Map<string, string[]>());
+        const subPathsToFilenames = Map.groupBy(filenames, (filename) =>
+          filename.replace(/[\\/].+$/, ''),
+        );
 
         if (subPathsToFilenames.size <= options.getDirLetterLimit()) {
           lettersMap.set(letter, new Set(filenames));

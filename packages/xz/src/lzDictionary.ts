@@ -18,7 +18,10 @@ const BULK_COPY_MIN = 32;
 export default class LzDictionary {
   private readonly dictionarySize: number;
 
-  private buffer = new Uint8Array(0);
+  private readonly arrayBuffer: ArrayBuffer;
+
+  // Tracks the length of the resizable array buffer, so it never needs to be recreated
+  private readonly buffer: Uint8Array;
 
   private bufferPosition = 0;
 
@@ -32,6 +35,8 @@ export default class LzDictionary {
 
   constructor(dictionarySize: number) {
     this.dictionarySize = dictionarySize;
+    this.arrayBuffer = new ArrayBuffer(0, { maxByteLength: dictionarySize });
+    this.buffer = new Uint8Array(this.arrayBuffer);
   }
 
   /**
@@ -101,17 +106,10 @@ export default class LzDictionary {
   }
 
   private grow(): void {
-    // Before the buffer reaches the dictionary size it never wraps, so the write position is the
-    // number of bytes in it
-    const capacity = Math.min(
-      this.dictionarySize,
-      Math.max(INITIAL_CAPACITY, this.buffer.length * 2),
+    // Resizing keeps the bytes already written, so growing never copies the history
+    this.arrayBuffer.resize(
+      Math.min(this.dictionarySize, Math.max(INITIAL_CAPACITY, this.buffer.length * 2)),
     );
-    // Matches can't reach back past what has been written since the last reset, so the bytes past
-    // the write position are never read before they're written
-    const buffer = Buffer.allocUnsafe(capacity);
-    buffer.set(this.buffer.subarray(0, this.bufferPosition));
-    this.buffer = buffer;
   }
 
   /**

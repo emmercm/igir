@@ -267,8 +267,8 @@ describe('pipelineSafe', () => {
       StreamUtil.pipelineSafe(chunkThen('error'), upperCase(), async (readable) => {
         try {
           await readAll(readable);
-        } catch {
-          throw new Error('callback failed');
+        } catch (error) {
+          throw new Error('callback failed', { cause: error });
         }
       }),
     ).rejects.toThrow('callback failed');

@@ -111,7 +111,7 @@ export default class FileFactory {
       return entries;
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-        throw new IgirException(`file doesn't exist: ${filePath}`);
+        throw new IgirException(`file doesn't exist: ${filePath}`, { cause: error });
       }
       if (typeof error === 'string') {
         throw new Error(error, { cause: error });

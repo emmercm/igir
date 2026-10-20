@@ -264,6 +264,14 @@ export default eslintConfig.defineConfig([
       // ***** ESLint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
+      // Also check the app's own exceptions, and don't let catch blocks discard the caught error
+      'preserve-caught-error': [
+        'error',
+        {
+          requireCatchParameter: true,
+          errorClassNames: ['IgirException', 'TokenReplacementException'],
+        },
+      ],
     },
   },
   {

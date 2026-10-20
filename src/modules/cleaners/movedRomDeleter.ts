@@ -227,18 +227,14 @@ export default class MovedROMDeleter extends Module {
   }
 
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {
-    return files.reduce((map, file) => {
-      const key = file.getFilePath();
-      const filesForKey = map.get(key) ?? [];
-
-      filesForKey.push(file);
-      const uniqueFilesForKey = filesForKey.filter(
-        ArrayUtil.filterUniqueMapped((fileForKey) => fileForKey.toString()),
+    const filePathsToFiles = Map.groupBy(files, (file) => file.getFilePath());
+    for (const [filePath, filesForPath] of filePathsToFiles) {
+      filePathsToFiles.set(
+        filePath,
+        filesForPath.filter(ArrayUtil.filterUniqueMapped((fileForPath) => fileForPath.toString())),
       );
-
-      map.set(key, uniqueFilesForKey);
-      return map;
-    }, new Map<string, File[]>());
+    }
+    return filePathsToFiles;
   }
 
   /**

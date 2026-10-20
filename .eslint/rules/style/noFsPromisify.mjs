@@ -1,5 +1,5 @@
 /**
- * Bans util.promisify(fs.*) in favour of the native fs.promises namespace.
+ * Bans util.promisify(fs.*) in favor of the native fs.promises namespace.
  *
  * Node.js has shipped fs.promises since v10 LTS. Using util.promisify() to
  * wrap the older callback-style fs methods is redundant, adds an extra
