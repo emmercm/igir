@@ -60,21 +60,19 @@ export default abstract class Dolphin extends Archive {
   }
 
   /**
-   * Open a stream over the disc image's decompressed ISO bytes, skipping the first `start`
-   * bytes, and invoke the callback. A Dolphin disc image exposes a single logical ISO, so the
-   * entry path is not needed to resolve it.
+   * Open a stream over the disc image's decompressed ISO bytes and invoke the callback. A Dolphin
+   * disc image exposes a single logical ISO, so the entry path is not needed to resolve it.
    */
-  override async extractEntryToStream<T>(
+  protected override async streamEntry<T>(
     entryRef: ArchiveEntryRef,
-    callback: (readable: stream.Readable) => Promise<T> | T,
-    start = 0,
-    end?: number,
+    callback: (source: stream.Readable) => Promise<T>,
+    byteCount?: number,
   ): Promise<T> {
     const sourceStream: stream.Readable = dolphinTool.openReader({
       inputFilename: this.getFilePath(),
-      highWaterMark: Archive.getStreamChunkSize(start, end, entryRef.size),
+      highWaterMark: Archive.getStreamChunkSize(entryRef.size, byteCount),
     });
-    return await Archive.pipelineRange(sourceStream, callback, start, end);
+    return await callback(sourceStream);
   }
 
   /**

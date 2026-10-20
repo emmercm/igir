@@ -107,7 +107,7 @@ export default class ROMPadding implements ROMPaddingProps {
       callback(0, file.getSize());
     }
 
-    return await file.createReadStream(async (readable) => {
+    return await file.extractToStream(async (readable) => {
       const readableWithCallback =
         callback === undefined
           ? readable

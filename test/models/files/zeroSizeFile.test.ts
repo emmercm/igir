@@ -72,9 +72,9 @@ describe('extractAndTransformToFile', () => {
   });
 });
 
-describe('createReadStream', () => {
+describe('extractToStream', () => {
   it('should create a readable of length zero', async () => {
-    const contents = await ZeroSizeFile.getInstance().createReadStream(
+    const contents = await ZeroSizeFile.getInstance().extractToStream(
       async (readable) => await BufferUtil.fromReadable(readable),
     );
     expect(contents).toBeDefined();
@@ -82,9 +82,15 @@ describe('createReadStream', () => {
   });
 });
 
-describe('createTransformedReadStream', () => {
+describe('readFirstBytes', () => {
+  it('should read no bytes', async () => {
+    await expect(ZeroSizeFile.getInstance().readFirstBytes()).resolves.toEqual(Buffer.alloc(0));
+  });
+});
+
+describe('extractAndTransformToStream', () => {
   it('should create a readable of length zero', async () => {
-    const contents = await ZeroSizeFile.getInstance().createTransformedReadStream(
+    const contents = await ZeroSizeFile.getInstance().extractAndTransformToStream(
       async (readable) => await BufferUtil.fromReadable(readable),
     );
     expect(contents).toBeDefined();

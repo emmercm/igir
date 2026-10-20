@@ -896,14 +896,14 @@ const scannedFiles = await new ROMScanner(
 ).scan();
 const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
-describe('createReadStream', () => {
+describe('extractToStream', () => {
   test.each(
     archiveEntries
       // Some CHDs can't/shouldn't be extracted, ignore those
       .filter((file) => !(file.getArchive() instanceof Chd) || file.getSize() > 0)
       .map((file) => [file.toString(), file]),
   )('should extract archived files: %s', async (_, archiveEntry) => {
-    await archiveEntry.createReadStream(async (readable) => {
+    await archiveEntry.extractToStream(async (readable) => {
       const contents = (await bufferUtil.fromReadable(readable)).toString();
       expect(contents).toBeTruthy();
     });
@@ -911,26 +911,39 @@ describe('createReadStream', () => {
 
   test.each(
     archiveEntries.filter((file) => file.getSize() > 0).map((file) => [file.toString(), file]),
-  )('should read byte ranges of archived files: %s', async (_, archiveEntry) => {
-    const contents = await archiveEntry.createReadStream(
+  )('should read archived files from byte offsets: %s', async (_, archiveEntry) => {
+    const contents = await archiveEntry.extractToStream(
       async (readable) => await bufferUtil.fromReadable(readable),
     );
 
-    for (const { start, end } of [
-      { start: 0, end: 15 },
-      { start: 3, end: 18 },
-      { start: 0, end: contents.length - 1 },
-      { start: contents.length - 1, end: contents.length + 100 },
-    ]) {
-      const range = await archiveEntry.createReadStream(
+    for (const start of [0, 3, contents.length - 1, contents.length]) {
+      const range = await archiveEntry.extractToStream(
         async (readable) => await bufferUtil.fromReadable(readable),
         start,
-        end,
       );
-      const expected = contents.subarray(start, end + 1);
-      expect({ start, end, length: range.length, equal: range.equals(expected) }).toEqual({
+      const expected = contents.subarray(start);
+      expect({ start, length: range.length, equal: range.equals(expected) }).toEqual({
         start,
-        end,
+        length: expected.length,
+        equal: true,
+      });
+    }
+  });
+});
+
+describe('readFirstBytes', () => {
+  test.each(
+    archiveEntries.filter((file) => file.getSize() > 0).map((file) => [file.toString(), file]),
+  )('should read the leading bytes of archived files: %s', async (_, archiveEntry) => {
+    const contents = await archiveEntry.extractToStream(
+      async (readable) => await bufferUtil.fromReadable(readable),
+    );
+
+    for (const byteCount of [1, 16, contents.length, contents.length + 100]) {
+      const firstBytes = await archiveEntry.readFirstBytes(byteCount);
+      const expected = contents.subarray(0, byteCount);
+      expect({ byteCount, length: firstBytes.length, equal: firstBytes.equals(expected) }).toEqual({
+        byteCount,
         length: expected.length,
         equal: true,
       });

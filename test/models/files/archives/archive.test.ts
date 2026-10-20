@@ -34,6 +34,7 @@ import { ChecksumBitmask } from '../../../../src/models/files/fileChecksums.js';
 import Options from '../../../../src/models/options.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayUtil from '../../../../src/utils/arrayUtil.js';
+import BufferUtil from '../../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
@@ -279,6 +280,32 @@ describe('getArchiveEntries', () => {
         [0, size],
         [size, undefined],
       ]);
+    },
+  );
+});
+
+describe('readEntryFirstBytes', () => {
+  test.each([
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', (filePath: string): Archive => new Gzip(filePath)],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', (filePath: string): Archive => new Rar(filePath)],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', (filePath: string): Archive => new Zip(filePath)],
+  ] satisfies [string, (filePath: string) => Archive][])(
+    'should read the leading bytes: %s',
+    async (filePath, archiveFactory) => {
+      const archive = archiveFactory(filePath);
+      const [entry] = await archive.getArchiveEntries(ChecksumBitmask.CRC32);
+      const contents = await archive.extractEntryToStream(
+        entry,
+        async (readable) => await BufferUtil.fromReadable(readable),
+      );
+
+      for (const byteCount of [0, 1, 4, contents.length, contents.length + 100]) {
+        const firstBytes = await archive.readEntryFirstBytes(entry, byteCount);
+        expect({ byteCount, firstBytes }).toEqual({
+          byteCount,
+          firstBytes: contents.subarray(0, byteCount),
+        });
+      }
     },
   );
 });

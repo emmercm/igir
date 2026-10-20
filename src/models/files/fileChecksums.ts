@@ -57,7 +57,7 @@ export default {
       return {};
     }
 
-    return await File.createStreamFromFile(
+    return await File.streamFilePath(
       filePath,
       async (readable) => await this.hashStream(readable, checksumBitmask, callback),
       size,

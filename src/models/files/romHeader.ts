@@ -1,5 +1,4 @@
 import path from 'node:path';
-import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
@@ -97,35 +96,15 @@ export default class ROMHeader {
     return undefined;
   }
 
-  private static async readHeaderHex(
-    readable: stream.Readable,
-    start: number,
-    end: number,
-  ): Promise<string> {
-    const chunks: Buffer[] = [];
-    let bytesRead = 0;
-
-    for await (const chunk of readable as AsyncIterable<Buffer>) {
-      if (chunk.length > 0) {
-        chunks.push(chunk);
-        bytesRead += chunk.length;
-      }
-
-      // Stop reading when we get enough data, trigger a 'close' event
-      if (bytesRead >= end) {
-        break;
-      }
-    }
-
-    return Buffer.concat(chunks).subarray(start, end).toString('hex').toUpperCase();
-  }
-
   /**
-   * Read the leading bytes from a stream and return the matching {@link ROMHeader}, or
-   * undefined if no known header matches.
+   * Return the {@link ROMHeader} matching a file's leading bytes, or undefined if no known header
+   * matches.
    */
-  static async headerFromFileStream(readable: stream.Readable): Promise<ROMHeader | undefined> {
-    const fileHeader = await this.readHeaderHex(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
+  static headerFromBuffer(fileHead: Buffer): ROMHeader | undefined {
+    const fileHeader = fileHead
+      .subarray(0, this.MAX_HEADER_LENGTH_BYTES)
+      .toString('hex')
+      .toUpperCase();
 
     const headers = Object.values(this.HEADERS);
     for (const header of headers) {
