@@ -58,9 +58,17 @@ export default class ZeroSizeFile extends File {
   /**
    * Invoke the callback with a readable stream that produces zero bytes.
    */
-  override async createReadStream<T>(callback: (readable: Readable) => Promise<T> | T): Promise<T> {
+  override async extractToStream<T>(callback: (readable: Readable) => Promise<T> | T): Promise<T> {
     const readable = StreamUtil.staticReadable(0, 0x00);
     return await callback(readable);
+  }
+
+  /**
+   * @returns no bytes, because this file has none
+   */
+  // eslint-disable-next-line @typescript-eslint/require-await
+  override async readFirstBytes(): Promise<Buffer> {
+    return Buffer.alloc(0);
   }
 
   override withProps(): File {

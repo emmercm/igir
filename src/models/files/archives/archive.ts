@@ -3,8 +3,8 @@ import type { Readable } from 'node:stream';
 
 import Temp from '../../../globals/temp.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
-import LimitBytesTransform from '../../../streams/limitBytesTransform.js';
 import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
+import BufferUtil from '../../../utils/bufferUtil.js';
 import FsUtil from '../../../utils/fsUtil.js';
 import StreamUtil from '../../../utils/streamUtil.js';
 import File from '../file.js';
@@ -106,34 +106,81 @@ export default abstract class Archive {
   }
 
   /**
-   * Most archive libraries don't provide a way to read a specific entry's stream, extract the entry
-   * to a temp file and then create a stream by default.
-   *
-   * The stream is bounded by the {@link start} and {@link end} byte offsets (both inclusive).
+   * Invoke the callback with a readable stream of the entry's bytes, from the {@link start} byte
+   * offset to the end of the entry.
    */
   async extractEntryToStream<T>(
     entryRef: ArchiveEntryRef,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
-    end?: number,
   ): Promise<T> {
-    return await this.extractEntryToTempFile(
+    return await this.streamEntry(
       entryRef,
-      async (tempFile) =>
-        await File.createStreamFromFile(tempFile, callback, entryRef.size, start, end),
+      async (source) =>
+        await StreamUtil.pipelineSafe(
+          source,
+          start > 0 ? new SkipBytesTransform(start) : undefined,
+          callback,
+        ),
     );
   }
 
   /**
-   * Pick the chunk size to read and decompress an entry's {@link start} to {@link end} byte range
-   * (both inclusive) with, from a source stream of the entry's {@link size} bytes. A short range,
-   * such as a header probe, gets a smaller chunk size so it doesn't decompress far past its end.
+   * Read the entry's first {@link byteCount} bytes, without decompressing much further than that.
+   * @returns those bytes, or fewer if the entry is shorter
+   */
+  async readEntryFirstBytes(entryRef: ArchiveEntryRef, byteCount: number): Promise<Buffer> {
+    if (byteCount <= 0) {
+      return Buffer.alloc(0);
+    }
+    return await this.streamEntry(
+      entryRef,
+      async (source) =>
+        await StreamUtil.pipelineSafe(
+          source,
+          undefined,
+          async (readable) => await BufferUtil.fromReadableFirstBytes(readable, byteCount),
+        ),
+      byteCount,
+    );
+  }
+
+  /**
+   * Invoke the callback with a forward-only stream of the entry's bytes from its first byte. When
+   * the caller only reads the leading {@link byteCount} bytes, the stream is read in chunks sized
+   * for that, but it isn't bounded by it. The callback tears the stream down.
+   *
+   * Most archive libraries don't provide a way to read a specific entry's stream, extract the entry
+   * to a temp file and then create a stream by default.
+   */
+  protected async streamEntry<T>(
+    entryRef: ArchiveEntryRef,
+    callback: (source: Readable) => Promise<T>,
+    byteCount?: number,
+  ): Promise<T> {
+    return await this.extractEntryToTempFile(
+      entryRef,
+      async (tempFile) =>
+        await File.streamFilePath(
+          tempFile,
+          callback,
+          entryRef.size,
+          0,
+          // The temp file can be bounded for free
+          byteCount === undefined ? undefined : byteCount - 1,
+        ),
+    );
+  }
+
+  /**
+   * Pick the chunk size to read and decompress an entry of {@link size} bytes with. A caller that
+   * only reads the entry's leading {@link byteCount} bytes, such as a header probe, gets a smaller
+   * chunk size so it doesn't decompress far past them.
    * @returns the chunk size, in bytes
    */
-  protected static getStreamChunkSize(start: number, end?: number, size?: number): number {
-    // The source stream starts at the entry's first byte, even when the range starts later
+  protected static getStreamChunkSize(size?: number, byteCount?: number): number {
     const chunkSize = StreamUtil.getChunkSize(0, undefined, size);
-    if (end === undefined) {
+    if (byteCount === undefined) {
       return chunkSize;
     }
 
@@ -142,35 +189,8 @@ export default abstract class Archive {
       Math.max(
         this.MIN_STREAM_CHUNK_SIZE,
         // The 4x here is a guess at how much a highly-compressible file might be compressed
-        4 * (end - start + 1),
+        4 * byteCount,
       ),
-    );
-  }
-
-  /**
-   * Invoke the callback with the {@link start} to {@link end} byte range (both inclusive) of a
-   * forward-only {@link source} stream, then tear the stream down. Reaching {@link end} stops the
-   * source early, so it doesn't decompress bytes that would be thrown away.
-   */
-  protected static async pipelineRange<T>(
-    source: Readable,
-    callback: (readable: Readable) => Promise<T> | T,
-    start: number,
-    end?: number,
-  ): Promise<T> {
-    const limitedCallback =
-      end === undefined
-        ? callback
-        : async (readable: Readable): Promise<T> =>
-            await StreamUtil.pipelineSafe(
-              readable,
-              new LimitBytesTransform(Math.max(0, end - start + 1)),
-              callback,
-            );
-    return await StreamUtil.pipelineSafe(
-      source,
-      start > 0 ? new SkipBytesTransform(start) : undefined,
-      limitedCallback,
     );
   }
 

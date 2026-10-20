@@ -11,6 +11,7 @@ import Temp from '../../globals/temp.js';
 import IOFile from '../../models/files/ioFile.js';
 import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
 import PadEndTransform from '../../streams/padEndTransform.js';
+import BufferUtil from '../../utils/bufferUtil.js';
 import FsUtil from '../../utils/fsUtil.js';
 import StreamUtil from '../../utils/streamUtil.js';
 import URLUtil from '../../utils/urlUtil.js';
@@ -372,9 +373,9 @@ export default class File implements FileProps {
     destinationPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    // If there are any paddings then we must use createTransformedReadStream()
+    // If there are any paddings then we must use extractAndTransformToStream()
     if (this.getPaddings().length > 0) {
-      await this.createTransformedReadStream(async (readable) => {
+      await this.extractAndTransformToStream(async (readable) => {
         const writeStream = fs.createWriteStream(destinationPath);
         if (callback) {
           await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -408,7 +409,7 @@ export default class File implements FileProps {
       );
       try {
         await patch.createPatchedFile(this, tempFile, callback);
-        await File.createStreamFromFile(
+        await File.streamFilePath(
           tempFile,
           async (readable) => {
             const writeStream = fs.createWriteStream(destinationPath);
@@ -428,7 +429,7 @@ export default class File implements FileProps {
     }
 
     // Headered: remove the header using streaming
-    await this.createReadStream(async (readable) => {
+    await this.extractToStream(async (readable) => {
       const writeStream = fs.createWriteStream(destinationPath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -439,20 +440,30 @@ export default class File implements FileProps {
   }
 
   /**
-   * Invoke the callback with a readable stream of this file's bytes, optionally bounded by
-   * start/end byte offsets (both inclusive).
+   * Invoke the callback with a readable stream of this file's bytes, from the {@link start} byte
+   * offset to the end of the file.
    */
-  async createReadStream<T>(
+  async extractToStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
-    end?: number,
   ): Promise<T> {
-    return await File.createStreamFromFile(
+    return await File.streamFilePath(this.getFilePath(), callback, this.getSize(), start);
+  }
+
+  /**
+   * Read this file's first {@link byteCount} bytes.
+   * @returns those bytes, or fewer if the file is shorter
+   */
+  async readFirstBytes(byteCount: number): Promise<Buffer> {
+    if (byteCount <= 0) {
+      return Buffer.alloc(0);
+    }
+    return await File.streamFilePath(
       this.getFilePath(),
-      callback,
+      async (readable) => await BufferUtil.fromReadableFirstBytes(readable, byteCount),
       this.getSize(),
-      start,
-      end,
+      0,
+      byteCount - 1,
     );
   }
 
@@ -460,7 +471,7 @@ export default class File implements FileProps {
    * Invoke the callback with a readable stream of this file's bytes after stripping any header
    * and applying any associated patch.
    */
-  async createTransformedReadStream<T>(
+  async extractAndTransformToStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
   ): Promise<T> {
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
@@ -485,7 +496,7 @@ export default class File implements FileProps {
 
     // Simple case: create a read stream at an offset
     if (!patch) {
-      return await this.createReadStream(wrappedCallback, start);
+      return await this.extractToStream(wrappedCallback, start);
     }
 
     // Complex case: create a temp patched file and then create read stream at an offset
@@ -494,12 +505,7 @@ export default class File implements FileProps {
     );
     try {
       await patch.createPatchedFile(this, tempFile);
-      return await File.createStreamFromFile(
-        tempFile,
-        wrappedCallback,
-        patch.getSizeAfter(),
-        start,
-      );
+      return await File.streamFilePath(tempFile, wrappedCallback, patch.getSizeAfter(), start);
     } finally {
       await FsUtil.rm(tempFile, { force: true });
     }
@@ -510,7 +516,7 @@ export default class File implements FileProps {
    * by start/end byte offsets. Reads are sized from the file's {@link size}, when known, so that
    * they don't allocate more memory than necessary.
    */
-  static async createStreamFromFile<T>(
+  static async streamFilePath<T>(
     filePath: fs.PathLike,
     callback: (readable: stream.Readable) => Promise<T> | T,
     size?: number,

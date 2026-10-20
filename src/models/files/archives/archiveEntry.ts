@@ -271,15 +271,22 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   /**
-   * Invoke the callback with a readable stream of this entry's bytes, optionally bounded by
-   * start/end byte offsets (both inclusive).
+   * Invoke the callback with a readable stream of this entry's bytes, from the {@link start} byte
+   * offset to the end of the entry.
    */
-  override async createReadStream<T>(
+  override async extractToStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
-    end?: number,
   ): Promise<T> {
-    return await this.archive.extractEntryToStream(this, callback, start, end);
+    return await this.archive.extractEntryToStream(this, callback, start);
+  }
+
+  /**
+   * Read this entry's first {@link byteCount} bytes.
+   * @returns those bytes, or fewer if the entry is shorter
+   */
+  override async readFirstBytes(byteCount: number): Promise<Buffer> {
+    return await this.archive.readEntryFirstBytes(this, byteCount);
   }
 
   override withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {

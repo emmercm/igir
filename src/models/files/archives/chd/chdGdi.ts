@@ -75,19 +75,18 @@ export default class ChdGdi extends Chd {
   }
 
   /**
-   * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback.
+   * Open a stream for the named entry and invoke the callback.
    */
-  override async extractEntryToStream<T>(
+  protected override async streamEntry<T>(
     entryRef: ArchiveEntryRef,
-    callback: (readable: stream.Readable) => Promise<T> | T,
-    start = 0,
-    end?: number,
+    callback: (source: stream.Readable) => Promise<T>,
+    byteCount?: number,
   ): Promise<T> {
     const sourceStream = await this.streamFile(
       entryRef,
-      Chd.getStreamChunkSize(start, end, entryRef.size),
+      Chd.getStreamChunkSize(entryRef.size, byteCount),
     );
-    return await Chd.pipelineRange(sourceStream, callback, start, end);
+    return await callback(sourceStream);
   }
 
   /**
@@ -135,7 +134,7 @@ export default class ChdGdi extends Chd {
           inputFilename: this.getFilePath(),
           mode: 'gdi',
           trackIndex: file.trackIndex,
-          highWaterMark: Chd.getStreamChunkSize(0, undefined, file.size),
+          highWaterMark: Chd.getStreamChunkSize(file.size),
         });
         let lastProgress = 0;
         const checksums = await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
