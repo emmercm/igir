@@ -6,6 +6,7 @@ import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import IOFile from '../../../src/models/files/ioFile.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 
 if (!(await FsUtil.exists(Temp.getTempDir()))) {
   await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
@@ -368,7 +369,7 @@ describe('getSize', () => {
     await FsUtil.copyFile(filePath, tempFile);
     const tempLink = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'link'));
     await (linkType === 'symbolic'
-      ? FsUtil.symlink(path.resolve(tempFile), tempLink)
+      ? FsUtil.symlink(PathUtil.resolve(tempFile), tempLink)
       : FsUtil.hardlink(tempFile, tempLink));
 
     const ioFile = await IOFile.fileFrom(tempLink, 'r');

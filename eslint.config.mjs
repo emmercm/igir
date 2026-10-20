@@ -16,6 +16,7 @@ import noArrayPushSpread from './.eslint/rules/performance/noArrayPushSpread.mjs
 import noArrayRebuildInLoop from './.eslint/rules/performance/noArrayRebuildInLoop.mjs';
 import noArrayShiftMutationInLoop from './.eslint/rules/performance/noArrayShiftMutationInLoop.mjs';
 import noNumberToLocaleString from './.eslint/rules/performance/noNumberToLocaleString.mjs';
+import noPathResolve from './.eslint/rules/performance/noPathResolve.mjs';
 import noFsPromisify from './.eslint/rules/style/noFsPromisify.mjs';
 import noNodeSubpathImports from './.eslint/rules/style/noNodeSubpathImports.mjs';
 import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImport.mjs';
@@ -90,6 +91,7 @@ export default eslintConfig.defineConfig([
           'no-array-rebuild-in-loop': noArrayRebuildInLoop,
           'no-array-shift-mutation-in-loop': noArrayShiftMutationInLoop,
           'no-number-to-locale-string': noNumberToLocaleString,
+          'no-path-resolve': noPathResolve,
         },
       },
     },
@@ -101,6 +103,7 @@ export default eslintConfig.defineConfig([
       'local/no-array-rebuild-in-loop': 'error',
       'local/no-array-shift-mutation-in-loop': 'error',
       'local/no-number-to-locale-string': 'error',
+      'local/no-path-resolve': 'error',
     },
   },
 

@@ -5,6 +5,7 @@ import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import DirectoryCleaner from '../../../src/modules/cleaners/directoryCleaner.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
@@ -32,7 +33,7 @@ async function runOutputCleaner(
 
   try {
     const writtenRomFilePathsToExclude = writtenFilePathsToExclude.map((filePath) =>
-      path.resolve(tempInputDir, filePath),
+      PathUtil.resolve(tempInputDir, filePath),
     );
 
     const before = await FsUtil.walk(tempInputDir, WalkMode.FILES);
@@ -189,7 +190,7 @@ it('should delete hard links', async () => {
         commands: ['move', 'clean'],
       }),
       new ProgressBarFake(),
-    ).clean([linksDir], [path.resolve(tempLinkOne)]);
+    ).clean([linksDir], [PathUtil.resolve(tempLinkOne)]);
 
     const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted((a, b) =>
       a.localeCompare(b),
@@ -229,7 +230,7 @@ it('should delete symlinks', async () => {
         commands: ['move', 'clean'],
       }),
       new ProgressBarFake(),
-    ).clean([linksDir], [path.resolve(tempLinkOne)]);
+    ).clean([linksDir], [PathUtil.resolve(tempLinkOne)]);
 
     const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted((a, b) =>
       a.localeCompare(b),

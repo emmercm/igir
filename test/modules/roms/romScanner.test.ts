@@ -13,6 +13,7 @@ import Options from '../../../src/models/options.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ArrayUtil from '../../../src/utils/arrayUtil.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
@@ -260,7 +261,7 @@ describe('multiple files', () => {
           await FsUtil.mkdir(path.dirname(tempLink), { recursive: true });
           if (idx % 2 === 0) {
             // symlink some files with absolute paths
-            await FsUtil.symlink(path.resolve(romFile), tempLink);
+            await FsUtil.symlink(PathUtil.resolve(romFile), tempLink);
           } else {
             // symlink some files with relative paths
             await FsUtil.symlink(await FsUtil.symlinkRelativePath(romFile, tempLink), tempLink);
@@ -303,7 +304,7 @@ describe('multiple files', () => {
           await FsUtil.mkdir(path.dirname(tempLink), { recursive: true });
           if (idx % 2 === 0) {
             // symlink some files with absolute paths
-            await FsUtil.symlink(path.resolve(romDir), tempLink);
+            await FsUtil.symlink(PathUtil.resolve(romDir), tempLink);
           } else {
             // symlink some files with relative paths
             await FsUtil.symlink(await FsUtil.symlinkRelativePath(romDir, tempLink), tempLink);
