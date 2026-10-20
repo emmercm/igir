@@ -118,15 +118,15 @@ export default class Igir {
       fileCache.disable();
     } else {
       const cachePath = await this.getCachePath();
-      if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
+      if (cachePath === undefined || process.env.NODE_ENV === 'test') {
+        logger.trace('not using a file for the file cache');
+      } else {
         if (await FsUtil.exists(cachePath)) {
           logger.trace(`loading the existing file cache at '${cachePath}'`);
         } else {
           logger.trace(`creating a new file cache at '${cachePath}'`);
         }
         await fileCache.loadFile(cachePath);
-      } else {
-        logger.trace('not using a file for the file cache');
       }
     }
     const fileFactory = new FileFactory(fileCache);
