@@ -21,6 +21,7 @@ import File from '../../../src/models/files/file.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const CRC = '12345678';
@@ -313,7 +314,7 @@ describe('preferFilenameRegex', () => {
 });
 
 describe('overwrite preference', () => {
-  const outputDir = path.resolve('/igir-test/output');
+  const outputDir = PathUtil.resolve('/igir-test/output');
 
   it('should prefer files NOT in the output dir when overwrite=true', async () => {
     const inOutput = await File.fileOf({
@@ -322,7 +323,7 @@ describe('overwrite preference', () => {
       crc32: CRC,
     });
     const notInOutput = await File.fileOf({
-      filePath: path.resolve('/igir-test/input/rom.rom'),
+      filePath: PathUtil.resolve('/igir-test/input/rom.rom'),
       size: SIZE,
       crc32: CRC,
     });
@@ -344,7 +345,7 @@ describe('overwrite preference', () => {
       crc32: CRC,
     });
     const notInOutput = await File.fileOf({
-      filePath: path.resolve('/igir-test/input/rom.rom'),
+      filePath: PathUtil.resolve('/igir-test/input/rom.rom'),
       size: SIZE,
       crc32: CRC,
     });
@@ -367,7 +368,7 @@ describe('overwrite preference', () => {
     });
     const notInOutput = await File.fileOf({
       // "/igir-test/aaa" sorts before "/igir-test/output" alphabetically
-      filePath: path.resolve('/igir-test/aaa/rom.rom'),
+      filePath: PathUtil.resolve('/igir-test/aaa/rom.rom'),
       size: SIZE,
       crc32: CRC,
     });

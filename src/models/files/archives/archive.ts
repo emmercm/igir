@@ -6,6 +6,7 @@ import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import LimitBytesTransform from '../../../streams/limitBytesTransform.js';
 import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
+import PathUtil from '../../../utils/pathUtil.js';
 import StreamUtil from '../../../utils/streamUtil.js';
 import File from '../file.js';
 import type ArchiveEntry from './archiveEntry.js';
@@ -36,7 +37,7 @@ export default abstract class Archive {
   private readonly filePath: string;
 
   constructor(filePath: string) {
-    this.filePath = path.resolve(filePath);
+    this.filePath = PathUtil.resolve(filePath);
   }
 
   protected abstract new(filePath: string): Archive;

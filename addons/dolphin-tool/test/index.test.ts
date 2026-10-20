@@ -8,6 +8,7 @@ import worker_threads from 'node:worker_threads';
 import Temp from '../../../src/globals/temp.js';
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import isFileOpen from '../../../test/utils/isFileOpen.js';
 import dolphin, { ContainerFormat } from '../index.js';
 
@@ -382,7 +383,7 @@ describe('openReader', () => {
     'should terminate workers with pending native reads, releasing the file',
     async () => {
       await withTempDir(async (directory) => {
-        const imagePath = path.resolve(
+        const imagePath = PathUtil.resolve(
           await copyInto(directory, '240pSuite-GameCube-1.20.zstd.rvz'),
         );
         for (let i = 0; i < 20; i++) {

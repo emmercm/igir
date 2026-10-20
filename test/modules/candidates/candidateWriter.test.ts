@@ -40,6 +40,7 @@ import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ROMTrimProcessor from '../../../src/modules/roms/romTrimProcessor.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function copyFixturesToTemp(
@@ -2200,8 +2201,8 @@ describe('link', () => {
       expect(outputFilesBefore.length).toBeGreaterThan(0);
       for (const [outputPath, stats] of outputFilesBefore) {
         expect(stats.isSymbolicLink()).toEqual(true);
-        const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
-        const outputPathResolved = path.resolve(
+        const outputPathAbsolute = PathUtil.resolve(path.join(outputTemp, outputPath));
+        const outputPathResolved = PathUtil.resolve(
           path.dirname(outputPathAbsolute),
           await FsUtil.readlink(outputPathAbsolute),
         );

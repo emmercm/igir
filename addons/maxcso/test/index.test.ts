@@ -9,6 +9,7 @@ import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import isFileOpen from '../../../test/utils/isFileOpen.js';
 import maxcso, { MaxcsoFormat } from '../index.js';
 
@@ -1199,7 +1200,7 @@ describe('openReader', () => {
     'should terminate workers with pending native reads and info calls, releasing the file',
     async () => {
       await withTempDir(async (directory) => {
-        const archivePath = path.resolve(await copyInto(directory, CSO1_ZLIB));
+        const archivePath = PathUtil.resolve(await copyInto(directory, CSO1_ZLIB));
         for (let i = 0; i < 20; i++) {
           const worker = new worker_threads.Worker(
             `const { parentPort, workerData } = require('node:worker_threads');

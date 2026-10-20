@@ -19,6 +19,7 @@ import IPSPatch from '../../../../src/models/patches/ipsPatch.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import bufferUtil from '../../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../../src/utils/fsUtil.js';
+import PathUtil from '../../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('constructor', () => {
@@ -119,7 +120,7 @@ describe('getSize', () => {
       const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
-        await FsUtil.symlink(path.resolve(filePath), tempLink);
+        await FsUtil.symlink(PathUtil.resolve(filePath), tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);

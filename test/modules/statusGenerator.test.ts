@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import stripAnsi from 'strip-ansi';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
@@ -24,6 +22,7 @@ import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.
 import DATPreferer from '../../src/modules/dats/datPreferer.js';
 import ROMIndexer from '../../src/modules/roms/romIndexer.js';
 import StatusGenerator from '../../src/modules/statusGenerator.js';
+import PathUtil from '../../src/utils/pathUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const gameNameNoRoms = 'no roms';
@@ -443,7 +442,7 @@ dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,fal
       );
       await expect(datStatus.toCsv(options)).resolves
         .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
-dat,bios,FOUND,${path.resolve('bios.rom')},false,true,true,false,false,false,false,false,false,false,false,false,false
+dat,bios,FOUND,${PathUtil.resolve('bios.rom')},false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
 dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
@@ -479,7 +478,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,INCOMPLETE,${path.resolve('one.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with multiple roms,INCOMPLETE,${PathUtil.resolve('one.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
     });
@@ -497,7 +496,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
         .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),FOUND,${path.resolve('game prototype (proto).rom')},false,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game prototype (proto),FOUND,${PathUtil.resolve('game prototype (proto).rom')},false,false,false,false,false,false,false,false,true,false,false,false,false
 dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
@@ -518,7 +517,7 @@ dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,fals
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
 dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
-dat,game with single rom,FOUND,${path.resolve('game.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with single rom,FOUND,${PathUtil.resolve('game.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
     });
   });
@@ -551,7 +550,7 @@ dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,fa
 dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-dat,patched game,FOUND,${path.resolve('patched.rom')},true,false,true,false,false,false,false,false,false,false,false,false,false`);
+dat,patched game,FOUND,${PathUtil.resolve('patched.rom')},true,false,true,false,false,false,false,false,false,false,false,false,false`);
   });
 
   it('should report every game as found when all are present', async () => {
@@ -570,11 +569,11 @@ dat,patched game,FOUND,${path.resolve('patched.rom')},true,false,true,false,fals
     );
     await expect(datStatus.toCsv(options)).resolves
       .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
-dat,bios,FOUND,${path.resolve('bios.rom')},false,true,true,false,false,false,false,false,false,false,false,false,false
+dat,bios,FOUND,${PathUtil.resolve('bios.rom')},false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),FOUND,${path.resolve('game prototype (proto).rom')},false,false,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,FOUND,"${path.resolve('one.rom')}|${path.resolve('two.rom')}",false,false,true,false,false,false,false,false,false,false,false,false,false
-dat,game with single rom,FOUND,${path.resolve('game.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),FOUND,${PathUtil.resolve('game prototype (proto).rom')},false,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,FOUND,"${PathUtil.resolve('one.rom')}|${PathUtil.resolve('two.rom')}",false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with single rom,FOUND,${PathUtil.resolve('game.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
   });
 
@@ -620,10 +619,10 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
     );
     await expect(datStatus.toCsv(options)).resolves
       .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
-dat,bios,FOUND,${path.resolve('bios.rom')},false,true,true,false,false,false,false,false,false,false,false,false,false
+dat,bios,FOUND,${PathUtil.resolve('bios.rom')},false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-dat,game with multiple roms,FOUND,"${path.resolve('one.rom')}|${path.resolve('two.rom')}",false,false,true,false,false,false,false,false,false,false,false,false,false
-dat,game with single rom,FOUND,${path.resolve('game.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with multiple roms,FOUND,"${PathUtil.resolve('one.rom')}|${PathUtil.resolve('two.rom')}",false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with single rom,FOUND,${PathUtil.resolve('game.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
   });
 
@@ -675,7 +674,7 @@ dat,${gameNameDiskOnly},FOUND,,false,false,true,false,false,false,false,false,fa
       );
       await expect(datStatus.toCsv(options)).resolves
         .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
-dat,${gameNameDiskOnly},FOUND,${path.resolve('one.chd')},false,false,true,false,false,false,false,false,false,false,false,false,false`);
+dat,${gameNameDiskOnly},FOUND,${PathUtil.resolve('one.chd')},false,false,true,false,false,false,false,false,false,false,false,false,false`);
     });
   });
 });

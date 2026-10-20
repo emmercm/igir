@@ -37,6 +37,7 @@ import Options, {
 import yargs from '../polyfill/yargsShim.js';
 import ArrayUtil from '../utils/arrayUtil.js';
 import ConsoleUtil from '../utils/consoleUtil.js';
+import PathUtil from '../utils/pathUtil.js';
 
 /**
  * Parse a {@link process.argv} (without its first two arguments, the Node.js executable and the
@@ -445,10 +446,10 @@ export default class ArgumentsParser {
         )) {
           return;
         }
-        const outputResolved = path.resolve(middlewareArgv.output as string);
+        const outputResolved = PathUtil.resolve(middlewareArgv.output as string);
         if (
           middlewareArgv.input.every(
-            (inputPath) => !outputResolved.startsWith(path.resolve(inputPath as string)),
+            (inputPath) => !outputResolved.startsWith(PathUtil.resolve(inputPath as string)),
           )
         ) {
           logger.warn(

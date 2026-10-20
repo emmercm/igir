@@ -21,6 +21,7 @@ import type { ChecksumProps } from '../../models/files/fileChecksums.js';
 import type Options from '../../models/options.js';
 import ArrayUtil from '../../utils/arrayUtil.js';
 import IntlUtil from '../../utils/intlUtil.js';
+import PathUtil from '../../utils/pathUtil.js';
 import Module from '../module.js';
 
 /**
@@ -51,7 +52,7 @@ export default class DATGameInferrer extends Module {
     const normalizedInputPaths = this.options
       .getInputPaths()
       // Try to strip out glob patterns
-      .map((inputPath) => path.resolve(inputPath.replace(/([\\/][?*]+)+$/, '')));
+      .map((inputPath) => PathUtil.resolve(inputPath.replace(/([\\/][?*]+)+$/, '')));
 
     const inputPathsToRomFiles = romFiles.reduce((map, file) => {
       const filePath = file.getFilePath();

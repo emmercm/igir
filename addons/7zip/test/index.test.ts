@@ -9,6 +9,7 @@ import zlib from 'node:zlib';
 import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import isFileOpen from '../../../test/utils/isFileOpen.js';
 import sevenZip, { SevenZipFormat } from '../index.js';
 
@@ -1565,7 +1566,7 @@ describe('openEntryReader', () => {
               eval: true,
               workerData: {
                 indexUrl: new URL('../index.ts', import.meta.url).href,
-                archivePath: path.resolve(archivePath),
+                archivePath: PathUtil.resolve(archivePath),
               },
             },
           );

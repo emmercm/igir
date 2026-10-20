@@ -12,6 +12,7 @@ import Defaults from '../globals/defaults.js';
 import gracefulFs from '../polyfill/gracefulFs.js';
 import type { FsReadCallback } from '../streams/fsReadTransform.js';
 import FsReadTransform from '../streams/fsReadTransform.js';
+import PathUtil from './pathUtil.js';
 import StreamUtil from './streamUtil.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
@@ -187,7 +188,7 @@ export default class FsUtil {
    * Create a hardlink at location {@link link} to the original file {@link target}.
    */
   static async hardlink(target: string, link: string): Promise<void> {
-    const targetResolved = path.resolve(target);
+    const targetResolved = PathUtil.resolve(target);
 
     if (!(await this.exists(targetResolved))) {
       throw new IgirException(`can't link nonexistent file '${targetResolved}' to '${link}'`);
@@ -293,7 +294,7 @@ export default class FsUtil {
    * @returns if {@link filePath} is on a samba path
    */
   static isSamba(filePath: string): boolean {
-    const resolvedPath = path.resolve(filePath);
+    const resolvedPath = PathUtil.resolve(filePath);
     if (resolvedPath === os.devNull) {
       return false;
     }

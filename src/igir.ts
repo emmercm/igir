@@ -63,6 +63,7 @@ import StatusGenerator from './modules/statusGenerator.js';
 import ArrayUtil from './utils/arrayUtil.js';
 import FsUtil from './utils/fsUtil.js';
 import IntlUtil from './utils/intlUtil.js';
+import PathUtil from './utils/pathUtil.js';
 
 /**
  * The main class that coordinates file scanning, processing, and writing.
@@ -233,7 +234,7 @@ export default class Igir {
         writerSemaphore,
       ).write(processedDat, candidates);
       for (const playlistPath of playlistPaths) {
-        filePathsToExcludeFromCleaning.add(path.resolve(playlistPath));
+        filePathsToExcludeFromCleaning.add(PathUtil.resolve(playlistPath));
       }
 
       // Write a dir2dat
@@ -243,7 +244,7 @@ export default class Igir {
         writerSemaphore,
       ).create(processedDat, candidates);
       if (dir2DatPath) {
-        filePathsToExcludeFromCleaning.add(path.resolve(dir2DatPath));
+        filePathsToExcludeFromCleaning.add(PathUtil.resolve(dir2DatPath));
       }
 
       // Write a fixdat
@@ -252,7 +253,7 @@ export default class Igir {
         candidates,
       );
       if (fixdatPath) {
-        filePathsToExcludeFromCleaning.add(path.resolve(fixdatPath));
+        filePathsToExcludeFromCleaning.add(PathUtil.resolve(fixdatPath));
       }
 
       // Write the output report
