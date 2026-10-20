@@ -23,3 +23,7 @@
 	url = https://github.com/unknownbrackets/maxcso.git
 	branch = master
 	shallow = true
+[submodule "addons/7zip/deps/JWasm"]
+	path = addons/7zip/deps/JWasm
+	url = https://github.com/Baron-von-Riedesel/JWasm.git
+	shallow = true
