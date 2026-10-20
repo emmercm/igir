@@ -511,7 +511,7 @@ describe('extractAndTransformToFile', () => {
   });
 });
 
-describe('createTransformedReadStream padding', () => {
+describe('extractAndTransformToStream padding', () => {
   it('returns raw bytes unchanged when paddings is empty', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
@@ -520,7 +520,7 @@ describe('createTransformedReadStream padding', () => {
       await FsUtil.writeFile(tempFilePath, raw);
       const file = await File.fileOf({ filePath: tempFilePath }, ChecksumBitmask.CRC32);
 
-      const bytes = await file.createTransformedReadStream(
+      const bytes = await file.extractAndTransformToStream(
         async (readable) => await BufferUtil.fromReadable(readable),
       );
 
@@ -546,7 +546,7 @@ describe('createTransformedReadStream padding', () => {
       ]);
 
       await expect(
-        file.createTransformedReadStream(
+        file.extractAndTransformToStream(
           async (readable) => await BufferUtil.fromReadable(readable),
         ),
       ).rejects.toThrow(/multiple paddings/i);
@@ -565,7 +565,7 @@ describe('createTransformedReadStream padding', () => {
       const fileWithoutPadding = await fileFactory.fileFrom(tempFilePath, ChecksumBitmask.CRC32);
       const file = fileWithoutPadding.withPaddings([new ROMPadding({ paddedSize: 8, fillByte })]);
 
-      const bytes = await file.createTransformedReadStream(
+      const bytes = await file.extractAndTransformToStream(
         async (readable) => await BufferUtil.fromReadable(readable),
       );
 
@@ -577,7 +577,7 @@ describe('createTransformedReadStream padding', () => {
   });
 });
 
-describe('createReadStream', () => {
+describe('extractToStream', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(
       new Options({
@@ -591,7 +591,7 @@ describe('createReadStream', () => {
 
     const temp = await FsUtil.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
-      await raw.createReadStream(async (readable) => {
+      await raw.extractToStream(async (readable) => {
         const contents = (await bufferUtil.fromReadable(readable)).toString();
         expect(contents).toBeTruthy();
       });
@@ -602,13 +602,25 @@ describe('createReadStream', () => {
   it('should read no more than the file size at a time', async () => {
     const file = await File.fileOf({ filePath: './test/fixtures/roms/raw/trimmed.3ds' });
 
-    const highWaterMark = await file.createReadStream((readable) => readable.readableHighWaterMark);
+    const highWaterMark = await file.extractToStream((readable) => readable.readableHighWaterMark);
 
     expect(highWaterMark).toEqual(520);
   });
 });
 
-describe('createStreamFromFile', () => {
+describe('readFirstBytes', () => {
+  const filePath = './test/fixtures/roms/raw/trimmed.3ds';
+
+  test.each([0, 1, 16, 520, 1024])('should read the leading %s bytes', async (byteCount) => {
+    const file = await File.fileOf({ filePath });
+
+    const firstBytes = await file.readFirstBytes(byteCount);
+
+    expect(firstBytes).toEqual((await fs.promises.readFile(filePath)).subarray(0, byteCount));
+  });
+});
+
+describe('streamFilePath', () => {
   const filePath = './test/fixtures/roms/raw/trimmed.3ds';
 
   it.each([
@@ -626,7 +638,7 @@ describe('createStreamFromFile', () => {
       end: number | undefined,
       expected,
     ) => {
-      const highWaterMark = await File.createStreamFromFile(
+      const highWaterMark = await File.streamFilePath(
         filePath,
         (readable) => readable.readableHighWaterMark,
         size,

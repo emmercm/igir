@@ -111,19 +111,18 @@ export default abstract class SevenZipLib extends Archive {
   /**
    * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
    */
-  override async extractEntryToStream<T>(
+  protected override async streamEntry<T>(
     { entryPath, entryIndex, size }: ArchiveEntryRef,
-    callback: (readable: Readable) => Promise<T> | T,
-    start = 0,
-    end?: number,
+    callback: (source: Readable) => Promise<T>,
+    byteCount?: number,
   ): Promise<T> {
     const sourceStream = sevenZip.openEntryReader({
       inputFilename: this.getFilePath(),
       format: this.getSevenZipFormat(),
       entryPath: this.hasMeaningfulEntryPaths() ? entryPath : undefined,
       entryIndex,
-      highWaterMark: Archive.getStreamChunkSize(start, end, size),
+      highWaterMark: Archive.getStreamChunkSize(size, byteCount),
     });
-    return await Archive.pipelineRange(sourceStream, callback, start, end);
+    return await callback(sourceStream);
   }
 }

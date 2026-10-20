@@ -77,20 +77,18 @@ export default class ChdRaw extends Chd {
   }
 
   /**
-   * Open a stream over the CHD's logical bytes, skipping the first `start` bytes, and invoke the
-   * callback. A raw CHD exposes a single logical image, so the entry path is not needed to
-   * resolve it.
+   * Open a stream over the CHD's logical bytes and invoke the callback. A raw CHD exposes a single
+   * logical image, so the entry path is not needed to resolve it.
    */
-  override async extractEntryToStream<T>(
+  protected override async streamEntry<T>(
     entryRef: ArchiveEntryRef,
-    callback: (readable: stream.Readable) => Promise<T> | T,
-    start = 0,
-    end?: number,
+    callback: (source: stream.Readable) => Promise<T>,
+    byteCount?: number,
   ): Promise<T> {
     const sourceStream: stream.Readable = chdman.openRawReader({
       inputFilename: this.getFilePath(),
-      highWaterMark: Chd.getStreamChunkSize(start, end, entryRef.size),
+      highWaterMark: Chd.getStreamChunkSize(entryRef.size, byteCount),
     });
-    return await Chd.pipelineRange(sourceStream, callback, start, end);
+    return await callback(sourceStream);
   }
 }

@@ -1,8 +1,4 @@
-import stream from 'node:stream';
-
 import { Memoize } from 'typescript-memoize';
-
-import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 
 type SignaturePiece = (
   | {
@@ -900,29 +896,6 @@ export default class FileSignature {
     this._canBeTrimmed = canBeTrimmed;
   }
 
-  private static async readHeaderBuffer(
-    readable: stream.Readable,
-    start: number,
-    end: number,
-  ): Promise<Buffer> {
-    const chunks: Buffer[] = [];
-    let bytesRead = 0;
-
-    for await (const chunk of readable as AsyncIterable<Buffer>) {
-      if (chunk.length > 0) {
-        chunks.push(chunk);
-        bytesRead += chunk.length;
-      }
-
-      // Stop reading when we get enough data, trigger a 'close' event
-      if (bytesRead >= end) {
-        break;
-      }
-    }
-
-    return Buffer.concat(chunks).subarray(start, end);
-  }
-
   /**
    * Look up a known {@link FileSignature} by its registered name, or undefined if no match
    * exists.
@@ -932,17 +905,11 @@ export default class FileSignature {
   }
 
   /**
-   * Read the leading bytes from a stream and return the matching {@link FileSignature}, or
-   * undefined if no known signature matches.
+   * Return the {@link FileSignature} matching a file's leading bytes, or undefined if no known
+   * signature matches.
    */
-  static async signatureFromFileStream(
-    readable: stream.Readable,
-    callback?: FsReadCallback,
-  ): Promise<FileSignature | undefined> {
-    const fileHeader = await this.readHeaderBuffer(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
-    if (callback) {
-      callback(fileHeader.length);
-    }
+  static signatureFromBuffer(fileHead: Buffer): FileSignature | undefined {
+    const fileHeader = fileHead.subarray(0, this.MAX_HEADER_LENGTH_BYTES);
 
     for (const romSignature of this.SIGNATURES) {
       const didSignatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
