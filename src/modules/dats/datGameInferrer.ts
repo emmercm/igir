@@ -217,30 +217,22 @@ export default class DATGameInferrer extends Module {
     files: File[],
     keyFunc: (file: File) => string | undefined,
   ): Map<string, ChecksumProps> {
-    const crc32Map = files.reduce((map, romFile) => {
-      const key = keyFunc(romFile);
+    const result = new Map<string, ChecksumProps>();
+    for (const [key, romFiles] of Map.groupBy(files, keyFunc)) {
       if (key === undefined) {
-        return map;
+        // Files without the checksum were grouped together, ignore them
+        continue;
       }
-      if (map.has(key)) {
-        map.get(key)?.push(romFile);
-      } else {
-        map.set(key, [romFile]);
+      const checksums: ChecksumProps = {};
+      for (const romFile of romFiles) {
+        checksums.crc32 = romFile.getCrc32() ?? checksums.crc32;
+        checksums.md5 = romFile.getMd5() ?? checksums.md5;
+        checksums.sha1 = romFile.getSha1() ?? checksums.sha1;
+        checksums.sha256 = romFile.getSha256() ?? checksums.sha256;
       }
-      return map;
-    }, new Map<string, File[]>());
-    return new Map(
-      Array.from(crc32Map, ([key, romFiles]) => {
-        const checksums: ChecksumProps = {};
-        for (const romFile of romFiles) {
-          checksums.crc32 = romFile.getCrc32() ?? checksums.crc32;
-          checksums.md5 = romFile.getMd5() ?? checksums.md5;
-          checksums.sha1 = romFile.getSha1() ?? checksums.sha1;
-          checksums.sha256 = romFile.getSha256() ?? checksums.sha256;
-        }
-        return [key, checksums];
-      }),
-    );
+      result.set(key, checksums);
+    }
+    return result;
   }
 
   private static getGameName(file: File): string {
@@ -273,17 +265,10 @@ export default class DATGameInferrer extends Module {
     );
 
     // For archives, assume the entire archive is one game
-    const archivePathsToArchiveEntries = romFiles
-      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
-      .reduce((map, file) => {
-        const key = `${file.getFilePath()}|${file.getArchive().constructor.name}`;
-        if (map.has(key)) {
-          map.get(key)?.push(file);
-        } else {
-          map.set(key, [file]);
-        }
-        return map;
-      }, new Map<string, ArchiveEntry<Archive>[]>());
+    const archivePathsToArchiveEntries = Map.groupBy(
+      romFiles.filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry),
+      (file) => `${file.getFilePath()}|${file.getArchive().constructor.name}`,
+    );
 
     const results = Array.from(archivePathsToArchiveEntries.values(), (archiveEntries) => {
       const gameName = DATGameInferrer.getGameName(archiveEntries[0]);
@@ -408,11 +393,10 @@ export default class DATGameInferrer extends Module {
       return map;
     }, new Map<string, number>());
 
-    const results = romFiles
-      .filter((file) => !(file instanceof ArchiveEntry))
-      .reduce((map, file) => {
+    const results = Map.groupBy(
+      romFiles.filter((file) => !(file instanceof ArchiveEntry)),
+      (file) => {
         const dirname = path.dirname(file.getFilePath());
-        let gameName: string;
         if (
           // Group this file with other files in the same subdirectory if:
           // ...this file is in a subdirectory of the input path
@@ -422,19 +406,12 @@ export default class DATGameInferrer extends Module {
           // ...and this file's subdirectory has multiple files
           (dirnamesToFileCounts.get(dirname) ?? 0) > 1
         ) {
-          gameName = path.basename(dirname);
-        } else {
-          // Otherwise, get the game name from the file, ignoring its subdirectory
-          gameName = DATGameInferrer.getGameName(file);
+          return path.basename(dirname);
         }
-
-        if (map.has(gameName)) {
-          map.get(gameName)?.push(file);
-        } else {
-          map.set(gameName, [file]);
-        }
-        return map;
-      }, new Map<string, File[]>());
+        // Otherwise, get the game name from the file, ignoring its subdirectory
+        return DATGameInferrer.getGameName(file);
+      },
+    );
 
     this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(results.size)} games from raw files`,

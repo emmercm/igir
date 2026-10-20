@@ -161,17 +161,12 @@ export default class DATParentInferrer extends Module {
     this.progressBar.resetProgress(dat.getGames().length);
 
     // Group games by their stripped names
-    const strippedNamesToGames = dat.getGames().reduce((map, game) => {
+    const strippedNamesToGames = Map.groupBy(dat.getGames(), (game) => {
       let strippedGameName = game.getName();
       strippedGameName = DATParentInferrer.stripGameRegionAndLanguage(strippedGameName);
       strippedGameName = DATParentInferrer.stripGameVariants(strippedGameName);
-      if (map.has(strippedGameName)) {
-        map.get(strippedGameName)?.push(game);
-      } else {
-        map.set(strippedGameName, [game]);
-      }
-      return map;
-    }, new Map<string, Game[]>());
+      return strippedGameName;
+    });
     const groupedGames = [...strippedNamesToGames]
       .toSorted((a, b) => a[0].localeCompare(b[0]))
       .map(([, games]) => games);

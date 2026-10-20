@@ -512,17 +512,8 @@ export default class CandidateWriter extends Module {
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
     // the same input archive at the same time, to benefit from batch extraction.
-    const uniqueInputToOutputEntriesMap = inputToOutputEntries.reduce(
-      (map, [inputRomFile, outputRomFile]) => {
-        const key = inputRomFile.getFilePath();
-        if (map.has(key)) {
-          map.get(key)?.push([inputRomFile, outputRomFile]);
-        } else {
-          map.set(key, [[inputRomFile, outputRomFile]]);
-        }
-        return map;
-      },
-      new Map<string, [File, File][]>(),
+    const uniqueInputToOutputEntriesMap = Map.groupBy(inputToOutputEntries, ([inputRomFile]) =>
+      inputRomFile.getFilePath(),
     );
     for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
       await Promise.all(

@@ -58,15 +58,9 @@ export default class DATStatus {
   constructor(options: Options, dat: DAT, candidates: WriteCandidate[]) {
     this.dat = dat;
 
-    const indexedCandidates = candidates.reduce((map, candidate) => {
-      const key = candidate.getGame().hashCode();
-      if (map.has(key)) {
-        map.get(key)?.push(candidate);
-      } else {
-        map.set(key, [candidate]);
-      }
-      return map;
-    }, new Map<string, WriteCandidate[]>());
+    const indexedCandidates = Map.groupBy(candidates, (candidate) =>
+      candidate.getGame().hashCode(),
+    );
 
     // Un-patched ROMs
     for (const game of dat.getGames()) {

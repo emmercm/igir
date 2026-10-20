@@ -112,8 +112,10 @@ export default class FsUtil {
     let srcSize: number;
     try {
       srcSize = (await fs.promises.stat(src)).size;
-    } catch {
-      throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
+    } catch (error) {
+      throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`, {
+        cause: error,
+      });
     }
     const destDir = path.dirname(dest);
     if (!(await this.exists(destDir))) {
@@ -206,7 +208,9 @@ export default class FsUtil {
       return;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
-        throw new IgirException(`can't hard link files on different drives: ${error}`);
+        throw new IgirException(`can't hard link files on different drives: ${error}`, {
+          cause: error,
+        });
       }
       throw error;
     }
@@ -534,10 +538,10 @@ export default class FsUtil {
       await fs.promises.copyFile(src, dest, fs.constants.COPYFILE_FICLONE);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOTSUP') {
-        throw new IgirException('reflinks are not supported on this filesystem');
+        throw new IgirException('reflinks are not supported on this filesystem', { cause: error });
       }
       if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
-        throw new IgirException('reflinks are not supported across filesystems');
+        throw new IgirException('reflinks are not supported across filesystems', { cause: error });
       }
       throw error;
     }

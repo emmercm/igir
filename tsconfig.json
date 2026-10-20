@@ -12,17 +12,18 @@
 
     /**
      * https://node.green
-     * Node.js >=10.3.0 required for ES2018 (ignoring RegExp unicode property escapes)
+     * Node.js >=10.0.0 required for ES2018 (ignoring RegExp unicode property escapes)
      * Node.js >=12.0.0 required for ES2019
-     * Node.js >=16.3.0 required for ES2020
-     * Node.js >=16.0.0 required for ES2021
-     * Node.js >=16.13.2 required for ES2022
-     * Node.js >=20.11.1 required for ES2023
-     * Node.js >=22.12.1 required for ES2024
+     * Node.js >=14.0.0 required for ES2020 (mostly)
+     * Node.js >=15.0.0 required for ES2021
+     * Node.js >=16.11.0 required for ES2022 (mostly)
+     * Node.js >=20.0.0 required for ES2023
+     * Node.js >=22.13.0 required for ES2024
+     * Node.js >=24.0.0 required for ES2025
      */
 
     /* Language and Environment */
-    "target": "es2023",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "target": "es2024",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     // "lib": [],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
     // "jsx": "preserve",                                /* Specify what JSX code is generated. */
     "experimentalDecorators": true,                      /* Enable experimental support for TC39 stage 2 draft decorators. */

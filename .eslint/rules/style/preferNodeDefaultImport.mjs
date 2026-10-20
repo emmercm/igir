@@ -1,5 +1,5 @@
 /**
- * Bans named value imports from node: built-in modules in favour of the default import.
+ * Bans named value imports from node: built-in modules in favor of the default import.
  *
  * Node.js built-in modules expose a default export (the module namespace object)
  * and also allow named imports for individual exports. Using named imports for

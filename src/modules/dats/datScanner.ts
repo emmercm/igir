@@ -110,6 +110,7 @@ export default class DATScanner extends Scanner {
       } catch (error) {
         throw new IgirException(
           `failed to download '${datFile.toString()}': ${error instanceof Error ? error.message : error}`,
+          { cause: error },
         );
       }
     });
