@@ -21,18 +21,6 @@ export default {
    * {@link Game}s' names, group those objects together with the disc numbers stripped.
    */
   groupMultiDiscGames<T>(values: T[], gameNameMapper: (value: T) => string): Map<string, T[]> {
-    return values.reduce((map, value) => {
-      const gameName = gameNameMapper(value);
-
-      const gameNameStripped = this.getMultiDiscCommonName(gameName);
-
-      if (map.has(gameNameStripped)) {
-        map.get(gameNameStripped)?.push(value);
-      } else {
-        map.set(gameNameStripped, [value]);
-      }
-
-      return map;
-    }, new Map<string, T[]>());
+    return Map.groupBy(values, (value) => this.getMultiDiscCommonName(gameNameMapper(value)));
   },
 };
