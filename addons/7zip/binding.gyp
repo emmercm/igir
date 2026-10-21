@@ -99,6 +99,54 @@
         }],
         ["OS=='emscripten'", {
           "sources": ["stubs/emscriptenSysinfo.c"]
+        }],
+
+        # The assembly LZMA decoders, which only use integer instructions. LzmaDec.c calls them
+        # instead of its C decoder when Z7_LZMA_DEC_OPT is defined.
+        ["target_arch=='arm64' and OS!='win'", {
+          "defines": ["Z7_LZMA_DEC_OPT"],
+          "sources": ["<(z7)/Asm/arm64/LzmaDecOpt.S"]
+        }],
+        # The arm64 source is GNU syntax, which MSVC's armasm64 can't assemble. MSBuild matches
+        # rules by lowercased extension, so this one is "s".
+        ["target_arch=='arm64' and OS=='win'", {
+          "defines": ["Z7_LZMA_DEC_OPT"],
+          "sources": ["<(z7)/Asm/arm64/LzmaDecOpt.S"],
+          "rules": [{
+            "rule_name": "clang_asm",
+            "extension": "s",
+            "inputs": ["<(z7)/Asm/arm64/7zAsm.S"],
+            "outputs": ["<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj"],
+            "action": ["clang", "--target=aarch64-pc-windows-msvc", "-c", "<(RULE_INPUT_PATH)",
+                       "-o", "<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj"],
+            "message": "clang <(RULE_INPUT_PATH)",
+            "process_outputs_as_sources": 1
+          }]
+        }],
+        # The x64 source is MASM syntax, which MSBuild assembles with ml64
+        ["target_arch=='x64' and OS=='win'", {
+          "defines": ["Z7_LZMA_DEC_OPT"],
+          "sources": ["<(z7)/Asm/x86/LzmaDecOpt.asm"]
+        }],
+        # Elsewhere, JWasm assembles it. macOS x64 keeps the C decoder: JWasm can't write Mach-O.
+        ["target_arch=='x64' and OS=='linux'", {
+          "dependencies": ["jwasm#host"],
+          "defines": ["Z7_LZMA_DEC_OPT"],
+          "sources": ["<(z7)/Asm/x86/LzmaDecOpt.asm"],
+          "rules": [{
+            "rule_name": "jwasm",
+            "extension": "asm",
+            "inputs": ["<(PRODUCT_DIR)/jwasm", "<(z7)/Asm/x86/7zAsm.asm"],
+            "outputs": ["<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).o"],
+            "action": ["<(PRODUCT_DIR)/jwasm", "-nologo", "-elf64", "-DABI_LINUX", "-I<(z7)/Asm/x86",
+                       "-Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).o", "<(RULE_INPUT_PATH)"],
+            "message": "JWasm <(RULE_INPUT_PATH)",
+            "process_outputs_as_sources": 1
+          }],
+          # JWasm's ELF objects have no .note.GNU-stack section, so without this the linker marks
+          # binding.node as needing an executable stack, which newer glibc refuses to load. 7-Zip's
+          # own makefile links with this too.
+          "link_settings": {"ldflags": ["-Wl,-z,noexecstack"]}
         }]
       ],
       "defines": ["Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0",
@@ -352,5 +400,82 @@
                           "-U__AVX__", "-U__AVX2__", "-U__PCLMUL__"]
       }
     }
+  ],
+
+  "conditions": [
+    ["target_arch=='x64' and OS=='linux'", {
+      "targets": [
+        {
+          # The MASM-compatible assembler for the x64 LZMA decoder, which 7-Zip's own makefile supports,
+          # built from source
+          "target_name": "jwasm",
+          "type": "executable",
+          "toolsets": ["host"],
+          "variables": {"jwasm": "deps/JWasm/src"},
+          "defines": ["__UNIX__"],
+          "include_dirs": ["<(jwasm)/H"],
+          "cflags_c": ["-std=gnu99"],
+          "sources": [
+            "<(jwasm)/apiemu.c",
+            "<(jwasm)/assemble.c",
+            "<(jwasm)/assume.c",
+            "<(jwasm)/atofloat.c",
+            "<(jwasm)/backptch.c",
+            "<(jwasm)/bin.c",
+            "<(jwasm)/branch.c",
+            "<(jwasm)/cmdline.c",
+            "<(jwasm)/codegen.c",
+            "<(jwasm)/coff.c",
+            "<(jwasm)/condasm.c",
+            "<(jwasm)/context.c",
+            "<(jwasm)/cpumodel.c",
+            "<(jwasm)/data.c",
+            "<(jwasm)/dbgcv.c",
+            "<(jwasm)/directiv.c",
+            "<(jwasm)/elf.c",
+            "<(jwasm)/end.c",
+            "<(jwasm)/equate.c",
+            "<(jwasm)/errmsg.c",
+            "<(jwasm)/expans.c",
+            "<(jwasm)/expreval.c",
+            "<(jwasm)/extern.c",
+            "<(jwasm)/fastpass.c",
+            "<(jwasm)/fixup.c",
+            "<(jwasm)/fpfixup.c",
+            "<(jwasm)/hll.c",
+            "<(jwasm)/input.c",
+            "<(jwasm)/invoke.c",
+            "<(jwasm)/label.c",
+            "<(jwasm)/linnum.c",
+            "<(jwasm)/listing.c",
+            "<(jwasm)/loop.c",
+            "<(jwasm)/lqueue.c",
+            "<(jwasm)/macro.c",
+            "<(jwasm)/main.c",
+            "<(jwasm)/mangle.c",
+            "<(jwasm)/memalloc.c",
+            "<(jwasm)/msgtext.c",
+            "<(jwasm)/omf.c",
+            "<(jwasm)/omffixup.c",
+            "<(jwasm)/omfint.c",
+            "<(jwasm)/option.c",
+            "<(jwasm)/parser.c",
+            "<(jwasm)/posndir.c",
+            "<(jwasm)/preproc.c",
+            "<(jwasm)/proc.c",
+            "<(jwasm)/queue.c",
+            "<(jwasm)/reswords.c",
+            "<(jwasm)/safeseh.c",
+            "<(jwasm)/segment.c",
+            "<(jwasm)/simsegm.c",
+            "<(jwasm)/string.c",
+            "<(jwasm)/symbols.c",
+            "<(jwasm)/tbyte.c",
+            "<(jwasm)/tokenize.c",
+            "<(jwasm)/types.c"
+          ]
+        }
+      ]
+    }]
   ]
 }

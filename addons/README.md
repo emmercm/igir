@@ -27,6 +27,8 @@ cd addons/<name>
 ../../node_modules/.bin/node-gyp rebuild
 ```
 
+The `7zip` addon assembles 7-Zip's integer-only LZMA decoder on every platform but macOS x64 and WebAssembly. Linux x64 uses [JWasm](https://github.com/Baron-von-Riedesel/JWasm), which `node-gyp` builds from `7zip/deps/JWasm` first, and Windows arm64 uses LLVM's `clang`, which must be on the `PATH`.
+
 ## WebAssembly
 
 The WebAssembly builds use [Emscripten](https://emscripten.org/) and [emnapi](https://github.com/toyobayashi/emnapi)'s Node-API implementation. Every `binding.gyp` includes the shared [`common.gypi`](common.gypi) settings, which add [`wasm.gypi`](wasm.gypi)'s under `OS=="emscripten"`, an OS that `node-gyp` only sets when it's run with emnapi.
