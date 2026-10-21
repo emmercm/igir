@@ -12,20 +12,9 @@
   reviewers: ['@emmercm'],
   assignAutomerge: false, // default
 
-  // Open PRs immediately for vulnerability alerts
-  // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
+  // Rely on Dependabot for security updates, as it tends to be more timely than Renovate
   vulnerabilityAlerts: {
-    labels: ['security'],
-    platformAutomerge: true,
-    // Renovate's defaults for `vulnerabilityAlerts`
-    groupName: '',
-    schedule: [],
-    dependencyDashboardApproval: false,
-    minimumReleaseAge: '',
-    rangeStrategy: 'update-lockfile',
-    commitMessageSuffix: '[SECURITY]',
-    branchTopic: '{{{datasource}}}-{{{depName}}}-vulnerability',
-    prCreation: 'immediate',
+    "enabled": false
   },
 
   // Use pseudo semantic commit (and therefore PR title) commit messages

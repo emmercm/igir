@@ -55,9 +55,27 @@ jobs:
           advanced-security: false
           min-severity: medium
 
+  # Don't allow a PR with no changes to merge ever
+  non-empty-diff:
+    permissions:
+      contents: read # actions/checkout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - run: |
+          if git diff --quiet HEAD^1 HEAD; then
+            echo "::error::This pull request doesn't change any files compared to its base branch"
+            exit 1
+          fi
+          git diff --stat HEAD^1 HEAD
+
   # !!! This check should be required by GitHub !!!
   linter-status-check:
     needs:
+      - non-empty-diff
       - renovate-lint
       - shellcheck
       - actionlint
