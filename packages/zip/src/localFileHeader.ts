@@ -25,6 +25,12 @@ export default class LocalFileHeader extends FileRecord {
   // Size with the signature, and without variable length fields at the end
   private static readonly LOCAL_FILE_HEADER_SIZE = 30;
 
+  // zstd can't output anything until it has a whole block, so read at least enough compressed
+  // bytes for the first one: a 4-byte magic number, an up-to-14-byte frame header, a 3-byte block
+  // header, and up to 128 KiB of block content.
+  // @see https://www.rfc-editor.org/rfc/rfc8878.html#section-3.1.1.2.4
+  private static readonly ZSTD_MIN_COMPRESSED_CHUNK_SIZE = 4 + 14 + 3 + 128 * 1024;
+
   private readonly zipFilePath: string;
   private readonly centralDirectoryFileHeader: CentralDirectoryFileHeader;
 
@@ -228,7 +234,12 @@ export default class LocalFileHeader extends FileRecord {
       case CompressionMethod.ZSTD_DEPRECATED:
       case CompressionMethod.ZSTD: {
         return StreamUtil.withTransforms(
-          this.compressedStream(highWaterMark),
+          this.compressedStream(
+            Math.min(
+              Math.max(highWaterMark ?? 0, LocalFileHeader.ZSTD_MIN_COMPRESSED_CHUNK_SIZE),
+              this.compressedSizeResolved(),
+            ),
+          ),
           zlib.createZstdDecompress({ chunkSize: this.decompressorChunkSize(highWaterMark) }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
