@@ -26,26 +26,28 @@ type CanBeTrimmedValue = (typeof CanBeTrimmed)[CanBeTrimmedKey];
 
 /**
  * Build a dynamic SignaturePiece that matches a Super Nintendo ROM's internal header at any of
- * the LoROM/HiROM/ExHiROM offsets, accounting for an optional fixed-size ROM header prefix.
+ * the LoROM/HiROM offsets, accounting for an optional fixed-size ROM header prefix.
  */
 function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
   return {
-    offset: headerSize + 0x40_ff_b0,
+    offset: headerSize + 0xff_b0,
     length: 0x2e + 2,
     match: (buffer): boolean => {
       return [
-        headerSize + 0x7f_b0, // LoROM
-        headerSize + 0xff_b0, // HiROM
-        headerSize + 0x40_ff_b0, // ExHiROM
+        headerSize + 0x7f_b0, // LoROM, SA-1, SDD-1
+        headerSize + 0xff_b0, // HiROM, SPC7110
+        // headerSize + 0x40_ff_b0, // ExHiROM (excluded because it requires reading >4MiB)
       ].some((offset) => {
         if (buffer.length < offset + 0x25 + 1) {
           return false;
         }
+
         const romSpeedAndMemoryMapMode = buffer.readUInt8(offset + 0x25);
         if ((romSpeedAndMemoryMapMode & 0b1110_0000) !== 0b0010_0000) {
           // The upper 3 bits are always the same
           return false;
         }
+
         const mapMode = romSpeedAndMemoryMapMode & 0x0f; // lower 4 bits
         if (
           ![
@@ -54,6 +56,7 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
             0b0010, // SDD-1
             0b0011, // SA-1
             0b0101, // ExHiROM
+            0b1010, // SPC7110
           ].includes(mapMode)
         ) {
           return false;
@@ -571,6 +574,64 @@ export default class FileSignature {
     // @see https://wiki.superfamicom.org/game-doctor
     smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\u{0}\u{1}ME DOCTOR SF 3') }]), // Game Doctor SF3?
     smc_gd3_2: new FileSignature('.smc', [{ value: Buffer.from('GAME DOCTOR SF 3') }]), // Game Doctor SF3/SF6/SF7
+
+    // Nintendo - Satellaview
+    // @see https://wiki.superfamicom.org/bs-x-satellaview-header
+    // @see https://github.com/snes9xgit/snes9x/blob/master/bsx.cpp
+    bs: new FileSignature('.bs', [
+      {
+        offset: 0xff_b0,
+        length: 0x2a + 1,
+        match: (buffer): boolean => {
+          return [
+            0x7f_b0, // LoROM
+            0xff_b0, // HiROM
+          ].some((offset) => {
+            if (buffer.length < offset + 0x2a + 1) {
+              return false;
+            }
+            const fixedValue = buffer.readUInt8(offset + 0x2a);
+            if (fixedValue !== 0x33 && fixedValue !== 0xff) {
+              return false;
+            }
+
+            // Bit 15 set means limited starts, so the high byte is either 0 or has its top bit set,
+            // which never overlaps with a regular SNES header's speed & map mode byte
+            const limitedStartsHigh = buffer.readUInt8(offset + 0x25);
+            if (limitedStartsHigh !== 0 && (limitedStartsHigh & 0b1000_0011) !== 0b1000_0000) {
+              return false;
+            }
+
+            const romSpeedAndMemoryMapMode = buffer.readUInt8(offset + 0x28);
+            if (
+              ![
+                0x20, // LoROM
+                0x21, // HiROM
+                0x30, // LoROM, fast
+                0x31, // HiROM, fast
+              ].includes(romSpeedAndMemoryMapMode)
+            ) {
+              return false;
+            }
+
+            const month = buffer.readUInt8(offset + 0x26);
+            const day = buffer.readUInt8(offset + 0x27);
+            if (month === 0xff && day === 0xff) {
+              return true;
+            }
+            if (month === 0 && day === 0) {
+              return false;
+            }
+            // The month is stored in the upper 4 bits
+            return (month & 0x0f) === 0 && month >> 4 <= 12;
+          });
+        },
+      },
+    ]),
+
+    // Nintendo - Sufami Turbo
+    // @see https://github.com/snes9xgit/snes9x/blob/master/memmap.cpp
+    st: new FileSignature('.st', [{ value: Buffer.from('BANDAI SFC-ADX') }]),
 
     // Nintendo - Switch
     // @see https://switchbrew.org/wiki/NCA
