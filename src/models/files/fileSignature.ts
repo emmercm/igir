@@ -26,26 +26,28 @@ type CanBeTrimmedValue = (typeof CanBeTrimmed)[CanBeTrimmedKey];
 
 /**
  * Build a dynamic SignaturePiece that matches a Super Nintendo ROM's internal header at any of
- * the LoROM/HiROM/ExHiROM offsets, accounting for an optional fixed-size ROM header prefix.
+ * the LoROM/HiROM offsets, accounting for an optional fixed-size ROM header prefix.
  */
 function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
   return {
-    offset: headerSize + 0x40_ff_b0,
+    offset: headerSize + 0xff_b0,
     length: 0x2e + 2,
     match: (buffer): boolean => {
       return [
-        headerSize + 0x7f_b0, // LoROM
-        headerSize + 0xff_b0, // HiROM
-        headerSize + 0x40_ff_b0, // ExHiROM
+        headerSize + 0x7f_b0, // LoROM, SA-1, SDD-1
+        headerSize + 0xff_b0, // HiROM, SPC7110
+        // headerSize + 0x40_ff_b0, // ExHiROM (excluded because it requires reading >4MiB)
       ].some((offset) => {
         if (buffer.length < offset + 0x25 + 1) {
           return false;
         }
+
         const romSpeedAndMemoryMapMode = buffer.readUInt8(offset + 0x25);
         if ((romSpeedAndMemoryMapMode & 0b1110_0000) !== 0b0010_0000) {
           // The upper 3 bits are always the same
           return false;
         }
+
         const mapMode = romSpeedAndMemoryMapMode & 0x0f; // lower 4 bits
         if (
           ![
@@ -54,6 +56,7 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
             0b0010, // SDD-1
             0b0011, // SA-1
             0b0101, // ExHiROM
+            0b1010, // SPC7110
           ].includes(mapMode)
         ) {
           return false;
