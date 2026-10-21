@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v5.7.2 (Node.js v26.10.0)
+     @@   @@        @@   @@   @@       @@    v5.8.0 (Node.js v26.12.0)
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -116,8 +116,8 @@ DAT input options:
 
 Patch input options:
   -p, --patch          Path(s) to ROM patch files or archives (supports globbing) (supported:
-                       .aps, .bps, .dps, .ebp, .ips, .ips32, .ppf, .rup, .ups, .vcdiff,
-                       .xdelta)                                                        [array]
+                       .aps, .bdf, .bps, .bsdiff, .dps, .ebp, .ips, .ips32, .mod, .ppf, .rup,
+                       .ups, .vcdiff, .xdelta)                                         [array]
   -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing
                        (supports globbing)                                             [array]
       --patch-only     Only write patched ROMs to the output directory               [boolean]
