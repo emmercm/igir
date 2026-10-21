@@ -2743,6 +2743,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#supported-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#patch-types" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3827,6 +3838,35 @@
 <p>Games and their ROMs are protected under copyrights, so patches are used to not share copyrighted code online. A person needs the original ROM file plus a patch file to get the resulting patched ROM that will be played with an emulator.</p>
 <h2 id="specifying-patch-files">Specifying patch files</h2>
 <p>Patch files can be specified with the <code>--patch &lt;path|glob&gt;</code> option. See the <a href="../../input/file-scanning/">file scanning docs</a> for more information.</p>
+<h2 id="supported-commands">Supported commands</h2>
+<p>Patching can be used with any combination of the <a href="../../commands/#rom-writing"><code>copy</code> or <code>move</code> commands</a>, with or without the <a href="../../commands/#rom-extracting-zipping"><code>extract</code> or <code>zip</code> commands</a>. Patching can't be used with the <a href="../../commands/#link"><code>link</code> command</a>.</p>
+<p>Patches need to read the ROM's contents, so there are some limitations when ROMs are archived and those archives would be copied or moved as-is:</p>
+<table>
+<thead>
+<tr>
+<th>Commands</th>
+<th>Patched un-archived ROMs</th>
+<th>Patched archived ROMs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>copy</code> or <code>move</code></td>
+<td>✅</td>
+<td>❌ input archives will not be modified in any way</td>
+</tr>
+<tr>
+<td><code>copy extract</code> or <code>move extract</code></td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>copy zip</code> or <code>move zip</code></td>
+<td>✅</td>
+<td>⚠️ only ROMs that aren't <a href="../../output/writing-archives/#excluding-files-from-zipping">excluded from zipping</a></td>
+</tr>
+</tbody>
+</table>
 <h2 id="patch-types">Patch types</h2>
 <p>There are many, <em>many</em> patch types that ROM hackers use to distribute their changes on the internet (<a href="https://xkcd.com/927/">xkcd "Standards"</a>). Typically, a patch will only be distributed in one format, so gamers are entirely at the mercy of the ROM hacker's choice.</p>
 <p>Not all patch types are created equal. Here are some tables of some existing formats, whether Igir supports them, and what the patch supports.</p>
@@ -3855,7 +3895,7 @@
 </tr>
 <tr>
 <td><code>.ppf</code></td>
-<td>✅ 2.0, 3.0</td>
+<td>✅ v2, v3</td>
 <td>❌</td>
 <td></td>
 </tr>
@@ -3863,13 +3903,13 @@
 <td><code>.ups</code></td>
 <td>✅</td>
 <td>✅</td>
-<td>⚠️ UPS patches read and write files byte-by-byte, making them horribly slow and inefficient. The author, byuu, created <code>.ups</code> to replace <code>.ips</code>, but then created <code>.bps</code> as a replacement for <code>.ups</code>.</td>
+<td>The author, byuu, created <code>.ups</code> to replace <code>.ips</code>, but then created <code>.bps</code> as a replacement for <code>.ups</code>.</td>
 </tr>
 <tr>
 <td><code>.vcdiff</code>, <code>.xdelta</code></td>
-<td>⚠️ without secondary compression</td>
+<td>⚠️ (LZMA secondary compression only)</td>
 <td>❌</td>
-<td>⚠️ VCDIFF patches read and write files byte-by-byte during <code>COPY</code> instructions, usually making them slow and inefficient.<br>⚠️ <a href="https://github.com/jmacd/xdelta">xdelta3</a> makes use of LZMA secondary compression by default, so many patches are likely to be unsupported.</td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -3897,9 +3937,9 @@
 <td></td>
 </tr>
 <tr>
-<td><code>.bdf</code> (BSDiff)</td>
+<td><code>.bdf</code>, <code>.bsdiff</code> (BSDiff)</td>
+<td>✅ v4</td>
 <td>❌</td>
-<td>❓</td>
 <td></td>
 </tr>
 <tr>
@@ -3933,10 +3973,10 @@
 <td></td>
 </tr>
 <tr>
-<td><code>.mod</code> (Star Rod)</td>
+<td><code>.mod</code> (Paper Mario Star Rod)</td>
+<td>✅ PMSR, Yay0-compressed PMSR</td>
 <td>❌</td>
-<td>❓</td>
-<td>No file specification exists anymore.</td>
+<td>The source file has to be <code>Paper Mario (USA).z64</code> (CRC32 <code>A7F5CD7E</code>), so you don't need to put it in the patch filename.</td>
 </tr>
 <tr>
 <td><code>.ffp</code>, <code>.pat</code> (FireFlower)</td>
@@ -3965,6 +4005,10 @@
 </tbody>
 </table>
 <p>If you have a choice in patch format, choose one that contains CRC32 checksums in the patch file contents (e.g. choose <code>.bps</code> over <code>.ips</code> if possible).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Igir can read patch files inside any supported <a href="../../input/reading-archives/">archive format</a> (just like DATs and ROMs), but most patch types will have to be fully extracted to a <a href="https://igir.io/advanced/temp-dir/">temporary file</a> before they can be applied.</p>
+</div>
 <h2 id="rom-checksums">ROM checksums</h2>
 <p>Igir needs to be able to know what source ROM each patch file applies to, and it does this using CRC32 checksums.</p>
 <p>A few patch formats include the source ROM's CRC32 checksum in the patch's file contents. This is the most accurate and therefore the best way to get source ROM information. <code>.bps</code> is a great example of an efficient and simple patch format that includes this information.</p>
@@ -4028,7 +4072,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="April 19, 2026 20:54:52 UTC">April 19, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 16, 2026 05:11:10 UTC">October 16, 2026</span>
   </span>
 
     
