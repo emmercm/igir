@@ -1,5 +1,6 @@
 #include "entryReader.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -102,8 +103,8 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
 
         // The bridge exists before the producer does, because the producer
         // captures it. It is created unreferenced (the `false`), so holding a
-        // reader open does not by itself keep the process alive; a parked read
-        // re-references it for exactly as long as it is parked.
+        // reader open does not by itself keep the process alive; a paused read
+        // re-references it for exactly as long as it is paused.
         auto bridge = std::make_shared<Bridge>();
         readFailure_ = Napi::Persistent(Napi::Error::New(env, "failed to allocate the read result").Value());
         bridge->signal = AsyncSignal::Create(env, "sevenzip::EntryReader", false, [bridge](Napi::Env callbackEnv) {
@@ -120,13 +121,18 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
                 entryIndex, Registry(env), [bridge]() { bridge->signal->Notify(); },
                 [bridge]() {
-                    // Pool or producer thread, exactly once. Close the signal
-                    // after pending delivery; teardown may close it independently.
+                    // Pool or producer thread, exactly once, after the archive
+                    // and every volume it opened are closed. Recorded before
+                    // the notification, so the callback it wakes sees it, and
+                    // the signal closes after that delivery; teardown may close
+                    // it independently.
+                    bridge->exited.store(true, std::memory_order_release);
+                    bridge->signal->Notify();
                     bridge->signal->Release();
                 });
 
             // The archive is opened and the entry found on the pool, never on
-            // this thread. Reads that arrive first simply park until the
+            // this thread. Reads that arrive first simply pause until the
             // producer lends its first chunk, or the open fails.
             PoolTask::Queue(
                 env, "sevenzip::EntryReader", [pump]() mutable { Pump::Run(std::move(pump)); },
@@ -172,7 +178,7 @@ EntryReader::~EntryReader() {
     // into it; unlike Reset(), its destructor cannot throw.
 }
 
-bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled) {
+bool EntryReader::TryFinishRead(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* finished) {
     size_t length = 0;
     OutputSlot::Status status = OutputSlot::Status::kEnd;
     try {
@@ -182,12 +188,12 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         // what went wrong with it. It only throws at the end, so nothing is
         // lent any more.
         ReleaseLent();
-        *settled = true;
+        *finished = true;
         deferred.Reject(Napi::Error::New(env, e.what()).Value());
         return true;
     } catch (...) {
         ReleaseLent();
-        *settled = true;
+        *finished = true;
         deferred.Reject(Napi::Error::New(env, "unknown 7-Zip read error").Value());
         return true;
     }
@@ -197,27 +203,30 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
     }
     if (status == OutputSlot::Status::kEnd) {
         ReleaseLent();
-        *settled = true;
+        *finished = true;
         deferred.Resolve(env.Null());
         return true;
     }
+    // Only the final chunk comes back short
+    bool const isShort = length < lentBytes_;
+    delivered_ += length;
 
 #ifdef __EMSCRIPTEN__
-    // The slot has handed the scratch memory back. Copied before settling, so
+    // The slot has handed the scratch memory back. Copied before resolving, so
     // that failing to allocate the copy still rejects the read.
     Napi::Value const chunk = CopyToBuffer(env, scratch_.get(), length);
-    *settled = true;
+    *finished = true;
     deferred.Resolve(chunk);
 #else
     // The slot has handed the buffer back, so the producer is done with it
     Napi::Buffer<uint8_t> const buffer = lent_.Value();
     lent_.Reset();
-    *settled = true;
-    if (length == buffer.Length()) {
+    *finished = true;
+    if (!isShort) {
         deferred.Resolve(buffer);
     } else {
-        // Only the final chunk comes back short. A view rather than a copy, at
-        // the cost of pinning the unused tail until the view is collected.
+        // A view rather than a copy, at the cost of pinning the unused tail
+        // until the view is collected
         deferred.Resolve(
             buffer.Get("subarray")
                 .As<Napi::Function>()
@@ -231,62 +240,72 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
 
-    // A napi_deferred may be settled exactly once, and settling twice is
-    // undefined behavior rather than an error, so the catch-all below has to
-    // know whether the body already got there
-    bool settled = false;
-    bool parked = false;
+    // A napi_deferred may be resolved or rejected exactly once, and doing so
+    // twice is undefined behavior rather than an error, so the catch-all below
+    // has to know whether the body already got there
+    bool finished = false;
+    bool paused = false;
     try {
         if (closed_) {
-            settled = true;
+            finished = true;
             deferred.Reject(Napi::Error::New(env, "read after close").Value());
         } else if (pending_.has_value()) {
-            settled = true;
+            finished = true;
             deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
         } else if (!constructed_ || !pump_) {
             // The constructor reported a TypeError and returned without starting
             // anything. Resolving with null here would tell a caller the entry
             // was empty, which is a different answer, and a silently wrong one.
-            settled = true;
+            finished = true;
             deferred.Reject(Napi::Error::New(env, "the entry reader was never opened").Value());
         } else {
+            // Once the producer has finished, nothing is left to decode, so nothing is lent: the
+            // slot reports the end, or the producer's failure, without a buffer
+            if (!pump_->Done()) {
+                // No more than the entry has left, so that its final chunk doesn't allocate more
+                // memory than necessary. The declared size is untrusted, so once it is reached the
+                // read lends one byte rather than none: an entry longer than declared still has
+                // somewhere to go, instead of blocking the producer for good.
+                lentBytes_ =
+                    static_cast<size_t>(std::clamp<uint64_t>(Remaining().value_or(chunkBytes_), 1, chunkBytes_));
 #ifdef __EMSCRIPTEN__
-            // Allocated once and reused, since reads are one at a time
-            if (!scratch_) {
-                // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
-                scratch_ = std::make_unique_for_overwrite<uint8_t[]>(chunkBytes_);
-            }
-            pump_->Lend(scratch_.get(), chunkBytes_);
+                // Allocated once and reused, since reads are one at a time
+                if (!scratch_) {
+                    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+                    scratch_ = std::make_unique_for_overwrite<uint8_t[]>(chunkBytes_);
+                }
+                pump_->Lend(scratch_.get(), lentBytes_);
 #else
-            // Referenced before it is lent, so that V8 cannot collect it while
-            // the producer holds its address
-            Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, chunkBytes_);
-            lent_ = Napi::Persistent(buffer);
-            pump_->Lend(buffer.Data(), buffer.Length());
+                // Referenced before it is lent, so that V8 cannot collect it while
+                // the producer holds its address
+                Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, lentBytes_);
+                lent_ = Napi::Persistent(buffer);
+                pump_->Lend(buffer.Data(), buffer.Length());
 #endif
-            if (!TrySettle(env, deferred, &settled)) {
+            }
+            if (!TryFinishRead(env, deferred, &finished)) {
                 // The producer has not filled the buffer yet, which is the
                 // common case, since it only starts once the buffer is lent.
-                // Park, holding both the object and the event loop open until it
+                // Pause, holding both the object and the event loop open until it
                 // wakes us; the read above has already armed the callback that
                 // will.
-                parked = true;
+                paused = true;
             }
         }
-        if (parked) {
+        if (paused) {
             pending_ = deferred;
-            settled = true;
+            finished = true;
             Ref();
             bridge_->signal->Ref(env);
         }
     } catch (...) {
-        if (!parked) {
+        if (!paused) {
             // Nothing is lent: allocating, referencing and lending all fail
-            // before the producer learns the address, and a settled read has
+            // before the producer learns the address, and a finished read has
             // already had its memory handed back
             ReleaseLent();
         }
-        if (!settled) {
+        if (!finished) {
             deferred.Reject(Napi::Error::New(env, "failed to start a read").Value());
         }
     }
@@ -294,21 +313,26 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
 }
 
 void EntryReader::OnProducerReady(Napi::Env env) {
+    if (!closeWaiters_.empty()) {
+        // close() resolved any paused read already, so the only thing left to wait for is the exit
+        FinishClose(env);
+        return;
+    }
     if (!pending_.has_value()) {
-        // close() settled the read before the notification arrived. Nothing to
+        // close() resolved the read before the notification arrived. Nothing to
         // do; the producer is already unwinding.
         return;
     }
     Napi::Promise::Deferred const deferred = *pending_;
-    bool settled = false;
+    bool finished = false;
     try {
-        if (!TrySettle(env, deferred, &settled)) {
+        if (!TryFinishRead(env, deferred, &finished)) {
             return;
         }
     } catch (...) {
         pump_->Cancel();
         ReleaseLent();
-        if (!settled) {
+        if (!finished) {
             try {
                 // Created before the producer started: reporting a failed
                 // allocation does not need another error-object allocation.
@@ -319,6 +343,14 @@ void EntryReader::OnProducerReady(Napi::Env env) {
         }
     }
     ReleasePending(env);
+}
+
+std::optional<uint64_t> EntryReader::Remaining() const {
+    std::optional<uint64_t> const size = pump_->DeclaredSize();
+    if (!size.has_value() || delivered_ > *size) {
+        return std::nullopt;
+    }
+    return *size - delivered_;
 }
 
 void EntryReader::ReleaseLent() {
@@ -338,8 +370,26 @@ void EntryReader::ReleasePending(Napi::Env env) {
     Unref();
 }
 
-void EntryReader::Close(const Napi::CallbackInfo& info) {
+void EntryReader::FinishClose(Napi::Env env) {
+    if (!bridge_->exited.load(std::memory_order_acquire)) {
+        return;
+    }
+    // Copied out before the references are released, which may destroy `this`
+    std::vector<Napi::Promise::Deferred> const waiters = std::exchange(closeWaiters_, {});
+    bridge_->signal->Unref(env);
+    Unref();
+    for (const Napi::Promise::Deferred& waiter : waiters) {
+        waiter.Resolve(env.Undefined());
+    }
+}
+
+Napi::Value EntryReader::Close(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
+    Napi::Promise::Deferred const closed = Napi::Promise::Deferred::New(env);
+
+    // Whether `closed` is resolved, or will be by FinishClose(), so the catch-all below rejects it
+    // only if neither
+    bool finished = false;
     try {
         closed_ = true;
         if (pump_) {
@@ -356,17 +406,36 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
         // Drops this side's reference to the producer without waiting for it. The
         // producer holds the other one and unwinds on its own time.
         pump_.reset();
+
+        if (!bridge_ || bridge_->exited.load(std::memory_order_acquire)) {
+            // Nothing was ever started, or the producer has already closed everything
+            finished = true;
+            closed.Resolve(env.Undefined());
+        } else {
+            closeWaiters_.push_back(closed);
+            finished = true;
+            if (closeWaiters_.size() == 1) {
+                // Held until the producer's exit notification, so that neither the object nor the
+                // signal that delivers it goes away first, and so that the loop stays alive for it
+                Ref();
+                bridge_->signal->Ref(env);
+            }
+        }
+
         if (pending.has_value()) {
             // The caller asked for the rest of the entry and then said it did
             // not want it: the end of the stream, not a failure. It has to be
-            // settled here rather than left to the producer, whose notification
-            // we have just stopped listening for.
+            // resolved here rather than left to the producer, whose notification
+            // now only reports its exit.
             pending->Resolve(env.Null());
             ReleasePending(env);
         }
     } catch (...) {
-        Napi::Error::New(env, "failed to close the entry reader").ThrowAsJavaScriptException();
+        if (!finished) {
+            closed.Reject(Napi::Error::New(env, "failed to close the entry reader").Value());
+        }
     }
+    return closed.Promise();
 }
 
 }  // namespace sevenzip

@@ -1,0 +1,2 @@
+# Keep tsc --init's column-aligned trailing comments
+tsconfig.json

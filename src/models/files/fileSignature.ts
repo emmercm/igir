@@ -1,8 +1,4 @@
-import stream from 'node:stream';
-
 import { Memoize } from 'typescript-memoize';
-
-import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 
 type SignaturePiece = (
   | {
@@ -30,26 +26,28 @@ type CanBeTrimmedValue = (typeof CanBeTrimmed)[CanBeTrimmedKey];
 
 /**
  * Build a dynamic SignaturePiece that matches a Super Nintendo ROM's internal header at any of
- * the LoROM/HiROM/ExHiROM offsets, accounting for an optional fixed-size ROM header prefix.
+ * the LoROM/HiROM offsets, accounting for an optional fixed-size ROM header prefix.
  */
 function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
   return {
-    offset: headerSize + 0x40_ff_b0,
+    offset: headerSize + 0xff_b0,
     length: 0x2e + 2,
     match: (buffer): boolean => {
       return [
-        headerSize + 0x7f_b0, // LoROM
-        headerSize + 0xff_b0, // HiROM
-        headerSize + 0x40_ff_b0, // ExHiROM
+        headerSize + 0x7f_b0, // LoROM, SA-1, SDD-1
+        headerSize + 0xff_b0, // HiROM, SPC7110
+        // headerSize + 0x40_ff_b0, // ExHiROM (excluded because it requires reading >4MiB)
       ].some((offset) => {
         if (buffer.length < offset + 0x25 + 1) {
           return false;
         }
+
         const romSpeedAndMemoryMapMode = buffer.readUInt8(offset + 0x25);
         if ((romSpeedAndMemoryMapMode & 0b1110_0000) !== 0b0010_0000) {
           // The upper 3 bits are always the same
           return false;
         }
+
         const mapMode = romSpeedAndMemoryMapMode & 0x0f; // lower 4 bits
         if (
           ![
@@ -58,6 +56,7 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
             0b0010, // SDD-1
             0b0011, // SA-1
             0b0101, // ExHiROM
+            0b1010, // SPC7110
           ].includes(mapMode)
         ) {
           return false;
@@ -152,9 +151,7 @@ export default class FileSignature {
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     tar1: new FileSignature('.tar', [{ offset: 257, value: Buffer.from('ustar\u{0}00') }]),
-    tar2: new FileSignature('.tar', [
-      { offset: 257, value: Buffer.from('ustar\u{20}\u{20}\u{0}') },
-    ]),
+    tar2: new FileSignature('.tar', [{ offset: 257, value: Buffer.from('ustar  \u{0}') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     xar: new FileSignature('.xar', [{ value: Buffer.from('xar!') }]),
@@ -578,6 +575,64 @@ export default class FileSignature {
     smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\u{0}\u{1}ME DOCTOR SF 3') }]), // Game Doctor SF3?
     smc_gd3_2: new FileSignature('.smc', [{ value: Buffer.from('GAME DOCTOR SF 3') }]), // Game Doctor SF3/SF6/SF7
 
+    // Nintendo - Satellaview
+    // @see https://wiki.superfamicom.org/bs-x-satellaview-header
+    // @see https://github.com/snes9xgit/snes9x/blob/master/bsx.cpp
+    bs: new FileSignature('.bs', [
+      {
+        offset: 0xff_b0,
+        length: 0x2a + 1,
+        match: (buffer): boolean => {
+          return [
+            0x7f_b0, // LoROM
+            0xff_b0, // HiROM
+          ].some((offset) => {
+            if (buffer.length < offset + 0x2a + 1) {
+              return false;
+            }
+            const fixedValue = buffer.readUInt8(offset + 0x2a);
+            if (fixedValue !== 0x33 && fixedValue !== 0xff) {
+              return false;
+            }
+
+            // Bit 15 set means limited starts, so the high byte is either 0 or has its top bit set,
+            // which never overlaps with a regular SNES header's speed & map mode byte
+            const limitedStartsHigh = buffer.readUInt8(offset + 0x25);
+            if (limitedStartsHigh !== 0 && (limitedStartsHigh & 0b1000_0011) !== 0b1000_0000) {
+              return false;
+            }
+
+            const romSpeedAndMemoryMapMode = buffer.readUInt8(offset + 0x28);
+            if (
+              ![
+                0x20, // LoROM
+                0x21, // HiROM
+                0x30, // LoROM, fast
+                0x31, // HiROM, fast
+              ].includes(romSpeedAndMemoryMapMode)
+            ) {
+              return false;
+            }
+
+            const month = buffer.readUInt8(offset + 0x26);
+            const day = buffer.readUInt8(offset + 0x27);
+            if (month === 0xff && day === 0xff) {
+              return true;
+            }
+            if (month === 0 && day === 0) {
+              return false;
+            }
+            // The month is stored in the upper 4 bits
+            return (month & 0x0f) === 0 && month >> 4 <= 12;
+          });
+        },
+      },
+    ]),
+
+    // Nintendo - Sufami Turbo
+    // @see https://github.com/snes9xgit/snes9x/blob/master/memmap.cpp
+    st: new FileSignature('.st', [{ value: Buffer.from('BANDAI SFC-ADX') }]),
+
     // Nintendo - Switch
     // @see https://switchbrew.org/wiki/NCA
     nca_0: new FileSignature('.nca', [{ offset: 0x2_00, value: Buffer.from('NCA0') }]),
@@ -615,19 +670,19 @@ export default class FileSignature {
     vff: new FileSignature('.vff', [{ value: Buffer.from('VFF ') }]),
     // @see http://wiibrew.org/wiki/WAD_files
     wad_installable_ib: new FileSignature('.wad', [
-      { value: Buffer.from('\u{0}\u{0}\u{0}\u{20}') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0} ') }, // header size
       { offset: 0x04, value: Buffer.from('ib') },
       { offset: 0x06, value: Buffer.from('\u{0}\u{0}') }, // WAD version
       { offset: 0x0c, value: Buffer.from('\u{0}\u{0}\u{0}\u{0}') }, // reserved
     ]),
     wad_installable_is: new FileSignature('.wad', [
-      { value: Buffer.from('\u{0}\u{0}\u{0}\u{20}') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0} ') }, // header size
       { offset: 0x04, value: Buffer.from('Is') },
       { offset: 0x06, value: Buffer.from('\u{0}\u{0}') }, // WAD version
       { offset: 0x0c, value: Buffer.from('\u{0}\u{0}\u{0}\u{0}') }, // reserved
     ]),
     wad_backup: new FileSignature('.wad', [
-      { value: Buffer.from('\u{0}\u{0}\u{0}\u{70}') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0}p') }, // header size
       { offset: 0x04, value: Buffer.from('Bk') },
       { offset: 0x06, value: Buffer.from('\u{0}\u{1}') }, // WAD version
       { offset: 0x6e, value: Buffer.from('\u{0}\u{0}') }, // reserved
@@ -643,7 +698,7 @@ export default class FileSignature {
     // Note: .wua doesn't appear to have any consistent signature
     wud: new FileSignature('.wud', [{ value: Buffer.from('WUP-') }]),
     // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25-L26
-    wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\u{2E}\u{D0}\u{99}\u{10}') }]),
+    wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0.\u{D0}\u{99}\u{10}') }]),
 
     // Philips - CD-i
     // @see https://www.icdia.co.uk/docs/GRNBK/BY_NUMBER/chap3
@@ -902,29 +957,6 @@ export default class FileSignature {
     this._canBeTrimmed = canBeTrimmed;
   }
 
-  private static async readHeaderBuffer(
-    readable: stream.Readable,
-    start: number,
-    end: number,
-  ): Promise<Buffer> {
-    const chunks: Buffer[] = [];
-    let bytesRead = 0;
-
-    for await (const chunk of readable as AsyncIterable<Buffer>) {
-      if (chunk.length > 0) {
-        chunks.push(chunk);
-        bytesRead += chunk.length;
-      }
-
-      // Stop reading when we get enough data, trigger a 'close' event
-      if (bytesRead >= end) {
-        break;
-      }
-    }
-
-    return Buffer.concat(chunks).subarray(start, end);
-  }
-
   /**
    * Look up a known {@link FileSignature} by its registered name, or undefined if no match
    * exists.
@@ -934,17 +966,11 @@ export default class FileSignature {
   }
 
   /**
-   * Read the leading bytes from a stream and return the matching {@link FileSignature}, or
-   * undefined if no known signature matches.
+   * Return the {@link FileSignature} matching a file's leading bytes, or undefined if no known
+   * signature matches.
    */
-  static async signatureFromFileStream(
-    readable: stream.Readable,
-    callback?: FsReadCallback,
-  ): Promise<FileSignature | undefined> {
-    const fileHeader = await this.readHeaderBuffer(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
-    if (callback) {
-      callback(fileHeader.length);
-    }
+  static signatureFromBuffer(fileHead: Buffer): FileSignature | undefined {
+    const fileHeader = fileHead.subarray(0, this.MAX_HEADER_LENGTH_BYTES);
 
     for (const romSignature of this.SIGNATURES) {
       const didSignatureMatch = romSignature.signaturePieces.every((signaturePiece) => {

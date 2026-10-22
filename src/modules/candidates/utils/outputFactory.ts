@@ -19,6 +19,7 @@ import ZeroSizeFile from '../../../models/files/zeroSizeFile.js';
 import type Options from '../../../models/options.js';
 import { FixExtension, GameSubdirMode } from '../../../models/options.js';
 import FsUtil from '../../../utils/fsUtil.js';
+import PathUtil from '../../../utils/pathUtil.js';
 import outputTokensData from './consoleTokens.json' with { type: 'json' };
 
 interface ConsoleTokensJson {
@@ -122,7 +123,7 @@ export default class OutputFactory {
 
     return new OutputPath({
       root: '',
-      dir: path.resolve(this.getDir(options, dat, game, inputFile, basename, romBasenames)),
+      dir: PathUtil.resolve(this.getDir(options, dat, game, inputFile, basename, romBasenames)),
       base: '',
       name,
       ext,
@@ -168,7 +169,7 @@ export default class OutputFactory {
     ) {
       const mirroredFilePath = options
         .getInputPaths()
-        .map((inputPath) => path.resolve(inputPath))
+        .map((inputPath) => PathUtil.resolve(inputPath))
         .reduce((inputFilePath, inputPath) => {
           const inputPathRegex = new RegExp(
             `^${inputPath.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
@@ -187,13 +188,13 @@ export default class OutputFactory {
     ) {
       const mirroredFilePath = options
         .getDatPaths()
-        .map((datPath) => path.resolve(datPath))
+        .map((datPath) => PathUtil.resolve(datPath))
         .reduce((datFilePath, datPath) => {
           const datPathRegex = new RegExp(
             `^${datPath.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
           );
           return datFilePath.replace(datPathRegex, '');
-        }, path.resolve(datFilePath));
+        }, PathUtil.resolve(datFilePath));
       const mirroredDirPath = path.dirname(mirroredFilePath);
       output = path.join(output, mirroredDirPath);
     }
@@ -498,15 +499,9 @@ export default class OutputFactory {
           // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
-          const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
-            const subPath = filename.replace(/[\\/].+$/, '');
-            if (subPathMap.has(subPath)) {
-              subPathMap.get(subPath)?.push(filename);
-            } else {
-              subPathMap.set(subPath, [filename]);
-            }
-            return subPathMap;
-          }, new Map<string, string[]>());
+          const subPathsToFilenames = Map.groupBy(filenames, (filename) =>
+            filename.replace(/[\\/].+$/, ''),
+          );
           const tuples = [...subPathsToFilenames]
             .toSorted(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
             .map(
@@ -552,15 +547,9 @@ export default class OutputFactory {
         // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
         // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
         // subdir, or just the ROM's basename otherwise.
-        const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
-          const subPath = filename.replace(/[\\/].+$/, '');
-          if (subPathMap.has(subPath)) {
-            subPathMap.get(subPath)?.push(filename);
-          } else {
-            subPathMap.set(subPath, [filename]);
-          }
-          return subPathMap;
-        }, new Map<string, string[]>());
+        const subPathsToFilenames = Map.groupBy(filenames, (filename) =>
+          filename.replace(/[\\/].+$/, ''),
+        );
 
         if (subPathsToFilenames.size <= options.getDirLetterLimit()) {
           lettersMap.set(letter, new Set(filenames));

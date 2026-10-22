@@ -9,6 +9,7 @@ import FileFactory from '../../../src/factories/fileFactory.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';
+import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 function createDatScanner(props: OptionsProps): DATScanner {
@@ -175,7 +176,7 @@ describe('single files', () => {
       ).scan();
       expect(dats).toHaveLength(1);
       const datFile = dats[0].getFile();
-      expect(datFile?.getFilePath()).toEqual(path.resolve(datPath));
+      expect(datFile?.getFilePath()).toEqual(PathUtil.resolve(datPath));
       expect(datFile?.getExtractedFilePath()).toEqual(expectedExtractedFilePath);
     },
   );

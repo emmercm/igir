@@ -212,15 +212,7 @@ export default class IndexedFiles {
 
   @Memoize()
   getFilesByFilePath(): Map<string, File[]> {
-    return this.getFiles().reduce((map, file) => {
-      const key = file.getFilePath();
-      if (map.has(key)) {
-        map.get(key)?.push(file);
-      } else {
-        map.set(key, [file]);
-      }
-      return map;
-    }, new Map<string, File[]>());
+    return Map.groupBy(this.getFiles(), (file) => file.getFilePath());
   }
 
   getSize(): number {

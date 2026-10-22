@@ -24,7 +24,7 @@ import { ZipFormat } from '../../options.js';
 import type File from '../file.js';
 import type { ChecksumProps } from '../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
-import type { ArchiveEntryLocation } from './archive.js';
+import type { ArchiveEntryRef } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -139,7 +139,7 @@ export default class Zip extends Archive {
    * Extract the named entry from the ZIP to the given file path.
    */
   async extractEntryToFile(
-    location: ArchiveEntryLocation,
+    entryRef: ArchiveEntryRef,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
@@ -148,7 +148,7 @@ export default class Zip extends Archive {
       await FsUtil.mkdir(extractedDir, { recursive: true });
     }
 
-    await this.extractEntryToStream(location, async (readable) => {
+    await this.extractEntryToStream(entryRef, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -161,11 +161,10 @@ export default class Zip extends Archive {
   /**
    * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
    */
-  override async extractEntryToStream<T>(
-    { entryPath }: ArchiveEntryLocation,
-    callback: (readable: Readable) => Promise<T> | T,
-    start = 0,
-    end?: number,
+  protected override async streamEntry<T>(
+    { entryPath }: ArchiveEntryRef,
+    callback: (source: Readable) => Promise<T>,
+    byteCount?: number,
   ): Promise<T> {
     // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
     const entries = await this.zipReader.centralDirectoryFileHeaders();
@@ -180,13 +179,15 @@ export default class Zip extends Archive {
 
     let sourceStream: stream.Readable;
     try {
-      sourceStream = await entry.uncompressedStream(Archive.getStreamChunkSize(start, end));
+      sourceStream = await entry.uncompressedStream(
+        Archive.getStreamChunkSize(undefined, byteCount),
+      );
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
         cause: error,
       });
     }
-    return await Archive.pipelineRange(sourceStream, callback, start, end);
+    return await callback(sourceStream);
   }
 
   /**
@@ -237,7 +238,7 @@ export default class Zip extends Archive {
         let lastProgress = 0;
         await new Promise((resolve, reject) => {
           inputFile
-            .createTransformedReadStream(async (readable) => {
+            .extractAndTransformToStream(async (readable) => {
               readable.on('error', reject);
               await torrentZip.addStream(
                 readable,

@@ -48,8 +48,8 @@ export default {
   async hashFile(
     filePath: string,
     checksumBitmask: number,
+    size?: number,
     start?: number,
-    end?: number,
     callback?: FsReadCallback,
   ): Promise<ChecksumPropsWithSize> {
     if (!checksumBitmask) {
@@ -57,11 +57,11 @@ export default {
       return {};
     }
 
-    return await File.createStreamFromFile(
+    return await File.streamFilePath(
       filePath,
       async (readable) => await this.hashStream(readable, checksumBitmask, callback),
+      size,
       start,
-      end,
     );
   },
 

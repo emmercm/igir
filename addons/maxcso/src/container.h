@@ -61,6 +61,9 @@ class Container {
     /** The uncompressed image's size in bytes */
     [[nodiscard]] uint64_t Size() const { return size_; }
 
+    /** The uncompressed bytes Next() has yet to return, which is zero exactly when it returns nothing */
+    [[nodiscard]] uint64_t Remaining() const { return pos_ >= size_ ? 0 : size_ - pos_; }
+
     /** The size of the uncompressed data each index entry covers */
     [[nodiscard]] uint32_t BlockSize() const { return blockSize_; }
 

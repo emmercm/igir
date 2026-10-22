@@ -28,7 +28,7 @@ describe('headerFromFilename', () => {
   );
 });
 
-describe('headerFromFileStream', () => {
+describe('headerFromBuffer', () => {
   it('should get a file header for headered files', async () => {
     const headeredRoms = await new ROMScanner(
       new Options({
@@ -41,11 +41,11 @@ describe('headerFromFileStream', () => {
     expect(headeredRoms).toHaveLength(6);
 
     for (const headeredRom of headeredRoms) {
-      await headeredRom.createReadStream(async (readable) => {
-        const fileHeader = await ROMHeader.headerFromFileStream(readable);
-        expect(fileHeader).toBeDefined();
-        expect(fileHeader?.getName()).toBeTruthy();
-      });
+      const fileHeader = ROMHeader.headerFromBuffer(
+        await headeredRom.readFirstBytes(ROMHeader.MAX_HEADER_LENGTH_BYTES),
+      );
+      expect(fileHeader).toBeDefined();
+      expect(fileHeader?.getName()).toBeTruthy();
     }
   });
 
@@ -65,10 +65,10 @@ describe('headerFromFileStream', () => {
     expect(headeredRoms.length).toBeGreaterThan(0);
 
     for (const headeredRom of headeredRoms) {
-      await headeredRom.createReadStream(async (readable) => {
-        const fileHeader = await ROMHeader.headerFromFileStream(readable);
-        expect(fileHeader).toBeUndefined();
-      });
+      const fileHeader = ROMHeader.headerFromBuffer(
+        await headeredRom.readFirstBytes(ROMHeader.MAX_HEADER_LENGTH_BYTES),
+      );
+      expect(fileHeader).toBeUndefined();
     }
   });
 });

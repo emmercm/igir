@@ -5,6 +5,7 @@ import fg from 'fast-glob';
 import Temp from '../../src/globals/temp.js';
 import Options from '../../src/models/options.js';
 import FsUtil, { WalkMode } from '../../src/utils/fsUtil.js';
+import PathUtil from '../../src/utils/pathUtil.js';
 
 describe('scanPaths', () => {
   test.each([
@@ -147,16 +148,16 @@ describe('scanPaths', () => {
 
 describe('getOutputDirRoot', () => {
   test.each([
-    ['', path.resolve('')],
-    ['.', path.resolve('.')],
-    ['root', path.resolve('root')],
-    ['foo/bar', path.resolve('foo', 'bar')],
-    ['Assets/{pocket}/common/', path.resolve('Assets')],
-    ['games/{mister}/', path.resolve('games')],
-    ['Roms/{onion}/', path.resolve('Roms')],
-    ['roms/{batocera}/', path.resolve('roms')],
-    ['{datName}', path.resolve('')],
-    ['{datDescription}', path.resolve('')],
+    ['', PathUtil.resolve('')],
+    ['.', PathUtil.resolve('.')],
+    ['root', PathUtil.resolve('root')],
+    ['foo/bar', PathUtil.resolve('foo', 'bar')],
+    ['Assets/{pocket}/common/', PathUtil.resolve('Assets')],
+    ['games/{mister}/', PathUtil.resolve('games')],
+    ['Roms/{onion}/', PathUtil.resolve('Roms')],
+    ['roms/{batocera}/', PathUtil.resolve('roms')],
+    ['{datName}', PathUtil.resolve('')],
+    ['{datDescription}', PathUtil.resolve('')],
   ])('should find the root dir: %s', (output, expectedPath) => {
     expect(new Options({ commands: ['copy'], output }).getOutputDirRoot()).toEqual(expectedPath);
   });

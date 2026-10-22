@@ -13,6 +13,7 @@ import IgirException from '../src/exceptions/igirException.js';
 import Package from '../src/globals/package.js';
 import Temp from '../src/globals/temp.js';
 import FsUtil from '../src/utils/fsUtil.js';
+import PathUtil from '../src/utils/pathUtil.js';
 
 logger.info('========== COMPILING ==========');
 
@@ -32,7 +33,7 @@ const argv = await yargs([])
   })
   .parse(process.argv.slice(2));
 
-const output = path.resolve(argv.output);
+const output = PathUtil.resolve(argv.output);
 logger.info(`Output: '${output}'`);
 if (await FsUtil.exists(output)) {
   await FsUtil.rm(output);
@@ -189,6 +190,7 @@ const bunBuildConfig = {
     },
   ],
 } satisfies Bun.BuildConfig;
+// eslint-disable-next-line unicorn/no-unsafe-json-serialization
 logger.info(JSON.stringify(bunBuildConfig, undefined, 2));
 const result = await Bun.build(bunBuildConfig);
 

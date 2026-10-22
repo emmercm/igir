@@ -25,6 +25,12 @@ export default class LocalFileHeader extends FileRecord {
   // Size with the signature, and without variable length fields at the end
   private static readonly LOCAL_FILE_HEADER_SIZE = 30;
 
+  // zstd can't output anything until it has a whole block, so read at least enough compressed
+  // bytes for the first one: a 4-byte magic number, an up-to-14-byte frame header, a 3-byte block
+  // header, and up to 128 KiB of block content.
+  // @see https://www.rfc-editor.org/rfc/rfc8878.html#section-3.1.1.2.4
+  private static readonly ZSTD_MIN_COMPRESSED_CHUNK_SIZE = 4 + 14 + 3 + 128 * 1024;
+
   private readonly zipFilePath: string;
   private readonly centralDirectoryFileHeader: CentralDirectoryFileHeader;
 
@@ -195,6 +201,22 @@ export default class LocalFileHeader extends FileRecord {
   }
 
   /**
+   * Pick the decompressor's output chunk size from this file's uncompressed size, so that it
+   * doesn't allocate more memory than necessary.
+   * @returns the chunk size, in bytes, or undefined to use zlib's default
+   */
+  private decompressorChunkSize(highWaterMark?: number): number | undefined {
+    if (highWaterMark === undefined) {
+      return undefined;
+    }
+    return Math.max(
+      zlib.constants.Z_MIN_CHUNK,
+      // One byte more than the output, so zlib doesn't allocate a second buffer just to finish
+      Math.min(highWaterMark, this.uncompressedSizeResolved() + 1),
+    );
+  }
+
+  /**
    * Return this file's uncompressed/decompressed stream.
    */
   uncompressedStream(highWaterMark?: number): stream.Readable {
@@ -205,15 +227,20 @@ export default class LocalFileHeader extends FileRecord {
       case CompressionMethod.DEFLATE: {
         return StreamUtil.withTransforms(
           this.compressedStream(highWaterMark),
-          zlib.createInflateRaw({ chunkSize: highWaterMark }),
+          zlib.createInflateRaw({ chunkSize: this.decompressorChunkSize(highWaterMark) }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }
       case CompressionMethod.ZSTD_DEPRECATED:
       case CompressionMethod.ZSTD: {
         return StreamUtil.withTransforms(
-          this.compressedStream(highWaterMark),
-          zlib.createZstdDecompress({ chunkSize: highWaterMark }),
+          this.compressedStream(
+            Math.min(
+              Math.max(highWaterMark ?? 0, LocalFileHeader.ZSTD_MIN_COMPRESSED_CHUNK_SIZE),
+              this.compressedSizeResolved(),
+            ),
+          ),
+          zlib.createZstdDecompress({ chunkSize: this.decompressorChunkSize(highWaterMark) }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }

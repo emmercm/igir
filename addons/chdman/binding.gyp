@@ -270,6 +270,7 @@
         "binding.cpp",
         "src/tracks.cpp",
         "src/info.cpp",
+        "src/chdOpen.cpp",
         "stubs/utf8proc.cpp",
         "stubs/win_utf8_io.cpp"
       ],

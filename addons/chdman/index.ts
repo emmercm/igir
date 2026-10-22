@@ -104,7 +104,8 @@ export interface ListGdRomOptions {
 // The raw stream-based reader that the native addon returns
 interface NativeTrackReader {
   read: (maxBytes: number) => Promise<Buffer | null>;
-  close: () => void;
+  // Resolves once the CHD is closed
+  close: () => Promise<void>;
 }
 
 export const TrackReaderMode = {
@@ -192,40 +193,67 @@ function loadBinding(): ChdmanBinding {
 }
 
 /**
- * Wrap a native CHD reader in a {@link stream.Readable}. The reader is closed when the
- * stream ends, errors, or is destroyed. Callers must consume the stream to its end or
- * call `destroy()` so the native reader is released.
+ * Turn a thrown value into an {@link Error}.
+ * @returns the value, or an Error describing it
+ */
+function toError(thrown: unknown): Error {
+  return thrown instanceof Error ? thrown : new Error(String(thrown));
+}
+
+/**
+ * Wrap a native CHD reader in a {@link stream.Readable}. The stream closes the CHD in `destroy()`,
+ * which it calls once it has ended or failed, after any read in flight finishes, and emits
+ * `'close'` only once the CHD is closed (like Node.js fs.ReadStream). Callers must consume the
+ * stream to its end or call `destroy()` so the native reader is released.
  */
 function readableFromReader(reader: NativeTrackReader, highWaterMark?: number): stream.Readable {
-  let isClosed = false;
-  const closeOnce = (): void => {
-    if (isClosed) {
-      return;
-    }
-
-    isClosed = true;
-    reader.close();
-  };
+  // The read in flight, which destroy() waits for before closing the reader
+  let reading: ReturnType<NativeTrackReader['read']> | undefined;
   return new stream.Readable({
     highWaterMark,
     async read(): Promise<void> {
+      let chunk: Buffer | null;
       try {
-        const chunk = await reader.read(this.readableHighWaterMark);
-        if (chunk === null || chunk.length === 0) {
-          closeOnce();
-          // eslint-disable-next-line unicorn/no-null
-          this.push(null);
-        } else {
-          this.push(chunk);
-        }
+        reading = reader.read(this.readableHighWaterMark);
+        chunk = await reading;
       } catch (error) {
-        closeOnce();
-        this.destroy(error instanceof Error ? error : new Error(String(error)));
+        reading = undefined;
+        // Once destroyed, destroy() reports the error instead
+        if (!this.destroyed) {
+          this.destroy(toError(error));
+        }
+        return;
+      }
+      reading = undefined;
+      // A chunk that arrives once destroyed is dropped
+      if (this.destroyed) {
+        return;
+      }
+      if (chunk === null || chunk.length === 0) {
+        // eslint-disable-next-line unicorn/no-null
+        this.push(null);
+      } else {
+        this.push(chunk);
       }
     },
     destroy(error, callback): void {
-      closeOnce();
-      callback(error);
+      // Reports an error closing over the one destroyed with, and that one over an error from the
+      // read in flight (like Node.js fs.ReadStream)
+      const pending = reading;
+      void (async (): Promise<void> => {
+        let result = error;
+        try {
+          await pending;
+        } catch (readError) {
+          result ??= toError(readError);
+        }
+        try {
+          await reader.close();
+        } catch (closeError) {
+          result = toError(closeError);
+        }
+        callback(result);
+      })();
     },
   });
 }

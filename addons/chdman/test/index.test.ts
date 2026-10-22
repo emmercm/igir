@@ -2,10 +2,13 @@ import crypto from 'node:crypto';
 import events from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import type stream from 'node:stream';
 import worker_threads from 'node:worker_threads';
 
+import Temp from '../../../src/globals/temp.js';
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
+import isFileOpen from '../../../test/utils/isFileOpen.js';
 import chdman, {
   type CHDInfo,
   CHDType,
@@ -419,13 +422,6 @@ const HARD_DISK = findFixture('layouts/hd.chd');
 
 const MISSING = path.join(FIXTURES, 'missing.chd');
 
-// Files that no reader can open
-const UNOPENABLE = [
-  { label: 'a missing file', inputFilename: MISSING },
-  { label: 'a file that is not a CHD', inputFilename: import.meta.filename },
-  { label: 'a truncated CHD', inputFilename: TRUNCATED },
-];
-
 // Read sizes that land frame and hunk boundaries at awkward offsets: a byte at a time, one byte
 // short of a CD frame, a CD frame, a CD frame with subcode, and more than any fixture holds.
 // Node's default is covered by every fixture's own read test.
@@ -554,6 +550,22 @@ async function expectTracks(fixture: Fixture, highWaterMark?: number): Promise<v
 }
 
 /**
+ * @returns the length of the final chunk {@link readable} emits, and the size of the memory behind it
+ */
+async function readFinalChunk(
+  readable: stream.Readable,
+): Promise<{ length?: number; allocated?: number }> {
+  let finalChunk: Buffer | undefined;
+  for await (const chunk of readable) {
+    if (!Buffer.isBuffer(chunk)) {
+      throw new TypeError('expected a Buffer chunk');
+    }
+    finalChunk = chunk;
+  }
+  return { length: finalChunk?.length, allocated: finalChunk?.buffer.byteLength };
+}
+
+/**
  * @returns the size and SHA-1 of the logical image of {@link inputPath}, streamed by the addon
  */
 async function readRaw(inputPath: string, highWaterMark?: number): Promise<Digest> {
@@ -563,6 +575,205 @@ async function readRaw(inputPath: string, highWaterMark?: number): Promise<Diges
     ),
   );
 }
+
+/**
+ * Run `callback` against a temporary directory that is removed afterwards,
+ * however it finishes.
+ */
+async function withTempDir<T>(callback: (directory: string) => Promise<T> | T): Promise<T> {
+  if (!(await FsUtil.exists(Temp.getTempDir()))) {
+    await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
+  }
+  const directory = await FsUtil.mkdtemp(Temp.getTempDir());
+  try {
+    return await callback(directory);
+  } finally {
+    await FsUtil.rm(directory, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Copy {@link source} into {@link directory}, keeping its name, so that a test checks the handles
+ * of a file that no other test, and no other process, has open.
+ * @returns the path of the copy
+ */
+async function copyInto(directory: string, source: string): Promise<string> {
+  const copy = path.join(directory, path.basename(source));
+  await FsUtil.copyFile(source, copy);
+  return copy;
+}
+
+/**
+ * Destroy {@link readable}, with {@link error} if one is given, and record the events it emits from
+ * then on, until it closes.
+ * @returns the names of the events, in the order they were emitted
+ */
+async function eventsAfterDestroy(readable: stream.Readable, error?: Error): Promise<string[]> {
+  const emitted: string[] = [];
+  const closed = new Promise<void>((resolve) => {
+    for (const name of ['data', 'end', 'error', 'close']) {
+      readable.on(name, () => {
+        emitted.push(name);
+        if (name === 'close') {
+          resolve();
+        }
+      });
+    }
+  });
+  readable.destroy(error);
+  await closed;
+  return emitted;
+}
+
+/**
+ * Copy the disc {@link fixture} into {@link directory}.
+ * @returns the fixture, read from the copy
+ */
+async function copyFixtureInto(directory: string, fixture: Fixture): Promise<Fixture> {
+  return { ...fixture, inputPath: await copyInto(directory, fixture.inputPath) };
+}
+
+// Files that every reader rejects, each written into a directory of its own
+const REJECTED: { label: string; write: (directory: string) => Promise<string> }[] = [
+  {
+    label: 'a file that is not a CHD',
+    write: async (directory): Promise<string> => {
+      const inputFilename = path.join(directory, 'garbage.chd');
+      await FsUtil.writeFile(inputFilename, crypto.randomBytes(4096));
+      return inputFilename;
+    },
+  },
+  {
+    label: 'a truncated CHD',
+    write: async (directory): Promise<string> => await copyInto(directory, TRUNCATED),
+  },
+];
+
+// A v3 CD-ROM CHD of a 30-frame MODE1 track and a 30-frame AUDIO track, whose metadata is rewritten
+const CRAFTED_CD_BASE = findFixture('legacy/cd-v3.chd');
+
+/**
+ * One entry of a CHD's metadata chain.
+ */
+interface CraftedMetadata {
+  tag: string;
+  data: Buffer;
+}
+
+/**
+ * One track of old-style (`CHCD`) CD-ROM metadata.
+ */
+interface OldCdTrack {
+  trackType: number;
+  dataSize: number;
+  frames: number;
+}
+
+// The tracks of CRAFTED_CD_BASE: CD_TRACK_MODE1 and CD_TRACK_AUDIO
+const CRAFTED_CD_TRACKS: OldCdTrack[] = [
+  { trackType: 0, dataSize: 2048, frames: 30 },
+  { trackType: 7, dataSize: 2352, frames: 30 },
+];
+
+/**
+ * Old-style CD-ROM metadata is a track count, then 99 tracks of six little-endian words each: the
+ * track type, subcode type, data size, subcode size, frames, and padding frames.
+ * @returns old-style metadata declaring {@link trackCount} tracks, of which {@link tracks} are filled in
+ */
+function encodeOldCdMetadata(trackCount: number, tracks: OldCdTrack[]): Buffer {
+  const data = Buffer.alloc((1 + 99 * 6) * 4);
+  data.writeUInt32LE(trackCount, 0);
+  for (const [index, track] of tracks.entries()) {
+    const offset = 4 + index * 24;
+    data.writeUInt32LE(track.trackType, offset);
+    // CD_SUB_NONE
+    data.writeUInt32LE(2, offset + 4);
+    data.writeUInt32LE(track.dataSize, offset + 8);
+    data.writeUInt32LE(0, offset + 12);
+    data.writeUInt32LE(track.frames, offset + 16);
+    data.writeUInt32LE((4 - (track.frames % 4)) % 4, offset + 20);
+  }
+  return data;
+}
+
+/**
+ * Write a copy of {@link CRAFTED_CD_BASE} whose metadata chain is replaced by {@link entries},
+ * appended after its hunks.
+ * @returns the path of the written CHD
+ */
+async function writeCraftedCdChd(directory: string, entries: CraftedMetadata[]): Promise<string> {
+  const chd = await fs.promises.readFile(CRAFTED_CD_BASE.inputPath);
+  // The v3 header's big-endian offset of the first metadata entry
+  chd.writeBigUInt64BE(BigInt(chd.length), 36);
+  const parts: Buffer[] = [chd];
+  let offset = chd.length;
+  for (const [index, entry] of entries.entries()) {
+    // A metadata entry header: its tag, flags and length, and the offset of the next entry
+    const header = Buffer.alloc(16);
+    header.write(entry.tag, 0, 'latin1');
+    header.writeUInt32BE(entry.data.length, 4);
+    const next = offset + header.length + entry.data.length;
+    header.writeBigUInt64BE(index + 1 < entries.length ? BigInt(next) : 0n, 8);
+    parts.push(header, entry.data);
+    offset = next;
+  }
+  const filePath = path.join(directory, 'crafted.chd');
+  await fs.promises.writeFile(filePath, Buffer.concat(parts));
+  return filePath;
+}
+
+// CD-ROM metadata that MAME parses without validating, each of which must be refused rather than
+// crash the process (too many tracks), read past its metadata (truncated), spin through 2^32 frames
+// without emitting anything (zero data size), or overflow a frame buffer (oversized data size)
+const MALFORMED_CD_METADATA: { description: string; entries: CraftedMetadata[]; error: string }[] =
+  [
+    {
+      description: 'old-style metadata with more tracks than a CD holds',
+      entries: [{ tag: 'CHCD', data: encodeOldCdMetadata(1000, CRAFTED_CD_TRACKS) }],
+      error: 'CHD CD-ROM metadata has too many tracks',
+    },
+    {
+      description: 'truncated old-style metadata',
+      entries: [{ tag: 'CHCD', data: encodeOldCdMetadata(2, CRAFTED_CD_TRACKS).subarray(0, 4) }],
+      error: 'CHD CD-ROM metadata is truncated',
+    },
+    {
+      description: 'old-style metadata with a zero data size and 2^32-1 frames',
+      entries: [
+        {
+          tag: 'CHCD',
+          data: encodeOldCdMetadata(2, [
+            { trackType: 0, dataSize: 0, frames: 0xff_ff_ff_ff },
+            CRAFTED_CD_TRACKS[1],
+          ]),
+        },
+      ],
+      error: 'CHD track 1 has an invalid data size of 0 bytes',
+    },
+    {
+      description: 'old-style metadata with a data size larger than a CD frame',
+      entries: [
+        {
+          tag: 'CHCD',
+          data: encodeOldCdMetadata(2, [
+            { trackType: 0, dataSize: 4096, frames: 30 },
+            CRAFTED_CD_TRACKS[1],
+          ]),
+        },
+      ],
+      error: 'CHD track 1 has an invalid data size of 4096 bytes',
+    },
+    {
+      description: 'new-style metadata that skips track 1',
+      entries: [
+        {
+          tag: 'CHTR',
+          data: Buffer.from('TRACK:2 TYPE:MODE1 SUBTYPE:NONE FRAMES:30\0', 'latin1'),
+        },
+      ],
+      error: 'CHD track 1 has an invalid data size of 0 bytes',
+    },
+  ];
 
 describe('info', () => {
   it('should have fixtures to test', () => {
@@ -579,9 +790,16 @@ describe('info', () => {
   });
 
   it.each(ALL_FIXTURES)(
-    'should read the info of $inputPath',
+    'should read the info of $inputPath, then release it',
     async ({ inputPath, expectedInfo }) => {
-      await expect(chdman.info({ inputFilename: inputPath })).resolves.toEqual(expectedInfo);
+      await withTempDir(async (directory) => {
+        const inputFilename = await copyInto(directory, inputPath);
+        await expect(chdman.info({ inputFilename })).resolves.toEqual({
+          ...expectedInfo,
+          inputFile: inputFilename,
+        });
+        expect(await isFileOpen(inputFilename)).toEqual(false);
+      });
     },
   );
 
@@ -598,42 +816,63 @@ describe('info', () => {
     },
   );
 
-  it.each(UNOPENABLE)('should reject on $label', async ({ inputFilename }) => {
-    await expect(chdman.info({ inputFilename })).rejects.toThrow('failed to open CHD');
+  it('should reject on a missing file', async () => {
+    await expect(chdman.info({ inputFilename: MISSING })).rejects.toThrow('failed to open CHD');
   });
 
-  it('should read the info of a CHD whose parent is missing', async () => {
-    await expect(chdman.info({ inputFilename: NEEDS_PARENT })).resolves.toEqual({
-      inputFile: NEEDS_PARENT,
-      type: CHDType.HARD_DISK,
-      fileVersion: 5,
-      logicalSize: 8192,
-      hunkSize: 4096,
-      totalHunks: 2,
-      unitSize: 512,
-      totalUnits: 16,
-      compression: HD_CODECS,
-      chdSize: 273,
-      sha1: '023a2b1a4959613883fd409018fb626b6dcd4fd1',
-      dataSha1: 'f4f3d9db6bf1fec701d73ba37a6430ca09e1c131',
+  it.each(REJECTED)('should reject on $label, then release it', async ({ write }) => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await write(directory);
+      await expect(chdman.info({ inputFilename })).rejects.toThrow('failed to open CHD');
+      expect(await isFileOpen(inputFilename)).toEqual(false);
     });
   });
 
-  it('should read many CHDs concurrently', async () => {
-    const infos = await Promise.all(
-      Array.from(
-        { length: 16 },
-        async () => await chdman.info({ inputFilename: HARD_DISK.inputPath }),
-      ),
-    );
-    expect(infos).toEqual(Array.from({ length: 16 }, () => HARD_DISK.expectedInfo));
+  it('should read the info of a CHD whose parent is missing, then release it', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, NEEDS_PARENT);
+      await expect(chdman.info({ inputFilename })).resolves.toEqual({
+        inputFile: inputFilename,
+        type: CHDType.HARD_DISK,
+        fileVersion: 5,
+        logicalSize: 8192,
+        hunkSize: 4096,
+        totalHunks: 2,
+        unitSize: 512,
+        totalUnits: 16,
+        compression: HD_CODECS,
+        chdSize: 273,
+        sha1: '023a2b1a4959613883fd409018fb626b6dcd4fd1',
+        dataSha1: 'f4f3d9db6bf1fec701d73ba37a6430ca09e1c131',
+      });
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
+  });
+
+  it('should read many CHDs concurrently, then release them', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, HARD_DISK.inputPath);
+      const infos = await Promise.all(
+        Array.from({ length: 16 }, async () => await chdman.info({ inputFilename })),
+      );
+      expect(infos).toEqual(
+        Array.from({ length: 16 }, () => ({ ...HARD_DISK.expectedInfo, inputFile: inputFilename })),
+      );
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
   });
 });
 
 describe('listCdBinCueTracks', () => {
   it.each(CUEBIN_FIXTURES)(
-    "should list $inputPath with chdman's cue text and track sizes",
-    expectListing,
+    "should list $inputPath with chdman's cue text and track sizes, then release it",
+    async (original) => {
+      await withTempDir(async (directory) => {
+        const fixture = await copyFixtureInto(directory, original);
+        await expectListing(fixture);
+        expect(await isFileOpen(fixture.inputPath)).toEqual(false);
+      });
+    },
   );
 
   it('should refuse to list a GD-ROM as cue/bin instead of producing a runaway track', async () => {
@@ -650,6 +889,43 @@ describe('listCdBinCueTracks', () => {
     ).rejects.toThrow(/cannot be extracted as cue\/bin/);
   });
 
+  it('should list old-style CD-ROM metadata the same as the new-style metadata it encodes', async () => {
+    const expected = await chdman.listCdBinCueTracks({
+      inputFilename: CRAFTED_CD_BASE.inputPath,
+      binNamePattern: 'crafted (Track %t).bin',
+      cueName: 'crafted.cue',
+    });
+    await withTempDir(async (directory) => {
+      const inputFilename = await writeCraftedCdChd(directory, [
+        { tag: 'CHCD', data: encodeOldCdMetadata(2, CRAFTED_CD_TRACKS) },
+      ]);
+      await expect(
+        chdman.listCdBinCueTracks({
+          inputFilename,
+          binNamePattern: 'crafted (Track %t).bin',
+          cueName: 'crafted.cue',
+        }),
+      ).resolves.toEqual(expected);
+    });
+  });
+
+  it.each(MALFORMED_CD_METADATA)(
+    'should reject a CHD with $description, then release it',
+    async ({ entries, error }) => {
+      await withTempDir(async (directory) => {
+        const inputFilename = await writeCraftedCdChd(directory, entries);
+        await expect(
+          chdman.listCdBinCueTracks({
+            inputFilename,
+            binNamePattern: 'crafted (Track %t).bin',
+            cueName: 'crafted.cue',
+          }),
+        ).rejects.toThrow(error);
+        expect(await isFileOpen(inputFilename)).toEqual(false);
+      });
+    },
+  );
+
   it('should reject on a missing file', async () => {
     await expect(
       chdman.listCdBinCueTracks({
@@ -659,12 +935,47 @@ describe('listCdBinCueTracks', () => {
       }),
     ).rejects.toThrow('failed to open CHD');
   });
+
+  it.each(REJECTED)('should reject on $label, then release it', async ({ write }) => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await write(directory);
+      await expect(
+        chdman.listCdBinCueTracks({
+          inputFilename,
+          binNamePattern: 'track %t.bin',
+          cueName: 'disc.cue',
+        }),
+      ).rejects.toThrow('failed to open CHD');
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
+  });
 });
 
 describe('listGdRomTracks', () => {
   it.each(GDI_FIXTURES)(
-    "should list $inputPath with chdman's gdi text and track sizes",
-    expectListing,
+    "should list $inputPath with chdman's gdi text and track sizes, then release it",
+    async (original) => {
+      await withTempDir(async (directory) => {
+        const fixture = await copyFixtureInto(directory, original);
+        await expectListing(fixture);
+        expect(await isFileOpen(fixture.inputPath)).toEqual(false);
+      });
+    },
+  );
+
+  it.each(MALFORMED_CD_METADATA)(
+    'should reject a CHD with $description',
+    async ({ entries, error }) => {
+      await withTempDir(async (directory) => {
+        await expect(
+          chdman.listGdRomTracks({
+            inputFilename: await writeCraftedCdChd(directory, entries),
+            trackBaseName: 'track',
+            gdiName: 'crafted.gdi',
+          }),
+        ).rejects.toThrow(error);
+      });
+    },
   );
 
   it('should reject on a missing file', async () => {
@@ -680,16 +991,51 @@ describe('listGdRomTracks', () => {
 
 describe('openTrackReader', () => {
   it.each(DISC_FIXTURES)(
-    'should stream every track of $inputPath byte-identically to chdman',
-    async (fixture) => {
-      await expectTracks(fixture);
+    'should stream every track of $inputPath byte-identically to chdman, then release it',
+    async (original) => {
+      await withTempDir(async (directory) => {
+        const fixture = await copyFixtureInto(directory, original);
+        await expectTracks(fixture);
+        expect(await isFileOpen(fixture.inputPath)).toEqual(false);
+      });
     },
   );
 
   it.each(expandHighWaterMarks([MIXED_PREGAP, GD_ROM]))(
-    'should stream $fixture.inputPath with a high-water mark of $highWaterMark byte-identically',
+    'should stream $fixture.inputPath with a highWaterMark of $highWaterMark byte-identically',
     async ({ fixture, highWaterMark }) => {
       await expectTracks(fixture, highWaterMark);
+    },
+  );
+
+  it.each([MIXED_PREGAP, GD_ROM])(
+    'should allocate only the bytes left for the final chunk of every track of $inputPath',
+    async (fixture) => {
+      // One byte short of a CD frame, so the final chunk of every track falls mid-frame
+      const highWaterMark = 2351;
+      const expected = await readExpectedDisc(fixture);
+      const listing = await listTracks(fixture, expected.tocName);
+      const finalChunks = [];
+      for (const track of listing.tracks) {
+        finalChunks.push(
+          await readFinalChunk(
+            chdman.openTrackReader({
+              inputFilename: fixture.inputPath,
+              mode: path.basename(fixture.inputPath).startsWith('gd-')
+                ? TrackReaderMode.GDI
+                : TrackReaderMode.CUEBIN,
+              trackIndex: track.index,
+              highWaterMark,
+            }),
+          ),
+        );
+      }
+      const finalChunkSizes = listing.tracks.map(
+        (track) => track.size % highWaterMark || highWaterMark,
+      );
+      expect(finalChunks).toEqual(
+        finalChunkSizes.map((size) => ({ length: size, allocated: size })),
+      );
     },
   );
 
@@ -726,17 +1072,57 @@ describe('openTrackReader', () => {
   });
 
   it.each([99, -1])(
-    'should reject with a RangeError for track index %i, which the CHD does not have',
+    'should reject with a RangeError for track index %i, which the CHD does not have, then release it',
     async (trackIndex) => {
-      const read = BufferUtil.fromReadable(
-        chdman.openTrackReader({
-          inputFilename: MIXED_PREGAP.inputPath,
-          mode: TrackReaderMode.CUEBIN,
-          trackIndex,
-        }),
+      await withTempDir(async (directory) => {
+        const fixture = await copyFixtureInto(directory, MIXED_PREGAP);
+        const read = BufferUtil.fromReadable(
+          chdman.openTrackReader({
+            inputFilename: fixture.inputPath,
+            mode: TrackReaderMode.CUEBIN,
+            trackIndex,
+          }),
+        );
+        await expect(read).rejects.toThrow(RangeError);
+        await expect(read).rejects.toThrow('track index out of range');
+        expect(await isFileOpen(fixture.inputPath)).toEqual(false);
+      });
+    },
+  );
+
+  it('should stream old-style CD-ROM metadata the same as the new-style metadata it encodes', async () => {
+    const readTracks = async (inputFilename: string): Promise<Digest[]> =>
+      await Promise.all(
+        [0, 1].map(async (trackIndex) =>
+          computeDigest(
+            await BufferUtil.fromReadable(
+              chdman.openTrackReader({ inputFilename, mode: TrackReaderMode.CUEBIN, trackIndex }),
+            ),
+          ),
+        ),
       );
-      await expect(read).rejects.toThrow(RangeError);
-      await expect(read).rejects.toThrow('track index out of range');
+    const expected = await readTracks(CRAFTED_CD_BASE.inputPath);
+    await withTempDir(async (directory) => {
+      const inputFilename = await writeCraftedCdChd(directory, [
+        { tag: 'CHCD', data: encodeOldCdMetadata(2, CRAFTED_CD_TRACKS) },
+      ]);
+      await expect(readTracks(inputFilename)).resolves.toEqual(expected);
+    });
+  });
+
+  it.each(MALFORMED_CD_METADATA)(
+    'should reject reading a CHD with $description, then release it',
+    async ({ entries, error }) => {
+      await withTempDir(async (directory) => {
+        const inputFilename = await writeCraftedCdChd(directory, entries);
+        const readable = chdman.openTrackReader({
+          inputFilename,
+          mode: TrackReaderMode.CUEBIN,
+          trackIndex: 0,
+        });
+        await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(error);
+        expect(await isFileOpen(inputFilename)).toEqual(false);
+      });
     },
   );
 
@@ -749,32 +1135,88 @@ describe('openTrackReader', () => {
     await expect(BufferUtil.fromReadable(readable)).rejects.toThrow('failed to open CHD');
   });
 
-  it('should close cleanly when destroyed mid-stream', async () => {
-    const readable = chdman.openTrackReader({
-      inputFilename: FRAME_STRADDLES_READ.inputPath,
-      mode: TrackReaderMode.CUEBIN,
-      trackIndex: 0,
-      highWaterMark: 2352,
-    });
-    await new Promise<void>((resolve, reject) => {
-      readable.once('data', () => {
-        readable.destroy();
-        resolve();
+  it('should hold the CHD open mid-stream, and release it before emitting close when destroyed', async () => {
+    await withTempDir(async (directory) => {
+      const fixture = await copyFixtureInto(directory, FRAME_STRADDLES_READ);
+      const readable = chdman.openTrackReader({
+        inputFilename: fixture.inputPath,
+        mode: TrackReaderMode.CUEBIN,
+        trackIndex: 0,
+        highWaterMark: 2352,
       });
-      readable.once('error', reject);
+      expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
+      expect(await isFileOpen(fixture.inputPath)).toEqual(true);
+
+      const closed = events.once(readable, 'close');
+      readable.destroy();
+      await closed;
+      expect(readable.destroyed).toEqual(true);
+      expect(await isFileOpen(fixture.inputPath)).toEqual(false);
     });
-    await new Promise<void>((resolve) => {
-      readable.once('close', resolve);
+  });
+
+  it('should release the CHD when destroyed before reading, emitting the same events as fs.ReadStream', async () => {
+    await withTempDir(async (directory) => {
+      const { inputPath: inputFilename } = await copyFixtureInto(directory, MIXED_PREGAP);
+      const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
+      expect(expected).toEqual(['close']);
+
+      const readable = chdman.openTrackReader({
+        inputFilename,
+        mode: TrackReaderMode.CUEBIN,
+        trackIndex: 0,
+      });
+      expect(await eventsAfterDestroy(readable)).toEqual(expected);
+      expect(await isFileOpen(inputFilename)).toEqual(false);
     });
-    expect(readable.destroyed).toEqual(true);
+  });
+
+  it('should release the CHD when destroyed with a read in flight, reporting the same error as fs.ReadStream', async () => {
+    await withTempDir(async (directory) => {
+      const { inputPath: inputFilename } = await copyFixtureInto(directory, FRAME_STRADDLES_READ);
+      const error = new Error('destroyed');
+      // Flowing, so each stream has its next read in flight whenever a chunk arrives
+      const fileStream = fs.createReadStream(inputFilename, { highWaterMark: 1 });
+      await events.once(fileStream.resume(), 'data');
+      const expected = await eventsAfterDestroy(fileStream, error);
+      // The chunk that the read in flight returns is dropped
+      expect(expected).toEqual(['error', 'close']);
+
+      const readable = chdman.openTrackReader({
+        inputFilename,
+        mode: TrackReaderMode.CUEBIN,
+        trackIndex: 0,
+        highWaterMark: 1,
+      });
+      await events.once(readable.resume(), 'data');
+      expect(await eventsAfterDestroy(readable, error)).toEqual(expected);
+      expect(readable.errored).toEqual(error);
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
+  });
+
+  it.each(REJECTED)('should reject on $label, then release it', async ({ write }) => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await write(directory);
+      await expect(
+        BufferUtil.fromReadable(
+          chdman.openTrackReader({ inputFilename, mode: TrackReaderMode.CUEBIN, trackIndex: 0 }),
+        ),
+      ).rejects.toThrow('failed to open CHD');
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
   });
 });
 
 describe('openRawReader', () => {
   it.each(RAW_FIXTURES)(
-    'should stream the logical image of $inputPath byte-identically to chdman',
+    'should stream the logical image of $inputPath byte-identically to chdman, then release it',
     async (fixture) => {
-      await expect(readRaw(fixture.inputPath)).resolves.toEqual(await readExpectedImage(fixture));
+      await withTempDir(async (directory) => {
+        const inputFilename = await copyInto(directory, fixture.inputPath);
+        await expect(readRaw(inputFilename)).resolves.toEqual(await readExpectedImage(fixture));
+        expect(await isFileOpen(inputFilename)).toEqual(false);
+      });
     },
   );
 
@@ -784,13 +1226,22 @@ describe('openRawReader', () => {
       findFixture('layouts/raw-unit2448.chd'),
     ]),
   )(
-    'should stream $fixture.inputPath with a high-water mark of $highWaterMark byte-identically',
+    'should stream $fixture.inputPath with a highWaterMark of $highWaterMark byte-identically',
     async ({ fixture, highWaterMark }) => {
       await expect(readRaw(fixture.inputPath, highWaterMark)).resolves.toEqual(
         await readExpectedImage(fixture),
       );
     },
   );
+
+  it('should allocate only the bytes left for the final chunk', async () => {
+    const highWaterMark = 3000;
+    const { size } = await readExpectedImage(HARD_DISK);
+    const finalChunkSize = size % highWaterMark || highWaterMark;
+    await expect(
+      readFinalChunk(chdman.openRawReader({ inputFilename: HARD_DISK.inputPath, highWaterMark })),
+    ).resolves.toEqual({ length: finalChunkSize, allocated: finalChunkSize });
+  });
 
   it('should stream multiple raw readers over the same CHD in parallel', async () => {
     const image = await readExpectedImage(HARD_DISK);
@@ -801,12 +1252,78 @@ describe('openRawReader', () => {
     ).resolves.toEqual([image, image, image]);
   });
 
-  it.each(UNOPENABLE)('should reject on $label', async ({ inputFilename }) => {
-    await expect(readRaw(inputFilename)).rejects.toThrow('failed to open CHD');
+  it.each([
+    {
+      label: 'appended to',
+      change: async (inputFilename: string): Promise<void> => {
+        // A CHD's size is in its header, so bytes past it are never read
+        await fs.promises.appendFile(inputFilename, crypto.randomBytes(2500));
+      },
+    },
+    {
+      label: 'renamed',
+      change: async (inputFilename: string): Promise<void> => {
+        await fs.promises.rename(inputFilename, `${inputFilename}.renamed`);
+      },
+    },
+    {
+      label: 'deleted',
+      change: async (inputFilename: string): Promise<void> => {
+        await fs.promises.rm(inputFilename);
+      },
+    },
+    {
+      label: 'rewritten in place',
+      change: async (inputFilename: string): Promise<void> => {
+        // Opening for writing only succeeds while every other handle to the file shares writes
+        const contents = await FsUtil.readFile(inputFilename);
+        const handle = await fs.promises.open(inputFilename, 'r+');
+        try {
+          await handle.write(contents, 0, contents.length, 0);
+        } finally {
+          await handle.close();
+        }
+      },
+    },
+  ])('should keep reading a CHD that is $label while open', async ({ change }) => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, HARD_DISK.inputPath);
+
+      const readable = chdman.openRawReader({ inputFilename, highWaterMark: 3000 });
+      const chunks: Buffer[] = [];
+      for await (const chunk of readable) {
+        if (!Buffer.isBuffer(chunk)) {
+          throw new TypeError('expected a Buffer chunk');
+        }
+        chunks.push(chunk);
+        if (chunks.length === 1) {
+          // The CHD is open once the first chunk has arrived
+          await change(inputFilename);
+        }
+      }
+
+      expect(computeDigest(Buffer.concat(chunks))).toEqual(await readExpectedImage(HARD_DISK));
+    });
   });
 
-  it('should reject on a CHD whose parent is missing', async () => {
-    await expect(readRaw(NEEDS_PARENT)).rejects.toThrow('Requires parent');
+  it('should reject on a missing file', async () => {
+    await expect(readRaw(MISSING)).rejects.toThrow('failed to open CHD');
+  });
+
+  it.each(REJECTED)('should reject on $label, then release it', async ({ write }) => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await write(directory);
+      await expect(readRaw(inputFilename)).rejects.toThrow('failed to open CHD');
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
+  });
+
+  it('should reject on a CHD whose parent is missing, then release it', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, NEEDS_PARENT);
+      await expect(readRaw(inputFilename)).rejects.toThrow('Requires parent');
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
   });
 
   it.each([
@@ -821,8 +1338,27 @@ describe('openRawReader', () => {
       highWaterMark: Number.MAX_SAFE_INTEGER * 2,
       error: 'maxBytes is too large',
     },
-  ])('should reject a high-water mark $label', async ({ highWaterMark, error }) => {
+  ])('should reject a highWaterMark $label', async ({ highWaterMark, error }) => {
     await expect(readRaw(HARD_DISK.inputPath, highWaterMark)).rejects.toThrow(error);
+  });
+
+  it('should release the CHD once many readers are abandoned at different points', async () => {
+    await withTempDir(async (directory) => {
+      const inputFilename = await copyInto(directory, HARD_DISK.inputPath);
+      await Promise.all(
+        Array.from({ length: 16 }, async (_value, index) => {
+          const readable = chdman.openRawReader({ inputFilename, highWaterMark: 512 });
+          const iterator = readable[Symbol.asyncIterator]();
+          for (let chunks = 0; chunks < index % 4; chunks++) {
+            expect((await iterator.next()).done).toEqual(false);
+          }
+          const closed = events.once(readable, 'close');
+          readable.destroy();
+          await closed;
+        }),
+      );
+      expect(await isFileOpen(inputFilename)).toEqual(false);
+    });
   });
 
   // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
@@ -830,11 +1366,13 @@ describe('openRawReader', () => {
   // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
   // to be fixed by https://github.com/oven-sh/bun/pull/40249
   it.skipIf(process.versions.bun)(
-    'should terminate workers with pending native reads',
+    'should terminate workers with pending native reads, releasing the CHD',
     async () => {
-      for (let i = 0; i < 20; i++) {
-        const worker = new worker_threads.Worker(
-          `const { parentPort, workerData } = require('node:worker_threads');
+      await withTempDir(async (directory) => {
+        const inputPath = await copyInto(directory, GD_ROM.inputPath);
+        for (let i = 0; i < 20; i++) {
+          const worker = new worker_threads.Worker(
+            `const { parentPort, workerData } = require('node:worker_threads');
          import(workerData.indexUrl).then(({ default: chdman }) => {
            for (let j = 0; j < 32; j++) {
              chdman
@@ -845,22 +1383,25 @@ describe('openRawReader', () => {
            parentPort.postMessage('ready');
            setInterval(() => {}, 1000);
          });`,
-          {
-            eval: true,
-            workerData: {
-              indexUrl: new URL('../index.ts', import.meta.url).href,
-              inputPath: GD_ROM.inputPath,
+            {
+              eval: true,
+              workerData: {
+                indexUrl: new URL('../index.ts', import.meta.url).href,
+                inputPath,
+              },
             },
-          },
-        );
-        try {
-          await events.once(worker, 'message');
-          // Vary when the worker terminates relative to its reads
-          await new Promise((resolve) => setTimeout(resolve, i % 5));
-        } finally {
-          await worker.terminate();
+          );
+          try {
+            await events.once(worker, 'message');
+            // Vary when the worker terminates relative to its reads
+            await new Promise((resolve) => setTimeout(resolve, i % 5));
+          } finally {
+            await worker.terminate();
+          }
+          // Terminating waits for the worker's environment to tear down, which frees every reader
+          expect(await isFileOpen(inputPath)).toEqual(false);
         }
-      }
+      });
     },
     30_000,
   );

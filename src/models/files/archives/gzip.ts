@@ -6,12 +6,11 @@ import * as tar from 'tar';
 
 import { logger } from '../../../console/logger.js';
 import IgirException from '../../../exceptions/igirException.js';
-import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
-import BufferUtil from '../../../utils/bufferUtil.js';
+import FsUtil from '../../../utils/fsUtil.js';
 import StreamUtil from '../../../utils/streamUtil.js';
 import FileChecksums, { ChecksumBitmask, type ChecksumProps } from '../fileChecksums.js';
-import type { ArchiveEntryLocation } from './archive.js';
+import type { ArchiveEntryRef } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 import Tar from './tar.js';
@@ -81,9 +80,12 @@ export default class Gzip extends Archive {
       checksumBitmask & ~ChecksumBitmask.CRC32 ||
       (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
     ) {
-      checksums = await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
-        return await FileChecksums.hashStream(readable, checksumBitmask, callback);
-      });
+      checksums = await this.extractEntryToStream(
+        { entryPath: '', size: gzipHeaderTrailer.size },
+        async (readable) => {
+          return await FileChecksums.hashStream(readable, checksumBitmask, callback);
+        },
+      );
     } else if (callback) {
       // The trailer's CRC32 is used, so there's nothing to read
       callback(gzipHeaderTrailer.size);
@@ -116,12 +118,7 @@ export default class Gzip extends Archive {
    */
   private async isTar(): Promise<boolean> {
     try {
-      const header = await this.extractEntryToStream(
-        { entryPath: '' },
-        async (readable) => await BufferUtil.fromReadable(readable),
-        0,
-        511,
-      );
+      const header = await this.readEntryFirstBytes({ entryPath: '' }, 512);
       return header.length === 512 && new tar.Header(header).cksumValid;
     } catch {
       return false;
@@ -186,34 +183,58 @@ export default class Gzip extends Archive {
   /**
    * Decompress the gzip file to the given path.
    */
-  async extractEntryToFile(
-    _location: ArchiveEntryLocation,
-    extractedFilePath: string,
-  ): Promise<void> {
+  async extractEntryToFile(entryRef: ArchiveEntryRef, extractedFilePath: string): Promise<void> {
+    const { readChunkSize, gunzipChunkSize } = await this.getChunkSizes(entryRef);
     await stream.promises.pipeline(
-      fs.createReadStream(this.getFilePath(), {
-        highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
-      }),
-      zlib.createGunzip({ chunkSize: Defaults.FILE_READING_CHUNK_SIZE }),
+      fs.createReadStream(this.getFilePath(), { highWaterMark: readChunkSize }),
+      zlib.createGunzip({ chunkSize: gunzipChunkSize }),
       fs.createWriteStream(extractedFilePath),
     );
   }
 
   /**
    * Decompress the gzip file and invoke the callback with a readable stream of the decompressed
-   * bytes from {@link start} to {@link end} (both inclusive).
+   * bytes.
    */
-  override async extractEntryToStream<T>(
-    _location: ArchiveEntryLocation,
-    callback: (readable: stream.Readable) => Promise<T> | T,
-    start = 0,
-    end?: number,
+  protected override async streamEntry<T>(
+    entryRef: ArchiveEntryRef,
+    callback: (source: stream.Readable) => Promise<T>,
+    byteCount?: number,
   ): Promise<T> {
-    const chunkSize = Gzip.getStreamChunkSize(start, end);
+    const { readChunkSize, gunzipChunkSize } = await this.getChunkSizes(entryRef, byteCount);
     return await StreamUtil.pipelineSafe(
-      fs.createReadStream(this.getFilePath(), { highWaterMark: chunkSize }),
-      zlib.createGunzip({ chunkSize }),
-      async (readable) => await Gzip.pipelineRange(readable, callback, start, end),
+      fs.createReadStream(this.getFilePath(), { highWaterMark: readChunkSize }),
+      zlib.createGunzip({ chunkSize: gunzipChunkSize }),
+      callback,
     );
+  }
+
+  /**
+   * Pick the chunk sizes to read and decompress the entry with, or only its leading
+   * {@link byteCount} bytes, so that neither allocates more memory than necessary.
+   * @returns the read stream's and the gunzip stream's chunk sizes, in bytes
+   */
+  private async getChunkSizes(
+    entryRef: ArchiveEntryRef,
+    byteCount?: number,
+  ): Promise<{ readChunkSize: number; gunzipChunkSize: number }> {
+    const compressedSize = await FsUtil.size(this.getFilePath());
+    // The trailer only holds the last member's size, modulo 4GiB, so it can understate the
+    // uncompressed size. Compression rarely makes data larger, so the compressed size is a safe
+    // lower bound.
+    const uncompressedSize =
+      entryRef.size === undefined ? undefined : Math.max(entryRef.size, compressedSize);
+    return {
+      readChunkSize: Gzip.getStreamChunkSize(compressedSize, byteCount),
+      // One byte more than the output, so zlib doesn't allocate a second buffer just to finish,
+      // and no less than zlib allows
+      gunzipChunkSize: Math.max(
+        zlib.constants.Z_MIN_CHUNK,
+        Gzip.getStreamChunkSize(
+          uncompressedSize === undefined ? undefined : uncompressedSize + 1,
+          byteCount,
+        ),
+      ),
+    };
   }
 }

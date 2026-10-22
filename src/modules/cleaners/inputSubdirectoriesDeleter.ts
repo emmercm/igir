@@ -9,6 +9,7 @@ import type File from '../../models/files/file.js';
 import type Options from '../../models/options.js';
 import { MoveDeleteDirs } from '../../models/options.js';
 import FsUtil, { WalkMode } from '../../utils/fsUtil.js';
+import PathUtil from '../../utils/pathUtil.js';
 import Module from '../module.js';
 
 /**
@@ -59,7 +60,7 @@ export default class InputSubdirectoriesDeleter extends Module {
     }
 
     const inputPathsNormalized = new Set(
-      this.options.getInputPaths().map((inputPath) => path.resolve(inputPath)),
+      this.options.getInputPaths().map((inputPath) => PathUtil.resolve(inputPath)),
     );
     const deletedDirs = await this.walkAndDelete([...dirsToMaybeDelete], [...inputPathsNormalized]);
 

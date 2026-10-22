@@ -16,6 +16,7 @@ import noArrayPushSpread from './.eslint/rules/performance/noArrayPushSpread.mjs
 import noArrayRebuildInLoop from './.eslint/rules/performance/noArrayRebuildInLoop.mjs';
 import noArrayShiftMutationInLoop from './.eslint/rules/performance/noArrayShiftMutationInLoop.mjs';
 import noNumberToLocaleString from './.eslint/rules/performance/noNumberToLocaleString.mjs';
+import noPathResolve from './.eslint/rules/performance/noPathResolve.mjs';
 import noFsPromisify from './.eslint/rules/style/noFsPromisify.mjs';
 import noNodeSubpathImports from './.eslint/rules/style/noNodeSubpathImports.mjs';
 import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImport.mjs';
@@ -89,6 +90,7 @@ export default eslintConfig.defineConfig([
           'no-array-rebuild-in-loop': noArrayRebuildInLoop,
           'no-array-shift-mutation-in-loop': noArrayShiftMutationInLoop,
           'no-number-to-locale-string': noNumberToLocaleString,
+          'no-path-resolve': noPathResolve,
         },
       },
     },
@@ -100,6 +102,7 @@ export default eslintConfig.defineConfig([
       'local/no-array-rebuild-in-loop': 'error',
       'local/no-array-shift-mutation-in-loop': 'error',
       'local/no-number-to-locale-string': 'error',
+      'local/no-path-resolve': 'error',
     },
   },
 
@@ -236,6 +239,7 @@ export default eslintConfig.defineConfig([
       'unicorn/max-nested-calls': 'off',
       'unicorn/name-replacements': 'off',
       'unicorn/no-array-reduce': 'off',
+      'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
       'unicorn/no-await-expression-member': 'off',
       'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
       'unicorn/no-hex-escape': 'off',
@@ -259,6 +263,14 @@ export default eslintConfig.defineConfig([
       // ***** ESLint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
+      // Also check the app's own exceptions, and don't let catch blocks discard the caught error
+      'preserve-caught-error': [
+        'error',
+        {
+          requireCatchParameter: true,
+          errorClassNames: ['IgirException', 'TokenReplacementException'],
+        },
+      ],
     },
   },
   {

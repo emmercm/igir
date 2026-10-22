@@ -110,6 +110,7 @@ export default class DATScanner extends Scanner {
       } catch (error) {
         throw new IgirException(
           `failed to download '${datFile.toString()}': ${error instanceof Error ? error.message : error}`,
+          { cause: error },
         );
       }
     });
@@ -174,7 +175,7 @@ export default class DATScanner extends Scanner {
       dat = await this.parseMameListxml(datFile);
     }
 
-    dat ??= await datFile.createReadStream(async (readable) => {
+    dat ??= await datFile.extractToStream(async (readable) => {
       const fileContents = await BufferUtil.fromReadable(readable);
       return await this.parseDatContents(datFile, fileContents);
     });

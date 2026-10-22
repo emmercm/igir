@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "5.7.2",
+  "version": "5.8.0",
   "description": "🕹 A zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.",
   "keywords": [
     "1g1r",
@@ -126,7 +126,7 @@
     "eslint-plugin-jsdoc": "65.0.0",
     "eslint-plugin-prettier": "5.5.6",
     "eslint-plugin-simple-import-sort": "14.0.0",
-    "eslint-plugin-unicorn": "76.0.0",
+    "eslint-plugin-unicorn": "78.0.0",
     "globals": "17.12.0",
     "node-addon-api": "8.9.2",
     "node-gyp": "13.0.2",
@@ -141,6 +141,6 @@
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "volta": {
-    "node": "26.11.1"
+    "node": "26.12.0"
   }
 }

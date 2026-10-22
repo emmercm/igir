@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -73,11 +74,20 @@ class Pump {
     /** Lends the producer `capacity` bytes at `data` to fill; see OutputSlot::Lend. */
     void Lend(uint8_t* data, size_t capacity);
 
+    /** Reports whether a lend would go unfilled; see OutputSlot::Done. */
+    [[nodiscard]] bool Done();
+
     /**
      * Takes back the lent buffer without blocking. A pending result arms `onReady`, and a
      * terminal producer failure throws once the output is exhausted.
      */
     OutputSlot::Status TryRead(size_t* length);
+
+    /**
+     * The entry's size as its archive declares it, or nothing until the open has read it, or when
+     * the format records none. Archives are untrusted, so the entry can turn out shorter or longer.
+     */
+    [[nodiscard]] std::optional<uint64_t> DeclaredSize() const noexcept;
 
     /**
      * Idempotently signals abort, unblocks the producer, and returns without joining it.
@@ -127,6 +137,11 @@ class Pump {
     // starts only after Open() returns
     OpenedArchive opened_;
     uint32_t resolvedIndex_ = 0;
+
+    // Written by Open() on a pool thread, and read by the consumer on the event loop thread at any
+    // time, so atomic. kUnknownSize until then, or when the format records no size.
+    static constexpr uint64_t kUnknownSize = std::numeric_limits<uint64_t>::max();
+    std::atomic<uint64_t> declaredSize_{kUnknownSize};
 
     OutputSlot slot_;
     std::atomic<bool> abort_{false};

@@ -63,6 +63,7 @@ import StatusGenerator from './modules/statusGenerator.js';
 import ArrayUtil from './utils/arrayUtil.js';
 import FsUtil from './utils/fsUtil.js';
 import IntlUtil from './utils/intlUtil.js';
+import PathUtil from './utils/pathUtil.js';
 
 /**
  * The main class that coordinates file scanning, processing, and writing.
@@ -117,15 +118,15 @@ export default class Igir {
       fileCache.disable();
     } else {
       const cachePath = await this.getCachePath();
-      if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
+      if (cachePath === undefined || process.env.NODE_ENV === 'test') {
+        logger.trace('not using a file for the file cache');
+      } else {
         if (await FsUtil.exists(cachePath)) {
           logger.trace(`loading the existing file cache at '${cachePath}'`);
         } else {
           logger.trace(`creating a new file cache at '${cachePath}'`);
         }
         await fileCache.loadFile(cachePath);
-      } else {
-        logger.trace('not using a file for the file cache');
       }
     }
     const fileFactory = new FileFactory(fileCache);
@@ -233,7 +234,7 @@ export default class Igir {
         writerSemaphore,
       ).write(processedDat, candidates);
       for (const playlistPath of playlistPaths) {
-        filePathsToExcludeFromCleaning.add(path.resolve(playlistPath));
+        filePathsToExcludeFromCleaning.add(PathUtil.resolve(playlistPath));
       }
 
       // Write a dir2dat
@@ -243,7 +244,7 @@ export default class Igir {
         writerSemaphore,
       ).create(processedDat, candidates);
       if (dir2DatPath) {
-        filePathsToExcludeFromCleaning.add(path.resolve(dir2DatPath));
+        filePathsToExcludeFromCleaning.add(PathUtil.resolve(dir2DatPath));
       }
 
       // Write a fixdat
@@ -252,7 +253,7 @@ export default class Igir {
         candidates,
       );
       if (fixdatPath) {
-        filePathsToExcludeFromCleaning.add(path.resolve(fixdatPath));
+        filePathsToExcludeFromCleaning.add(PathUtil.resolve(fixdatPath));
       }
 
       // Write the output report

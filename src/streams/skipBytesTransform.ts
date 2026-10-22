@@ -1,5 +1,7 @@
 import stream from 'node:stream';
 
+import Defaults from '../globals/defaults.js';
+
 /**
  * A {@link stream.Transform} that drops the first `count` bytes of its input.
  */
@@ -7,7 +9,7 @@ export default class SkipBytesTransform extends stream.Transform {
   private remaining: number;
 
   constructor(count: number) {
-    super();
+    super({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
     this.remaining = count;
   }
 

@@ -1,5 +1,3 @@
-import type { Readable } from 'node:stream';
-
 import type File from '../models/files/file.js';
 import APSPatch from '../models/patches/apsPatch.js';
 import BPSPatch from '../models/patches/bpsPatch.js';
@@ -104,35 +102,14 @@ export default class PatchFactory {
     return undefined;
   }
 
-  private static async readHeaderHex(readable: Readable, length: number): Promise<string> {
-    const chunks: Buffer[] = [];
-    let readBytes = 0;
-
-    for await (const chunk of readable as AsyncIterable<Buffer>) {
-      if (chunk.length > 0) {
-        chunks.push(chunk);
-        readBytes += chunk.length;
-      }
-
-      // Stop reading when we get enough data, trigger a 'close' event
-      if (readBytes >= length) {
-        break;
-      }
-    }
-
-    return Buffer.concat(chunks).subarray(0, length).toString('hex').toLowerCase();
-  }
-
   /**
    * Return a {@link Patch} for a file by reading its leading bytes and matching them against
    * the known patch-format file signatures, or undefined if no signature matches.
    */
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
-    const fileHeader = await file.createReadStream(
-      async (readable) => await this.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
-      0,
-      this.MAX_HEADER_LENGTH_BYTES - 1,
-    );
+    const fileHeader = (await file.readFirstBytes(this.MAX_HEADER_LENGTH_BYTES))
+      .toString('hex')
+      .toLowerCase();
 
     const parsers = Object.values(this.PATCH_PARSERS);
     for (const parser of parsers) {

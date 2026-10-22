@@ -17,6 +17,7 @@
 #include "addon.h"
 #include "cdrom.h"
 #include "chd.h"
+#include "chdOpen.h"
 #include "chdcodec.h"
 #include "path.h"
 #include "strformat.h"
@@ -131,7 +132,7 @@ class InfoWorker : public Napi::AsyncWorker {
 
             // Opening reads the header and the hunk map, which a compressed v5 CHD stores
             // compressed, so the map is decompressed here too
-            std::error_condition const err = chd.open(path_, false, nullptr);
+            std::error_condition const err = OpenChdForReading(chd, path_);
             if (err) {
                 SetError("failed to open CHD: " + err.message());
                 return;

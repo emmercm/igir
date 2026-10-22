@@ -5,7 +5,6 @@ import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import type DAT from '../models/dats/dat.js';
 import Disk from '../models/dats/disk.js';
-import type Game from '../models/dats/game.js';
 import IgirHeader from '../models/dats/igirHeader.js';
 import LogiqxDAT from '../models/dats/logiqx/logiqxDat.js';
 import type Options from '../models/options.js';
@@ -52,19 +51,10 @@ export default class Dir2DatCreator extends Module {
      * manipulated, such as from {@link CandidateExtensionCorrector}. Use the {@link Game}s and
      * {@link ROM}s from the {@link WriteCandidate}s instead of the original {@link DAT}.
      */
-    const gamesToCandidates = candidates.reduce((map, candidate) => {
-      if (!candidate.canWrite()) {
-        return map;
-      }
-
-      const key = candidate.getGame();
-      if (map.has(key)) {
-        map.get(key)?.push(candidate);
-      } else {
-        map.set(key, [candidate]);
-      }
-      return map;
-    }, new Map<Game, WriteCandidate[]>());
+    const gamesToCandidates = Map.groupBy(
+      candidates.filter((candidate) => candidate.canWrite()),
+      (candidate) => candidate.getGame(),
+    );
     const gamesFromCandidates = Array.from(gamesToCandidates, ([game, candidates]) => {
       const roms = candidates
         .at(0)
