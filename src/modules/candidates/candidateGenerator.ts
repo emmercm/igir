@@ -36,9 +36,6 @@ import Module from '../module.js';
  * and return a set of candidate files.
  */
 export default class CandidateGenerator extends Module {
-  // Excess entries only need to be found, not counted; this many are enough to log
-  private static readonly EXCESS_ENTRIES_TO_LOG = 10;
-
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
   private readonly readerSemaphore: MappableSemaphore;
@@ -493,15 +490,14 @@ export default class CandidateGenerator extends Module {
     const filteredArchivesWithEveryRom = archivesWithEveryRom
       .filter((archive) => {
         // Filter out Archives with excess entries
-        const unusedEntries = this.findArchiveUnusedEntryPaths(
+        const { unusedEntries, hasMoreUnusedEntries } = this.findArchiveUnusedEntryPaths(
           archive,
           romsAndInputFiles.flatMap(([, inputFiles]) => inputFiles),
           indexedFiles,
-          CandidateGenerator.EXCESS_ENTRIES_TO_LOG,
         );
         if (unusedEntries.length > 0) {
           this.prefixedLogger.trace(
-            `${dat.getName()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
+            `${dat.getName()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries${hasMoreUnusedEntries ? ' (and more)' : ''}:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry}`).join('\n')}`,
           );
           return false;
         }
@@ -1148,15 +1144,14 @@ export default class CandidateGenerator extends Module {
     }
 
     for (const inputArchive of inputArchives) {
-      const unusedEntries = this.findArchiveUnusedEntryPaths(
+      const { unusedEntries, hasMoreUnusedEntries } = this.findArchiveUnusedEntryPaths(
         inputArchive,
         inputArchiveEntries,
         indexedFiles,
-        CandidateGenerator.EXCESS_ENTRIES_TO_LOG,
       );
       if (unusedEntries.length > 0) {
         this.prefixedLogger.trace(
-          `${dat.getName()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
+          `${dat.getName()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries${hasMoreUnusedEntries ? ' (and more)' : ''}:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry}`).join('\n')}`,
         );
         return true;
       }
@@ -1167,17 +1162,17 @@ export default class CandidateGenerator extends Module {
 
   /**
    * Given an input {@link archive} and a set of {@link inputFiles} that match to a {@link ROM} from
-   * a {@link Game}, determine if every entry from the {@link archive} was matched.
+   * a {@link Game}, determine if every entry from the {@link archive} was matched. Only the first
+   * few unused entries are returned, {@link hasMoreUnusedEntries} is true if there are more.
    */
   private findArchiveUnusedEntryPaths(
     archive: Archive,
     inputFiles: File[],
     indexedFiles: IndexedFiles,
-    limit = Infinity,
-  ): ArchiveEntry<Archive>[] {
+  ): { unusedEntries: string[]; hasMoreUnusedEntries: boolean } {
     if (this.options.shouldExtract() || this.options.getAllowExcessSets()) {
       // We don't particularly care where input files come from
-      return [];
+      return { unusedEntries: [], hasMoreUnusedEntries: false };
     }
 
     /**
@@ -1197,9 +1192,9 @@ export default class CandidateGenerator extends Module {
         .map((entry) => entry.getExtractedFilePath()),
     );
 
-    // Find which of the Archive's entries didn't match to a ROM from this Game, stopping at
-    // `limit`: an archive can hold tens of thousands of entries, and this runs for every game
-    const unusedEntries: ArchiveEntry<Archive>[] = [];
+    // Find which of the Archive's entries didn't match to a ROM from this Game, stopping after
+    // ten: an archive can hold tens of thousands of entries, and this runs for every game
+    const unusedEntries: string[] = [];
     const filesAtPath = indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? [];
     for (const file of filesAtPath) {
       if (!(file instanceof ArchiveEntry)) {
@@ -1218,12 +1213,12 @@ export default class CandidateGenerator extends Module {
       if (usedEntryPaths.has(extractedFilePath)) {
         continue;
       }
-      unusedEntries.push(file as ArchiveEntry<Archive>);
-      if (unusedEntries.length >= limit) {
-        break;
+      if (unusedEntries.length >= 10) {
+        return { unusedEntries, hasMoreUnusedEntries: true };
       }
+      unusedEntries.push(file.toString());
     }
-    return unusedEntries;
+    return { unusedEntries, hasMoreUnusedEntries: false };
   }
 
   private async getOutputFile(
