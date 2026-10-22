@@ -177,8 +177,8 @@ describe('findFiles', () => {
 describe('findFilesAtPath', () => {
   it('should find what findFiles finds, at one path', async () => {
     // Several files share each checksum, as identical tracks do across many discs
-    const files = await Promise.all(
-      ['alpha.zip', 'bravo.zip', 'charlie.zip'].flatMap((filePath) => [
+    const files = await Promise.all([
+      ...['alpha.zip', 'bravo.zip', 'charlie.zip'].flatMap((filePath) => [
         File.fileOf({ filePath, size: 1, crc32: '11111111' }),
         File.fileOf({
           filePath,
@@ -188,7 +188,9 @@ describe('findFilesAtPath', () => {
         }),
         File.fileOf({ filePath, size: 3, sha1: '3333333333333333333333333333333333333333' }),
       ]),
-    );
+      // A single file at its path, like an extracted file or a single-file archive
+      File.fileOf({ filePath: 'echo.zip', size: 1, crc32: '11111111' }),
+    ]);
     const indexedFiles = IndexedFiles.fromFiles(files);
 
     for (const rom of [
@@ -197,7 +199,7 @@ describe('findFilesAtPath', () => {
       new ROM({ name: 'three', size: 3, sha1: '3333333333333333333333333333333333333333' }),
       new ROM({ name: 'none', size: 9, crc32: '99999999' }),
     ]) {
-      for (const filePath of ['alpha.zip', 'bravo.zip', 'charlie.zip', 'delta.zip']) {
+      for (const filePath of ['alpha.zip', 'bravo.zip', 'charlie.zip', 'delta.zip', 'echo.zip']) {
         expect(indexedFiles.findFilesAtPath(rom, filePath)).toEqual(
           indexedFiles.findFiles(rom).filter((file) => file.getFilePath() === filePath),
         );
