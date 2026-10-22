@@ -32,8 +32,8 @@ export default class Software extends Game {
   }
 
   /**
-   * Return a new {@link Game} with some different properties. The copy keeps this software's ROMs
-   * as its own: a {@link Game} has no parts, so without them it would have no ROMs at all.
+   * Return a new {@link Game} with some different properties. Special care is needed to preserve
+   * this game's ROMs, as it does not populate {@link Game#roms}.
    */
   override withProps(props: GameProps): Game {
     return new Game({ ...this, roms: this.getRoms(), ...props });
