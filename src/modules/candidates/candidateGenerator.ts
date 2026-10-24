@@ -1104,12 +1104,13 @@ export default class CandidateGenerator extends Module {
       .map((romWithFiles) => {
         const rom = romWithFiles.getRom();
         const inputFile = romWithFiles.getInputFile();
+        if (!(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile)) {
+          return undefined;
+        }
         const candidates = indexedFiles
-          .findFiles(rom)
+          .findFilesAtPath(rom, inputFile.getFilePath())
           .filter(
             (foundFile) =>
-              foundFile.getFilePath() === inputFile.getFilePath() &&
-              (inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile) &&
               foundFile instanceof ArchiveEntry &&
               inputFile.getArchive() === foundFile.getArchive(),
           );

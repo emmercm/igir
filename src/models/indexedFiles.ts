@@ -220,32 +220,88 @@ export default class IndexedFiles {
   }
 
   /**
-   * Find file(s) in the index based some search criteria.
+   * The checksum indexes again, grouped by file path. Paths with only one file (an extracted file,
+   * or a single-file archive) are left out to save memory.
    */
-  findFiles(file: File | ROM): File[] {
-    let results: File[] = [];
+  @Memoize()
+  private getChecksumsByFilePath(): Map<string, Map<string, File[]>> {
+    const filesByFilePath = this.getFilesByFilePath();
+    const checksumsByFilePath = new Map<string, Map<string, File[]>>();
+    for (const checksumsToFiles of [this.sha256, this.sha1, this.md5, this.crc32]) {
+      for (const [checksum, files] of checksumsToFiles) {
+        const filesByPath = Map.groupBy(files, (file) => file.getFilePath());
+        for (const [filePath, filesAtPath] of filesByPath) {
+          if ((filesByFilePath.get(filePath)?.length ?? 0) <= 1) {
+            continue;
+          }
+          let checksumsToFilesAtPath = checksumsByFilePath.get(filePath);
+          if (checksumsToFilesAtPath === undefined) {
+            checksumsToFilesAtPath = new Map();
+            checksumsByFilePath.set(filePath, checksumsToFilesAtPath);
+          }
+          checksumsToFilesAtPath.set(checksum, filesAtPath);
+        }
+      }
+    }
+    return checksumsByFilePath;
+  }
+
+  /**
+   * The checksum index and key to look up for each of a file's checksums, strongest first.
+   */
+  private getChecksumKeys(file: File | ROM): [ChecksumsToFiles, string][] {
+    const keys: [ChecksumsToFiles, string][] = [];
 
     const sha256 = file.sha256?.replaceAll(/[^0-9a-f]/gi, '');
     if (sha256) {
-      results = [...results, ...(this.sha256.get(sha256) ?? [])];
+      keys.push([this.sha256, sha256]);
     }
 
     const sha1 = file.sha1?.replaceAll(/[^0-9a-f]/gi, '');
     if (sha1) {
-      results = [...results, ...(this.sha1.get(sha1) ?? [])];
+      keys.push([this.sha1, sha1]);
     }
 
     const md5 = file.md5?.replaceAll(/[^0-9a-f]/gi, '');
     if (md5) {
-      results = [...results, ...(this.md5.get(md5) ?? [])];
+      keys.push([this.md5, md5]);
     }
 
     const crc32 = file.crc32?.replaceAll(/[^0-9a-f]/gi, '');
     if (crc32) {
-      const crc32WithSize = `${crc32}|${file.getSize()}`;
-      results = [...results, ...(this.crc32.get(crc32WithSize) ?? [])];
+      keys.push([this.crc32, `${crc32}|${file.getSize()}`]);
     }
 
-    return results.filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
+    return keys;
+  }
+
+  /**
+   * The same as {@link findFiles}, limited to files at {@link filePath}. Many files can share a
+   * checksum (identical audio tracks across discs, for example), so this skips building and
+   * de-duplicating the full list just to keep the few at one path.
+   */
+  findFilesAtPath(file: File | ROM, filePath: string): File[] {
+    const checksumKeys = this.getChecksumKeys(file);
+    const checksumsToFilesAtPath = this.getChecksumsByFilePath().get(filePath);
+    if (checksumsToFilesAtPath === undefined) {
+      // There's at most one file at this path
+      return (this.getFilesByFilePath().get(filePath) ?? []).filter((fileAtPath) =>
+        checksumKeys.some(([checksumsToFiles, checksum]) =>
+          checksumsToFiles.get(checksum)?.includes(fileAtPath),
+        ),
+      );
+    }
+    return checksumKeys
+      .flatMap(([, checksum]) => checksumsToFilesAtPath.get(checksum) ?? [])
+      .filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
+  }
+
+  /**
+   * Find file(s) in the index based some search criteria.
+   */
+  findFiles(file: File | ROM): File[] {
+    return this.getChecksumKeys(file)
+      .flatMap(([checksumsToFiles, checksum]) => checksumsToFiles.get(checksum) ?? [])
+      .filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
   }
 }
