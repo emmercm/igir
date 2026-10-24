@@ -231,7 +231,9 @@ export default class MovedROMDeleter extends Module {
     for (const [filePath, filesForPath] of filePathsToFiles) {
       filePathsToFiles.set(
         filePath,
-        filesForPath.filter(ArrayUtil.filterUniqueMapped((fileForPath) => fileForPath.toString())),
+        filesForPath.filter(
+          ArrayUtil.filterUniqueMapped((fileForPath) => fileForPath.getLocationKey()),
+        ),
       );
     }
     return filePathsToFiles;

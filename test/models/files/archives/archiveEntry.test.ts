@@ -65,6 +65,25 @@ describe('getEntryPath', () => {
   );
 });
 
+describe('getLocationKey', () => {
+  it('should return the archive path and entry path', async () => {
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+    });
+    expect(entry.getLocationKey()).toEqual(`${PathUtil.resolve('file.zip')}|entry.rom`);
+  });
+
+  it('should ignore the symlink source', async () => {
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+      symlinkSource: 'source.zip',
+    });
+    expect(entry.getLocationKey()).toEqual(`${PathUtil.resolve('file.zip')}|entry.rom`);
+  });
+});
+
 describe('getSize', () => {
   describe.each([
     // fizzbuzz
@@ -1022,5 +1041,19 @@ describe('equals', () => {
     expect(second.equals(third)).toEqual(false);
     expect(third.equals(fourth)).toEqual(false);
     expect(fourth.equals(first)).toEqual(false);
+  });
+
+  it('should not equal the same entry with a different patch', async () => {
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+      size: 0,
+      crc32: '00000000',
+    });
+    const patchedEntry = entry.withPatch(
+      IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' })),
+    );
+    expect(entry.equals(patchedEntry)).toEqual(false);
+    expect(patchedEntry.equals(entry)).toEqual(false);
   });
 });

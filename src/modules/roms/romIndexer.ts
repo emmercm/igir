@@ -131,7 +131,7 @@ export default class ROMIndexer extends Module {
         }
 
         // Otherwise, be deterministic
-        return fileOne.toString().localeCompare(fileTwo.toString());
+        return fileOne.getLocationKey().localeCompare(fileTwo.getLocationKey());
       });
       checksumsToFiles.set(checksum, sortedFiles);
     }

@@ -314,6 +314,13 @@ export default class File implements FileProps {
     );
   }
 
+  /**
+   * Return a key that uniquely identifies where this file is or will be located on disk.
+   */
+  getLocationKey(): string {
+    return this.getFilePath();
+  }
+
   // Other functions
 
   /**
@@ -693,7 +700,8 @@ export default class File implements FileProps {
    */
 
   /**
-   * Return a human-readable identifier for this file.
+   * Return a human-readable identifier for this file. This is NOT suitable for any kind of
+   * comparison or de-duplication of files.
    */
   toString(): string {
     // TODO(cemmer): indicate if there's a patch?
@@ -716,18 +724,19 @@ export default class File implements FileProps {
   }
 
   /**
-   * Return true if the other file has the same path, hash code, header, and paddings.
+   * Return true if the other file has the same location, hash code, header, paddings, and patch.
    */
   equals(other: File): boolean {
     if (this === other) {
       return true;
     }
     return (
-      this.getFilePath() === other.getFilePath() &&
+      this.getLocationKey() === other.getLocationKey() &&
       this.hashCode() === other.hashCode() &&
       this.getFileHeader() === other.getFileHeader() &&
       this.getPaddings().length === other.getPaddings().length &&
-      this.getPaddings().every((padding, idx) => padding === other.getPaddings()[idx])
+      this.getPaddings().every((padding, idx) => padding === other.getPaddings()[idx]) &&
+      this.getPatch()?.hashCode() === other.getPatch()?.hashCode()
     );
   }
 }

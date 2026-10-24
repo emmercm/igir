@@ -68,13 +68,17 @@ A few patch formats include the source ROM's CRC32 checksum in the patch's file 
 
 Most patch formats _do not_ include the source ROM's CRC32 checksum. `.ips` patches are some of the most likely you will come across. For those patches, you need to put the source ROM's CRC32 checksum in the patch's filename. Here are some examples:
 
-| Source ROM filename                                | Patch filename                                                                                      |
-|----------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| `Super Mario Land (World).gb`                      | At the end: `Super Mario Land DX v2.0 (World) 90776841.ips`                                         |
-| `NBA Jam - Tournament Edition (USA) (Track 1).bin` | At the beginning: `A8F1ADF5 NBA Jam 22 v1.4.ppf`                                                    |
-| `Mega Man - Dr. Wily's Revenge (USA).gb`           | In square brackets: `Mega Man - Dr. Wily's Revenge DX v1.02 (USA) [47e70e08].ips`                   |
-| `Metroid II - Return of Samus (World).gb`          | In parentheses: `Metroid II - Return of Samus DX v2.0 (World) (DEE05370).ips`                       |
-| `Pokemon Card GB 2 - GR Dan Sanjou! (Japan).gbc`   | With an 0x prefix: `Pokemon Card GB 2 - GR Dan Sanjou! (Japan) 0x6c933a14 [T+En1.0_Artemis251].gbc` |
+| Input ROM filename                                 | Patch filename                                                                                      | Output filename written                                               |
+|----------------------------------------------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| `Super Mario Land (World).gb`                      | At the end: `Super Mario Land DX v2.0 (World) 90776841.ips`                                         | `Super Mario Land DX v2.0 (World).ips`                                |
+| `NBA Jam - Tournament Edition (USA) (Track 1).bin` | At the beginning: `A8F1ADF5 NBA Jam 22 v1.4.ppf`                                                    | `NBA Jam 22 v1.4.ppf`                                                 |
+| `Mega Man - Dr. Wily's Revenge (USA).gb`           | In square brackets: `Mega Man - Dr. Wily's Revenge DX v1.02 (USA) [47e70e08].ips`                   | `Mega Man - Dr. Wily's Revenge DX v1.02 (USA).ips`                    |
+| `Metroid II - Return of Samus (World).gb`          | In parentheses: `Metroid II - Return of Samus DX v2.0 (World) (DEE05370).ips`                       | `Metroid II - Return of Samus DX v2.0 (World).ips`                    |
+| `Pokemon Card GB 2 - GR Dan Sanjou! (Japan).gbc`   | With an 0x prefix: `Pokemon Card GB 2 - GR Dan Sanjou! (Japan) 0x6c933a14 [T+En1.0_Artemis251].gbc` | `Pokemon Card GB 2 - GR Dan Sanjou! (Japan) [T+En1.0_Artemis251].gbc` |
+
+!!! note
+
+    Providing `--patch <path|glob>` will cause Igir to calculate CRC32 checksums for input files regardless of what [`--input-checksum-min <algorithm>`](matching.md#automatically-using-other-checksum-algorithms) is provided. Igir will still prefer to match ROMs to DATs with the highest checksum possible.
 
 ## Only writing patched ROMs
 

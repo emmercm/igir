@@ -1020,16 +1020,20 @@ export default class CandidateGenerator extends Module {
 
     let hasConflict = false;
     for (const duplicateOutput of duplicateOutputPaths) {
-      // For an output path that has multiple input paths, filter to only the unique input paths,
-      //  and if there are still multiple input file paths then we won't be able to resolve this
-      //  at write time
-      const conflictedInputFiles = romsWithFiles
-        .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
-        .map((romWithFiles) => romWithFiles.getInputFile().toString())
-        .reduce(ArrayUtil.reduceUnique(), []);
-      if (conflictedInputFiles.length <= 1) {
+      // For an output path that has multiple input files, if they wouldn't all write the same
+      //  contents then we won't be able to resolve this at write time
+      const [firstRomWithFiles, ...otherRomsWithFiles] = romsWithFiles.filter(
+        (romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput,
+      );
+      const conflictedRomsWithFiles = otherRomsWithFiles.filter(
+        (romWithFiles) => !romWithFiles.writesSameOutputAs(firstRomWithFiles),
+      );
+      if (conflictedRomsWithFiles.length === 0) {
         continue;
       }
+      const conflictedInputFiles = [firstRomWithFiles, ...conflictedRomsWithFiles]
+        .map((romWithFiles) => romWithFiles.getInputFile().toString())
+        .reduce(ArrayUtil.reduceUnique(), []);
       hasConflict = true;
       let message = `${dat.getName()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
       for (const conflictedInputFile of conflictedInputFiles) {
