@@ -1316,11 +1316,7 @@ Example use cases:
         description: 'Show help',
         type: 'boolean',
       })
-      .option('version', {
-        group: groupHelpDebug,
-        description: 'Show version number',
-        type: 'boolean',
-      })
+      .group('version', groupHelpDebug)
       .fail((msg, err, _yargs) => {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions,@typescript-eslint/no-unnecessary-condition
         if (err) {
