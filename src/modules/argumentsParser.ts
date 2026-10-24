@@ -81,6 +81,24 @@ export default class ArgumentsParser {
   }
 
   /**
+   * Determine if the arguments will result in yargs printing the version the same way that
+   * {@link parse} would parse them.
+   */
+  static isVersionRequest(argv: string[]): boolean {
+    const parsedArgv = yargs([])
+      // Disable the built-ins so they don't print or exit, and declare them as plain booleans
+      .version(false)
+      .help(false)
+      .option('version', { type: 'boolean' })
+      .option('help', { type: 'boolean', alias: 'h' })
+      .parserConfiguration({ 'boolean-negation': false })
+      .exitProcess(false)
+      .parseSync(argv);
+    // yargs prints help instead of the version when both are given
+    return parsedArgv.version === true && parsedArgv.help !== true;
+  }
+
+  /**
    * Parse the arguments.
    */
   parse(argv: string[]): Options {

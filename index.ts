@@ -20,7 +20,7 @@ import UpdateChecker from './src/modules/updateChecker.js';
 Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);
 
 logger.setLogLevel(LogLevel.WARN); // don't print any timestamps
-if (!process.argv.slice(2).includes('--version')) {
+if (!ArgumentsParser.isVersionRequest(process.argv.slice(2))) {
   // Keep `--version` output machine-readable
   logger.printHeader();
 }
