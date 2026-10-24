@@ -52,12 +52,44 @@ export default class ROMWithFiles {
     return new ROMWithFiles(this.rom, this.inputFile, outputFile);
   }
 
+  /**
+   * Return true if this and the other {@link ROMWithFiles} would write the same contents to the
+   * same output location.
+   */
+  writesSameOutputAs(other: ROMWithFiles): boolean {
+    if (this.outputFile.getLocationKey() !== other.getOutputFile().getLocationKey()) {
+      return false;
+    }
+
+    // The same input file with the same header, paddings, and patch will always produce the same
+    // output contents. Check this first, as an output file's checksums may not be known yet.
+    if (this.inputFile.equals(other.getInputFile())) {
+      return true;
+    }
+
+    // Different input files can still produce the same output contents, such as duplicate files,
+    // or symlinks to them
+    if (this.outputFile.getSize() !== other.getOutputFile().getSize()) {
+      return false;
+    }
+    const checksumPairs = [
+      [this.outputFile.getCrc32(), other.getOutputFile().getCrc32()],
+      [this.outputFile.getMd5(), other.getOutputFile().getMd5()],
+      [this.outputFile.getSha1(), other.getOutputFile().getSha1()],
+      [this.outputFile.getSha256(), other.getOutputFile().getSha256()],
+    ].filter(([checksum, otherChecksum]) => checksum !== undefined && otherChecksum !== undefined);
+    return (
+      checksumPairs.length > 0 &&
+      checksumPairs.every(([checksum, otherChecksum]) => checksum === otherChecksum)
+    );
+  }
+
   // Pseudo Built-Ins
 
   /**
    * A string hash code to uniquely identify this {@link ROMWithFiles}.
    */
   hashCode(): string {
-    return `${this.rom.hashCode()}|${this.outputFile.toString()}`;
+    return `${this.rom.hashCode()}|${this.outputFile.getLocationKey()}`;
   }
 }

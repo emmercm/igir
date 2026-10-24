@@ -2,6 +2,7 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type DAT from '../../models/dats/dat.js';
 import type Options from '../../models/options.js';
+import type ROMWithFiles from '../../models/romWithFiles.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
 import ArrayUtil from '../../utils/arrayUtil.js';
 import Module from '../module.js';
@@ -66,17 +67,25 @@ export default class CandidateValidator extends Module {
           return false;
         }
 
-        const uniqueInputFiles = uniqueCandidates
-          .flatMap((candidate) => candidate.getRomsWithFiles())
-          .map((romWithFiles) => romWithFiles.getInputFile())
-          .filter(ArrayUtil.filterUniqueMapped((inputFile) => inputFile.toString()));
-        if (uniqueInputFiles.length <= 1) {
-          // There are multiple WriteCandidates, but all of them have either no ROMs and therefore
-          // no ROMWithFiles, or all ROMWithFiles all have the same input file.
-          // This can happen with CHDs in particular, where a CHD may be parsed as a few different
-          // CHD subtypes (e.g. "raw" + CD-ROM, or GD-ROM .bin/.cue and GD-ROM .gdi/.bin/.raw).
-          // This will cause candidates with duplicate input->output files, which CandidateWriter
-          // will need to de-duplicate.
+        const [firstCandidate, ...otherCandidates] = uniqueCandidates.map((candidate) =>
+          candidate
+            .getRomsWithFiles()
+            .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === outputPath),
+        );
+        if (
+          otherCandidates.every((romsWithFiles) =>
+            CandidateValidator.writeTheSameOutputs(firstCandidate, romsWithFiles),
+          )
+        ) {
+          // Multiple games want to write to the same output path, but they would all write the same
+          // file with the same contents, so there's no conflict. This can happen when:
+          //  - A CHD is scanned as multiple CHD subtypes (e.g. a "raw" disk and a CD-ROM .bin/.cue,
+          //    or a GD-ROM .bin/.cue and .gdi/.bin/.raw), and a game is inferred for each of them
+          //  - Different games contain identical files, such as an inferred game for a directory
+          //    and an inferred game for one of the files inside it
+          //  - Different games match different input files with identical contents, such as
+          //    duplicate files or symlinks
+          // CandidateWriter will de-duplicate these writes.
           return false;
         }
 
@@ -89,5 +98,30 @@ export default class CandidateValidator extends Module {
       })
       .flatMap(([, candidates]) => candidates)
       .reduce(ArrayUtil.reduceUnique(), []);
+  }
+
+  /**
+   * Return true if both lists of {@link ROMWithFiles} would write the same set of output files with
+   * the same contents.
+   */
+  private static writeTheSameOutputs(
+    romsWithFiles: ROMWithFiles[],
+    otherRomsWithFiles: ROMWithFiles[],
+  ): boolean {
+    return (
+      // Every file the first candidate writes must also be written, with the same contents, by the
+      // other candidate. Otherwise, the other candidate would write different contents, or would
+      // be missing a file (such as an archive entry) that the first candidate needs.
+      romsWithFiles.every((romWithFiles) =>
+        otherRomsWithFiles.some((otherRomWithFiles) =>
+          romWithFiles.writesSameOutputAs(otherRomWithFiles),
+        ),
+      ) &&
+      // And the reverse, so that the other candidate doesn't write any extra files that the first
+      // candidate doesn't
+      otherRomsWithFiles.every((otherRomWithFiles) =>
+        romsWithFiles.some((romWithFiles) => otherRomWithFiles.writesSameOutputAs(romWithFiles)),
+      )
+    );
   }
 }

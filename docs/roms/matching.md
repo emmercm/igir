@@ -117,11 +117,11 @@ You can also set the _maximum_ checksum that will be used with `--input-checksum
 
 Here is a table that shows the keyspace for each checksum algorithm, where the higher number of bits reduces the chances of collisions:
 
-| Algorithm | Digest size | Unique values                       | Example value                                                      |
-|-----------|-------------|-------------------------------------|--------------------------------------------------------------------|
-| CRC32     | 32 bits     | 2^32 = 4.29 billion                 | `30a184a7`                                                         |
-| MD5       | 128 bits    | 2^128 = 340.28 undecillion          | `52bb8f12b27cebd672b1fd8a06145b1c`                                 |
-| SHA1      | 160 bits    | 2^160 = 1.46 quindecillion          | `666d29a15d92f62750dd665a06ce01fbd09eb98a`                         |
-| SHA256    | 256 bits    | 2^256 = 115.79 quattuorvigintillion | `1934e26cf69aa49978baac893ad5a890af35bdfb2c7a9393745f14dc89459137` |
+| Algorithm | Digest size | Unique values                                 | Example value                                                      |
+|-----------|-------------|-----------------------------------------------|--------------------------------------------------------------------|
+| CRC32     | 32 bits     | 2<sup>32</sup> = 4.29 billion                 | `30a184a7`                                                         |
+| MD5       | 128 bits    | 2<sup>128</sup> = 340.28 undecillion          | `52bb8f12b27cebd672b1fd8a06145b1c`                                 |
+| SHA1      | 160 bits    | 2<sup>160</sup> = 1.46 quindecillion          | `666d29a15d92f62750dd665a06ce01fbd09eb98a`                         |
+| SHA256    | 256 bits    | 2<sup>256</sup> = 115.79 quattuorvigintillion | `1934e26cf69aa49978baac893ad5a890af35bdfb2c7a9393745f14dc89459137` |
 
 When files are [tested](../commands.md#test) after being written, Igir will use the highest checksum available from the scanned file to check the written file. This lets you have equal confidence that a file was written correctly as well as matched correctly.

@@ -207,7 +207,7 @@ export default class IndexedFiles {
       ...this.sha256.values(),
     ]
       .flat()
-      .filter(ArrayUtil.filterUniqueMapped((file) => file.toString()));
+      .filter(ArrayUtil.filterUniqueMapped((file) => file.getLocationKey()));
   }
 
   @Memoize()
@@ -246,6 +246,6 @@ export default class IndexedFiles {
       results = [...results, ...(this.crc32.get(crc32WithSize) ?? [])];
     }
 
-    return results.filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
+    return results.filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
   }
 }
