@@ -1,3 +1,5 @@
+import util from 'node:util';
+
 import type { GameProps } from './game.js';
 import Game from './game.js';
 
@@ -17,10 +19,29 @@ export default class MergedDiscGame extends Game {
     // object spread (`{ ...mergedDiscGame }`) and serialization both see every ROM. getRoms() below
     // keeps the sub-games authoritative.
     super({
+      ...MergedDiscGame.getSharedProps(props.subGames),
       ...props,
       roms: props.subGames.flatMap((game) => game.getRoms()),
     });
     this.subGames = props.subGames;
+  }
+
+  /**
+   * Return every property whose value is identical across all sub-games (e.g. categories, genre),
+   * so the merged game keeps the game-level metadata its discs share. Properties that differ
+   * between discs (e.g. name, description, ROMs) are left out. Properties are discovered from the
+   * sub-games themselves, so metadata added to {@link Game} in the future is carried over too.
+   */
+  private static getSharedProps(subGames: Game[]): GameProps {
+    const [firstGame, ...otherGames] = subGames;
+    const sharedProps: GameProps = { ...firstGame };
+    for (const key of Object.keys(sharedProps)) {
+      const firstValue: unknown = Reflect.get(firstGame, key);
+      if (otherGames.some((game) => !util.isDeepStrictEqual(Reflect.get(game, key), firstValue))) {
+        Reflect.deleteProperty(sharedProps, key);
+      }
+    }
+    return sharedProps;
   }
 
   /**
