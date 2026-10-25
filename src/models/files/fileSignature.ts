@@ -1,4 +1,9 @@
+import path from 'node:path';
+
 import { Memoize } from 'typescript-memoize';
+
+import ArrayUtil from '../../utils/arrayUtil.js';
+import ROMHeader from './romHeader.js';
 
 type SignaturePiece = (
   | {
@@ -77,6 +82,21 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
  * A known file signature (magic bytes) used to identify a file's format from its contents.
  */
 export default class FileSignature {
+  private static readonly ROM_HEADERS = {
+    // @see http://7800.8bitdev.org/index.php/A78_Header_Specification
+    A78: new ROMHeader(128, '.a78'),
+    // @see https://atarigamer.com/lynx/lnxhdrgen
+    LNX: new ROMHeader(64, '.lyx'),
+    // @see https://www.nesdev.org/wiki/INES
+    // @see https://www.nesdev.org/wiki/NES_2.0
+    NES: new ROMHeader(16, '.nes'),
+    // @see https://www.nesdev.org/wiki/FDS_file_format
+    FDS: new ROMHeader(16, '.fds'),
+    // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#The_SNES_header
+    // @see https://wiki.superfamicom.org/game-doctor
+    SMC: new ROMHeader(512, '.sfc'),
+  } as const;
+
   // @see https://en.wikipedia.org/wiki/List_of_file_signatures
   // @see https://www.garykessler.net/library/file_sigs.html
   // @see https://file-extension.net/seeker/
@@ -257,10 +277,16 @@ export default class FileSignature {
     woz: new FileSignature('.woz', [{ value: Buffer.from('WOZ2\u{FF}\u{A}\u{D}\u{A}') }]),
 
     // Atari - 7800
-    a78: new FileSignature('.a78', [
-      { offset: 1, value: Buffer.from('ATARI7800') },
-      { offset: 0x64, value: Buffer.from('ACTUAL CART DATA STARTS HERE') },
-    ]),
+    // @see http://7800.8bitdev.org/index.php/A78_Header_Specification
+    a78: new FileSignature(
+      '.a78',
+      [
+        { offset: 1, value: Buffer.from('ATARI7800') },
+        { offset: 0x64, value: Buffer.from('ACTUAL CART DATA STARTS HERE') },
+      ],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.A78,
+    ),
 
     // Atari - Jaguar
     jag: new FileSignature('.jag', [{ value: Buffer.from('JAGR') }]),
@@ -277,7 +303,12 @@ export default class FileSignature {
       { value: Buffer.from('\u{80}\u{8}') },
       { offset: 0x6, value: Buffer.from('LYNX') },
     ]),
-    lnx: new FileSignature('.lnx', [{ value: Buffer.from('LYNX') }]),
+    lnx: new FileSignature(
+      '.lnx',
+      [{ value: Buffer.from('LYNX') }],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.LNX,
+    ),
 
     // Commodore
     // @see https://vice-emu.sourceforge.io/vice_17.html#SEC434
@@ -368,8 +399,14 @@ export default class FileSignature {
     ndd: new FileSignature('.ndd', [{ value: Buffer.from('E848D31610', 'hex') }]),
 
     // Nintendo - Famicom Disk System
+    // @see https://www.nesdev.org/wiki/FDS_file_format
     fds_hvc: new FileSignature('.fds', [{ value: Buffer.from('\u{1}*NINTENDO-HVC*') }]),
-    fds: new FileSignature('.fds', [{ value: Buffer.from('FDS') }]),
+    fds: new FileSignature(
+      '.fds',
+      [{ value: Buffer.from('FDS\u{1A}') }],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.FDS,
+    ),
 
     // Nintendo - Game & Watch
     gw: new FileSignature('.bin', [{ value: Buffer.from('main.bs') }]),
@@ -479,36 +516,51 @@ export default class FileSignature {
 
     // Nintendo - Nintendo Entertainment System
     // @see https://www.nesdev.org/wiki/INES
-    nes_ines: new FileSignature('.nes', [
-      { value: Buffer.from('NES\u{1A}') },
-      {
-        offset: 7,
-        length: 1,
-        match: (buffer): boolean => {
-          if (buffer.length < 7 + 1) {
-            return false;
-          }
-          return (buffer.readUInt8(7) & 0x0c) === 0x00;
+    nes_ines: new FileSignature(
+      '.nes',
+      [
+        { value: Buffer.from('NES\u{1A}') },
+        {
+          offset: 7,
+          length: 1,
+          match: (buffer): boolean => {
+            if (buffer.length < 7 + 1) {
+              return false;
+            }
+            return (buffer.readUInt8(7) & 0x0c) === 0x00;
+          },
         },
-      },
-      { offset: 12, value: Buffer.from('00000000', 'hex') },
-    ]),
+        { offset: 12, value: Buffer.from('00000000', 'hex') },
+      ],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.NES,
+    ),
     // @see https://www.nesdev.org/wiki/NES_2.0
-    nes_2: new FileSignature('.nes', [
-      { value: Buffer.from('NES\u{1A}') },
-      {
-        offset: 7,
-        length: 1,
-        match: (buffer): boolean => {
-          if (buffer.length < 7 + 1) {
-            return false;
-          }
-          return (buffer.readUInt8(7) & 0x0c) === 0x08;
+    nes_2: new FileSignature(
+      '.nes',
+      [
+        { value: Buffer.from('NES\u{1A}') },
+        {
+          offset: 7,
+          length: 1,
+          match: (buffer): boolean => {
+            if (buffer.length < 7 + 1) {
+              return false;
+            }
+            return (buffer.readUInt8(7) & 0x0c) === 0x08;
+          },
         },
-      },
-    ]),
+      ],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.NES,
+    ),
     // @see https://www.nesdev.org/wiki/INES#Variant_comparison
-    nes: new FileSignature('.nes', [{ value: Buffer.from('NES\u{1A}') }]),
+    nes: new FileSignature(
+      '.nes',
+      [{ value: Buffer.from('NES\u{1A}') }],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.NES,
+    ),
     // @see https://www.nesdev.org/wiki/UNIF
     unf: new FileSignature('.unf', [
       { value: Buffer.from('UNIF') },
@@ -565,15 +617,29 @@ export default class FileSignature {
     ]),
     // @see https://snes.nesdev.org/wiki/ROM_header
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
-    smc: new FileSignature('.smc', [
-      { offset: 3, value: Buffer.from('00'.repeat(509), 'hex') },
-      superNintendoDynamicPiece(512),
-    ]),
+    smc: new FileSignature(
+      '.smc',
+      [{ offset: 3, value: Buffer.from('00'.repeat(509), 'hex') }, superNintendoDynamicPiece(512)],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.SMC,
+    ),
     sfc: new FileSignature('.sfc', [superNintendoDynamicPiece(0)]),
     // @see https://file-extension.net/seeker/file_extension_smc
     // @see https://wiki.superfamicom.org/game-doctor
-    smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\u{0}\u{1}ME DOCTOR SF 3') }]), // Game Doctor SF3?
-    smc_gd3_2: new FileSignature('.smc', [{ value: Buffer.from('GAME DOCTOR SF 3') }]), // Game Doctor SF3/SF6/SF7
+    // Game Doctor SF3?
+    smc_gd3_1: new FileSignature(
+      '.smc',
+      [{ value: Buffer.from('\u{0}\u{1}ME DOCTOR SF 3') }],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.SMC,
+    ),
+    // Game Doctor SF3/SF6/SF7
+    smc_gd3_2: new FileSignature(
+      '.smc',
+      [{ value: Buffer.from('GAME DOCTOR SF 3') }],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.SMC,
+    ),
 
     // Nintendo - Satellaview
     // @see https://wiki.superfamicom.org/bs-x-satellaview-header
@@ -945,16 +1011,19 @@ export default class FileSignature {
   private readonly extension: string;
   private readonly signaturePieces: SignaturePiece[];
   private readonly _canBeTrimmed: CanBeTrimmedValue;
+  private readonly romHeader?: ROMHeader;
 
   constructor(
     extension: string,
     fileSignatures: SignaturePiece[],
     // eslint-disable-next-line unicorn/consistent-boolean-name
     canBeTrimmed: CanBeTrimmedValue = CanBeTrimmed.NO,
+    romHeader?: ROMHeader,
   ) {
     this.extension = extension;
     this.signaturePieces = fileSignatures;
     this._canBeTrimmed = canBeTrimmed;
+    this.romHeader = romHeader;
   }
 
   /**
@@ -963,6 +1032,30 @@ export default class FileSignature {
    */
   static signatureFromName(name: string): FileSignature | undefined {
     return this.SIGNATURES_UNSORTED[name];
+  }
+
+  /**
+   * Return the sorted, unique extensions of all signatures that have a {@link ROMHeader}.
+   */
+  static getROMHeaderExtensions(): string[] {
+    return this.SIGNATURES.filter((signature) => signature.romHeader !== undefined)
+      .map((signature) => signature.extension)
+      .reduce(ArrayUtil.reduceUnique(), [])
+      .toSorted((a, b) => a.localeCompare(b));
+  }
+
+  /**
+   * Look up a known {@link ROMHeader} whose signature's (headered) extension or headerless
+   * extension matches the given file path, or undefined if no match exists.
+   */
+  static romHeaderFromFilename(filePath: string): ROMHeader | undefined {
+    const extension = path.extname(filePath).toLowerCase();
+    return this.SIGNATURES.find(
+      (signature) =>
+        signature.romHeader !== undefined &&
+        (signature.extension.toLowerCase() === extension ||
+          signature.romHeader.getHeaderlessFileExtension().toLowerCase() === extension),
+    )?.romHeader;
   }
 
   /**
@@ -1012,5 +1105,9 @@ export default class FileSignature {
    */
   canBeTrimmed(): boolean {
     return this._canBeTrimmed === CanBeTrimmed.YES;
+  }
+
+  getROMHeader(): ROMHeader | undefined {
+    return this.romHeader;
   }
 }

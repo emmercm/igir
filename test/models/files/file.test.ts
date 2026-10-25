@@ -12,8 +12,8 @@ import ArchiveFile from '../../../src/models/files/archives/archiveFile.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import FileSignature from '../../../src/models/files/fileSignature.js';
 import IOFile from '../../../src/models/files/ioFile.js';
-import ROMHeader from '../../../src/models/files/romHeader.js';
 import ROMPadding from '../../../src/models/files/romPadding.js';
 import Options from '../../../src/models/options.js';
 import IPSPatch from '../../../src/models/patches/ipsPatch.js';
@@ -175,7 +175,7 @@ describe('getCrc32WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedCrc) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }
@@ -235,7 +235,7 @@ describe('getMd5WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedMd5) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }
@@ -301,7 +301,7 @@ describe('getSha1WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedSha1) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }
@@ -385,7 +385,7 @@ describe('getSha256WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedSha256) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }

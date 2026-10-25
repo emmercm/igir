@@ -1,74 +1,13 @@
-import os from 'node:os';
-import path from 'node:path';
-
-import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
-import FileCache from '../../../src/cache/fileCache.js';
-import FileFactory from '../../../src/factories/fileFactory.js';
 import ROMHeader from '../../../src/models/files/romHeader.js';
-import Options from '../../../src/models/options.js';
-import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import ProgressBarFake from '../../console/progressBarFake.js';
 
-describe('headerFromFilename', () => {
-  test.each(['rom.a78', 'rom.lnx', 'rom.nes', 'rom.fds', 'rom.smc', 'rom.zip.fds'])(
-    'should get a file header for extension: %s',
-    (filePath) => {
-      const fileHeader = ROMHeader.headerFromFilename(filePath);
-      expect(fileHeader).toBeDefined();
-      expect(fileHeader?.getName()).toBeTruthy();
-    },
-  );
-
-  test.each(['', ' '.repeat(3), '.nes', 'rom.zip', 'rom.nes.zip'])(
-    'should not get a file header for extension: %s',
-    (filePath) => {
-      const fileHeader = ROMHeader.headerFromFilename(filePath);
-      expect(fileHeader).toBeUndefined();
-    },
-  );
+describe('getDataOffsetBytes', () => {
+  it('should return the data offset', () => {
+    expect(new ROMHeader(16, '.nes').getDataOffsetBytes()).toEqual(16);
+  });
 });
 
-describe('headerFromBuffer', () => {
-  it('should get a file header for headered files', async () => {
-    const headeredRoms = await new ROMScanner(
-      new Options({
-        input: ['./test/fixtures/roms/headered'],
-      }),
-      new ProgressBarFake(),
-      new FileFactory(new FileCache()),
-      new MappableSemaphore(os.availableParallelism()),
-    ).scan();
-    expect(headeredRoms).toHaveLength(6);
-
-    for (const headeredRom of headeredRoms) {
-      const fileHeader = ROMHeader.headerFromBuffer(
-        await headeredRom.readFirstBytes(ROMHeader.MAX_HEADER_LENGTH_BYTES),
-      );
-      expect(fileHeader).toBeDefined();
-      expect(fileHeader?.getName()).toBeTruthy();
-    }
-  });
-
-  it('should not get a file header for dummy files', async () => {
-    const headeredRoms = await new ROMScanner(
-      new Options({
-        input: [path.join('test', 'fixtures', 'roms', '!(headered){,/}*')],
-        inputExclude: [
-          path.join('test', 'fixtures', 'roms', 'chd'),
-          path.join('test', 'fixtures', 'roms', 'nkit'),
-        ],
-      }),
-      new ProgressBarFake(),
-      new FileFactory(new FileCache()),
-      new MappableSemaphore(os.availableParallelism()),
-    ).scan();
-    expect(headeredRoms.length).toBeGreaterThan(0);
-
-    for (const headeredRom of headeredRoms) {
-      const fileHeader = ROMHeader.headerFromBuffer(
-        await headeredRom.readFirstBytes(ROMHeader.MAX_HEADER_LENGTH_BYTES),
-      );
-      expect(fileHeader).toBeUndefined();
-    }
+describe('getHeaderlessFileExtension', () => {
+  it('should return the headerless extension', () => {
+    expect(new ROMHeader(512, '.sfc').getHeaderlessFileExtension()).toEqual('.sfc');
   });
 });

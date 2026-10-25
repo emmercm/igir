@@ -49,10 +49,6 @@ describe('getOrComputeFileSignature', () => {
   });
 });
 
-describe('getOrComputeFileHeader', () => {
-  // Tested by romHeaderProcessor.test.ts
-});
-
 describe('getOrComputeFilePaddings', () => {
   // Tested by romTrimProcessor.test.ts
 });
