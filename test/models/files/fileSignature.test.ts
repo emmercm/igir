@@ -1,6 +1,5 @@
 import os from 'node:os';
 import path from 'node:path';
-import zlib from 'node:zlib';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
@@ -10,7 +9,6 @@ import FileSignature from '../../../src/models/files/fileSignature.js';
 import type ROMHeader from '../../../src/models/files/romHeader.js';
 import Options from '../../../src/models/options.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function scan(input: string[], inputExclude: string[] = []): Promise<File[]> {
