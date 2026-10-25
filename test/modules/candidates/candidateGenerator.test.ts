@@ -1529,6 +1529,75 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     expect(candidates).toHaveLength(1);
     expect(candidates[0].getRomsWithFiles()).toHaveLength(4);
   });
+
+  it('should replace {category} for disc-merged games', async () => {
+    const discOne = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 1)',
+      categories: 'Games',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 1).bin',
+          size: 705_614_112,
+          crc32: 'e32f4a7e',
+        }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 2)',
+      categories: 'Games',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 2).bin',
+          size: 731_911_824,
+          crc32: '21b5d15d',
+        }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const categoryOptions = new Options({ ...options, output: 'output/{category}' });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...categoryOptions, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(categoryOptions, discMergedDat, files);
+
+    expect(candidates).toHaveLength(1);
+    expect(
+      candidates[0]
+        .getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
+    ).toEqual(
+      files.map((file) =>
+        PathUtil.resolve(
+          'output',
+          'Games',
+          'Metal Gear Solid (USA)',
+          path.basename(file.getFilePath()),
+        ),
+      ),
+    );
+  });
 });
 
 describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
