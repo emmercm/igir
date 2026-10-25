@@ -4,7 +4,7 @@ import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type FileFactory from '../../factories/fileFactory.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import type File from '../../models/files/file.js';
-import ROMHeader from '../../models/files/romHeader.js';
+import FileSignature from '../../models/files/fileSignature.js';
 import type Options from '../../models/options.js';
 import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
@@ -109,7 +109,7 @@ export default class ROMHeaderProcessor extends Module {
     }
 
     return (
-      ROMHeader.headerFromFilename(inputFile.getExtractedFilePath()) !== undefined ||
+      FileSignature.romHeaderFromFilename(inputFile.getExtractedFilePath()) !== undefined ||
       this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())
     );
   }
@@ -118,13 +118,14 @@ export default class ROMHeaderProcessor extends Module {
     this.prefixedLogger.trace(
       `${inputFile.toString()}: reading potentially headered file by file contents`,
     );
-    const headerForFileStream = await this.fileFactory.headerFrom(inputFile);
-    if (headerForFileStream) {
+    const signature = await this.fileFactory.signatureFrom(inputFile);
+    const romHeader = signature?.getROMHeader();
+    if (signature && romHeader) {
       this.prefixedLogger.trace(
-        `${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`,
+        `${inputFile.toString()}: found header by file contents: ${signature.getExtension()}`,
       );
       // TODO(cemmer): figure out a way to cache this
-      return await inputFile.withFileHeader(headerForFileStream);
+      return await inputFile.withFileHeader(romHeader);
     }
     this.prefixedLogger.trace(`${inputFile.toString()}: didn't find header by file contents`);
     return inputFile;
