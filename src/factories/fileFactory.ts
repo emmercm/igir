@@ -22,6 +22,7 @@ import Bzip2 from '../models/files/archives/sevenZip/bzip2.js';
 import Lzma from '../models/files/archives/sevenZip/lzma.js';
 import Lzma86 from '../models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../models/files/archives/sevenZip/sevenZip.js';
+import SevenZipLib from '../models/files/archives/sevenZip/sevenZipLib.js';
 import Split from '../models/files/archives/sevenZip/split.js';
 import Z from '../models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../models/files/archives/sevenZip/zipSpanned.js';
@@ -215,12 +216,22 @@ export default class FileFactory {
     if (Lzma.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Lzma(filePath)];
     }
-    if (fileExt.toLowerCase().endsWith('.zip.001')) {
-      // A ZIP split into numbered parts isn't supported: 7-Zip's ZIP handler only finds parts
-      // named .z01, .z02, ..., .zip, and Split would yield the whole ZIP as a single entry
-      return [];
-    }
-    if (Split.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    const splitExt = Split.getExtensions().find((ext) => fileExt.toLowerCase().endsWith(ext));
+    if (splitExt !== undefined) {
+      // The 7-Zip addon joins the numbered parts of any format it reads, so those formats are read
+      // whole, by the extension before the part number. Every other split file, including formats
+      // igir reads without the addon (RAR, TAR, gzip), is read as one joined file.
+      const [joinedArchive] = this.archiveFromArchiveExtension(
+        filePath,
+        fileExt.slice(0, -splitExt.length),
+      );
+      if (joinedArchive instanceof Zip) {
+        // The built-in ZIP reader can only read a single file, the addon reads the joined parts
+        return [new ZipSpanned(filePath)];
+      }
+      if (joinedArchive instanceof SevenZipLib) {
+        return [joinedArchive];
+      }
       return [new Split(filePath)];
     }
     if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {

@@ -519,21 +519,9 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
     return S_OK;
 }
 
-}  // namespace
-
-HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out, const std::atomic<bool>* abort) {
-    const std::vector<Format>& formats = Formats();
-    if (path.empty() || formatIndex >= formats.size()) {
-        return E_INVALIDARG;
-    }
-    GUID const clsid = formats[formatIndex].classId;
-
-    UString const widePath = GetUnicodeString(path.c_str(), CP_UTF8);
-    CMyComPtr<IInStream> const stream = OpenFile(widePath);
-    if (!stream) {
-        return kVolumeOpenFailed;
-    }
-
+/** Creates the handler with the given class ID and opens `stream` with it. */
+HRESULT OpenHandler(const GUID& clsid, IInStream* stream, const UString& widePath, const std::atomic<bool>* abort,
+                    CMyComPtr<IInArchive>& out) {
     CMyComPtr<IInArchive> archive;
 
     // CreateArchiver takes its out-parameter as void**, like every COM factory
@@ -545,10 +533,73 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
     }
     // Only the first volume is opened here. When the archive spans several, the
     // handler pulls the rest through this callback's GetStream(), and each one
-    // it takes is owned by the handler, so `out->stream` below is the first
-    // volume's handle alone, and closing the archive still releases them all.
+    // it takes is owned by the handler, so closing the archive releases them all.
     CMyComPtr<IArchiveOpenCallback> const openCallback(new OpenCallback(widePath, abort));
     RINOK(archive->Open(stream, nullptr, openCallback))
+
+    out = archive;
+    return S_OK;
+}
+
+/**
+ * Joins the numbered parts starting at `firstPart` with the Split handler and
+ * returns them as one seekable stream, which holds its own reference to every part.
+ */
+HRESULT JoinNumberedParts(IInStream* firstPart, const UString& widePath, const std::atomic<bool>* abort,
+                          CMyComPtr<IInStream>& out) {
+    const std::vector<Format>& formats = Formats();
+    const auto split = std::ranges::find(formats, std::string("Split"), &Format::name);
+    if (split == formats.end()) {
+        return E_FAIL;
+    }
+
+    CMyComPtr<IInArchive> archive;
+    RINOK(OpenHandler(split->classId, firstPart, widePath, abort, archive))
+    CMyComPtr<IInArchiveGetStream> getStream;
+    RINOK(archive.QueryInterface(IID_IInArchiveGetStream, &getStream))
+    if (!getStream) {
+        return E_FAIL;
+    }
+    CMyComPtr<ISequentialInStream> joined;
+    RINOK(getStream->GetStream(0, &joined))
+    if (!joined) {
+        return E_FAIL;
+    }
+    CMyComPtr<IInStream> seekable;
+    RINOK(joined.QueryInterface(IID_IInStream, &seekable))
+    if (!seekable) {
+        return E_FAIL;
+    }
+    out = seekable;
+    return S_OK;
+}
+
+}  // namespace
+
+HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out, const std::atomic<bool>* abort) {
+    const std::vector<Format>& formats = Formats();
+    if (path.empty() || formatIndex >= formats.size()) {
+        return E_INVALIDARG;
+    }
+
+    UString const widePath = GetUnicodeString(path.c_str(), CP_UTF8);
+    CMyComPtr<IInStream> stream = OpenFile(widePath);
+    if (!stream) {
+        return kVolumeOpenFailed;
+    }
+
+    // Only the Split handler finds the parts of an archive split into numbered
+    // parts (.001, .002, ...), the other handlers only find the volumes of their
+    // own naming schemes, such as ZIP's .z01, .z02, ..., .zip. So the parts are
+    // joined first, and the archive is opened from the joined stream.
+    if (formats[formatIndex].name != "Split" && path.ends_with(".001")) {
+        CMyComPtr<IInStream> joined;
+        RINOK(JoinNumberedParts(stream, widePath, abort, joined))
+        stream = joined;
+    }
+
+    CMyComPtr<IInArchive> archive;
+    RINOK(OpenHandler(formats[formatIndex].classId, stream, widePath, abort, archive))
 
     out->archive = archive;
     out->stream = stream;
