@@ -64,14 +64,16 @@ function fixtures(directory: string): Fixture[] {
 }
 
 /**
- * Every archive holding the same four entries, `1kb` through `4kb`. The `.7z`
- * fixtures share one payload; the zstd zips carry a compressible one instead,
- * so that method 93 exercises zstd's literal and sequence decoders rather than
- * emitting raw blocks. Nothing here compares bytes across archives -- each entry
- * is checked against the CRC32 its own archive records.
+ * Every archive holding the same four entries, `1kb` through `4kb`, with the
+ * same keystream payload -- every one of them lists identically to
+ * `7z-copy.7z`. The payload is incompressible, so each fixture was written by a
+ * tool that keeps its named method rather than falling back to Store.
  *
- * Zstd fixtures cover both ZIP method 93 and 7-Zip-zstd's registered 7z codec,
- * including solid archives where extracting a later entry decodes earlier ones.
+ * The ZIP fixtures cover every ZIP method the addon decodes except Shrink and
+ * Implode: Store (0), Deflate (8), Deflate64 (9), bzip2 (12), LZMA (14), zstd
+ * (93), xz (95), and PPMd (98). Zstd fixtures cover both ZIP method 93 and
+ * 7-Zip-zstd's registered 7z codec, including solid archives where extracting a
+ * later entry decodes earlier ones.
  */
 const MULTI_ENTRY_ARCHIVES = fixtures('four-small-files');
 
@@ -422,25 +424,22 @@ async function writeStoredZip(
 
 describe('listEntries', () => {
   it('should have fixtures to test', () => {
-    expect(MULTI_ENTRY_ARCHIVES.length).toEqual(31);
+    expect(MULTI_ENTRY_ARCHIVES.length).toEqual(35);
     expect(SINGLE_STREAM_ARCHIVES.length).toEqual(7);
     expect(LARGE_ENTRY_ARCHIVES.length).toEqual(10);
   });
 
-  it.each(
-    MULTI_ENTRY_ARCHIVES.filter(({ label }) =>
-      /7z-(?:zstd-|bcj-|bcj2-|delta-|brotli-|lz4-|lz5-|lizard-|flzma2-)|-original\.zip$/.test(
-        label,
-      ),
-    ),
-  )('should preserve the existing four-file payload in $label', async ({ format, archivePath }) => {
-    const original = await sevenZip.listEntries({
-      inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
-      format: SevenZipFormat.SEVEN_ZIP,
-    });
-    const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
-    expect(entries).toEqual(original);
-  });
+  it.each(MULTI_ENTRY_ARCHIVES)(
+    'should hold the same four files as every other four-file archive: $label',
+    async ({ format, archivePath }) => {
+      const reference = await sevenZip.listEntries({
+        inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
+        format: SevenZipFormat.SEVEN_ZIP,
+      });
+      const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
+      expect(entries).toEqual(reference);
+    },
+  );
 
   it.each(MULTI_ENTRY_ARCHIVES)(
     'should list the four entries in $label, then release it',

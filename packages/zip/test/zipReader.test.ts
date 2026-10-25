@@ -9,6 +9,7 @@ import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileCh
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import type { CompressionMethodValue } from '../src/fileRecord.js';
+import { CompressionMethod } from '../src/fileRecord.js';
 import ZipReader from '../src/zipReader.js';
 
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -635,4 +636,55 @@ describe('uncompressedStream', () => {
       }
     }
   });
+});
+
+describe('canDecompress', () => {
+  const fourFileFixtures = path.join(
+    dirname,
+    '..',
+    '..',
+    '..',
+    'addons',
+    '7zip',
+    'test',
+    'fixtures',
+    'four-small-files',
+  );
+
+  test.each([
+    ['zip-store.zip', CompressionMethod.STORE, true],
+    ['zip-deflate-level9.zip', CompressionMethod.DEFLATE, true],
+    ['zip-zstd-level1.zip', CompressionMethod.ZSTD, true],
+    ['zip-deflate64-level9.zip', CompressionMethod.DEFLATE64, false],
+    ['zip-bzip2-level9.zip', CompressionMethod.BZIP2, false],
+    ['zip-lzma-level9.zip', CompressionMethod.LZMA, false],
+    ['zip-xz-level9.zip', CompressionMethod.XZ, false],
+    ['zip-ppmd-level9.zip', CompressionMethod.PPMD, false],
+  ] satisfies [string, CompressionMethodValue, boolean][])(
+    'should decide from the local file header of %s',
+    async (fileName, expectedMethod, expectedCanDecompress) => {
+      const zip = new ZipReader(path.join(fourFileFixtures, fileName));
+      const entries = await zip.centralDirectoryFileHeaders();
+
+      const localMethods = await Promise.all(
+        entries.map(async (entry) => (await entry.localFileHeader()).compressionMethod),
+      );
+      expect(localMethods).toEqual([
+        expectedMethod,
+        expectedMethod,
+        expectedMethod,
+        expectedMethod,
+      ]);
+
+      const decompressible = await Promise.all(
+        entries.map(async (entry) => await entry.canDecompress()),
+      );
+      expect(decompressible).toEqual([
+        expectedCanDecompress,
+        expectedCanDecompress,
+        expectedCanDecompress,
+        expectedCanDecompress,
+      ]);
+    },
+  );
 });

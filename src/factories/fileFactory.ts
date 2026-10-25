@@ -25,7 +25,6 @@ import SevenZip from '../models/files/archives/sevenZip/sevenZip.js';
 import Split from '../models/files/archives/sevenZip/split.js';
 import Z from '../models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../models/files/archives/sevenZip/zipSpanned.js';
-import ZipX from '../models/files/archives/sevenZip/zipX.js';
 import Tar from '../models/files/archives/tar.js';
 import Zip from '../models/files/archives/zip.js';
 import File from '../models/files/file.js';
@@ -207,9 +206,6 @@ export default class FileFactory {
     if (ZipSpanned.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new ZipSpanned(filePath)];
     }
-    if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      return [new ZipX(filePath)];
-    }
     if (Bzip2.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Bzip2(filePath)];
     }
@@ -218,6 +214,11 @@ export default class FileFactory {
     }
     if (Lzma.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Lzma(filePath)];
+    }
+    if (fileExt.toLowerCase().endsWith('.zip.001')) {
+      // A ZIP split into numbered parts isn't supported: 7-Zip's ZIP handler only finds parts
+      // named .z01, .z02, ..., .zip, and Split would yield the whole ZIP as a single entry
+      return [];
     }
     if (Split.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Split(filePath)];
@@ -321,7 +322,6 @@ export default class FileFactory {
       ...SevenZip.getExtensions(),
       ...Z.getExtensions(),
       ...ZipSpanned.getExtensions(),
-      ...ZipX.getExtensions(),
       ...Bzip2.getExtensions(),
       ...Lzma.getExtensions(),
       ...Lzma86.getExtensions(),
