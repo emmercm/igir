@@ -8,7 +8,7 @@ Igir supports most common archive formats:
 
 | Extension                                                                                                                                                                      | Contains file CRC32s | Igir can checksum without temporary files |
 |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|-------------------------------------------|
-| `.001` (files split into numbered parts)                                                                                                                                       | ❌                   | ✅                                        |
+| `.001` (file or archive split into numbered parts)                                                                                                                             | ❌                   | ✅                                        |
 | `.7z` (Brotli, BZip2, copy, DEFLATE, DEFLATE64, Lizard, LZ4, LZ5, LZMA, LZMA2, PPMd, and Zstd) + (ARM, ARM64, ARMT, BCJ, BCJ2, byte swap, Delta, IA64, PPC, RISC-V, and SPARC) | ✅                   | ✅                                        |
 | `.bz2`/`.bzip2`                                                                                                                                                                | ❌                   | ✅                                        |
 | `.chd` (v3-5)                                                                                                                                                                  | ❌ SHA1              | ✅                                        |

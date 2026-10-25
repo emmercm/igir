@@ -6,9 +6,14 @@ import Temp from '../../src/globals/temp.js';
 import type Archive from '../../src/models/files/archives/archive.js';
 import ArchiveEntry from '../../src/models/files/archives/archiveEntry.js';
 import Bzip2 from '../../src/models/files/archives/sevenZip/bzip2.js';
+import Lzma from '../../src/models/files/archives/sevenZip/lzma.js';
+import Lzma86 from '../../src/models/files/archives/sevenZip/lzma86.js';
+import SevenZip from '../../src/models/files/archives/sevenZip/sevenZip.js';
+import Split from '../../src/models/files/archives/sevenZip/split.js';
+import Z from '../../src/models/files/archives/sevenZip/z.js';
+import ZipSpanned from '../../src/models/files/archives/sevenZip/zipSpanned.js';
 import Tar from '../../src/models/files/archives/tar.js';
 import Zip from '../../src/models/files/archives/zip.js';
-import { ChecksumBitmask } from '../../src/models/files/fileChecksums.js';
 import FsUtil from '../../src/utils/fsUtil.js';
 
 type ArchiveClass = new (filePath: string) => Archive;
@@ -118,19 +123,88 @@ describe('filesFrom', () => {
     },
   );
 
-  it('should not read a ZIP split into numbered parts as an archive', async () => {
-    const tempDir = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'dir'));
-    const tempFile = path.join(tempDir, 'file.zip.001');
-    await FsUtil.mkdir(tempDir, { recursive: true });
-    await FsUtil.copyFile('test/fixtures/roms/zip/onetwothree.zip', tempFile);
-    try {
-      const files = await new FileFactory(new FileCache()).filesFrom(tempFile);
-      expect(files).toEqual([
-        await new FileFactory(new FileCache()).fileFrom(tempFile, ChecksumBitmask.CRC32),
-      ]);
-      expect(files[0]).not.toBeInstanceOf(ArchiveEntry);
-    } finally {
-      await FsUtil.rm(tempDir, { force: true, recursive: true });
-    }
+  describe.each([
+    ['split-four-small-files/zip-deflate-level9.zip.001', 'four-small-files', ZipSpanned],
+    ['split-four-small-files/7z-copy.7z.001', 'four-small-files', SevenZip],
+    ['split-one-small-file/Z-bits16.Z.001', 'one-small-file', Z],
+    ['split-one-small-file/bz2-level9.bz2.001', 'one-small-file', Bzip2],
+    ['split-one-small-file/lzma-level9.lzma.001', 'one-small-file', Lzma],
+    ['split-one-small-file/lzma86-bcj.lzma86.001', 'one-small-file', Lzma86],
+  ])('%s', (firstPart, joinedDirectory, expectedArchiveClass: ArchiveClass) => {
+    it('should read the entries of the archive the numbered parts were split from', async () => {
+      const fixtureDir = 'addons/7zip/test/fixtures';
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        path.join(fixtureDir, firstPart),
+      );
+      const joinedEntries = await new FileFactory(new FileCache()).filesFrom(
+        path.join(fixtureDir, joinedDirectory, path.parse(firstPart).name),
+      );
+      expect(
+        archiveEntries.map((archiveEntry) =>
+          archiveEntry instanceof ArchiveEntry
+            ? {
+                archiveClass: archiveEntry.getArchive().constructor,
+                entryPath: archiveEntry.getEntryPath(),
+                size: archiveEntry.getSize(),
+                crc32: archiveEntry.getCrc32(),
+              }
+            : archiveEntry,
+        ),
+      ).toEqual(
+        joinedEntries.map((archiveEntry) =>
+          archiveEntry instanceof ArchiveEntry
+            ? {
+                archiveClass: expectedArchiveClass,
+                entryPath: archiveEntry.getEntryPath(),
+                size: archiveEntry.getSize(),
+                crc32: archiveEntry.getCrc32(),
+              }
+            : archiveEntry,
+        ),
+      );
+      expect(archiveEntries).toHaveLength(joinedEntries.length);
+    });
   });
+
+  test.each(['.bin', '.rar'])(
+    'should read numbered parts of a %s file as one joined file',
+    async (extension) => {
+      const fixtureDir = 'addons/7zip/test/fixtures/split-four-small-files';
+      const parts = ['001', '002', '003'];
+      const tempDir = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'dir'));
+      await FsUtil.mkdir(tempDir, { recursive: true });
+      try {
+        for (const part of parts) {
+          await FsUtil.copyFile(
+            path.join(fixtureDir, `zip-deflate-level9.zip.${part}`),
+            path.join(tempDir, `file${extension}.${part}`),
+          );
+        }
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+          path.join(tempDir, `file${extension}.001`),
+        );
+        expect(
+          archiveEntries.map((archiveEntry) =>
+            archiveEntry instanceof ArchiveEntry
+              ? {
+                  archiveClass: archiveEntry.getArchive().constructor,
+                  entryPath: archiveEntry.getEntryPath(),
+                  size: archiveEntry.getSize(),
+                }
+              : archiveEntry,
+          ),
+        ).toEqual([
+          {
+            archiveClass: Split,
+            entryPath: `file${extension}`,
+            size: await FsUtil.size(
+              'addons/7zip/test/fixtures/four-small-files/zip-deflate-level9.zip',
+            ),
+          },
+        ]);
+      } finally {
+        await FsUtil.rm(tempDir, { force: true, recursive: true });
+      }
+    },
+  );
 });
