@@ -29,3 +29,43 @@ describe('withProps', () => {
     expect(copy.getRoms().map((rom) => rom.getName())).toEqual(['smb.prg', 'smb.chr']);
   });
 });
+
+const cdXml = `<?xml version="1.0"?>
+<softwarelist name="fmtowns_cd" description="Fujitsu FM Towns CD-ROMs">
+  <software name="win30">
+    <description>Nihongo Microsoft Windows V3.0 with Multimedia Extensions V1.0 L10</description>
+    <part name="cdrom" interface="cdrom">
+      <diskarea name="cdrom">
+        <disk name="nihongo microsoft windows v3.0 with multimedia extensions v1.0 l10 (japan)" sha1="8426d9e6d652f830b378b06d0ea880607cc093b1"/>
+      </diskarea>
+    </part>
+  </software>
+</softwarelist>`;
+
+describe('getDisks', () => {
+  it('should return every disk from every disk area', () => {
+    const [software] = SoftwareListDAT.fromObject(
+      DATObject.fromXmlString(cdXml).softwarelist ?? {},
+    ).getGames();
+
+    expect(software.getRoms()).toHaveLength(0);
+    expect(software.getDisks().map((disk) => [disk.getName(), disk.getSha1()])).toEqual([
+      [
+        'nihongo microsoft windows v3.0 with multimedia extensions v1.0 l10 (japan)',
+        '8426d9e6d652f830b378b06d0ea880607cc093b1',
+      ],
+    ]);
+  });
+
+  it('should keep every disk through withProps', () => {
+    const [software] = SoftwareListDAT.fromObject(
+      DATObject.fromXmlString(cdXml).softwarelist ?? {},
+    ).getGames();
+
+    const copy = software.withProps({ cloneOf: undefined });
+
+    expect(copy.getDisks().map((disk) => disk.getSha1())).toEqual([
+      '8426d9e6d652f830b378b06d0ea880607cc093b1',
+    ]);
+  });
+});
