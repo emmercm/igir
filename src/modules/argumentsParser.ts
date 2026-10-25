@@ -10,7 +10,7 @@ import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
 import Internationalization from '../models/dats/internationalization.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../models/files/fileChecksums.js';
-import ROMHeader from '../models/files/romHeader.js';
+import FileSignature from '../models/files/fileSignature.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,
@@ -698,7 +698,7 @@ export default class ArgumentsParser {
       .option('remove-headers', {
         group: groupRomHeader,
         alias: 'H',
-        description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${ROMHeader.getSupportedExtensions().join(', ')})`,
+        description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${FileSignature.getROMHeaderExtensions().join(', ')})`,
         type: 'string',
         coerce: (vals: string | string[]) =>
           (Array.isArray(vals) ? vals : [vals]).flatMap((val) => {

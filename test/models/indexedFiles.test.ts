@@ -1,6 +1,6 @@
 import ROM from '../../src/models/dats/rom.js';
 import File from '../../src/models/files/file.js';
-import ROMHeader from '../../src/models/files/romHeader.js';
+import FileSignature from '../../src/models/files/fileSignature.js';
 import IndexedFiles from '../../src/models/indexedFiles.js';
 
 describe('findFiles', () => {
@@ -15,7 +15,7 @@ describe('findFiles', () => {
       size: 2,
       crc32: '22222222',
       md5: '22222222222222222222222222222222',
-      fileHeader: ROMHeader.headerFromFilename('two.lnx'),
+      fileHeader: FileSignature.romHeaderFromFilename('two.lnx'),
     }),
     File.fileOf({
       filePath: 'three',
@@ -38,7 +38,7 @@ describe('findFiles', () => {
       size: 6,
       sha1: '6666666666666666666666666666666666666666',
       sha256: '6666666666666666666666666666666666666666666666666666666666666666',
-      fileHeader: ROMHeader.headerFromFilename('six.nes'),
+      fileHeader: FileSignature.romHeaderFromFilename('six.nes'),
     }),
     File.fileOf({
       filePath: 'seven',

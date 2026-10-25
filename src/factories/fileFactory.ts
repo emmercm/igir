@@ -31,7 +31,6 @@ import Zip from '../models/files/archives/zip.js';
 import File from '../models/files/file.js';
 import { ChecksumBitmask } from '../models/files/fileChecksums.js';
 import type FileSignature from '../models/files/fileSignature.js';
-import type ROMHeader from '../models/files/romHeader.js';
 import type ROMPadding from '../models/files/romPadding.js';
 import type { FsReadCallback } from '../streams/fsReadTransform.js';
 import URLUtil from '../utils/urlUtil.js';
@@ -337,14 +336,6 @@ export default class FileFactory {
       ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
-  }
-
-  /**
-   * Return the {@link ROMHeader} for a file if its contents match a known ROM header signature,
-   * or undefined otherwise.
-   */
-  async headerFrom(file: File): Promise<ROMHeader | undefined> {
-    return await this.fileCache.getOrComputeFileHeader(file);
   }
 
   /**

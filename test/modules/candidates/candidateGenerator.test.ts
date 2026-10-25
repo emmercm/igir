@@ -25,7 +25,7 @@ import Tar from '../../../src/models/files/archives/tar.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
-import ROMHeader from '../../../src/models/files/romHeader.js';
+import FileSignature from '../../../src/models/files/fileSignature.js';
 import ROMPadding from '../../../src/models/files/romPadding.js';
 import IndexedFiles from '../../../src/models/indexedFiles.js';
 import Options, {
@@ -279,7 +279,7 @@ describe('with ROMs with headers', () => {
       filePath: 'one.rom',
       size: 1,
       crc32: '12345678',
-      fileHeader: ROMHeader.headerFromFilename('dummy.nes'),
+      fileHeader: FileSignature.romHeaderFromFilename('dummy.nes'),
     }),
     // Extension does change with header removal
     ArchiveEntry.entryOf({
@@ -287,7 +287,7 @@ describe('with ROMs with headers', () => {
       entryPath: 'a.rom',
       size: 2,
       crc32: 'abcdef90',
-      fileHeader: ROMHeader.headerFromFilename('dummy.smc'),
+      fileHeader: FileSignature.romHeaderFromFilename('dummy.smc'),
     }),
     // Doesn't have a header
     ArchiveEntry.entryOf({
