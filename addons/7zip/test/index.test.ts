@@ -8,7 +8,7 @@ import zlib from 'node:zlib';
 
 import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
-import FsUtil from '../../../src/utils/fsUtil.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import PathUtil from '../../../src/utils/pathUtil.js';
 import isFileOpen from '../../../test/utils/isFileOpen.js';
 import sevenZip, { SevenZipFormat } from '../index.js';
@@ -41,26 +41,37 @@ interface Fixture {
 }
 
 /**
+ * @returns the path of every file in one fixture directory, in a stable order
+ */
+async function filesIn(directory: string): Promise<string[]> {
+  return (await FsUtil.walk(path.join(FIXTURE_DIR, directory), WalkMode.FILES)).toSorted((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+/**
+ * @returns the format {@link fileName}'s extension names, failing loudly for an
+ * extension nothing maps to rather than silently skipping its fixture
+ */
+function formatOf(fileName: string): SevenZipFormat {
+  const format = FORMATS_BY_EXTENSION.get(path.extname(fileName));
+  if (format === undefined) {
+    throw new Error(`no format is mapped to the extension of fixture: ${fileName}`);
+  }
+  return format;
+}
+
+/**
  * Every archive in one fixture directory, in a stable order. Adding a fixture
  * is therefore committing the file: it joins the tests parametrized over its
- * directory with no code change, and an extension nothing maps to fails loudly
- * here rather than being silently skipped.
+ * directory with no code change.
  */
-function fixtures(directory: string): Fixture[] {
-  return fs
-    .readdirSync(path.join(FIXTURE_DIR, directory))
-    .toSorted((a, b) => a.localeCompare(b))
-    .map((file) => {
-      const format = FORMATS_BY_EXTENSION.get(path.extname(file));
-      if (format === undefined) {
-        throw new Error(`no format is mapped to the extension of fixture: ${file}`);
-      }
-      return {
-        label: path.join(directory, file),
-        format,
-        archivePath: path.join(FIXTURE_DIR, directory, file),
-      };
-    });
+async function fixtures(directory: string): Promise<Fixture[]> {
+  return (await filesIn(directory)).map((archivePath) => ({
+    label: path.relative(FIXTURE_DIR, archivePath),
+    format: formatOf(archivePath),
+    archivePath,
+  }));
 }
 
 /**
@@ -75,14 +86,23 @@ function fixtures(directory: string): Fixture[] {
  * 7-Zip-zstd's registered 7z codec, including solid archives where extracting a
  * later entry decodes earlier ones.
  */
-const MULTI_ENTRY_ARCHIVES = fixtures('four-small-files');
+const MULTI_ENTRY_ARCHIVES = await fixtures('four-small-files');
+
+// What every one of the four-file archives lists
+const MULTI_ENTRIES = [
+  { entryPath: '1kb', size: 1024, crc32: '6511d204' },
+  { entryPath: '2kb', size: 2048, crc32: 'a81210f1' },
+  { entryPath: '3kb', size: 3072, crc32: '768380d1' },
+  { entryPath: '4kb', size: 4096, crc32: 'a688b0ad' },
+].map((entry, entryIndex) => ({ entryIndex, ...entry, isDirectory: false, isEncrypted: false }));
+const MULTI_ENTRY_PATHS = MULTI_ENTRIES.map((entry) => entry.entryPath);
 
 /**
  * Formats that wrap one nameless stream instead of a directory of entries. They
  * all compress the same 4 KiB payload, so one size and one CRC32 cover every one
  * of them.
  */
-const SINGLE_STREAM_ARCHIVES = fixtures('one-small-file');
+const SINGLE_STREAM_ARCHIVES = await fixtures('one-small-file');
 
 // The payload every single-stream fixture holds.
 const SINGLE_STREAM_SIZE = 4096;
@@ -99,53 +119,89 @@ const SINGLE_STREAM_CRC32 = '266df1c3';
  * period is position-dependent, so the bytes read back can be verified rather
  * than only counted.
  */
-const LARGE_ENTRY_ARCHIVES = fixtures('one-large-file');
+const LARGE_ENTRY_ARCHIVES = await fixtures('one-large-file');
 const LARGE_ENTRY_PATH = '8mb';
 const LARGE_ENTRY_SIZE = 8 * 1024 * 1024;
 
 /**
- * One four-entry archive of a given format, for the tests that need a valid
- * archive to damage or to mis-open rather than every archive of that shape.
+ * One fixture of a given format, for the tests that need a valid archive to
+ * damage or to mis-open rather than every archive of that shape.
  */
-function multiEntryArchive(format: SevenZipFormat): string {
-  const fixture = MULTI_ENTRY_ARCHIVES.find((candidate) => candidate.format === format);
+function fixtureOf<F extends Fixture>(candidates: F[], format: SevenZipFormat): F {
+  const fixture = candidates.find((candidate) => candidate.format === format);
   if (fixture === undefined) {
-    throw new Error(`no four-entry fixture exists for format: ${format}`);
+    throw new Error(`no fixture exists for format: ${format}`);
   }
-  return fixture.archivePath;
+  return fixture;
 }
 
-const SEVEN_ZIP_ARCHIVE = multiEntryArchive(SevenZipFormat.SEVEN_ZIP);
-const ZIP_ARCHIVE = multiEntryArchive(SevenZipFormat.ZIP);
+const SEVEN_ZIP_ARCHIVE = fixtureOf(MULTI_ENTRY_ARCHIVES, SevenZipFormat.SEVEN_ZIP).archivePath;
+const ZIP_ARCHIVE = fixtureOf(MULTI_ENTRY_ARCHIVES, SevenZipFormat.ZIP).archivePath;
+const BZIP2_ARCHIVE = fixtureOf(SINGLE_STREAM_ARCHIVES, SevenZipFormat.BZIP2).archivePath;
 
-/**
- * One single-stream archive of a given format, for the tests that need a valid
- * archive to damage rather than every archive of that shape.
- */
-function singleStreamArchive(format: SevenZipFormat): string {
-  const fixture = SINGLE_STREAM_ARCHIVES.find((candidate) => candidate.format === format);
-  if (fixture === undefined) {
-    throw new Error(`no single-stream fixture exists for format: ${format}`);
-  }
-  return fixture.archivePath;
+// A set of volumes opened from `archivePath`, which is one of them
+interface VolumeSet extends Fixture {
+  volumes: string[];
 }
 
-const BZIP2_ARCHIVE = singleStreamArchive(SevenZipFormat.BZIP2);
+interface SplitFixture extends VolumeSet {
+  // The archive the parts were sliced from
+  joinedPath: string;
+}
 
 /**
- * `four-small-files/7z-copy.7z` sliced into 4 KiB volumes by `split`. Only the
- * first slice is ever named: 7-Zip's `Split` handler derives `.002`, `.003` and
- * so on itself. Listing it yields one entry -- the slices joined back together
- * -- when it's opened as a split set, which is why this is not part of
- * {@link MULTI_ENTRY_ARCHIVES} despite being built from an archive that holds
- * four. Opened as a 7z instead, it lists those four entries.
+ * Every set of numbered parts in every `split-<name>` fixture directory, each
+ * sliced into 4 KiB parts from the archive of the same name in `<name>`, and
+ * opened from its first part. Only the first part is ever named: the addon
+ * finds `.002`, `.003` and so on itself. Opened with the format of the archive
+ * it was sliced from, a set lists and extracts like that archive; see
+ * `OpenArchive` in `src/sevenZip.h`.
  */
-const SPLIT_FIRST_VOLUME = path.join(FIXTURE_DIR, 'split-four-small-files', '7z-copy.7z.001');
-const SPLIT_JOINED = path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z');
+const SPLIT_DIRECTORIES = (await FsUtil.dirs(FIXTURE_DIR))
+  .map((directory) => path.basename(directory))
+  .filter((directory) => directory.startsWith('split-'))
+  .toSorted((a, b) => a.localeCompare(b));
+const SPLIT_ARCHIVES: SplitFixture[] = (
+  await Promise.all(
+    SPLIT_DIRECTORIES.map(async (directory) => {
+      const files = await filesIn(directory);
+      return files
+        .filter((file) => file.endsWith('.001'))
+        .map((firstPart) => {
+          const joinedName = path.parse(firstPart).name;
+          return {
+            label: path.relative(FIXTURE_DIR, firstPart),
+            format: formatOf(joinedName),
+            archivePath: firstPart,
+            volumes: files.filter((file) => path.parse(file).name === joinedName),
+            joinedPath: path.join(FIXTURE_DIR, directory.replace(/^split-/, ''), joinedName),
+          };
+        });
+    }),
+  )
+).flat();
+
+/**
+ * The same sets opened with 7-Zip's `Split` handler, which lists each as one
+ * entry: its parts joined back together, named for the archive they were
+ * sliced from.
+ */
+const SPLIT_SETS: SplitFixture[] = SPLIT_ARCHIVES.map((fixture) => ({
+  ...fixture,
+  label: `${fixture.label} as a split set`,
+  format: SevenZipFormat.SPLIT,
+}));
+
+// One split set with a middle part, for the tests that need any one set
+const SPLIT_SET = fixtureOf(
+  SPLIT_SETS.filter((set) => set.volumes.length > 2),
+  SevenZipFormat.SPLIT,
+);
+const SPLIT_SET_ENTRY_PATH = path.basename(SPLIT_SET.joinedPath);
 
 /**
  * A true multi-disk zip from Info-ZIP's `zip -s`, which is a different thing
- * from the byte-sliced `split-four-small-files/` fixtures: the final disk is named `.zip` and
+ * from the byte-sliced `split-*` fixtures: the final disk is named `.zip` and
  * carries the central directory, the earlier ones are `.z01`/`.z02`, and the
  * first opens with the 4-byte spanning marker.
  *
@@ -154,66 +210,17 @@ const SPLIT_JOINED = path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z');
  * `.z01` and `.z02` through the addon's open callback.
  *
  * This keeps a directory of its own because its disks are not sliced from an
- * archive of another fixture directory: `zip` refuses a split size below 64 KiB, so a spanned archive
- * cannot be built out of the four small files at all -- its members have to be
- * large enough to straddle a disk.
+ * archive of another fixture directory: `zip` refuses a split size below
+ * 64 KiB, so a spanned archive cannot be built out of the four small files at
+ * all -- its members have to be large enough to straddle a disk.
  */
-const SPANNED_LAST_DISK = path.join(FIXTURE_DIR, 'spanned', 'spanned.zip');
+const SPANNED_SET: VolumeSet = {
+  label: 'a multi-disk zip',
+  format: SevenZipFormat.ZIP,
+  archivePath: path.join(FIXTURE_DIR, 'spanned', 'spanned.zip'),
+  volumes: await filesIn('spanned'),
+};
 
-interface SplitFixture extends Fixture {
-  // Every part of the set, the first of which is `archivePath`
-  volumes: string[];
-  // The archive the parts were sliced from
-  joinedPath: string;
-}
-
-/**
- * Every set of numbered parts in one fixture directory, each sliced into 4 KiB
- * parts, from the archive of the same name in
- * `joinedDirectory`. Only the first part is opened, with the format of the
- * archive it was sliced from rather than as a split set: the addon joins the
- * parts with the Split handler and opens the joined stream with that format,
- * because the other handlers only find the volumes of their own naming schemes,
- * such as ZIP's `.z01`, `.z02`, ..., `.zip`.
- */
-function splitFixtures(directory: string, joinedDirectory: string): SplitFixture[] {
-  const files = fs
-    .readdirSync(path.join(FIXTURE_DIR, directory))
-    .toSorted((a, b) => a.localeCompare(b));
-  return files
-    .filter((file) => file.endsWith('.001'))
-    .map((firstPart) => {
-      const joinedName = path.parse(firstPart).name;
-      const format = FORMATS_BY_EXTENSION.get(path.extname(joinedName));
-      if (format === undefined) {
-        throw new Error(`no format is mapped to the extension of fixture: ${firstPart}`);
-      }
-      return {
-        label: path.join(directory, firstPart),
-        format,
-        archivePath: path.join(FIXTURE_DIR, directory, firstPart),
-        volumes: files
-          .filter((file) => path.parse(file).name === joinedName)
-          .map((file) => path.join(FIXTURE_DIR, directory, file)),
-        joinedPath: path.join(FIXTURE_DIR, joinedDirectory, joinedName),
-      };
-    });
-}
-
-const SPLIT_ARCHIVES = [
-  ...splitFixtures('split-four-small-files', 'four-small-files'),
-  ...splitFixtures('split-one-small-file', 'one-small-file'),
-];
-
-function splitArchive(format: SevenZipFormat): SplitFixture {
-  const fixture = SPLIT_ARCHIVES.find((candidate) => candidate.format === format);
-  if (fixture === undefined) {
-    throw new Error(`no split fixture exists for format: ${format}`);
-  }
-  return fixture;
-}
-
-const SPLIT_ZIP = splitArchive(SevenZipFormat.ZIP);
 /**
  * Both members, in archive order. `first.bin` runs past the end of the second
  * disk, so `second.bin`'s local header begins on disk 2 and its
@@ -348,36 +355,19 @@ async function rewriteInPlace(volume: string): Promise<void> {
   }
 }
 
-// Every volume of SPLIT_FIRST_VOLUME's set, with the volume the set is opened from
-const SPLIT_SET = {
-  label: 'a split set',
-  format: SevenZipFormat.SPLIT,
-  volumes: ['7z-copy.7z.001', '7z-copy.7z.002', '7z-copy.7z.003'].map((volume) =>
-    path.join(FIXTURE_DIR, 'split-four-small-files', volume),
-  ),
-  openedVolume: path.basename(SPLIT_FIRST_VOLUME),
-  entryPath: '7z-copy.7z',
-};
-
-// Every disk of SPANNED_LAST_DISK's zip, with the disk the zip is opened from
-const SPANNED_SET = {
-  label: 'a multi-disk zip',
-  format: SevenZipFormat.ZIP,
-  volumes: ['spanned.z01', 'spanned.z02', 'spanned.zip'].map((volume) =>
-    path.join(FIXTURE_DIR, 'spanned', volume),
-  ),
-  openedVolume: path.basename(SPANNED_LAST_DISK),
-  entryPath: 'first.bin',
-};
-
-// Every part of SPLIT_ZIP's set, with the part the zip is opened from
-const SPLIT_ZIP_SET = {
-  label: 'a zip split into numbered parts',
-  format: SPLIT_ZIP.format,
-  volumes: SPLIT_ZIP.volumes,
-  openedVolume: path.basename(SPLIT_ZIP.archivePath),
-  entryPath: '4kb',
-};
+/**
+ * Copy every volume of {@link volumeSet} into {@link directory}.
+ * @returns the copies, and the copy of the volume the set is opened from
+ */
+async function copyVolumesInto(
+  directory: string,
+  volumeSet: VolumeSet,
+): Promise<{ copies: string[]; inputFilename: string }> {
+  return {
+    copies: await copyInto(directory, volumeSet.volumes),
+    inputFilename: path.join(directory, path.basename(volumeSet.archivePath)),
+  };
+}
 
 // Node's crypto has no 'crc32' digest, but zlib.crc32() has been available
 // since Node v20.15.0, comfortably below this package's engines floor.
@@ -486,49 +476,47 @@ async function writeStoredZip(
   await writeStoredZipEntries(filePath, [{ entryName, contents }], options);
 }
 
+// Paths neither function can open an archive from
+const UNOPENABLE_PATHS = [
+  {
+    label: 'a missing file',
+    inputFilename: path.join(FIXTURE_DIR, 'nope.7z'),
+    rejectMessage: /could not read/,
+  },
+  {
+    label: 'an empty path',
+    inputFilename: '',
+    rejectMessage: /path or format is invalid/,
+  },
+  {
+    label: 'a directory',
+    inputFilename: FIXTURE_DIR,
+    rejectMessage: /directory/i,
+  },
+];
+
+// Files that are not archives, by the format they're opened as
+const NOT_ARCHIVES = [
+  { format: SevenZipFormat.SEVEN_ZIP, rejectMessage: /is not a valid 7z archive/ },
+  { format: SevenZipFormat.ZIP, rejectMessage: /is not a valid zip archive/ },
+].flatMap((notArchive) => [0, 4096].map((size) => ({ ...notArchive, size })));
+
 describe('listEntries', () => {
   it('should have fixtures to test', () => {
-    expect(MULTI_ENTRY_ARCHIVES.length).toEqual(35);
-    expect(SINGLE_STREAM_ARCHIVES.length).toEqual(7);
-    expect(LARGE_ENTRY_ARCHIVES.length).toEqual(10);
-    expect(SPLIT_ARCHIVES.length).toEqual(6);
+    expect(
+      [MULTI_ENTRY_ARCHIVES, SINGLE_STREAM_ARCHIVES, LARGE_ENTRY_ARCHIVES, SPLIT_ARCHIVES].map(
+        (archives) => archives.length > 0,
+      ),
+    ).toEqual([true, true, true, true]);
   });
-
-  it.each(MULTI_ENTRY_ARCHIVES)(
-    'should hold the same four files as every other four-file archive: $label',
-    async ({ format, archivePath }) => {
-      const reference = await sevenZip.listEntries({
-        inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
-        format: SevenZipFormat.SEVEN_ZIP,
-      });
-      const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
-      expect(entries).toEqual(reference);
-    },
-  );
 
   it.each(MULTI_ENTRY_ARCHIVES)(
     'should list the four entries in $label, then release it',
     async ({ format, archivePath }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
-        const entries = await sevenZip.listEntries({ inputFilename, format });
+        expect(await sevenZip.listEntries({ inputFilename, format })).toEqual(MULTI_ENTRIES);
         expect(await openFiles([inputFilename])).toEqual([]);
-        expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
-        expect(entries.map((entry) => entry.size)).toEqual([1024, 2048, 3072, 4096]);
-        // Compared as arrays rather than collapsed with every(), so a failure
-        // names the entry that disagreed instead of reporting `false !== true`.
-        expect(entries.map((entry) => /^[\da-f]{8}$/.test(entry.crc32 ?? ''))).toEqual([
-          true,
-          true,
-          true,
-          true,
-        ]);
-        expect(entries.map((entry) => entry.isDirectory)).toEqual([false, false, false, false]);
-        expect(entries.map((entry) => entry.isEncrypted)).toEqual([false, false, false, false]);
-        // The archive's own item indices. They happen to match this array's
-        // positions here because no entry is filtered out, which is exactly why
-        // the directory case below is worth its own assertion.
-        expect(entries.map((entry) => entry.entryIndex)).toEqual([0, 1, 2, 3]);
       });
     },
   );
@@ -538,53 +526,30 @@ describe('listEntries', () => {
     async ({ format, archivePath }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
-        const entries = await sevenZip.listEntries({ inputFilename, format });
+        expect(await sevenZip.listEntries({ inputFilename, format })).toEqual([
+          {
+            entryIndex: 0,
+            // These fixtures record no name or CRC32
+            entryPath: undefined,
+            // Undefined, not 0: these formats record no length, and 0 is a real length an empty
+            // member could legitimately have. LZMA86 alone records it in its header.
+            size: format === SevenZipFormat.LZMA86 ? SINGLE_STREAM_SIZE : undefined,
+            crc32: undefined,
+            isDirectory: false,
+            isEncrypted: false,
+          },
+        ]);
         expect(await openFiles([inputFilename])).toEqual([]);
-        expect(entries.length).toEqual(1);
-        // These fixtures record no name or CRC32. LZMA86 additionally records
-        // the uncompressed size in its header.
-        expect(entries[0].entryPath).toBeUndefined();
-        // Undefined, not 0: these formats record no length, and 0 is a real
-        // length an empty member could legitimately have.
-        expect(entries[0].size).toEqual(
-          format === SevenZipFormat.LZMA86 ? SINGLE_STREAM_SIZE : undefined,
-        );
-        expect(entries[0].crc32).toBeUndefined();
-        expect(entries[0].isDirectory).toEqual(false);
-        expect(entries[0].isEncrypted).toEqual(false);
-        expect(entries[0].entryIndex).toEqual(0);
       });
     },
   );
 
-  it('should find the rest of a split set from the first volume alone, then release every volume', async () => {
-    await withTempDir(async (directory) => {
-      const copies = await copyInto(directory, SPLIT_SET.volumes);
-      const entries = await sevenZip.listEntries({
-        inputFilename: path.join(directory, SPLIT_SET.openedVolume),
-        format: SPLIT_SET.format,
-      });
-      expect(entries.map((entry) => entry.entryPath)).toEqual(['7z-copy.7z']);
-      expect(entries.map((entry) => entry.size)).toEqual([await FsUtil.size(SPLIT_JOINED)]);
-      expect(await openFiles(copies)).toEqual([]);
-    });
-  });
-
   it('should find the earlier disks of a multi-disk zip from the last alone, then release every disk', async () => {
     await withTempDir(async (directory) => {
-      const copies = await copyInto(directory, SPANNED_SET.volumes);
-      const entries = await sevenZip.listEntries({
-        inputFilename: path.join(directory, SPANNED_SET.openedVolume),
-        format: SPANNED_SET.format,
-      });
-      expect(entries.map((entry) => entry.entryPath)).toEqual(
-        SPANNED_ENTRIES.map((entry) => entry.entryPath),
-      );
-      expect(entries.map((entry) => entry.size)).toEqual(
-        SPANNED_ENTRIES.map((entry) => entry.size),
-      );
-      expect(entries.map((entry) => entry.crc32)).toEqual(
-        SPANNED_ENTRIES.map((entry) => entry.crc32),
+      const { copies, inputFilename } = await copyVolumesInto(directory, SPANNED_SET);
+      const entries = await sevenZip.listEntries({ inputFilename, format: SPANNED_SET.format });
+      expect(entries.map(({ entryPath, size, crc32 }) => ({ entryPath, size, crc32 }))).toEqual(
+        SPANNED_ENTRIES,
       );
       expect(await openFiles(copies)).toEqual([]);
     });
@@ -592,95 +557,118 @@ describe('listEntries', () => {
 
   it.each(SPLIT_ARCHIVES)(
     'should list $label from the first part alone like the archive it was sliced from, then release every part',
-    async ({ format, archivePath, volumes, joinedPath }) => {
+    async (splitArchive) => {
       await withTempDir(async (directory) => {
-        const copies = await copyInto(directory, volumes);
-        const entries = await sevenZip.listEntries({
-          inputFilename: path.join(directory, path.basename(archivePath)),
-          format,
-        });
-        expect(entries).toEqual(await sevenZip.listEntries({ inputFilename: joinedPath, format }));
+        const { copies, inputFilename } = await copyVolumesInto(directory, splitArchive);
+        const { format, joinedPath } = splitArchive;
+        expect(await sevenZip.listEntries({ inputFilename, format })).toEqual(
+          await sevenZip.listEntries({ inputFilename: joinedPath, format }),
+        );
         expect(await openFiles(copies)).toEqual([]);
       });
     },
   );
 
-  it('should list a zip split into numbered parts as one joined entry when opened as a split set', async () => {
-    const entries = await sevenZip.listEntries({
-      inputFilename: SPLIT_ZIP.archivePath,
-      format: SevenZipFormat.SPLIT,
-    });
-    expect(entries).toEqual([
-      {
-        entryIndex: 0,
-        entryPath: 'zip-deflate-level9.zip',
-        size: await FsUtil.size(SPLIT_ZIP.joinedPath),
-        crc32: undefined,
-        isDirectory: false,
-        isEncrypted: false,
-      },
-    ]);
-  });
-
-  it('should open a single-volume zip that carries the span marker', async () => {
-    await withTempDir(async (directory) => {
-      const archive = path.join(directory, 'span.zip');
-      await writeStoredZip(archive, 'a.txt', Buffer.from('hello span mode'), {
-        hasSpanMarker: true,
+  it.each(SPLIT_SETS)(
+    'should list $label as one joined entry from the first part alone, then release every part',
+    async (splitSet) => {
+      await withTempDir(async (directory) => {
+        const { copies, inputFilename } = await copyVolumesInto(directory, splitSet);
+        expect(await sevenZip.listEntries({ inputFilename, format: splitSet.format })).toEqual([
+          {
+            entryIndex: 0,
+            entryPath: path.basename(splitSet.joinedPath),
+            size: await FsUtil.size(splitSet.joinedPath),
+            crc32: undefined,
+            isDirectory: false,
+            isEncrypted: false,
+          },
+        ]);
+        expect(await openFiles(copies)).toEqual([]);
       });
-      const entries = await sevenZip.listEntries({
-        inputFilename: archive,
-        format: SevenZipFormat.ZIP,
-      });
-      expect(entries.length).toBeGreaterThanOrEqual(1);
-      expect(entries[0].entryPath).toEqual('a.txt');
-    });
-  });
+    },
+  );
 
   it.each([
     {
-      label: 'a missing file',
-      inputFilename: path.join(FIXTURE_DIR, 'nope.7z'),
-      invalidMessage: /could not read/,
+      label: 'a single-volume zip that carries the span marker',
+      entries: [{ entryName: 'a.txt', contents: Buffer.from('hello span mode') }],
+      options: { hasSpanMarker: true },
+      expectedEntries: [{ entryIndex: 0, entryPath: 'a.txt', isDirectory: false }],
     },
     {
-      label: 'an empty path',
-      inputFilename: '',
-      invalidMessage: /path or format is invalid/,
+      label: 'entry paths with forward slashes whatever the archive recorded',
+      entries: [{ entryName: String.raw`dir\file.bin`, contents: Buffer.from('windows-shaped') }],
+      expectedEntries: [{ entryIndex: 0, entryPath: 'dir/file.bin', isDirectory: false }],
     },
     {
-      label: 'a directory',
-      inputFilename: FIXTURE_DIR,
-      invalidMessage: /directory/i,
+      label: 'directory entries numbered alongside the files they contain',
+      entries: [
+        { entryName: 'sub/', contents: Buffer.alloc(0) },
+        { entryName: 'sub/file.bin', contents: Buffer.from('inside a directory') },
+      ],
+      expectedEntries: [
+        { entryIndex: 0, entryPath: 'sub', isDirectory: true },
+        { entryIndex: 1, entryPath: 'sub/file.bin', isDirectory: false },
+      ],
     },
-  ])('should reject $label as a path it cannot open', async ({ inputFilename, invalidMessage }) => {
-    await expect(
-      sevenZip.listEntries({ inputFilename, format: SevenZipFormat.SEVEN_ZIP }),
-    ).rejects.toThrow(invalidMessage);
+    {
+      label: 'an archive holding only directories and no files',
+      entries: [
+        { entryName: 'a/', contents: Buffer.alloc(0) },
+        { entryName: 'a/b/', contents: Buffer.alloc(0) },
+      ],
+      expectedEntries: [
+        { entryIndex: 0, entryPath: 'a', isDirectory: true },
+        { entryIndex: 1, entryPath: 'a/b', isDirectory: true },
+      ],
+    },
+    {
+      label: 'zero entries for an archive of an empty folder',
+      entries: [],
+      expectedEntries: [],
+    },
+  ])('should list $label', async ({ entries, options, expectedEntries }) => {
+    await withTempDir(async (directory) => {
+      const archive = path.join(directory, 'written.zip');
+      await writeStoredZipEntries(archive, entries, options);
+      const listed = await sevenZip.listEntries({
+        inputFilename: archive,
+        format: SevenZipFormat.ZIP,
+      });
+      expect(
+        listed.map(({ entryIndex, entryPath, isDirectory }) => ({
+          entryIndex,
+          entryPath,
+          isDirectory,
+        })),
+      ).toEqual(expectedEntries);
+    });
   });
 
-  describe.each([
-    {
-      format: SevenZipFormat.SEVEN_ZIP,
-      invalidMessage: /is not a valid 7z archive/,
+  it.each(UNOPENABLE_PATHS)(
+    'should reject $label as a path it cannot open',
+    async ({ inputFilename, rejectMessage }) => {
+      await expect(
+        sevenZip.listEntries({ inputFilename, format: SevenZipFormat.SEVEN_ZIP }),
+      ).rejects.toThrow(rejectMessage);
     },
-    {
-      format: SevenZipFormat.ZIP,
-      invalidMessage: /is not a valid zip archive/,
-    },
-  ])('$format', ({ format, invalidMessage }) => {
-    it.each([0, 4096])('should throw on %s random bytes, then release them', async (size) => {
+  );
+
+  it.each(NOT_ARCHIVES)(
+    'should reject $size random bytes as a $format archive, then release them',
+    async ({ format, size, rejectMessage }) => {
       await withTempDir(async (directory) => {
         const garbage = path.join(directory, 'garbage');
         await FsUtil.writeFile(garbage, crypto.randomBytes(size));
 
         await expect(sevenZip.listEntries({ inputFilename: garbage, format })).rejects.toThrow(
-          invalidMessage,
+          rejectMessage,
         );
         expect(await openFiles([garbage])).toEqual([]);
       });
-    });
-  });
+    },
+  );
 
   it('should list many archives at once, more than the thread pool has threads, then release them', async () => {
     await withTempDir(async (directory) => {
@@ -693,7 +681,7 @@ describe('listEntries', () => {
         ),
       );
       expect(listings.map((entries) => entries.map((entry) => entry.entryPath))).toEqual(
-        Array.from({ length: 32 }, () => ['1kb', '2kb', '3kb', '4kb']),
+        Array.from({ length: 32 }, () => MULTI_ENTRY_PATHS),
       );
       expect(await openFiles([inputFilename])).toEqual([]);
     });
@@ -716,7 +704,7 @@ describe('listEntries', () => {
       inputFilename: SEVEN_ZIP_ARCHIVE,
       format: SevenZipFormat.SEVEN_ZIP,
     });
-    expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
+    expect(entries.map((entry) => entry.entryPath)).toEqual(MULTI_ENTRY_PATHS);
   });
 
   it('should reject a 7z download cut off partway through, then release it', async () => {
@@ -736,106 +724,46 @@ describe('listEntries', () => {
       label: '7z archive opened as zip',
       archivePath: SEVEN_ZIP_ARCHIVE,
       openAsFormat: SevenZipFormat.ZIP,
-      invalidMessage: /is not a valid zip archive/,
+      rejectMessage: /is not a valid zip archive/,
     },
     {
       label: 'zip archive opened as 7z',
       archivePath: ZIP_ARCHIVE,
       openAsFormat: SevenZipFormat.SEVEN_ZIP,
-      invalidMessage: /is not a valid 7z archive/,
+      rejectMessage: /is not a valid 7z archive/,
     },
   ])(
     'should reject a real, undamaged $label',
-    async ({ archivePath, openAsFormat, invalidMessage }) => {
+    async ({ archivePath, openAsFormat, rejectMessage }) => {
       await expect(
         sevenZip.listEntries({ inputFilename: archivePath, format: openAsFormat }),
-      ).rejects.toThrow(invalidMessage);
+      ).rejects.toThrow(rejectMessage);
     },
   );
-
-  it('should report entry paths with forward slashes whatever the archive recorded', async () => {
-    await withTempDir(async (directory) => {
-      const archive = path.join(directory, 'backslash.zip');
-      await writeStoredZip(archive, String.raw`dir\file.bin`, Buffer.from('windows-shaped name'));
-      const entries = await sevenZip.listEntries({
-        inputFilename: archive,
-        format: SevenZipFormat.ZIP,
-      });
-      expect(entries.map((entry) => entry.entryPath)).toEqual(['dir/file.bin']);
-    });
-  });
-
-  it('should number directory entries alongside the files they contain', async () => {
-    await withTempDir(async (directory) => {
-      const archive = path.join(directory, 'withdir.zip');
-      await writeStoredZipEntries(archive, [
-        { entryName: 'sub/', contents: Buffer.alloc(0) },
-        { entryName: 'sub/file.bin', contents: Buffer.from('inside a directory') },
-      ]);
-      const entries = await sevenZip.listEntries({
-        inputFilename: archive,
-        format: SevenZipFormat.ZIP,
-      });
-      const files = entries.filter((entry) => !entry.isDirectory);
-      expect(files.map((entry) => entry.entryPath)).toEqual(['sub/file.bin']);
-      expect(files.map((entry) => entry.entryIndex)).toEqual([1]);
-    });
-  });
-
-  it('should list zero entries for an archive of an empty folder', async () => {
-    await withTempDir(async (directory) => {
-      const archive = path.join(directory, 'empty-folder.zip');
-      await writeStoredZipEntries(archive, []);
-      const entries = await sevenZip.listEntries({
-        inputFilename: archive,
-        format: SevenZipFormat.ZIP,
-      });
-      expect(entries).toEqual([]);
-    });
-  });
-
-  it('should list an archive holding only directories and no files', async () => {
-    await withTempDir(async (directory) => {
-      const archive = path.join(directory, 'only-dirs.zip');
-      await writeStoredZipEntries(archive, [
-        { entryName: 'a/', contents: Buffer.alloc(0) },
-        { entryName: 'a/b/', contents: Buffer.alloc(0) },
-      ]);
-      const entries = await sevenZip.listEntries({
-        inputFilename: archive,
-        format: SevenZipFormat.ZIP,
-      });
-      expect(entries.map((entry) => entry.isDirectory)).toEqual([true, true]);
-    });
-  });
 
   it('should silently stop at a missing middle volume of a split set', async () => {
     // If 7-zip doesn't find the next volume in a series then it assume it's done
     await withTempDir(async (directory) => {
-      await FsUtil.copyFile(SPLIT_FIRST_VOLUME, path.join(directory, '7z-copy.7z.001'));
-      // 7z-copy.7z.002 is deliberately never copied.
-      await FsUtil.copyFile(
-        path.join(FIXTURE_DIR, 'split-four-small-files', '7z-copy.7z.003'),
-        path.join(directory, '7z-copy.7z.003'),
-      );
+      // The second volume is deliberately never copied
+      const [firstVolume] = await copyInto(directory, [SPLIT_SET.volumes[0], SPLIT_SET.volumes[2]]);
 
       const entries = await sevenZip.listEntries({
-        inputFilename: path.join(directory, '7z-copy.7z.001'),
-        format: SevenZipFormat.SPLIT,
+        inputFilename: firstVolume,
+        format: SPLIT_SET.format,
       });
-      const wholeFirstVolume = await FsUtil.size(path.join(directory, '7z-copy.7z.001'));
-      expect(entries.map((entry) => entry.entryPath)).toEqual(['7z-copy.7z']);
-      // It only found and parsed 7z-copy.7z.001
+      const wholeFirstVolume = await FsUtil.size(firstVolume);
+      expect(entries.map((entry) => entry.entryPath)).toEqual([SPLIT_SET_ENTRY_PATH]);
+      // It only found and parsed the first volume
       expect(entries.map((entry) => entry.size)).toEqual([wholeFirstVolume]);
-      expect(wholeFirstVolume).toBeLessThan(await FsUtil.size(SPLIT_JOINED));
+      expect(wholeFirstVolume).toBeLessThan(await FsUtil.size(SPLIT_SET.joinedPath));
     });
   });
 
   it('should reject a split set opened from a volume other than the first', async () => {
     await expect(
       sevenZip.listEntries({
-        inputFilename: path.join(FIXTURE_DIR, 'split-four-small-files', '7z-copy.7z.002'),
-        format: SevenZipFormat.SPLIT,
+        inputFilename: SPLIT_SET.volumes[1],
+        format: SPLIT_SET.format,
       }),
     ).rejects.toThrow(/is not a valid split archive/);
   });
@@ -843,39 +771,20 @@ describe('listEntries', () => {
 
 describe('openEntryReader', () => {
   it.each(MULTI_ENTRY_ARCHIVES)(
-    'should extract every entry of $label intact, then release it',
+    'should extract every entry of $label intact, by path alone or with its index, then release it',
     async ({ format, archivePath }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
-        const entries = await sevenZip.listEntries({ inputFilename, format });
-        for (const entry of entries) {
-          const extracted = await drain(
-            sevenZip.openEntryReader({ inputFilename, format, entryPath: entry.entryPath }),
-          );
-          expect(extracted.length).toEqual(entry.size);
-          expect(crc32Hex(extracted)).toEqual(entry.crc32);
-          expect(await openFiles([inputFilename])).toEqual([]);
+        for (const { entryPath, entryIndex, size, crc32 } of MULTI_ENTRIES) {
+          for (const indexHint of [undefined, entryIndex]) {
+            const extracted = await drain(
+              sevenZip.openEntryReader({ inputFilename, format, entryPath, entryIndex: indexHint }),
+            );
+            expect({ size: extracted.length, crc32: crc32Hex(extracted) }).toEqual({ size, crc32 });
+            expect(await openFiles([inputFilename])).toEqual([]);
+          }
         }
       });
-    },
-  );
-
-  it.each(MULTI_ENTRY_ARCHIVES)(
-    'should extract every entry of $label intact when given its index',
-    async ({ format, archivePath }) => {
-      const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
-      for (const entry of entries) {
-        const extracted = await drain(
-          sevenZip.openEntryReader({
-            inputFilename: archivePath,
-            format,
-            entryPath: entry.entryPath,
-            entryIndex: entry.entryIndex,
-          }),
-        );
-        expect(extracted.length).toEqual(entry.size);
-        expect(crc32Hex(extracted)).toEqual(entry.crc32);
-      }
     },
   );
 
@@ -887,20 +796,16 @@ describe('openEntryReader', () => {
   ])('should ignore an index pointing $label', async ({ entryIndex }) => {
     // Every one of these fails the path check, so the scan runs and the entry
     // named is the entry extracted. A wrong index can cost time, never bytes.
-    const entries = await sevenZip.listEntries({
-      inputFilename: SEVEN_ZIP_ARCHIVE,
-      format: SevenZipFormat.SEVEN_ZIP,
-    });
+    const [{ entryPath, size, crc32 }] = MULTI_ENTRIES;
     const extracted = await drain(
       sevenZip.openEntryReader({
         inputFilename: SEVEN_ZIP_ARCHIVE,
         format: SevenZipFormat.SEVEN_ZIP,
-        entryPath: entries[0].entryPath,
+        entryPath,
         entryIndex,
       }),
     );
-    expect(extracted.length).toEqual(entries[0].size);
-    expect(crc32Hex(extracted)).toEqual(entries[0].crc32);
+    expect({ size: extracted.length, crc32: crc32Hex(extracted) }).toEqual({ size, crc32 });
   });
 
   it.each([
@@ -944,41 +849,43 @@ describe('openEntryReader', () => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
         const extracted = await drain(sevenZip.openEntryReader({ inputFilename, format }));
-        expect(extracted.length).toEqual(SINGLE_STREAM_SIZE);
-        expect(crc32Hex(extracted)).toEqual(SINGLE_STREAM_CRC32);
+        expect({ size: extracted.length, crc32: crc32Hex(extracted) }).toEqual({
+          size: SINGLE_STREAM_SIZE,
+          crc32: SINGLE_STREAM_CRC32,
+        });
         expect(await openFiles([inputFilename])).toEqual([]);
       });
     },
   );
 
-  it('should join a split set back into the original bytes, then release every volume', async () => {
-    await withTempDir(async (directory) => {
-      const copies = await copyInto(directory, SPLIT_SET.volumes);
-      const extracted = await drain(
-        sevenZip.openEntryReader({
-          inputFilename: path.join(directory, SPLIT_SET.openedVolume),
-          format: SPLIT_SET.format,
-          entryPath: SPLIT_SET.entryPath,
-        }),
-      );
-      expect(extracted.equals(await FsUtil.readFile(SPLIT_JOINED))).toEqual(true);
-      expect(await openFiles(copies)).toEqual([]);
-    });
-  });
+  it.each(SPLIT_SETS)(
+    'should join $label back into the archive it was sliced from, then release every part',
+    async (splitSet) => {
+      await withTempDir(async (directory) => {
+        const { copies, inputFilename } = await copyVolumesInto(directory, splitSet);
+        const extracted = await drain(
+          sevenZip.openEntryReader({
+            inputFilename,
+            format: splitSet.format,
+            entryPath: path.basename(splitSet.joinedPath),
+          }),
+        );
+        expect(extracted.equals(await FsUtil.readFile(splitSet.joinedPath))).toEqual(true);
+        expect(await openFiles(copies)).toEqual([]);
+      });
+    },
+  );
 
   it.each(SPLIT_ARCHIVES)(
     'should extract every entry of $label like the archive it was sliced from, then release every part',
-    async ({ format, archivePath, volumes, joinedPath }) => {
+    async (splitArchive) => {
       await withTempDir(async (directory) => {
-        const copies = await copyInto(directory, volumes);
+        const { copies, inputFilename } = await copyVolumesInto(directory, splitArchive);
+        const { format, joinedPath } = splitArchive;
         const entries = await sevenZip.listEntries({ inputFilename: joinedPath, format });
         for (const { entryPath } of entries) {
           const extracted = await drain(
-            sevenZip.openEntryReader({
-              inputFilename: path.join(directory, path.basename(archivePath)),
-              format,
-              entryPath,
-            }),
+            sevenZip.openEntryReader({ inputFilename, format, entryPath }),
           );
           expect(
             extracted.equals(
@@ -995,25 +902,22 @@ describe('openEntryReader', () => {
 
   it('should extract both entries across the disks of a multi-disk zip, then release every disk', async () => {
     await withTempDir(async (directory) => {
-      const copies = await copyInto(directory, SPANNED_SET.volumes);
+      const { copies, inputFilename } = await copyVolumesInto(directory, SPANNED_SET);
       const extracted = await Promise.all(
         SPANNED_ENTRIES.map(
           async ({ entryPath }) =>
             await drain(
-              sevenZip.openEntryReader({
-                inputFilename: path.join(directory, SPANNED_SET.openedVolume),
-                format: SPANNED_SET.format,
-                entryPath,
-              }),
+              sevenZip.openEntryReader({ inputFilename, format: SPANNED_SET.format, entryPath }),
             ),
         ),
       );
-      expect(extracted.map((buffer) => buffer.length)).toEqual(
-        SPANNED_ENTRIES.map((entry) => entry.size),
-      );
-      expect(extracted.map((buffer) => crc32Hex(buffer))).toEqual(
-        SPANNED_ENTRIES.map((entry) => entry.crc32),
-      );
+      expect(
+        extracted.map((buffer, index) => ({
+          entryPath: SPANNED_ENTRIES[index].entryPath,
+          size: buffer.length,
+          crc32: crc32Hex(buffer),
+        })),
+      ).toEqual(SPANNED_ENTRIES);
       expect(await openFiles(copies)).toEqual([]);
     });
   });
@@ -1072,9 +976,9 @@ describe('openEntryReader', () => {
     await expect(
       collectChunks(
         sevenZip.openEntryReader({
-          inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
+          inputFilename: SEVEN_ZIP_ARCHIVE,
           format: SevenZipFormat.SEVEN_ZIP,
-          entryPath: '1kb',
+          entryPath: MULTI_ENTRY_PATHS[0],
           highWaterMark: 64 * 1024 * 1024 + 1,
         }),
       ),
@@ -1138,46 +1042,38 @@ describe('openEntryReader', () => {
     });
   });
 
-  it.each([
-    {
-      label: 'a missing file',
-      inputFilename: path.join(FIXTURE_DIR, 'nope.7z'),
-      rejectMessage: /could not read/,
-    },
-    {
-      label: 'a directory',
-      inputFilename: FIXTURE_DIR,
-      rejectMessage: /directory/i,
-    },
-  ])(
+  it.each(UNOPENABLE_PATHS)(
     'should reject $label through the stream rather than when opened',
     async ({ inputFilename, rejectMessage }) => {
       const readable = sevenZip.openEntryReader({
         inputFilename,
         format: SevenZipFormat.SEVEN_ZIP,
-        entryPath: '1kb',
+        entryPath: MULTI_ENTRY_PATHS[0],
       });
       await expect(drain(readable)).rejects.toThrow(rejectMessage);
     },
   );
 
-  it('should reject a file that is not an archive through the stream, then release it', async () => {
-    await withTempDir(async (directory) => {
-      const garbage = path.join(directory, 'garbage');
-      await FsUtil.writeFile(garbage, crypto.randomBytes(4096));
+  it.each(NOT_ARCHIVES)(
+    'should reject $size random bytes as a $format archive through the stream, then release them',
+    async ({ format, size, rejectMessage }) => {
+      await withTempDir(async (directory) => {
+        const garbage = path.join(directory, 'garbage');
+        await FsUtil.writeFile(garbage, crypto.randomBytes(size));
 
-      await expect(
-        drain(
-          sevenZip.openEntryReader({
-            inputFilename: garbage,
-            format: SevenZipFormat.SEVEN_ZIP,
-            entryPath: '1kb',
-          }),
-        ),
-      ).rejects.toThrow(/is not a valid 7z archive/);
-      expect(await openFiles([garbage])).toEqual([]);
-    });
-  });
+        await expect(
+          drain(
+            sevenZip.openEntryReader({
+              inputFilename: garbage,
+              format,
+              entryPath: MULTI_ENTRY_PATHS[0],
+            }),
+          ),
+        ).rejects.toThrow(rejectMessage);
+        expect(await openFiles([garbage])).toEqual([]);
+      });
+    },
+  );
 
   it('should close cleanly and release the archive when destroyed before it has opened', async () => {
     await withTempDir(async (directory) => {
@@ -1330,7 +1226,7 @@ describe('openEntryReader', () => {
         inputFilename: corrupt,
         format: SevenZipFormat.SEVEN_ZIP,
       });
-      expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
+      expect(entries.map((entry) => entry.entryPath)).toEqual(MULTI_ENTRY_PATHS);
       for (const entry of entries) {
         await expect(
           drain(
@@ -1409,18 +1305,14 @@ describe('openEntryReader', () => {
     // A split set's size is summed from its volumes when it is opened, but each volume is then
     // copied to its end, so a volume that grows after that emits more than was declared
     await withTempDir(async (directory) => {
-      for (const volume of ['7z-copy.7z.001', '7z-copy.7z.002', '7z-copy.7z.003']) {
-        await FsUtil.copyFile(
-          path.join(FIXTURE_DIR, 'split-four-small-files', volume),
-          path.join(directory, volume),
-        );
-      }
+      const { copies, inputFilename } = await copyVolumesInto(directory, SPLIT_SET);
+      const [lastCopy] = copies.toReversed();
       const appended = crypto.randomBytes(2500);
 
       const readable = sevenZip.openEntryReader({
-        inputFilename: path.join(directory, '7z-copy.7z.001'),
-        format: SevenZipFormat.SPLIT,
-        entryPath: '7z-copy.7z',
+        inputFilename,
+        format: SPLIT_SET.format,
+        entryPath: SPLIT_SET_ENTRY_PATH,
         highWaterMark: 1000,
       });
       const chunks: Buffer[] = [];
@@ -1429,12 +1321,12 @@ describe('openEntryReader', () => {
         if (chunks.length === 1) {
           // The set is open once the first chunk has arrived, and the producer is still in
           // the first volume
-          await fs.promises.appendFile(path.join(directory, '7z-copy.7z.003'), appended);
+          await fs.promises.appendFile(lastCopy, appended);
         }
       }
 
       expect(Buffer.concat(chunks)).toEqual(
-        Buffer.concat([await FsUtil.readFile(SPLIT_JOINED), appended]),
+        Buffer.concat([await FsUtil.readFile(SPLIT_SET.joinedPath), appended]),
       );
     });
   });
@@ -1443,13 +1335,13 @@ describe('openEntryReader', () => {
     {
       label: 'renamed',
       change: async (volume: string): Promise<void> => {
-        await fs.promises.rename(volume, `${volume}.renamed`);
+        await FsUtil.mv(volume, `${volume}.renamed`);
       },
     },
     {
       label: 'deleted',
       change: async (volume: string): Promise<void> => {
-        await fs.promises.rm(volume);
+        await FsUtil.rm(volume);
       },
     },
     {
@@ -1459,12 +1351,12 @@ describe('openEntryReader', () => {
   ])('should keep reading a split set whose volumes are $label while open', async ({ change }) => {
     // Every volume is opened along with the set, so each is read through its open handle
     await withTempDir(async (directory) => {
-      const volumes = await copyInto(directory, SPLIT_SET.volumes);
+      const { copies, inputFilename } = await copyVolumesInto(directory, SPLIT_SET);
 
       const readable = sevenZip.openEntryReader({
-        inputFilename: path.join(directory, SPLIT_SET.openedVolume),
+        inputFilename,
         format: SPLIT_SET.format,
-        entryPath: SPLIT_SET.entryPath,
+        entryPath: SPLIT_SET_ENTRY_PATH,
         highWaterMark: 1000,
       });
       const chunks: Buffer[] = [];
@@ -1474,13 +1366,13 @@ describe('openEntryReader', () => {
         }
         chunks.push(chunk);
         if (chunks.length === 1) {
-          for (const volume of volumes) {
-            await change(volume);
+          for (const copy of copies) {
+            await change(copy);
           }
         }
       }
 
-      expect(Buffer.concat(chunks)).toEqual(await FsUtil.readFile(SPLIT_JOINED));
+      expect(Buffer.concat(chunks)).toEqual(await FsUtil.readFile(SPLIT_SET.joinedPath));
     });
   });
 
@@ -1598,13 +1490,15 @@ describe('openEntryReader', () => {
     30_000,
   );
 
-  it.each([SPLIT_SET, SPANNED_SET, SPLIT_ZIP_SET])(
+  it.each([...SPLIT_ARCHIVES, ...SPLIT_SETS, SPANNED_SET])(
     'should release every volume of $label once destroyed mid-read',
-    async ({ format, volumes, openedVolume, entryPath }) => {
+    async (volumeSet) => {
       await withTempDir(async (directory) => {
-        const copies = await copyInto(directory, volumes);
+        const { copies, inputFilename } = await copyVolumesInto(directory, volumeSet);
+        const { format } = volumeSet;
+        const [{ entryPath }] = await sevenZip.listEntries({ inputFilename, format });
         const readable = sevenZip.openEntryReader({
-          inputFilename: path.join(directory, openedVolume),
+          inputFilename,
           format,
           entryPath,
           highWaterMark: 1000,

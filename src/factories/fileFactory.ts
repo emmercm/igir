@@ -22,6 +22,7 @@ import Bzip2 from '../models/files/archives/sevenZip/bzip2.js';
 import Lzma from '../models/files/archives/sevenZip/lzma.js';
 import Lzma86 from '../models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../models/files/archives/sevenZip/sevenZip.js';
+import SevenZipLib from '../models/files/archives/sevenZip/sevenZipLib.js';
 import Split from '../models/files/archives/sevenZip/split.js';
 import Z from '../models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../models/files/archives/sevenZip/zipSpanned.js';
@@ -185,9 +186,6 @@ export default class FileFactory {
     filePath: string,
     fileExt = filePath.replace(/.+?(?=(\.[a-zA-Z0-9]+)+)/, ''),
   ): Archive[] {
-    if (Split.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      return [FileFactory.archiveFromSplitExtension(filePath, fileExt.toLowerCase().slice(0, -4))];
-    }
     if (Zip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Zip(filePath)];
     }
@@ -218,6 +216,24 @@ export default class FileFactory {
     if (Lzma.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Lzma(filePath)];
     }
+    const splitExt = Split.getExtensions().find((ext) => fileExt.toLowerCase().endsWith(ext));
+    if (splitExt !== undefined) {
+      // The 7-Zip addon joins the numbered parts of any format it reads, so those formats are read
+      // whole, by the extension before the part number. Every other split file, including formats
+      // igir reads without the addon (RAR, TAR, gzip), is read as one joined file.
+      const [joinedArchive] = this.archiveFromArchiveExtension(
+        filePath,
+        fileExt.slice(0, -splitExt.length),
+      );
+      if (joinedArchive instanceof Zip) {
+        // The built-in ZIP reader can only read a single file, the addon reads the joined parts
+        return [new ZipSpanned(filePath)];
+      }
+      if (joinedArchive instanceof SevenZipLib) {
+        return [joinedArchive];
+      }
+      return [new Split(filePath)];
+    }
     if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Cso(filePath)];
     }
@@ -247,36 +263,6 @@ export default class FileFactory {
 
     // The file path doesn't have a known archive extension
     return [];
-  }
-
-  /**
-   * Choose the class that reads a file split into numbered parts, from the extension before its
-   * `.001`. The 7-Zip addon joins the parts of any format it reads, so those formats are read
-   * whole; every other split file, including formats igir reads without the addon (RAR, TAR, gzip),
-   * is read as one joined file.
-   * @returns the archive that reads the split file
-   */
-  private static archiveFromSplitExtension(filePath: string, joinedExt: string): Archive {
-    if (Zip.getExtensions().some((ext) => joinedExt.endsWith(ext))) {
-      // The built-in ZIP reader can only read a single file, the addon reads the joined parts
-      return new ZipSpanned(filePath);
-    }
-    if (SevenZip.getExtensions().some((ext) => joinedExt.endsWith(ext))) {
-      return new SevenZip(filePath);
-    }
-    if (Z.getExtensions().some((ext) => joinedExt.endsWith(ext))) {
-      return new Z(filePath);
-    }
-    if (Bzip2.getExtensions().some((ext) => joinedExt.endsWith(ext))) {
-      return new Bzip2(filePath);
-    }
-    if (Lzma86.getExtensions().some((ext) => joinedExt.endsWith(ext))) {
-      return new Lzma86(filePath);
-    }
-    if (Lzma.getExtensions().some((ext) => joinedExt.endsWith(ext))) {
-      return new Lzma(filePath);
-    }
-    return new Split(filePath);
   }
 
   /**
