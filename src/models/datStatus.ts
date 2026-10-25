@@ -39,6 +39,26 @@ const GameStatusInverted = Object.fromEntries(
   Object.entries(GameStatus).map(([key, value]) => [value, key]),
 ) as Record<GameStatusValue, GameStatusKey>;
 
+const CSV_HEADERS = [
+  'DAT Name',
+  'Game Name',
+  'Status',
+  'ROM Files',
+  'Patched',
+  'BIOS',
+  'Retail Release',
+  'Unlicensed',
+  'Debug',
+  'Demo',
+  'Beta',
+  'Sample',
+  'Prototype',
+  'Program',
+  'Aftermarket',
+  'Homebrew',
+  'Bad',
+];
+
 /**
  * Parse and hold information about every {@link Game} in a {@link DAT}, as well as which
  * {@link Game}s were found (had a {@link WriteCandidate} created for it).
@@ -192,7 +212,7 @@ export default class DATStatus {
   }
 
   /**
-   * Return the file contents of a CSV with status information for every {@link Game}.
+   * Return a string of CSV rows without headers with status information for every {@link Game}.
    */
   async toCsv(options: Options): Promise<string> {
     const foundCandidates = DATStatus.getValuesForAllowedTypes(
@@ -255,27 +275,15 @@ export default class DATStatus {
           game.isBad(),
         );
       });
-    return await writeToString(rows, {
-      headers: [
-        'DAT Name',
-        'Game Name',
-        'Status',
-        'ROM Files',
-        'Patched',
-        'BIOS',
-        'Retail Release',
-        'Unlicensed',
-        'Debug',
-        'Demo',
-        'Beta',
-        'Sample',
-        'Prototype',
-        'Program',
-        'Aftermarket',
-        'Homebrew',
-        'Bad',
-      ],
-    });
+    return await writeToString(rows);
+  }
+
+  /**
+   * Return a string of the CSV header row that precedes rows from {@link toCsv} and
+   * {@link filesToCsv}.
+   */
+  static async getCsvHeader(): Promise<string> {
+    return await writeToString([CSV_HEADERS]);
   }
 
   /**

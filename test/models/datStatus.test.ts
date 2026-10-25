@@ -47,3 +47,9 @@ it('getDATName', () => {
   const datStatus = new DATStatus(new Options(), dat, []);
   expect(datStatus.getDATName()).toEqual('dat name');
 });
+
+it('getCsvHeader', async () => {
+  await expect(DATStatus.getCsvHeader()).resolves.toEqual(
+    'DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad',
+  );
+});
