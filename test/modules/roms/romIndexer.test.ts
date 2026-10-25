@@ -14,7 +14,6 @@ import SevenZip from '../../../src/models/files/archives/sevenZip/sevenZip.js';
 import Split from '../../../src/models/files/archives/sevenZip/split.js';
 import Z from '../../../src/models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../../../src/models/files/archives/sevenZip/zipSpanned.js';
-import ZipX from '../../../src/models/files/archives/sevenZip/zipX.js';
 import Tar from '../../../src/models/files/archives/tar.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
@@ -189,8 +188,7 @@ describe('archiveEntryPriority (default sort)', () => {
       new Gzip('rom.gz'),
       new SevenZip('rom.7z'),
       new Z('rom.z'),
-      new ZipSpanned('rom.zip.001'),
-      new ZipX('rom.zipx'),
+      new ZipSpanned('rom.z01'),
       new Bzip2('rom.bz2'),
       new Lzma86('rom.lzma86'),
       new Lzma('rom.lzma'),

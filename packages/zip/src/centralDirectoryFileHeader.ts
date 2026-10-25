@@ -235,6 +235,15 @@ export default class CentralDirectoryFileHeader extends FileRecord {
   }
 
   /**
+   * Return whether {@link uncompressedStream} can decompress this file. The local file header's
+   * compression method decides, because that is the one decompression uses.
+   */
+  async canDecompress(): Promise<boolean> {
+    const localFileHeader = await this.localFileHeader();
+    return localFileHeader.canDecompress();
+  }
+
+  /**
    * Return this file's uncompressed/decompressed stream.
    */
   async uncompressedStream(highWaterMark?: number): Promise<stream.Readable> {

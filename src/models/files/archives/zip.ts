@@ -5,6 +5,7 @@ import stream from 'node:stream';
 
 import async from 'async';
 
+import sevenZip, { SevenZipFormat } from '../../../../addons/7zip/index.js';
 import {
   CompressionMethod,
   tzFileNameComparator,
@@ -47,7 +48,7 @@ export default class Zip extends Archive {
   }
 
   static getExtensions(): string[] {
-    return ['.zip', '.zip64', '.apk', '.ipa', '.jar', '.pk3', '.vpk'];
+    return ['.zip', '.zip64', '.zipx', '.apk', '.ipa', '.jar', '.pk3', '.vpk'];
   }
 
   getExtensions(): string[] {
@@ -93,7 +94,7 @@ export default class Zip extends Archive {
           checksumBitmask & ~ChecksumBitmask.CRC32 ||
           (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
         ) {
-          const entryStream = await entryFile.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
+          const entryStream = await this.uncompressedStream(entryFile);
           let lastProgress = 0;
           try {
             checksums = await FileChecksums.hashStream(entryStream, checksumBitmask, (progress) => {
@@ -179,15 +180,38 @@ export default class Zip extends Archive {
 
     let sourceStream: stream.Readable;
     try {
-      sourceStream = await entry.uncompressedStream(
-        Archive.getStreamChunkSize(undefined, byteCount),
-      );
+      sourceStream = await this.uncompressedStream(entry, byteCount);
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
         cause: error,
       });
     }
     return await callback(sourceStream);
+  }
+
+  /**
+   * Open an entry's uncompressed stream with the built-in reader when it supports the entry's
+   * compression method, and with 7-Zip otherwise.
+   */
+  private async uncompressedStream(
+    entry: CentralDirectoryFileHeader,
+    byteCount?: number,
+  ): Promise<Readable> {
+    const highWaterMark = Archive.getStreamChunkSize(entry.uncompressedSizeResolved(), byteCount);
+    if (await entry.canDecompress()) {
+      return await entry.uncompressedStream(highWaterMark);
+    }
+    // TODO(cemmer): a name without the UTF-8 flag is decoded as CP437 here, but 7-Zip decodes it
+    //  as UTF-8 (or the OEM code page on Windows), so a non-ASCII name won't be found by 7-Zip.
+    //  For example, the name bytes `Pok\x82mon.bin` are listed by packages/zip as `Pokémon.bin`
+    //  (CP437 0x82 is 'é'), but by addons/7zip as `Pok\uEF82mon.bin` (0x82 isn't valid UTF-8, so
+    //  7-Zip maps it to the private-use code point U+EF82).
+    return sevenZip.openEntryReader({
+      inputFilename: this.getFilePath(),
+      format: SevenZipFormat.ZIP,
+      entryPath: entry.fileNameResolved().replaceAll('\\', '/'),
+      highWaterMark,
+    });
   }
 
   /**

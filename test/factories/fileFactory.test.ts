@@ -8,6 +8,7 @@ import ArchiveEntry from '../../src/models/files/archives/archiveEntry.js';
 import Bzip2 from '../../src/models/files/archives/sevenZip/bzip2.js';
 import Tar from '../../src/models/files/archives/tar.js';
 import Zip from '../../src/models/files/archives/zip.js';
+import { ChecksumBitmask } from '../../src/models/files/fileChecksums.js';
 import FsUtil from '../../src/utils/fsUtil.js';
 
 type ArchiveClass = new (filePath: string) => Archive;
@@ -116,4 +117,20 @@ describe('filesFrom', () => {
       }
     },
   );
+
+  it('should not read a ZIP split into numbered parts as an archive', async () => {
+    const tempDir = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'dir'));
+    const tempFile = path.join(tempDir, 'file.zip.001');
+    await FsUtil.mkdir(tempDir, { recursive: true });
+    await FsUtil.copyFile('test/fixtures/roms/zip/onetwothree.zip', tempFile);
+    try {
+      const files = await new FileFactory(new FileCache()).filesFrom(tempFile);
+      expect(files).toEqual([
+        await new FileFactory(new FileCache()).fileFrom(tempFile, ChecksumBitmask.CRC32),
+      ]);
+      expect(files[0]).not.toBeInstanceOf(ArchiveEntry);
+    } finally {
+      await FsUtil.rm(tempDir, { force: true, recursive: true });
+    }
+  });
 });

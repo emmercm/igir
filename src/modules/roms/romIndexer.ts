@@ -14,7 +14,6 @@ import SevenZip from '../../models/files/archives/sevenZip/sevenZip.js';
 import Split from '../../models/files/archives/sevenZip/split.js';
 import Z from '../../models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../../models/files/archives/sevenZip/zipSpanned.js';
-import ZipX from '../../models/files/archives/sevenZip/zipX.js';
 import Tar from '../../models/files/archives/tar.js';
 import Zip from '../../models/files/archives/zip.js';
 import type File from '../../models/files/file.js';
@@ -165,32 +164,29 @@ export default class ROMIndexer extends Module {
     if (file.getArchive() instanceof ZipSpanned) {
       return 7;
     }
-    if (file.getArchive() instanceof ZipX) {
+    if (file.getArchive() instanceof Bzip2) {
       return 8;
     }
-    if (file.getArchive() instanceof Bzip2) {
+    if (file.getArchive() instanceof Lzma86) {
       return 9;
     }
-    if (file.getArchive() instanceof Lzma86) {
+    if (file.getArchive() instanceof Lzma) {
       return 10;
     }
-    if (file.getArchive() instanceof Lzma) {
+    if (file.getArchive() instanceof Split) {
       return 11;
     }
-    if (file.getArchive() instanceof Split) {
+    if (file.getArchive() instanceof Maxcso) {
       return 12;
     }
-    if (file.getArchive() instanceof Maxcso) {
+    if (file.getArchive() instanceof Dolphin) {
       return 13;
     }
-    if (file.getArchive() instanceof Dolphin) {
+    if (file.getArchive() instanceof Chd) {
       return 14;
     }
-    if (file.getArchive() instanceof Chd) {
-      return 15;
-    }
     if (file.getArchive() instanceof NkitIso) {
-      return 16;
+      return 15;
     }
     return 99;
   }
