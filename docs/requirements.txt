@@ -6,7 +6,7 @@ click==8.5.0
 mkdocs-exclude-search==0.6.7
 mkdocs-git-committers-plugin-2==2.5.0
 mkdocs-git-revision-date-localized-plugin==1.6.0
-mkdocs-htmlproofer-plugin==1.5.0
+mkdocs-htmlproofer-plugin==1.6.0
 mkdocs-redirects==1.2.3
 mkdocs-unused-files==0.2.0
 mdx-truly-sane-lists==1.3
