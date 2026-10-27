@@ -6,25 +6,26 @@ Igir supports scanning the contents of archives for ROMs, DATs, and ROM patches.
 
 Igir supports most common archive formats:
 
-| Extension                                                                                                                          | Contains file CRC32s | Igir can checksum without temporary files |
-|------------------------------------------------------------------------------------------------------------------------------------|----------------------|-------------------------------------------|
-| `.7z`, `.7z.001` (Brotli, BZip2, copy, DEFLATE, DEFLATE64, Lizard, LZ4, LZ5, LZMA, LZMA2, PPMD, and Zstd) + (BCJ, BCJ2, and Delta) | ✅                   | ✅                                        |
-| `.bz2`/`.bzip2`                                                                                                                    | ❌                   | ✅                                        |
-| `.chd` (v3-5)                                                                                                                      | ❌ SHA1              | ✅                                        |
-| `.cso` (v1, v2), `.zso`, `.dax`                                                                                                    | ❌                   | ✅                                        |
-| `.gcz` ([GameCube docs](../usage/console/gamecube.md))                                                                             | ❌                   | ✅                                        |
-| `.gz`/`.gzip`                                                                                                                      | ✅                   | ✅                                        |
-| `.lzma`, `.lzma86`                                                                                                                 | ❌                   | ✅                                        |
-| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit))                                                                   | ✅                   | ✅                                        |
-| `.rar`                                                                                                                             | ✅                   | ❌                                        |
-| `.rvz` (GameCube, Wii)                                                                                                             | ❌                   | ✅                                        |
-| `.tar`, `.ova`                                                                                                                     | ❌                   | ✅                                        |
-| `.tar.gz`/`.tgz`/`.tpz`                                                                                                            | ❌                   | ✅                                        |
-| `.tbz2`/`.tbz`                                                                                                                     | ❌                   | ✅                                        |
-| `.wia` (Wii)                                                                                                                       | ❌                   | ✅                                        |
-| `.zip`, `.zip.001`, `.z01`, `.zip64` (DEFLATE, store, and Zstd)                                                                    | ✅                   | ✅                                        |
-| `.zipx`, `.zx01`                                                                                                                   | ✅                   | ✅                                        |
-| `.Z`, `.taz`                                                                                                                       | ❌                   | ✅                                        |
+| Extension                                                                                                                                                                      | Contains file CRC32s | Igir can checksum without temporary files |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|-------------------------------------------|
+| `.001` (file or archive split into numbered parts)                                                                                                                             | ❌                   | ✅                                        |
+| `.7z` (Brotli, BZip2, copy, DEFLATE, DEFLATE64, Lizard, LZ4, LZ5, LZMA, LZMA2, PPMd, and Zstd) + (ARM, ARM64, ARMT, BCJ, BCJ2, byte swap, Delta, IA64, PPC, RISC-V, and SPARC) | ✅                   | ✅                                        |
+| `.bz2`/`.bzip2`                                                                                                                                                                | ❌                   | ✅                                        |
+| `.chd` (v3-5)                                                                                                                                                                  | ❌ SHA1              | ✅                                        |
+| `.cso` (v1, v2), `.zso`, `.dax`                                                                                                                                                | ❌                   | ✅                                        |
+| `.gcz` ([GameCube docs](../usage/console/gamecube.md))                                                                                                                         | ❌                   | ✅                                        |
+| `.gz`/`.gzip`                                                                                                                                                                  | ✅                   | ✅                                        |
+| `.lzma`, `.lzma86`                                                                                                                                                             | ❌                   | ✅                                        |
+| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit))                                                                                                               | ✅                   | ✅                                        |
+| `.rar`                                                                                                                                                                         | ✅                   | ❌                                        |
+| `.rvz` (GameCube, Wii)                                                                                                                                                         | ❌                   | ✅                                        |
+| `.tar`, `.ova`                                                                                                                                                                 | ❌                   | ✅                                        |
+| `.tar.gz`/`.tgz`/`.tpz`                                                                                                                                                        | ❌                   | ✅                                        |
+| `.tbz2`/`.tbz`                                                                                                                                                                 | ❌                   | ✅                                        |
+| `.wia` (Wii)                                                                                                                                                                   | ❌                   | ✅                                        |
+| `.Z`, `.taz`                                                                                                                                                                   | ❌                   | ✅                                        |
+| `.zip`, `.zip64`, `.zipx`, `.apk`, `.ipa`, `.jar`, `.pk3`, `.vpk` (BZip2, DEFLATE, DEFLATE64, Implode, LZMA, PPMd, Shrink, store, xz, and Zstd)                                | ✅                   | ✅                                        |
+| `.z01` (zip spanned across `.z01`, `.z02`, …, `.zip`)                                                                                                                          | ✅                   | ✅                                        |
 
 !!! success
 

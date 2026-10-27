@@ -27,8 +27,9 @@ std::vector<std::string> FormatNames();
 std::string FormatLabel(uint32_t formatIndex);
 
 /**
- * Owns an opened archive and its first-volume stream.
- * Destroying both releases every handle; the archive owns any additional volume streams.
+ * Owns an opened archive and its first-volume stream, or for numbered parts the
+ * stream joining them. Destroying both releases every handle; the archive owns
+ * any additional volume streams, and the joined stream owns every part.
  */
 struct OpenedArchive {
     CMyComPtr<IInArchive> archive;
@@ -53,7 +54,9 @@ constexpr HRESULT kEntryNotFound = static_cast<HRESULT>(0x80070490L);
  * Opens one archive with the indexed handler and transfers owned interfaces to `out`.
  *
  * The path names the first file of a multi-volume set; callbacks discover its
- * siblings. Invalid paths or indexes return E_INVALIDARG. The optional abort
+ * siblings. A first part named `.001` is joined with its numbered siblings by
+ * the Split handler, and the indexed handler opens the joined stream. Invalid
+ * paths or indexes return E_INVALIDARG. The optional abort
  * flag interrupts costly header decoding and volume discovery through progress callbacks.
  */
 HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out,

@@ -12,8 +12,8 @@ import ArchiveFile from '../../../src/models/files/archives/archiveFile.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import FileSignature from '../../../src/models/files/fileSignature.js';
 import IOFile from '../../../src/models/files/ioFile.js';
-import ROMHeader from '../../../src/models/files/romHeader.js';
 import ROMPadding from '../../../src/models/files/romPadding.js';
 import Options from '../../../src/models/options.js';
 import IPSPatch from '../../../src/models/patches/ipsPatch.js';
@@ -175,7 +175,7 @@ describe('getCrc32WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedCrc) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }
@@ -235,7 +235,7 @@ describe('getMd5WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedMd5) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }
@@ -301,7 +301,7 @@ describe('getSha1WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedSha1) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }
@@ -385,7 +385,7 @@ describe('getSha256WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedSha256) => {
-      const header = ROMHeader.headerFromFilename(filePath);
+      const header = FileSignature.romHeaderFromFilename(filePath);
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${filePath}`);
       }
@@ -652,6 +652,18 @@ describe('streamFilePath', () => {
   );
 });
 
+describe('getLocationKey', () => {
+  it('should return the file path', async () => {
+    const file = await File.fileOf({ filePath: 'file.rom' });
+    expect(file.getLocationKey()).toEqual(PathUtil.resolve('file.rom'));
+  });
+
+  it('should ignore the symlink source', async () => {
+    const file = await File.fileOf({ filePath: 'file.rom', symlinkSource: 'source.rom' });
+    expect(file.getLocationKey()).toEqual(PathUtil.resolve('file.rom'));
+  });
+});
+
 describe('withPatch', () => {
   test.each([
     'patch deadbeef.ips',
@@ -707,5 +719,52 @@ describe('equals', () => {
     const archiveFile = new ArchiveFile(entry, {});
 
     expect(file.equals(archiveFile)).toEqual(true);
+  });
+
+  it('should equal the same file with a different symlink source', async () => {
+    const first = await File.fileOf({ filePath: 'file.rom' });
+    const second = await File.fileOf({ filePath: 'file.rom', symlinkSource: 'source.rom' });
+    expect(first.equals(second)).toEqual(true);
+    expect(second.equals(first)).toEqual(true);
+  });
+
+  it('should equal the same file with the same patch', async () => {
+    const file = await File.fileOf({ filePath: 'file.rom', size: 0, crc32: '00000000' });
+    const first = file.withPatch(
+      IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' })),
+    );
+    const second = file.withPatch(
+      IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' })),
+    );
+    expect(first.equals(second)).toEqual(true);
+    expect(second.equals(first)).toEqual(true);
+  });
+
+  it('should not equal the same file with a different patch', async () => {
+    const file = await File.fileOf({ filePath: 'file.rom', size: 0, crc32: '00000000' });
+    const first = file.withPatch(
+      IPSPatch.patchFrom(
+        await File.fileOf({ filePath: 'first 00000000.ips', size: 1, crc32: '11111111' }),
+      ),
+    );
+    const second = file.withPatch(
+      IPSPatch.patchFrom(
+        await File.fileOf({ filePath: 'second 00000000.ips', size: 1, crc32: '22222222' }),
+      ),
+    );
+    expect(file.equals(first)).toEqual(false);
+    expect(first.equals(file)).toEqual(false);
+    expect(first.equals(second)).toEqual(false);
+    expect(second.equals(first)).toEqual(false);
+  });
+
+  it('should not equal an ArchiveEntry', async () => {
+    const file = await File.fileOf({ filePath: 'file.zip' });
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+    });
+    expect(file.equals(entry)).toEqual(false);
+    expect(entry.equals(file)).toEqual(false);
   });
 });

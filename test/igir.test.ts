@@ -1868,8 +1868,8 @@ describe('with inferred DATs', () => {
         input: [inputDir],
         inputExclude: [
           path.join(inputTemp, '**', 'invalid.*'),
-          // Note: need to exclude some ROMs to prevent duplicate output paths
-          path.join(inputTemp, 'roms', 'chd'),
+          // Exclude plain files that would get preferred over archived files
+          path.join(inputTemp, 'roms', 'raw'),
         ],
         output: inputDir,
         dirMirror: true,

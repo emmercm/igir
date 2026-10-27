@@ -18,6 +18,7 @@ import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
 import type Options from '../../models/options.js';
 import type { ZipFormatValue } from '../../models/options.js';
 import { LinkMode, ZipFormat } from '../../models/options.js';
+import type ROMWithFiles from '../../models/romWithFiles.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
 import ArrayUtil from '../../utils/arrayUtil.js';
 import type { MoveResultValue } from '../../utils/fsUtil.js';
@@ -77,17 +78,26 @@ export default class CandidateWriter extends Module {
       };
     }
 
-    const inputToOutputFiles = new Set<string>();
+    const outputLocationsToRomsWithFiles = new Map<string, ROMWithFiles[]>();
     const writableCandidates = candidates
       .filter((candidate) => candidate.canWrite())
-      // Deduplicate input->output files
+      // Deduplicate files that would write the same output
       .map((candidate) => {
         const nonDuplicateRomsWithFiles = candidate.getRomsWithFiles().filter((romWithFiles) => {
-          const inputToOutputFile = `${romWithFiles.getInputFile().toString()} → ${romWithFiles.getOutputFile().toString()}`;
-          if (inputToOutputFiles.has(inputToOutputFile)) {
+          const outputLocation = romWithFiles.getOutputFile().getLocationKey();
+          const previousRomsWithFiles = outputLocationsToRomsWithFiles.get(outputLocation);
+          if (previousRomsWithFiles === undefined) {
+            outputLocationsToRomsWithFiles.set(outputLocation, [romWithFiles]);
+            return true;
+          }
+          if (
+            previousRomsWithFiles.some((previousRomWithFiles) =>
+              previousRomWithFiles.writesSameOutputAs(romWithFiles),
+            )
+          ) {
             return false;
           }
-          inputToOutputFiles.add(inputToOutputFile);
+          previousRomsWithFiles.push(romWithFiles);
           return true;
         });
         if (nonDuplicateRomsWithFiles.length === candidate.getRomsWithFiles().length) {

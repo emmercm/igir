@@ -1,3 +1,4 @@
+import type { GameProps } from '../../../src/models/dats/game.js';
 import Game from '../../../src/models/dats/game.js';
 import MergedDiscGame from '../../../src/models/dats/mergedDiscGame.js';
 import ROM from '../../../src/models/dats/rom.js';
@@ -15,6 +16,71 @@ const discTwo = new Game({
     new ROM({ name: 'Game (Disc 2).cue', size: 97, crc32: '33333333' }),
     new ROM({ name: 'Game (Disc 2).bin', size: 200, crc32: '44444444' }),
   ],
+});
+
+describe('constructor', () => {
+  it('should keep every property that is identical across all sub-games', () => {
+    const sharedProps: GameProps = {
+      isBios: 'yes',
+      categories: ['Games', 'Bonus Discs'],
+      manufacturer: 'Manufacturer',
+      genre: 'Genre',
+      region: 'USA',
+      language: 'EN',
+    };
+    const firstDisc = new Game({ ...discOne, ...sharedProps });
+    const secondDisc = new Game({ ...discTwo, ...sharedProps });
+
+    const merged = new MergedDiscGame({ name: 'Game', subGames: [firstDisc, secondDisc] });
+
+    expect({ ...merged }).toEqual({
+      ...new Game({
+        ...sharedProps,
+        name: 'Game',
+        roms: [...firstDisc.getRoms(), ...secondDisc.getRoms()],
+      }),
+      subGames: [firstDisc, secondDisc],
+    });
+  });
+
+  it('should omit properties that differ between sub-games', () => {
+    const firstDisc = new Game({
+      ...discOne,
+      categories: 'Games',
+      description: 'Game (Disc 1)',
+      genre: 'Genre',
+    });
+    const secondDisc = new Game({
+      ...discTwo,
+      categories: 'Bonus Discs',
+      description: 'Game (Disc 2)',
+      genre: 'Genre',
+    });
+
+    const merged = new MergedDiscGame({ name: 'Game', subGames: [firstDisc, secondDisc] });
+
+    expect({ ...merged }).toEqual({
+      ...new Game({
+        name: 'Game',
+        genre: 'Genre',
+        roms: [...firstDisc.getRoms(), ...secondDisc.getRoms()],
+      }),
+      subGames: [firstDisc, secondDisc],
+    });
+  });
+
+  it('should prefer explicit props over shared sub-game properties', () => {
+    const firstDisc = new Game({ ...discOne, categories: 'Games' });
+    const secondDisc = new Game({ ...discTwo, categories: 'Games' });
+
+    const merged = new MergedDiscGame({
+      name: 'Game',
+      categories: 'Demos',
+      subGames: [firstDisc, secondDisc],
+    });
+
+    expect(merged.getCategories()).toEqual(['Demos']);
+  });
 });
 
 describe('getSubGames', () => {
@@ -47,5 +113,15 @@ describe('withProps', () => {
     expect(reWrapped.getSubGames()).toEqual([discOne, discTwo]);
     expect(reWrapped.getCloneOf()).toEqual('Parent');
     expect(reWrapped.getRoms()).toEqual([...discOne.getRoms(), ...discTwo.getRoms()]);
+  });
+
+  it('should preserve properties shared by the sub-games', () => {
+    const firstDisc = new Game({ ...discOne, categories: 'Games' });
+    const secondDisc = new Game({ ...discTwo, categories: 'Games' });
+    const merged = new MergedDiscGame({ name: 'Game', subGames: [firstDisc, secondDisc] });
+
+    const reWrapped = merged.withProps({ cloneOf: 'Parent' });
+
+    expect(reWrapped.getCategories()).toEqual(['Games']);
   });
 });

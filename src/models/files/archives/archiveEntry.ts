@@ -208,8 +208,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryPath;
   }
 
-  getEntryIndex(): number | undefined {
-    return this.entryIndex;
+  /**
+   * Return a key that uniquely identifies where this archive entry is or will be located on disk.
+   */
+  override getLocationKey(): string {
+    return `${this.getFilePath()}|${this.getEntryPath()}`;
   }
 
   /**
@@ -370,7 +373,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   /**
-   * Return a human-readable identifier for this archive entry.
+   * Return a human-readable identifier for this archive entry. This is NOT suitable for any kind of
+   * comparison or de-duplication of files.
    */
   override toString(): string {
     if (this.getSymlinkSource()) {

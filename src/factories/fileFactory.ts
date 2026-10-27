@@ -22,16 +22,15 @@ import Bzip2 from '../models/files/archives/sevenZip/bzip2.js';
 import Lzma from '../models/files/archives/sevenZip/lzma.js';
 import Lzma86 from '../models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../models/files/archives/sevenZip/sevenZip.js';
+import SevenZipLib from '../models/files/archives/sevenZip/sevenZipLib.js';
 import Split from '../models/files/archives/sevenZip/split.js';
 import Z from '../models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../models/files/archives/sevenZip/zipSpanned.js';
-import ZipX from '../models/files/archives/sevenZip/zipX.js';
 import Tar from '../models/files/archives/tar.js';
 import Zip from '../models/files/archives/zip.js';
 import File from '../models/files/file.js';
 import { ChecksumBitmask } from '../models/files/fileChecksums.js';
 import type FileSignature from '../models/files/fileSignature.js';
-import type ROMHeader from '../models/files/romHeader.js';
 import type ROMPadding from '../models/files/romPadding.js';
 import type { FsReadCallback } from '../streams/fsReadTransform.js';
 import URLUtil from '../utils/urlUtil.js';
@@ -208,9 +207,6 @@ export default class FileFactory {
     if (ZipSpanned.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new ZipSpanned(filePath)];
     }
-    if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      return [new ZipX(filePath)];
-    }
     if (Bzip2.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Bzip2(filePath)];
     }
@@ -220,7 +216,22 @@ export default class FileFactory {
     if (Lzma.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Lzma(filePath)];
     }
-    if (Split.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    const splitExt = Split.getExtensions().find((ext) => fileExt.toLowerCase().endsWith(ext));
+    if (splitExt !== undefined) {
+      // The 7-Zip addon joins the numbered parts of any format it reads, so those formats are read
+      // whole, by the extension before the part number. Every other split file, including formats
+      // igir reads without the addon (RAR, TAR, gzip), is read as one joined file.
+      const [joinedArchive] = this.archiveFromArchiveExtension(
+        filePath,
+        fileExt.slice(0, -splitExt.length),
+      );
+      if (joinedArchive instanceof Zip) {
+        // The built-in ZIP reader can only read a single file, the addon reads the joined parts
+        return [new ZipSpanned(filePath)];
+      }
+      if (joinedArchive instanceof SevenZipLib) {
+        return [joinedArchive];
+      }
       return [new Split(filePath)];
     }
     if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
@@ -322,7 +333,6 @@ export default class FileFactory {
       ...SevenZip.getExtensions(),
       ...Z.getExtensions(),
       ...ZipSpanned.getExtensions(),
-      ...ZipX.getExtensions(),
       ...Bzip2.getExtensions(),
       ...Lzma.getExtensions(),
       ...Lzma86.getExtensions(),
@@ -337,14 +347,6 @@ export default class FileFactory {
       ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
-  }
-
-  /**
-   * Return the {@link ROMHeader} for a file if its contents match a known ROM header signature,
-   * or undefined otherwise.
-   */
-  async headerFrom(file: File): Promise<ROMHeader | undefined> {
-    return await this.fileCache.getOrComputeFileHeader(file);
   }
 
   /**

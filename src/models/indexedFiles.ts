@@ -207,7 +207,7 @@ export default class IndexedFiles {
       ...this.sha256.values(),
     ]
       .flat()
-      .filter(ArrayUtil.filterUniqueMapped((file) => file.toString()));
+      .filter(ArrayUtil.filterUniqueMapped((file) => file.getLocationKey()));
   }
 
   @Memoize()
@@ -305,7 +305,7 @@ export default class IndexedFiles {
     }
     return checksumKeys
       .flatMap(([, checksum]) => fileOrChecksumsToFiles.get(checksum) ?? [])
-      .filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
+      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
   }
 
   /**
@@ -314,6 +314,6 @@ export default class IndexedFiles {
   findFiles(file: File | ROM): File[] {
     return this.getChecksumKeys(file)
       .flatMap(([checksumsToFiles, checksum]) => checksumsToFiles.get(checksum) ?? [])
-      .filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
+      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
   }
 }

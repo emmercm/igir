@@ -27,7 +27,6 @@ import SevenZip from '../../../../src/models/files/archives/sevenZip/sevenZip.js
 import Split from '../../../../src/models/files/archives/sevenZip/split.js';
 import Z from '../../../../src/models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../../../../src/models/files/archives/sevenZip/zipSpanned.js';
-import ZipX from '../../../../src/models/files/archives/sevenZip/zipX.js';
 import Tar from '../../../../src/models/files/archives/tar.js';
 import Zip from '../../../../src/models/files/archives/zip.js';
 import { ChecksumBitmask } from '../../../../src/models/files/fileChecksums.js';
@@ -47,7 +46,6 @@ const archivesWithStaticExtensions: [Archive, string[]][] = [
   [new SevenZip('file'), SevenZip.getExtensions()],
   [new Z('file'), Z.getExtensions()],
   [new ZipSpanned('file'), ZipSpanned.getExtensions()],
-  [new ZipX('file'), ZipX.getExtensions()],
   [new Bzip2('file'), Bzip2.getExtensions()],
   [new Lzma('file'), Lzma.getExtensions()],
   [new Lzma86('file'), Lzma86.getExtensions()],
@@ -92,7 +90,6 @@ describe('getArchiveEntries', () => {
       ...SevenZip.getExtensions(),
       ...Z.getExtensions(),
       ...ZipSpanned.getExtensions(),
-      ...ZipX.getExtensions(),
       ...Bzip2.getExtensions(),
       ...Lzma.getExtensions(),
       ...Lzma86.getExtensions(),

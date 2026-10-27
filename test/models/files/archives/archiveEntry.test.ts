@@ -13,7 +13,7 @@ import SevenZip from '../../../../src/models/files/archives/sevenZip/sevenZip.js
 import Zip from '../../../../src/models/files/archives/zip.js';
 import File from '../../../../src/models/files/file.js';
 import { ChecksumBitmask } from '../../../../src/models/files/fileChecksums.js';
-import ROMHeader from '../../../../src/models/files/romHeader.js';
+import FileSignature from '../../../../src/models/files/fileSignature.js';
 import Options from '../../../../src/models/options.js';
 import IPSPatch from '../../../../src/models/patches/ipsPatch.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
@@ -63,6 +63,25 @@ describe('getEntryPath', () => {
       expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
     },
   );
+});
+
+describe('getLocationKey', () => {
+  it('should return the archive path and entry path', async () => {
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+    });
+    expect(entry.getLocationKey()).toEqual(`${PathUtil.resolve('file.zip')}|entry.rom`);
+  });
+
+  it('should ignore the symlink source', async () => {
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+      symlinkSource: 'source.zip',
+    });
+    expect(entry.getLocationKey()).toEqual(`${PathUtil.resolve('file.zip')}|entry.rom`);
+  });
 });
 
 describe('getSize', () => {
@@ -245,7 +264,7 @@ describe('getCrc32WithoutHeader', () => {
     async (filePath, expectedCrc) => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
-      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
       }
@@ -374,7 +393,7 @@ describe('getMd5WithoutHeader', () => {
         ChecksumBitmask.MD5,
       );
       expect(archiveEntries).toHaveLength(1);
-      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
       }
@@ -521,7 +540,7 @@ describe('getSha1WithoutHeader', () => {
         ChecksumBitmask.SHA1,
       );
       expect(archiveEntries).toHaveLength(1);
-      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
       }
@@ -758,7 +777,7 @@ describe('getSha256WithoutHeader', () => {
         ChecksumBitmask.SHA256,
       );
       expect(archiveEntries).toHaveLength(1);
-      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
       }
@@ -1022,5 +1041,19 @@ describe('equals', () => {
     expect(second.equals(third)).toEqual(false);
     expect(third.equals(fourth)).toEqual(false);
     expect(fourth.equals(first)).toEqual(false);
+  });
+
+  it('should not equal the same entry with a different patch', async () => {
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+      size: 0,
+      crc32: '00000000',
+    });
+    const patchedEntry = entry.withPatch(
+      IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' })),
+    );
+    expect(entry.equals(patchedEntry)).toEqual(false);
+    expect(patchedEntry.equals(entry)).toEqual(false);
   });
 });

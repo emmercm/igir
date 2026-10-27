@@ -35,8 +35,9 @@ export default abstract class SevenZipLib extends Archive {
   }
 
   private entryPathOf(entry: SevenZipEntry): string {
-    // Not every archive type can provide meaningful entry paths; default to the archive's name
-    return entry.entryPath ?? path.parse(this.getFilePath()).name;
+    // Not every archive type can provide meaningful entry paths; default to the archive's name,
+    // without the number of the first part when it's split into numbered parts
+    return entry.entryPath ?? path.parse(this.getFilePath().replace(/\.001$/, '')).name;
   }
 
   async getArchiveEntries(

@@ -31,6 +31,14 @@ export default class LocalFileHeader extends FileRecord {
   // @see https://www.rfc-editor.org/rfc/rfc8878.html#section-3.1.1.2.4
   private static readonly ZSTD_MIN_COMPRESSED_CHUNK_SIZE = 4 + 14 + 3 + 128 * 1024;
 
+  // The compression methods uncompressedStream() handles, which must change together with it
+  private static readonly DECOMPRESSIBLE_METHODS = new Set<CompressionMethodValue>([
+    CompressionMethod.STORE,
+    CompressionMethod.DEFLATE,
+    CompressionMethod.ZSTD_DEPRECATED,
+    CompressionMethod.ZSTD,
+  ]);
+
   private readonly zipFilePath: string;
   private readonly centralDirectoryFileHeader: CentralDirectoryFileHeader;
 
@@ -214,6 +222,13 @@ export default class LocalFileHeader extends FileRecord {
       // One byte more than the output, so zlib doesn't allocate a second buffer just to finish
       Math.min(highWaterMark, this.uncompressedSizeResolved() + 1),
     );
+  }
+
+  /**
+   * Return whether {@link uncompressedStream} can decompress this file's compression method.
+   */
+  canDecompress(): boolean {
+    return LocalFileHeader.DECOMPRESSIBLE_METHODS.has(this.compressionMethod);
   }
 
   /**

@@ -364,6 +364,28 @@ it('should de-conflict duplicate ROM names per sub-game in a MergedDiscGame', ()
   ]);
 });
 
+it('should keep the categories shared by every disc in a MergedDiscGame', () => {
+  const options = new Options({ mergeDiscs: true });
+  const discOne = new Game({
+    name: 'Pippo (Disc 1)',
+    categories: 'Games',
+    roms: [new ROM({ name: 'Pippo (Disc 1).chd', size: 100, crc32: '11111111' })],
+  });
+  const discTwo = new Game({
+    name: 'Pippo (Disc 2)',
+    categories: 'Games',
+    roms: [new ROM({ name: 'Pippo (Disc 2).chd', size: 200, crc32: '22222222' })],
+  });
+  const dat = new LogiqxDAT({ header: new Header(), games: [discOne, discTwo] });
+
+  const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
+
+  expect(result.getGames()).toHaveLength(1);
+  const merged = result.getGames()[0];
+  expect(merged).toBeInstanceOf(MergedDiscGame);
+  expect(merged.getCategories()).toEqual(['Games']);
+});
+
 it('should return a plain Game (not a MergedDiscGame) for single-disc groups', () => {
   const options = new Options({ mergeDiscs: true });
   const dat = new LogiqxDAT({ header: new Header(), games: [singleDiscGames[0]] });

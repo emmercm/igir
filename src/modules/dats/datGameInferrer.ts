@@ -108,9 +108,11 @@ export default class DATGameInferrer extends Module {
 
       // Remove the consumed files from further inference
       const consumedFiles = new Set(
-        result.flatMap(([, resultFiles]) => resultFiles).map((file) => file.toString()),
+        result.flatMap(([, resultFiles]) => resultFiles).map((file) => file.getLocationKey()),
       );
-      remainingRomFiles = remainingRomFiles.filter((file) => !consumedFiles.has(file.toString()));
+      remainingRomFiles = remainingRomFiles.filter(
+        (file) => !consumedFiles.has(file.getLocationKey()),
+      );
     }
 
     const games = gameNamesToRomFiles

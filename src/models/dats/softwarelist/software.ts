@@ -1,6 +1,6 @@
 import { Expose, Transform, Type } from 'class-transformer';
 
-import Game from '../game.js';
+import Game, { GameProps } from '../game.js';
 import ROM from '../rom.js';
 import Part from './part.js';
 
@@ -29,5 +29,13 @@ export default class Software extends Game {
     return this.getParts()
       .flatMap((part) => part.getDataAreas())
       .flatMap((dataArea) => dataArea.getRoms());
+  }
+
+  /**
+   * Return a new {@link Game} with some different properties. Special care is needed to preserve
+   * this game's ROMs, as it does not populate {@link Game#roms}.
+   */
+  override withProps(props: GameProps): Game {
+    return new Game({ ...this, roms: this.getRoms(), ...props });
   }
 }

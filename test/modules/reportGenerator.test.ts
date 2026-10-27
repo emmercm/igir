@@ -130,6 +130,35 @@ it('should return empty contents for an empty DAT', async () => {
   });
 });
 
+it('should return a header and one row for every unused file with no DATs', async () => {
+  await wrapReportGenerator(
+    new Options(),
+    [await File.fileOf({ filePath: 'One.rom', size: 123, crc32: 'abcdef01' })],
+    [],
+    [],
+    (contents) => {
+      expect(contents)
+        .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+,,UNUSED,${PathUtil.resolve('One.rom')},false,false,false,false,false,false,false,false,false,false,false,false,false`);
+    },
+  );
+});
+
+it('should return a header and one row for every unused and cleaned file in an empty DAT', async () => {
+  await wrapReportGenerator(
+    new Options(),
+    [await File.fileOf({ filePath: 'One.rom', size: 123, crc32: 'abcdef01' })],
+    ['Two.rom'],
+    [datStatusEmpty],
+    (contents) => {
+      expect(contents)
+        .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+,,UNUSED,${PathUtil.resolve('One.rom')},false,false,false,false,false,false,false,false,false,false,false,false,false
+,,DELETED,Two.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
+    },
+  );
+});
+
 it('should return one row for every game in a single game DAT', async () => {
   await wrapReportGenerator(new Options(), [], [], [await buildDatStatusSingle()], (contents) => {
     expect(contents)
