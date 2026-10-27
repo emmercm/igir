@@ -220,6 +220,39 @@ export default class IndexedFiles {
   }
 
   /**
+   * Find file(s) in the index based some search criteria.
+   */
+  findFiles(file: File | ROM): File[] {
+    return this.getChecksumKeys(file)
+      .flatMap(([checksumsToFiles, checksum]) => checksumsToFiles.get(checksum) ?? [])
+      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
+  }
+
+  /**
+   * The same as {@link findFiles}, limited to files at {@link filePath}. Many files can share a
+   * checksum (identical audio tracks across discs, for example), so this skips building and
+   * de-duplicating the full list just to keep the few at one path.
+   */
+  findFilesAtPath(file: File | ROM, filePath: string): File[] {
+    const fileOrChecksumsToFiles = this.getChecksumsByFilePath().get(filePath);
+    if (fileOrChecksumsToFiles === undefined) {
+      return [];
+    }
+    const checksumKeys = this.getChecksumKeys(file);
+    if (fileOrChecksumsToFiles instanceof File) {
+      // There's only one file at this path
+      return checksumKeys.some(([checksumsToFiles, checksum]) =>
+        checksumsToFiles.get(checksum)?.includes(fileOrChecksumsToFiles),
+      )
+        ? [fileOrChecksumsToFiles]
+        : [];
+    }
+    return checksumKeys
+      .flatMap(([, checksum]) => fileOrChecksumsToFiles.get(checksum) ?? [])
+      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
+  }
+
+  /**
    * The checksum indexes again, grouped by file path. To save memory, a path with only one file (an
    * extracted file, or a single-file archive) maps directly to that file rather than to a map, and
    * a checksum with only one file at a path maps directly to that file rather than to an array.
@@ -282,38 +315,5 @@ export default class IndexedFiles {
     }
 
     return keys;
-  }
-
-  /**
-   * The same as {@link findFiles}, limited to files at {@link filePath}. Many files can share a
-   * checksum (identical audio tracks across discs, for example), so this skips building and
-   * de-duplicating the full list just to keep the few at one path.
-   */
-  findFilesAtPath(file: File | ROM, filePath: string): File[] {
-    const fileOrChecksumsToFiles = this.getChecksumsByFilePath().get(filePath);
-    if (fileOrChecksumsToFiles === undefined) {
-      return [];
-    }
-    const checksumKeys = this.getChecksumKeys(file);
-    if (fileOrChecksumsToFiles instanceof File) {
-      // There's only one file at this path
-      return checksumKeys.some(([checksumsToFiles, checksum]) =>
-        checksumsToFiles.get(checksum)?.includes(fileOrChecksumsToFiles),
-      )
-        ? [fileOrChecksumsToFiles]
-        : [];
-    }
-    return checksumKeys
-      .flatMap(([, checksum]) => fileOrChecksumsToFiles.get(checksum) ?? [])
-      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
-  }
-
-  /**
-   * Find file(s) in the index based some search criteria.
-   */
-  findFiles(file: File | ROM): File[] {
-    return this.getChecksumKeys(file)
-      .flatMap(([checksumsToFiles, checksum]) => checksumsToFiles.get(checksum) ?? [])
-      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
   }
 }
