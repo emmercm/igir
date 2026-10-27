@@ -123,7 +123,7 @@
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-jsdoc": "65.3.15",
+    "eslint-plugin-jsdoc": "65.4.0",
     "eslint-plugin-prettier": "5.5.7",
     "eslint-plugin-simple-import-sort": "14.0.0",
     "eslint-plugin-unicorn": "78.0.0",
