@@ -4,14 +4,7 @@ import File from '../models/files/file.js';
 import ArrayUtil from '../utils/arrayUtil.js';
 import ROM from './dats/rom.js';
 
-export type ChecksumsToFiles = Map<string, File[]>;
-
-export interface AllChecksums {
-  crc32: ChecksumsToFiles;
-  md5: ChecksumsToFiles;
-  sha1: ChecksumsToFiles;
-  sha256: ChecksumsToFiles;
-}
+type ChecksumsToFiles = Map<string, File[]>;
 
 /**
  * A lookup table of {@link File}s based on their checksums.
@@ -38,9 +31,13 @@ export default class IndexedFiles {
   }
 
   /**
-   * Generate a {@link IndexedFiles} based on a set of {@link File}s.
+   * Generate a {@link IndexedFiles} based on a set of {@link File}s, optionally sorting the files
+   * that share each checksum with {@link comparator}.
    */
-  static fromFiles(files: File[]): IndexedFiles {
+  static fromFiles(
+    files: File[],
+    comparator?: (fileOne: File, fileTwo: File) => number,
+  ): IndexedFiles {
     const crc32RawMap = new Map<string, File[]>();
     const crc32WithoutHeaderMap = new Map<string, File[]>();
     const crc32PaddedMap = new Map<string, File[]>();
@@ -58,7 +55,8 @@ export default class IndexedFiles {
     const sha256PaddedMap = new Map<string, File[]>();
 
     // Build the maps
-    for (const file of files) {
+    const uniqueFiles = files.filter(ArrayUtil.filterUniqueMapped((file) => file.getLocationKey()));
+    for (const file of uniqueFiles) {
       const crc32WithSize = `${file.getCrc32()}|${file.getSize()}`;
       if (crc32RawMap.has(crc32WithSize)) {
         crc32RawMap.get(crc32WithSize)?.push(file);
@@ -172,6 +170,15 @@ export default class IndexedFiles {
     const md5Map = this.combineMaps(md5RawMap, md5WithoutHeaderMap, md5PaddedMap);
     const sha1Map = this.combineMaps(sha1RawMap, sha1WithoutHeaderMap, sha1PaddedMap);
     const sha256Map = this.combineMaps(sha256RawMap, sha256WithoutHeaderMap, sha256PaddedMap);
+
+    if (comparator !== undefined) {
+      for (const checksumsToFiles of [crc32Map, md5Map, sha1Map, sha256Map]) {
+        for (const checksumFiles of checksumsToFiles.values()) {
+          checksumFiles.sort(comparator);
+        }
+      }
+    }
+
     return new IndexedFiles(crc32Map, md5Map, sha1Map, sha256Map);
   }
 
@@ -201,13 +208,15 @@ export default class IndexedFiles {
   @Memoize()
   getFiles(): File[] {
     return [
-      ...this.crc32.values(),
-      ...this.md5.values(),
-      ...this.sha1.values(),
-      ...this.sha256.values(),
-    ]
-      .flat()
-      .filter(ArrayUtil.filterUniqueMapped((file) => file.getLocationKey()));
+      ...new Set(
+        [
+          ...this.crc32.values(),
+          ...this.md5.values(),
+          ...this.sha1.values(),
+          ...this.sha256.values(),
+        ].flat(),
+      ),
+    ];
   }
 
   @Memoize()
@@ -223,9 +232,15 @@ export default class IndexedFiles {
    * Find file(s) in the index based some search criteria.
    */
   findFiles(file: File | ROM): File[] {
-    return this.getChecksumKeys(file)
-      .flatMap(([checksumsToFiles, checksum]) => checksumsToFiles.get(checksum) ?? [])
-      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
+    const foundFiles = this.getChecksumKeys(file)
+      .map(([checksumsToFiles, checksum]) => checksumsToFiles.get(checksum))
+      .filter((checksumFiles) => checksumFiles !== undefined);
+    if (foundFiles.length <= 1) {
+      // Files commonly only have a CRC32, so skip de-duplicating a single list, which is already
+      // unique. Copy it so callers can't modify the index.
+      return foundFiles.at(0)?.slice() ?? [];
+    }
+    return [...new Set(foundFiles.flat())];
   }
 
   /**
@@ -247,9 +262,11 @@ export default class IndexedFiles {
         ? [fileOrChecksumsToFiles]
         : [];
     }
-    return checksumKeys
-      .flatMap(([, checksum]) => fileOrChecksumsToFiles.get(checksum) ?? [])
-      .filter(ArrayUtil.filterUniqueMapped((result) => result.getLocationKey()));
+    return [
+      ...new Set(
+        checksumKeys.flatMap(([, checksum]) => fileOrChecksumsToFiles.get(checksum) ?? []),
+      ),
+    ];
   }
 
   /**

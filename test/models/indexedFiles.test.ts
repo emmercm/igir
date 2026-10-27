@@ -4,6 +4,47 @@ import Zip from '../../src/models/files/archives/zip.js';
 import File from '../../src/models/files/file.js';
 import FileSignature from '../../src/models/files/fileSignature.js';
 import IndexedFiles from '../../src/models/indexedFiles.js';
+import PathUtil from '../../src/utils/pathUtil.js';
+
+describe('fromFiles', () => {
+  const filePromises = ['bravo', 'alpha', 'charlie'].map(
+    async (filePath) =>
+      await File.fileOf({
+        filePath,
+        size: 1,
+        crc32: '11111111',
+        sha1: '1111111111111111111111111111111111111111',
+      }),
+  );
+
+  it('should keep input order without a comparator', async () => {
+    const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
+    expect(
+      indexedFiles
+        .findFiles(new ROM({ name: '', size: 1, crc32: '11111111' }))
+        .map((file) => file.getFilePath()),
+    ).toEqual(['bravo', 'alpha', 'charlie'].map((filePath) => PathUtil.resolve(filePath)));
+  });
+
+  it('should sort files sharing a checksum with the comparator', async () => {
+    const indexedFiles = IndexedFiles.fromFiles(
+      await Promise.all(filePromises),
+      (fileOne, fileTwo) => fileOne.getFilePath().localeCompare(fileTwo.getFilePath()),
+    );
+    const expected = ['alpha', 'bravo', 'charlie'].map((filePath) => PathUtil.resolve(filePath));
+    expect(
+      indexedFiles
+        .findFiles(new ROM({ name: '', size: 1, crc32: '11111111' }))
+        .map((file) => file.getFilePath()),
+    ).toEqual(expected);
+    expect(
+      indexedFiles
+        .findFiles(new ROM({ name: '', size: 1, sha1: '1111111111111111111111111111111111111111' }))
+        .map((file) => file.getFilePath()),
+    ).toEqual(expected);
+    expect(indexedFiles.getFiles().map((file) => file.getFilePath())).toEqual(expected);
+  });
+});
 
 describe('findFiles', () => {
   const filePromises = [
@@ -127,6 +168,31 @@ describe('findFiles', () => {
         }),
       ),
     ).toHaveLength(1);
+  });
+
+  it('should deduplicate separate file objects at the same location', async () => {
+    const indexedFiles = IndexedFiles.fromFiles(
+      await Promise.all([
+        File.fileOf({ filePath: 'one', size: 1, crc32: '11111111' }),
+        File.fileOf({ filePath: 'one', size: 1, crc32: '11111111' }),
+        ArchiveEntry.entryOf({
+          archive: new Zip('two.zip'),
+          entryPath: 'two.bin',
+          size: 1,
+          crc32: '11111111',
+        }),
+        ArchiveEntry.entryOf({
+          archive: new Zip('two.zip'),
+          entryPath: 'two.bin',
+          size: 1,
+          crc32: '11111111',
+        }),
+      ]),
+    );
+    const rom = new ROM({ name: '', size: 1, crc32: '11111111' });
+    expect(indexedFiles.findFiles(rom)).toHaveLength(2);
+    expect(indexedFiles.findFilesAtPath(rom, PathUtil.resolve('two.zip'))).toHaveLength(1);
+    expect(indexedFiles.getSize()).toEqual(2);
   });
 
   it('should return all files when checksums match different files', async () => {
