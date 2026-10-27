@@ -220,26 +220,35 @@ export default class IndexedFiles {
   }
 
   /**
-   * The checksum indexes again, grouped by file path. Paths with only one file (an extracted file,
-   * or a single-file archive) are left out to save memory.
+   * The checksum indexes again, grouped by file path. To save memory, a path with only one file (an
+   * extracted file, or a single-file archive) maps directly to that file rather than to a map, and
+   * a checksum with only one file at a path maps directly to that file rather than to an array.
    */
   @Memoize()
-  private getChecksumsByFilePath(): Map<string, Map<string, File[]>> {
+  private getChecksumsByFilePath(): Map<string, File | Map<string, File | File[]>> {
     const filesByFilePath = this.getFilesByFilePath();
-    const checksumsByFilePath = new Map<string, Map<string, File[]>>();
+    const checksumsByFilePath = new Map<string, File | Map<string, File | File[]>>();
     for (const checksumsToFiles of [this.sha256, this.sha1, this.md5, this.crc32]) {
       for (const [checksum, files] of checksumsToFiles) {
+        // Map.groupBy() sizes its arrays exactly, unlike growing them with push()
         const filesByPath = Map.groupBy(files, (file) => file.getFilePath());
         for (const [filePath, filesAtPath] of filesByPath) {
-          if ((filesByFilePath.get(filePath)?.length ?? 0) <= 1) {
+          let fileOrChecksumsToFiles = checksumsByFilePath.get(filePath);
+          if (fileOrChecksumsToFiles instanceof File) {
             continue;
           }
-          let checksumsToFilesAtPath = checksumsByFilePath.get(filePath);
-          if (checksumsToFilesAtPath === undefined) {
-            checksumsToFilesAtPath = new Map();
-            checksumsByFilePath.set(filePath, checksumsToFilesAtPath);
+          if (fileOrChecksumsToFiles === undefined) {
+            if ((filesByFilePath.get(filePath)?.length ?? 0) <= 1) {
+              checksumsByFilePath.set(filePath, filesAtPath[0]);
+              continue;
+            }
+            fileOrChecksumsToFiles = new Map();
+            checksumsByFilePath.set(filePath, fileOrChecksumsToFiles);
           }
-          checksumsToFilesAtPath.set(checksum, filesAtPath);
+          fileOrChecksumsToFiles.set(
+            checksum,
+            filesAtPath.length === 1 ? filesAtPath[0] : filesAtPath,
+          );
         }
       }
     }
@@ -281,18 +290,21 @@ export default class IndexedFiles {
    * de-duplicating the full list just to keep the few at one path.
    */
   findFilesAtPath(file: File | ROM, filePath: string): File[] {
+    const fileOrChecksumsToFiles = this.getChecksumsByFilePath().get(filePath);
+    if (fileOrChecksumsToFiles === undefined) {
+      return [];
+    }
     const checksumKeys = this.getChecksumKeys(file);
-    const checksumsToFilesAtPath = this.getChecksumsByFilePath().get(filePath);
-    if (checksumsToFilesAtPath === undefined) {
-      // There's at most one file at this path
-      return (this.getFilesByFilePath().get(filePath) ?? []).filter((fileAtPath) =>
-        checksumKeys.some(([checksumsToFiles, checksum]) =>
-          checksumsToFiles.get(checksum)?.includes(fileAtPath),
-        ),
-      );
+    if (fileOrChecksumsToFiles instanceof File) {
+      // There's only one file at this path
+      return checksumKeys.some(([checksumsToFiles, checksum]) =>
+        checksumsToFiles.get(checksum)?.includes(fileOrChecksumsToFiles),
+      )
+        ? [fileOrChecksumsToFiles]
+        : [];
     }
     return checksumKeys
-      .flatMap(([, checksum]) => checksumsToFilesAtPath.get(checksum) ?? [])
+      .flatMap(([, checksum]) => fileOrChecksumsToFiles.get(checksum) ?? [])
       .filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
   }
 

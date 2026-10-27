@@ -1,4 +1,6 @@
 import ROM from '../../src/models/dats/rom.js';
+import ArchiveEntry from '../../src/models/files/archives/archiveEntry.js';
+import Zip from '../../src/models/files/archives/zip.js';
 import File from '../../src/models/files/file.js';
 import ROMHeader from '../../src/models/files/romHeader.js';
 import IndexedFiles from '../../src/models/indexedFiles.js';
@@ -190,6 +192,22 @@ describe('findFilesAtPath', () => {
       ]),
       // A single file at its path, like an extracted file or a single-file archive
       File.fileOf({ filePath: 'echo.zip', size: 1, crc32: '11111111' }),
+      // Several entries in one archive sharing a checksum, as identical tracks do within one disc
+      ...['one.bin', 'two.bin', 'three.bin'].map(
+        async (entryPath) =>
+          await ArchiveEntry.entryOf({
+            archive: new Zip('foxtrot.zip'),
+            entryPath,
+            size: 1,
+            crc32: '11111111',
+          }),
+      ),
+      ArchiveEntry.entryOf({
+        archive: new Zip('foxtrot.zip'),
+        entryPath: 'four.bin',
+        size: 3,
+        sha1: '3333333333333333333333333333333333333333',
+      }),
     ]);
     const indexedFiles = IndexedFiles.fromFiles(files);
 
@@ -199,7 +217,14 @@ describe('findFilesAtPath', () => {
       new ROM({ name: 'three', size: 3, sha1: '3333333333333333333333333333333333333333' }),
       new ROM({ name: 'none', size: 9, crc32: '99999999' }),
     ]) {
-      for (const filePath of ['alpha.zip', 'bravo.zip', 'charlie.zip', 'delta.zip', 'echo.zip']) {
+      for (const filePath of [
+        'alpha.zip',
+        'bravo.zip',
+        'charlie.zip',
+        'delta.zip',
+        'echo.zip',
+        'foxtrot.zip',
+      ]) {
         expect(indexedFiles.findFilesAtPath(rom, filePath)).toEqual(
           indexedFiles.findFiles(rom).filter((file) => file.getFilePath() === filePath),
         );
