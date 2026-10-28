@@ -490,14 +490,14 @@ export default class CandidateGenerator extends Module {
     const filteredArchivesWithEveryRom = archivesWithEveryRom
       .filter((archive) => {
         // Filter out Archives with excess entries
-        const unusedEntries = this.findArchiveUnusedEntryPaths(
+        const { unusedEntries, hasMoreUnusedEntries } = this.findArchiveUnusedEntryPaths(
           archive,
           romsAndInputFiles.flatMap(([, inputFiles]) => inputFiles),
           indexedFiles,
         );
         if (unusedEntries.length > 0) {
           this.prefixedLogger.trace(
-            `${dat.getName()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
+            `${dat.getName()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries${hasMoreUnusedEntries ? ' (and more)' : ''}:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry}`).join('\n')}`,
           );
           return false;
         }
@@ -1149,14 +1149,14 @@ export default class CandidateGenerator extends Module {
     }
 
     for (const inputArchive of inputArchives) {
-      const unusedEntries = this.findArchiveUnusedEntryPaths(
+      const { unusedEntries, hasMoreUnusedEntries } = this.findArchiveUnusedEntryPaths(
         inputArchive,
         inputArchiveEntries,
         indexedFiles,
       );
       if (unusedEntries.length > 0) {
         this.prefixedLogger.trace(
-          `${dat.getName()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
+          `${dat.getName()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries${hasMoreUnusedEntries ? ' (and more)' : ''}:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry}`).join('\n')}`,
         );
         return true;
       }
@@ -1167,16 +1167,17 @@ export default class CandidateGenerator extends Module {
 
   /**
    * Given an input {@link archive} and a set of {@link inputFiles} that match to a {@link ROM} from
-   * a {@link Game}, determine if every entry from the {@link archive} was matched.
+   * a {@link Game}, determine if every entry from the {@link archive} was matched. Only the first
+   * few unused entries are returned, {@link hasMoreUnusedEntries} is true if there are more.
    */
   private findArchiveUnusedEntryPaths(
     archive: Archive,
     inputFiles: File[],
     indexedFiles: IndexedFiles,
-  ): ArchiveEntry<Archive>[] {
+  ): { unusedEntries: string[]; hasMoreUnusedEntries: boolean } {
     if (this.options.shouldExtract() || this.options.getAllowExcessSets()) {
       // We don't particularly care where input files come from
-      return [];
+      return { unusedEntries: [], hasMoreUnusedEntries: false };
     }
 
     /**
@@ -1196,27 +1197,33 @@ export default class CandidateGenerator extends Module {
         .map((entry) => entry.getExtractedFilePath()),
     );
 
-    // Find which of the Archive's entries didn't match to a ROM from this Game
-    return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? []).filter(
-      (file): file is ArchiveEntry<Archive> => {
-        if (!(file instanceof ArchiveEntry)) {
-          // A non-archive file exists at the same path as the archive (this shouldn't happen)
-          return false;
-        }
-        if (file.getArchive() !== archive) {
-          // This archive entry is coming from a different archive at the same path (probably a
-          // different archive type)
-          return false;
-        }
-        if (
-          archive instanceof ChdBinCue &&
-          file.getExtractedFilePath().toLowerCase().endsWith('.cue')
-        ) {
-          return false;
-        }
-        return !usedEntryPaths.has(file.getExtractedFilePath());
-      },
-    );
+    // Find which of the Archive's entries didn't match to a ROM from this Game, stopping after
+    // ten: an archive can hold tens of thousands of entries, and this runs for every game
+    const unusedEntries: string[] = [];
+    const filesAtPath = indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? [];
+    for (const file of filesAtPath) {
+      if (!(file instanceof ArchiveEntry)) {
+        // A non-archive file exists at the same path as the archive (this shouldn't happen)
+        continue;
+      }
+      if (file.getArchive() !== archive) {
+        // This archive entry is coming from a different archive at the same path (probably a
+        // different archive type)
+        continue;
+      }
+      const extractedFilePath = file.getExtractedFilePath();
+      if (archive instanceof ChdBinCue && extractedFilePath.toLowerCase().endsWith('.cue')) {
+        continue;
+      }
+      if (usedEntryPaths.has(extractedFilePath)) {
+        continue;
+      }
+      if (unusedEntries.length >= 10) {
+        return { unusedEntries, hasMoreUnusedEntries: true };
+      }
+      unusedEntries.push(file.toString());
+    }
+    return { unusedEntries, hasMoreUnusedEntries: false };
   }
 
   private async getOutputFile(
