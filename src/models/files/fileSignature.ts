@@ -640,6 +640,14 @@ export default class FileSignature {
       CanBeTrimmed.NO,
       FileSignature.ROM_HEADERS.SMC,
     ),
+    // Super Wild Card, file type 4 (SNES program)
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/ffe.h
+    swc: new FileSignature(
+      '.smc',
+      [{ offset: 8, value: Buffer.from('AABB04', 'hex') }, superNintendoDynamicPiece(512)],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.SMC,
+    ),
 
     // Nintendo - Satellaview
     // @see https://wiki.superfamicom.org/bs-x-satellaview-header

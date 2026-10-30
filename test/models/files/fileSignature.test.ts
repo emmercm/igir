@@ -20,6 +20,21 @@ async function scan(input: string[], inputExclude: string[] = []): Promise<File[
   ).scan();
 }
 
+/**
+ * A LoROM file behind a 512-byte Super Wild Card copier header of the given file type.
+ */
+function superWildcardFile(fileType: number): Buffer {
+  const buffer = Buffer.alloc(512 + 0x80_00);
+  buffer.writeUInt16LE(0x00_c0, 0); // size, in 8 KiB blocks
+  buffer.write('aabb', 8, 'hex');
+  buffer.writeUInt8(fileType, 10);
+  const internalHeader = 512 + 0x7f_b0;
+  buffer.writeUInt8(0x20, internalHeader + 0x25); // LoROM
+  buffer.writeUInt16LE(0x12_34 ^ 0xff_ff, internalHeader + 0x2c); // checksum complement
+  buffer.writeUInt16LE(0x12_34, internalHeader + 0x2e); // checksum
+  return buffer;
+}
+
 describe('getROMHeaderExtensions', () => {
   it('should return every headered extension', () => {
     expect(FileSignature.getROMHeaderExtensions()).toEqual([
@@ -113,4 +128,17 @@ describe('getROMHeader', () => {
       );
     },
   );
+
+  it('should get the SMC ROM header for a Super Wild Card program header', () => {
+    const signature = FileSignature.signatureFromBuffer(superWildcardFile(0x04));
+    expect([signature?.getName(), signature?.getROMHeader()]).toEqual([
+      'swc',
+      FileSignature.romHeaderFromFilename('rom.smc'),
+    ]);
+  });
+
+  it('should not get a ROM header for a Super Wild Card SRAM header', () => {
+    const signature = FileSignature.signatureFromBuffer(superWildcardFile(0x05));
+    expect(signature?.getROMHeader()).toBeUndefined();
+  });
 });
