@@ -2257,4 +2257,32 @@ describe('renamed files', () => {
       }
     });
   });
+
+  it("should read a moved archive's entries with the input's checksums, not just cached ones", async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const entriesSpy = vi.spyOn(FileFactory.prototype, 'entriesFromArchive');
+      try {
+        // The input is scanned with every checksum (candidateWriter above), so its lookup asks for SHA1 too
+        const options = new Options({ commands: ['move', 'test'] });
+        await candidateWriter(
+          options,
+          inputTemp,
+          path.join('zip', 'foobar.zip'),
+          undefined,
+          outputTemp,
+        );
+
+        const movedArchiveLookups = entriesSpy.mock.calls.filter(
+          ([archive]) =>
+            archive.getFilePath() === path.join(inputTemp, 'roms', 'zip', 'foobar.zip'),
+        );
+        expect(movedArchiveLookups.length).toBeGreaterThan(0);
+        for (const [, checksumBitmask] of movedArchiveLookups) {
+          expect(checksumBitmask & ChecksumBitmask.SHA1).toEqual(ChecksumBitmask.SHA1);
+        }
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+  });
 });
