@@ -6,6 +6,8 @@ import Header from '../logiqx/header.js';
 import Software from './software.js';
 
 export interface SoftwareListDATProps extends DATProps {
+  name?: string;
+  description?: string;
   software?: Software | Software[];
 }
 
@@ -26,6 +28,8 @@ export default class SoftwareListDAT extends DAT implements SoftwareListDATProps
 
   constructor(props?: SoftwareListDATProps) {
     super(props);
+    this.name = props?.name;
+    this.description = props?.description;
     this.software = props?.software;
     this.generateGameNamesToParents();
   }
