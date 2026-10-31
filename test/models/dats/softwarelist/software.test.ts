@@ -16,20 +16,6 @@ const xml = `<?xml version="1.0"?>
   </software>
 </softwarelist>`;
 
-describe('withProps', () => {
-  it('should keep every ROM from every data area', () => {
-    const [software] = SoftwareListDAT.fromObject(
-      DATObject.fromXmlString(xml).softwarelist ?? {},
-    ).getGames();
-    expect(software.getRoms().map((rom) => rom.getName())).toEqual(['smb.prg', 'smb.chr']);
-
-    const copy = software.withProps({ cloneOf: undefined });
-
-    expect(copy.getName()).toEqual('smb');
-    expect(copy.getRoms().map((rom) => rom.getName())).toEqual(['smb.prg', 'smb.chr']);
-  });
-});
-
 const cdXml = `<?xml version="1.0"?>
 <softwarelist name="fmtowns_cd" description="Fujitsu FM Towns CD-ROMs">
   <software name="win30">
@@ -41,6 +27,31 @@ const cdXml = `<?xml version="1.0"?>
     </part>
   </software>
 </softwarelist>`;
+
+describe('withProps', () => {
+  it('should keep every ROM from every data area', () => {
+    const [software] = SoftwareListDAT.fromObject(
+      DATObject.fromXmlString(xml).softwarelist ?? {},
+    ).getGames();
+    expect(software.getRoms().map((rom) => rom.getName())).toEqual(['smb.prg', 'smb.chr']);
+
+    const copy = software.withProps({ cloneOf: undefined });
+
+    expect(copy.getName()).toEqual('smb');
+    expect(copy.getRoms()).toEqual(software.getRoms());
+  });
+
+  it('should keep every disk from every disk area', () => {
+    const [software] = SoftwareListDAT.fromObject(
+      DATObject.fromXmlString(cdXml).softwarelist ?? {},
+    ).getGames();
+    expect(software.getDisks()).toHaveLength(1);
+
+    const copy = software.withProps({ cloneOf: undefined });
+
+    expect(copy.getDisks()).toEqual(software.getDisks());
+  });
+});
 
 describe('getDisks', () => {
   it('should return every disk from every disk area', () => {
@@ -54,18 +65,6 @@ describe('getDisks', () => {
         'nihongo microsoft windows v3.0 with multimedia extensions v1.0 l10 (japan)',
         '8426d9e6d652f830b378b06d0ea880607cc093b1',
       ],
-    ]);
-  });
-
-  it('should keep every disk through withProps', () => {
-    const [software] = SoftwareListDAT.fromObject(
-      DATObject.fromXmlString(cdXml).softwarelist ?? {},
-    ).getGames();
-
-    const copy = software.withProps({ cloneOf: undefined });
-
-    expect(copy.getDisks().map((disk) => disk.getSha1())).toEqual([
-      '8426d9e6d652f830b378b06d0ea880607cc093b1',
     ]);
   });
 });
