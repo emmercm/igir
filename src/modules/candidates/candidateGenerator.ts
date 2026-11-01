@@ -1102,33 +1102,49 @@ export default class CandidateGenerator extends Module {
     }
 
     // For this Game, find every input file that is an ArchiveEntry
-    const inputArchiveEntries = romsWithFiles
-      // We need to rehydrate information from IndexedFiles because raw-copying/moving archives
-      // would have lost this information
-      .map((romWithFiles) => {
-        const rom = romWithFiles.getRom();
-        const inputFile = romWithFiles.getInputFile();
-        if (!(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile)) {
-          return undefined;
-        }
-        const candidates = indexedFiles
+    // We need to rehydrate information from IndexedFiles because raw-copying/moving archives
+    // would have lost this information
+    const romsAndCandidates = romsWithFiles.map((romWithFiles): [ROM, File[]] => {
+      const rom = romWithFiles.getRom();
+      const inputFile = romWithFiles.getInputFile();
+      if (!(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile)) {
+        return [rom, []];
+      }
+      return [
+        rom,
+        indexedFiles
           .findFilesAtPath(rom, inputFile.getFilePath())
           .filter(
             (foundFile) =>
               foundFile instanceof ArchiveEntry &&
               inputFile.getArchive() === foundFile.getArchive(),
-          );
-        // Prefer the entry whose path matches the ROM name. This matters whenever a Game has
-        // multiple ROMs that share a checksum but have different names - since those ROMs would
-        // otherwise all resolve to the same first matching entry, hiding which entries are
-        // actually used.
-        return (
-          candidates.find(
-            (foundFile) =>
-              foundFile instanceof ArchiveEntry &&
-              foundFile.getExtractedFilePath() === rom.getName(),
-          ) ?? candidates.at(0)
-        );
+          ),
+      ];
+    });
+    // Each ROM takes the entry whose path matches its name, then one no other ROM has taken. This
+    // matters whenever a Game has multiple ROMs that share a checksum but have different names -
+    // since those ROMs would otherwise all resolve to the same first matching entry, hiding which
+    // entries are actually used. Entry paths don't always match ROM names, e.g. chdman names a
+    // CHD's tracks without the DAT's zero padding, so every name match is taken first.
+    const nameMatches = romsAndCandidates.map(([rom, candidates]) =>
+      candidates.find(
+        (foundFile) =>
+          foundFile instanceof ArchiveEntry && foundFile.getExtractedFilePath() === rom.getName(),
+      ),
+    );
+    const claimedEntries = new Set(nameMatches.filter((entry) => entry !== undefined));
+    const inputArchiveEntries = romsAndCandidates
+      .map(([, candidates], index) => {
+        const nameMatch = nameMatches[index];
+        if (nameMatch !== undefined) {
+          return nameMatch;
+        }
+        const entry =
+          candidates.find((foundFile) => !claimedEntries.has(foundFile)) ?? candidates.at(0);
+        if (entry !== undefined) {
+          claimedEntries.add(entry);
+        }
+        return entry;
       })
       .filter((inputFile) => inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile);
     // ...then translate those ArchiveEntries into a list of unique Archives
