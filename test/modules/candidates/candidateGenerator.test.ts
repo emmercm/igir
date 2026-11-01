@@ -1194,6 +1194,65 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     );
   });
 
+  it('should not consider disc-merged CHDs to have excess entries when tracks share a checksum', async () => {
+    // Several audio tracks on each disc are identical, and the CHDs name their tracks without the
+    // DAT's zero padding, so only a two-digit track's entry path equals its ROM's name
+    const disc = (number: number): Game =>
+      new Game({
+        name: `Mr. Bones (USA) (Disc ${number})`,
+        roms: [
+          new ROM({
+            name: `Mr. Bones (USA) (Disc ${number}) (Track 01).bin`,
+            size: 1000 + number,
+            crc32: `0000000${number}`,
+          }),
+          ...[2, 3, 10].map(
+            (track) =>
+              new ROM({
+                name: `Mr. Bones (USA) (Disc ${number}) (Track ${String(track).padStart(2, '0')}).bin`,
+                size: 1_058_400,
+                crc32: 'f912e1de',
+              }),
+          ),
+        ],
+      });
+    const dat = new LogiqxDAT({ games: [disc(1), disc(2)] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName().replace('(Track 0', '(Track '),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(options, discMergedDat, files);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getRomsWithFiles()).toHaveLength(8);
+    expect(
+      new Set(
+        candidates[0]
+          .getRomsWithFiles()
+          .map((romWithFiles) => path.basename(romWithFiles.getInputFile().getFilePath())),
+      ),
+    ).toEqual(new Set(['Mr. Bones (USA) (Disc 1).chd', 'Mr. Bones (USA) (Disc 2).chd']));
+  });
+
   it('should not consider disc-merged games incomplete when .cue files are unknown in CHDs', async () => {
     const discOne = new Game({
       name: 'Metal Gear Solid (USA) (Disc 1)',
