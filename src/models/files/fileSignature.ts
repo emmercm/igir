@@ -644,7 +644,11 @@ export default class FileSignature {
     // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/ffe.h
     swc: new FileSignature(
       '.smc',
-      [{ offset: 8, value: Buffer.from('AABB04', 'hex') }, superNintendoDynamicPiece(512)],
+      [
+        { offset: 8, value: Buffer.from('AABB04', 'hex') },
+        { offset: 11, value: Buffer.from('00'.repeat(501), 'hex') }, // reserved
+        superNintendoDynamicPiece(512),
+      ],
       CanBeTrimmed.NO,
       FileSignature.ROM_HEADERS.SMC,
     ),

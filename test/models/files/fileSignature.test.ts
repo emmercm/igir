@@ -25,7 +25,7 @@ async function scan(input: string[], inputExclude: string[] = []): Promise<File[
  */
 function superWildcardFile(fileType: number): Buffer {
   const buffer = Buffer.alloc(512 + 0x80_00);
-  buffer.writeUInt16LE(0x00_c0, 0); // size, in 8 KiB blocks
+  buffer.writeUInt16LE(0x00_04, 0); // size, in 8 KiB blocks
   buffer.write('aabb', 8, 'hex');
   buffer.writeUInt8(fileType, 10);
   const internalHeader = 512 + 0x7f_b0;
@@ -140,5 +140,25 @@ describe('getROMHeader', () => {
   it('should not get a ROM header for a Super Wild Card SRAM header', () => {
     const signature = FileSignature.signatureFromBuffer(superWildcardFile(0x05));
     expect(signature?.getROMHeader()).toBeUndefined();
+  });
+
+  it.each([11, 511])(
+    'should not get a ROM header for a Super Wild Card header with reserved byte %i set',
+    (offset) => {
+      const file = superWildcardFile(0x04);
+      file.writeUInt8(0x01, offset);
+      const signature = FileSignature.signatureFromBuffer(file);
+      expect(signature?.getROMHeader()).toBeUndefined();
+    },
+  );
+
+  it('should get the SMC ROM header for a Super Wild Card header with Pro Fighter bytes 3-5', () => {
+    const file = superWildcardFile(0x04);
+    file.write('807783', 3, 'hex'); // HiROM flag, no-SRAM emulation bytes (ucon64 fig.h)
+    const signature = FileSignature.signatureFromBuffer(file);
+    expect([signature?.getName(), signature?.getROMHeader()]).toEqual([
+      'swc',
+      FileSignature.romHeaderFromFilename('rom.smc'),
+    ]);
   });
 });
