@@ -50,7 +50,7 @@ bool OutputSlot::WriteOrThrow(const uint8_t* data, size_t length) {
     size_t written = 0;
     std::unique_lock<std::mutex> lock(mutex_);
     while (written < length) {
-        lent_.wait(lock, [this]() { return aborted_ || (data_ != nullptr && length_ < capacity_); });
+        lent_.wait(lock, [this] { return aborted_ || (data_ != nullptr && length_ < capacity_); });
         if (aborted_) {
             return false;
         }

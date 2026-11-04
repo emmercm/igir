@@ -37,7 +37,7 @@ void InitAddonData(Napi::Env env) {
 
 /** Retrieves shared registry ownership independently of instance-data lifetime. */
 std::shared_ptr<JobRegistry> Registry(Napi::Env env) {
-    auto* data = env.GetInstanceData<AddonData>();
+    const auto* data = env.GetInstanceData<AddonData>();
     return data == nullptr ? nullptr : data->registry;
 }
 }  // namespace sevenzip

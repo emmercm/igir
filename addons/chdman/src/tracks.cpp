@@ -12,6 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -30,7 +31,7 @@
  * it, and the parser reads a fixed number of words however short the entry is. So this has to run
  * before a cdrom_file is constructed. Returned rather than thrown, like cuebin_underflow_error().
  */
-static std::string OldMetadataError(chd_file& chd) {
+static std::string_view OldMetadataError(chd_file& chd) {
     std::string metadata;
     for (chd_metadata_tag const tag :
          {CDROM_TRACK_METADATA_TAG, CDROM_TRACK_METADATA2_TAG, GDROM_OLD_METADATA_TAG, GDROM_TRACK_METADATA_TAG}) {
@@ -528,9 +529,9 @@ class TrackSource {
         if (err) {
             throw std::runtime_error("failed to open CHD: " + err.message());
         }
-        std::string const oldMetadata = OldMetadataError(chd_);
+        std::string_view const oldMetadata = OldMetadataError(chd_);
         if (!oldMetadata.empty()) {
-            throw std::runtime_error(oldMetadata);
+            throw std::runtime_error(std::string(oldMetadata));
         }
         try {
             cdrom_ = std::make_unique<cdrom_file>(&chd_);
