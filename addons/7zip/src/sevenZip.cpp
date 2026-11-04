@@ -74,7 +74,7 @@ std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
 
 void EnsureInitialized() {
     // Upstream requires this once, before any other CRC function is called
-    std::call_once(g_initOnce, []() { CrcGenerateTable(); });
+    std::call_once(g_initOnce, [] { CrcGenerateTable(); });
 }
 
 namespace {
@@ -96,7 +96,7 @@ const std::vector<Format>& Formats() {
     // Function-local static: initialized on first use, and the C++ runtime makes
     // that thread-safe. Archives are opened from libuv pool threads, so this
     // is genuinely reachable from more than one.
-    static const std::vector<Format> formats = []() {
+    static const std::vector<Format> formats = [] {
         EnsureInitialized();
         std::vector<Format> out;
         UInt32 count = 0;
@@ -302,6 +302,7 @@ bool CurrentSize(FileHandle handle, UInt64& size) {
 /** The last OS error as a failing HRESULT. */
 HRESULT LastErrorHResult() {
     DWORD const error = ::GetLastError();
+    // NOLINTNEXTLINE(bugprone-signed-bitwise): the bitwise operators are inside the vendored macro
     return error == 0 ? E_FAIL : HRESULT_FROM_WIN32(error);
 }
 

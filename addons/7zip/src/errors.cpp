@@ -25,10 +25,10 @@ std::string HResultSuffix(HRESULT hr) {
     // is prebuilt on provides yet
     static constexpr std::string_view kHexDigits = "0123456789abcdef";
     std::string out = " (HRESULT 0x";
-    for (int shift = 28; shift >= 0; shift -= 4) {
-        out += kHexDigits[(value >> shift) & 0xfU];
+    for (unsigned digit = 0; digit < 8U; ++digit) {
+        out += kHexDigits[(value >> (28U - (digit * 4U))) & 0xfU];
     }
-    out += ")";
+    out += ')';
     return out;
 }
 
@@ -61,7 +61,7 @@ std::string FindEntryErrorMessage(HRESULT hr, const std::string& entryPath) {
     return "failed to look up the entry '" + entryPath + "' in the archive" + HResultSuffix(hr);
 }
 
-std::string OperationResultMessage(int32_t opResult) {
+std::string_view OperationResultMessage(int32_t opResult) {
     using namespace NArchive::NExtract::NOperationResult;  // NOLINT(google-build-using-namespace)
     switch (opResult) {
         case kUnsupportedMethod:

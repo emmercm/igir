@@ -35,7 +35,6 @@ jobs:
           fi
 
   path-filter:
-    if: ${{ github.actor == 'emmercm' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
     permissions:
       pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
@@ -332,9 +331,8 @@ jobs:
 
   cpp-lint:
     needs:
-      - branch-gate
       - path-filter
-    if: ${{ (needs.branch-gate.outputs.should-prebuild == 'true' && needs.path-filter.outputs.changes == 'true') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read # actions/checkout
     runs-on: ubuntu-latest

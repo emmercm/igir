@@ -42,7 +42,7 @@ struct DefaultInitAllocator : std::allocator<T> {
     DefaultInitAllocator() = default;
     /** Converts between stateless allocator specializations. */
     template <typename U>
-    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions): allocators must convert implicitly
+    // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor,misc-explicit-constructor): allocators convert implicitly
     DefaultInitAllocator(const DefaultInitAllocator<U>& /*unused*/) noexcept {}
 
     /** Default-initializes storage without zeroing trivial elements; callers must write before reading. */
