@@ -281,11 +281,13 @@ Block Container::Locate(uint64_t pos) {
     uint64_t const entry = pos >> blockShift_;
     auto const skip = static_cast<uint32_t>(pos & (blockSize_ - 1));
     if (format_ == Format::kDax) {
-        return {.entry = entry,
-                .skip = skip,
-                .offset = index_.At(file_, entry),
-                .length = daxSizes_.At(file_, entry),
-                .codec = daxStored_[static_cast<size_t>(entry)] != 0 ? Codec::kStored : Codec::kZlib};
+        return {
+            .entry = entry,
+            .skip = skip,
+            .offset = index_.At(file_, entry),
+            .length = daxSizes_.At(file_, entry),
+            .codec = daxStored_[static_cast<size_t>(entry)] != 0 ? Codec::kStored : Codec::kZlib,
+        };
     }
     uint32_t const value = index_.At(file_, entry);
     uint64_t const offset = Position(value);

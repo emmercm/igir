@@ -11,6 +11,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -25,7 +26,7 @@
 // ---- chdman info ----
 
 /** Map a chd_file's metadata tags to a stable type string (mirrors CHDType in index.ts). */
-static std::string ChdTypeString(chd_file& chd) {
+static std::string_view ChdTypeString(const chd_file& chd) {
     // check_is_*() return a std::error_condition that is falsy (no error) when the
     // corresponding metadata is present. GD-ROM must be checked before CD-ROM
     // because a GD-ROM also carries CD-style track metadata.
@@ -37,7 +38,7 @@ static std::string ChdTypeString(chd_file& chd) {
 }
 
 /** The four-character codec name chdman prints for a codec, or "none" for an unknown one */
-static std::string CompressionString(chd_codec_type codec) {
+static std::string_view CompressionString(chd_codec_type codec) {
     switch (codec) {
         case CHD_CODEC_ZLIB:
             return "zlib";
@@ -149,7 +150,7 @@ class InfoWorker : public Napi::AsyncWorker {
 
             for (int i = 0; i < 4; i++) {
                 chd_codec_type const c = chd.compression(i);
-                if (c != CHD_CODEC_NONE) data_.compression.push_back(CompressionString(c));
+                if (c != CHD_CODEC_NONE) data_.compression.emplace_back(CompressionString(c));
             }
 
             uint64_t filesize = 0;

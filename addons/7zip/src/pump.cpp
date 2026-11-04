@@ -280,7 +280,7 @@ void Pump::Extract() {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" + HResultSuffix(hr));
     } else if (raw->OpResult() != NArchive::NExtract::NOperationResult::kOK) {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ +
-                 "': " + OperationResultMessage(raw->OpResult()));
+                 "': " + std::string(OperationResultMessage(raw->OpResult())));
     }
 }
 
