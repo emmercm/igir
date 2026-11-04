@@ -9,6 +9,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -440,7 +441,7 @@ class DolphinReader : public ReaderBase<DolphinReader, DolphinSource> {
 // ---- Dolphin info ----
 
 /** The format name index.ts reports for a blob type, or "UNKNOWN" for any other type */
-static std::string BlobFormatString(DiscIO::BlobType type) {
+static std::string_view BlobFormatString(DiscIO::BlobType type) {
     switch (type) {
         case DiscIO::BlobType::GCZ:
             return "GCZ";
