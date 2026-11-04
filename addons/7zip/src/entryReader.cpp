@@ -119,8 +119,8 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
         try {
             pump = Pump::Create(
                 info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
-                entryIndex, Registry(env), [bridge]() { bridge->signal->Notify(); },
-                [bridge]() {
+                entryIndex, Registry(env), [bridge] { bridge->signal->Notify(); },
+                [bridge] {
                     // Pool or producer thread, exactly once, after the archive
                     // and every volume it opened are closed. Recorded before
                     // the notification, so the callback it wakes sees it, and
