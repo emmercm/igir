@@ -75,7 +75,7 @@ void JobRegistry::DrainAndWait() noexcept {
 
     try {
         std::unique_lock<std::mutex> lock(mutex_);
-        empty_.wait(lock, [this]() { return jobs_.empty(); });
+        empty_.wait(lock, [this] { return jobs_.empty(); });
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // These throw only when the underlying OS primitive fails, which a
         // teardown hook cannot recover from, and letting it escape a noexcept
