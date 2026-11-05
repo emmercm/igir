@@ -43,7 +43,8 @@ export default class CandidateWriter extends Module {
   private readonly candidateSemaphore: CandidateWriterSemaphore;
   private readonly moveMutex: FileMoveMutex;
 
-  private readonly filesQueuedForDeletion: WriteCandidate[] = [];
+  // A Set: a candidate is queued once per input file it moves, and one can hold thousands of files
+  private readonly filesQueuedForDeletion = new Set<WriteCandidate>();
 
   constructor(
     options: Options,
@@ -146,7 +147,7 @@ export default class CandidateWriter extends Module {
         c.getRomsWithFiles().map((r) => r.getOutputFile().getFilePath()),
       ),
     );
-    const movedCandidates = this.filesQueuedForDeletion
+    const movedCandidates = [...this.filesQueuedForDeletion]
       // Of the WriteCandidates that were queued for deletion, exclude all that have at least one
       // input file that was an output file. This can happen if the output directory was also
       // provided as an input directory.
@@ -858,7 +859,7 @@ export default class CandidateWriter extends Module {
     if (inputRomFile instanceof ZeroSizeFile) {
       return;
     }
-    this.filesQueuedForDeletion.push(candidate);
+    this.filesQueuedForDeletion.add(candidate);
   }
 
   /**
