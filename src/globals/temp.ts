@@ -30,7 +30,6 @@ export default class Temp {
   }
 }
 
-// eslint-disable-next-line unicorn/no-top-level-side-effects
 process.once('exit', () => {
   FsUtil.rmSync(Temp.getTempDir(), {
     force: true,
