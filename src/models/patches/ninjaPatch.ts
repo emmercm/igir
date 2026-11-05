@@ -10,6 +10,7 @@ const NinjaCommand = {
   OPEN: 0x01,
   XOR: 0x02,
 } as const;
+// eslint-disable-next-line unicorn/prefer-smaller-scope
 type NinjaCommandValue = (typeof NinjaCommand)[keyof typeof NinjaCommand];
 
 const NinjaFileType = {
