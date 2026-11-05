@@ -1,0 +1,355 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
+#   Contents: read and write
+#   Pull Requests: read and write
+
+name: GitHub Submodule Update
+
+on:
+  push:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false # queue
+
+jobs:
+  # Find every submodule that should be kept up to date
+  discover:
+    permissions:
+      contents: read # actions/checkout
+    runs-on: ubuntu-latest
+    outputs:
+      paths: ${{ steps.discover.outputs.paths }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: discover
+        env:
+          # Submodules that are frozen on purpose, and must never be updated
+          SKIP_PATHS: |
+            addons/zlib-1.1.3/deps/zlib
+            addons/zstd-1.5.5/deps/zstd
+        run: |
+          set -euo pipefail
+
+          # Annotate any unexpected failure with the command that failed
+          trap 'echo "::error::Failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
+
+          # List the path of every submodule
+          submodule_paths="$(git config --file .gitmodules --get-regexp '\.path$' | cut --delimiter=' ' --fields=2-)"
+
+          # Fail on skip list entries that don't match any submodule, so typos and stale entries get noticed
+          while IFS= read -r skip_path; do
+            if [[ -n "${skip_path}" ]] && ! grep --quiet --fixed-strings --line-regexp -- "${skip_path}" <<< "${submodule_paths}"; then
+              echo "::error::Skip list entry doesn't match any submodule: ${skip_path}"
+              exit 1
+            fi
+          done <<< "${SKIP_PATHS}"
+
+          # Keep every submodule that isn't in the skip list
+          update_paths=""
+          while IFS= read -r submodule_path; do
+            if grep --quiet --fixed-strings --line-regexp -- "${submodule_path}" <<< "${SKIP_PATHS}"; then
+              echo "skip: ${submodule_path}"
+            else
+              echo "update: ${submodule_path}"
+              update_paths+="${submodule_path}"$'\n'
+            fi
+          done <<< "${submodule_paths}"
+
+          # Output the kept paths as a JSON array for the matrix
+          paths="$(jq --raw-input --slurp --compact-output 'split("\n") | map(select(length > 0))' <<< "${update_paths}")"
+          echo "paths=${paths}" >> "${GITHUB_OUTPUT}"
+
+  submodule-update:
+    needs:
+      - discover
+    if: ${{ needs.discover.outputs.paths != '[]' }}
+    name: ${{ matrix.path }}
+    permissions:
+      contents: read # actions/checkout
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't let one broken upstream hold back the other submodules
+      fail-fast: false
+      matrix:
+        path: ${{ fromJSON(needs.discover.outputs.paths) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # zizmor: ignore[artipacked] The persisted credentials are required for the
+          #   subsequent `git push` that commits the submodule update to its branch.
+          ref: main
+          fetch-depth: 1
+          # Token needed so that the push and pull request trigger Actions (e.g. node-addon-prebuild.yml)
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      # Pick the newest upstream release tag that is at least 7 days old and doesn't move the
+      #   submodule backward
+      - id: plan
+        env:
+          SUBMODULE_PATH: ${{ matrix.path }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Annotate any unexpected failure with the command that failed
+          trap 'echo "::error::Failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
+
+          # Settings for which tags qualify
+          min_age_seconds=$((7 * 24 * 60 * 60))
+          prerelease_regex='[-._]?(pre|alpha|beta|rc|dev)[-._]?[0-9]*$'
+
+          # Find the submodule's upstream, which has to be on GitHub for the Releases API; .gitmodules
+          #   section names don't always match paths, so look the section up by path
+          submodule_name="${SUBMODULE_PATH##*/}"
+          submodule_key="$(git config --file .gitmodules --name-only --fixed-value --get-regexp '\.path$' "${SUBMODULE_PATH}")"
+          url="$(git config --file .gitmodules --get "${submodule_key%.path}.url")"
+          if [[ ! "${url}" =~ ^https://github\.com/[^/]+/[^/]+$ ]]; then
+            echo "::error::Upstream isn't a GitHub repository: ${url}"
+            exit 1
+          fi
+          slug="${url#https://github.com/}"
+          slug="${slug%.git}"
+          echo "upstream: ${url}"
+
+          # Find the submodule's commit on main
+          main_commit="$(git rev-parse "HEAD:${SUBMODULE_PATH}")"
+
+          # Find the update branch's head and its submodule commit, if the branch exists; ls-remote
+          #   exits with 2 when the branch doesn't exist, and anything else is a real failure
+          branch="emmercm/submodule-update/${SUBMODULE_PATH//\//-}"
+          branch_head=""
+          branch_commit=""
+          ls_remote_status=0
+          git ls-remote --exit-code origin "refs/heads/${branch}" > /dev/null || ls_remote_status=$?
+          if [[ "${ls_remote_status}" -eq 0 ]]; then
+            git fetch --depth=1 --quiet origin "${branch}"
+            branch_head="$(git rev-parse FETCH_HEAD)"
+            branch_commit="$(git rev-parse "${branch_head}:${SUBMODULE_PATH}")"
+          elif [[ "${ls_remote_status}" -ne 2 ]]; then
+            echo "::error::Failed to look up branch ${branch}"
+            exit "${ls_remote_status}"
+          fi
+
+          # Clone only the upstream's commits and tags, not its files, and index them for fast
+          #   ancestry checks
+          upstream_dir="${RUNNER_TEMP}/upstream-${submodule_name}"
+          git clone --bare --filter=tree:0 --quiet "${url}" "${upstream_dir}"
+          upstream_git() {
+            git --git-dir "${upstream_dir}" "$@"
+          }
+          upstream_git commit-graph write --reachable
+
+          # Prints "true" if commit $1 is commit $2 or one of its ancestors, or "false" if it isn't.
+          #   Returns git's non-zero status if the commits can't be compared
+          is_ancestor() {
+            local status=0
+            upstream_git merge-base --is-ancestor "$1" "$2" || status=$?
+            if [[ "${status}" -eq 0 ]]; then
+              echo "true"
+            elif [[ "${status}" -eq 1 ]]; then
+              echo "false"
+            else
+              return "${status}"
+            fi
+          }
+
+          # Map each GitHub Release to its publish timestamp, and whether it's a pre-release
+          declare -A release_ts=()
+          declare -A release_prerelease=()
+          releases="$(gh api --paginate "repos/${slug}/releases?per_page=100" --jq '.[] | [.tag_name, .prerelease, (if .published_at then (.published_at | fromdateiso8601) else "" end)] | @tsv')"
+          while IFS=$'\t' read -r name prerelease published_ts; do
+            # Skip the empty line from an upstream with no releases
+            if [[ -z "${name}" ]]; then
+              continue
+            fi
+            release_prerelease["${name}"]="${prerelease}"
+            # Draft releases have no publish timestamp
+            if [[ -n "${published_ts}" ]]; then
+              release_ts["${name}"]="${published_ts}"
+            fi
+          done <<< "${releases}"
+
+          # Map each tag to the commit it points to (following annotated tags), and to its release
+          #   timestamp (falling back to the tag's own date), keeping the tag names in version order
+          declare -A tag_commit=()
+          declare -A tag_ts=()
+          tag_names=()
+          tags="$(upstream_git for-each-ref refs/tags --sort=version:refname --format='%(refname:strip=2)%09%(if)%(*objecttype)%(then)%(*objecttype)%09%(*objectname)%(else)%(objecttype)%09%(objectname)%(end)%09%(creatordate:unix)')"
+          while IFS=$'\t' read -r name object_type object_name created_ts; do
+            # Skip tags of trees and blobs, which can't be a submodule commit, and the empty line from
+            #   an upstream with no tags
+            if [[ "${object_type}" != "commit" ]]; then
+              continue
+            fi
+            tag_commit["${name}"]="${object_name}"
+            tag_ts["${name}"]="${release_ts["${name}"]:-${created_ts}}"
+            tag_names+=("${name}")
+          done <<< "${tags}"
+
+          # Prints the newest tag on commit $1, or nothing if the commit isn't tagged
+          newest_tag_on() {
+            local name newest_tag="" newest_ts=0
+            for name in "${tag_names[@]}"; do
+              if [[ "${tag_commit["${name}"]}" == "$1" && "${tag_ts["${name}"]}" -ge "${newest_ts}" ]]; then
+                newest_tag="${name}"
+                newest_ts="${tag_ts["${name}"]}"
+              fi
+            done
+            echo "${newest_tag}"
+          }
+
+          # Find main's tag and timestamp, using the commit's own date when it isn't tagged
+          current_tag="$(newest_tag_on "${main_commit}")"
+          if [[ -n "${current_tag}" ]]; then
+            current_ts="${tag_ts["${current_tag}"]}"
+          else
+            current_ts="$(upstream_git log -1 --format=%ct "${main_commit}")"
+          fi
+          current_label="${current_tag:-${main_commit:0:12}}"
+          echo "main: ${main_commit} (${current_tag:-untagged})"
+
+          # Log the update branch's tag, for debugging
+          if [[ -n "${branch_commit}" ]]; then
+            branch_tag="$(newest_tag_on "${branch_commit}")"
+            echo "branch ${branch}: ${branch_commit} (${branch_tag:-untagged})"
+          else
+            echo "branch ${branch}: no branch"
+          fi
+
+          # Keep the tags that are stable, old enough, and don't move the submodule backward
+          echo "::group::Tags newer than main"
+          now="$(date +%s)"
+          candidates=()
+          for name in "${tag_names[@]}"; do
+            commit="${tag_commit["${name}"]}"
+            ts="${tag_ts["${name}"]}"
+            reason=""
+
+            # Reject pre-releases, and tags that are too new
+            if [[ "${release_prerelease["${name}"]:-false}" == "true" || "${name,,}" =~ ${prerelease_regex} ]]; then
+              reason="pre-release"
+            elif [[ $((now - ts)) -lt "${min_age_seconds}" ]]; then
+              reason="too new, $(( (now - ts) / 3600 )) hours old < $(( min_age_seconds / 3600 )) hours required"
+            fi
+
+            # Reject main's own commit, and tags behind main
+            if [[ -z "${reason}" ]]; then
+              if ! behind_main="$(is_ancestor "${commit}" "${main_commit}")"; then
+                echo "::error::Failed to compare commits ${commit} and ${main_commit}"
+                exit 1
+              fi
+              if [[ "${behind_main}" == "true" ]]; then
+                reason="backward"
+              fi
+            fi
+
+            # Reject tags that have diverged from main, unless they're newer than main
+            if [[ -z "${reason}" ]]; then
+              if ! ahead_of_main="$(is_ancestor "${main_commit}" "${commit}")"; then
+                echo "::error::Failed to compare commits ${main_commit} and ${commit}"
+                exit 1
+              fi
+              if [[ "${ahead_of_main}" == "false" && "${ts}" -le "${current_ts}" ]]; then
+                reason="backward (diverged and not newer)"
+              fi
+            fi
+
+            # Log rejected tags that are newer than main, so a skipped release can be explained
+            if [[ -n "${reason}" ]]; then
+              if [[ "${ts}" -gt "${current_ts}" ]]; then
+                echo "rejected: ${name} (${reason})"
+              fi
+            else
+              echo "candidate: ${name} (${commit})"
+              candidates+=("${name}")
+            fi
+          done
+          echo "::endgroup::"
+
+          # Pick the candidate furthest ahead in history, then the newest
+          target=""
+          target_ts=0
+          for name in "${candidates[@]}"; do
+            commit="${tag_commit["${name}"]}"
+            ts="${tag_ts["${name}"]}"
+
+            # Skip candidates that are behind another candidate
+            superseded=false
+            for other in "${candidates[@]}"; do
+              other_commit="${tag_commit["${other}"]}"
+              if [[ "${other_commit}" == "${commit}" ]]; then
+                continue
+              fi
+              if ! behind_other="$(is_ancestor "${commit}" "${other_commit}")"; then
+                echo "::error::Failed to compare commits ${commit} and ${other_commit}"
+                exit 1
+              fi
+              if [[ "${behind_other}" == "true" ]]; then
+                superseded=true
+                break
+              fi
+            done
+
+            # Prefer the newest of the remaining candidates
+            if [[ "${superseded}" == "false" && "${ts}" -ge "${target_ts}" ]]; then
+              target="${name}"
+              target_ts="${ts}"
+            fi
+          done
+
+          # Do nothing when no tag qualifies
+          if [[ -z "${target}" ]]; then
+            echo "no qualifying tag"
+            echo "- \`${SUBMODULE_PATH}\`: \`${current_label}\` is up to date" >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+          target_commit="${tag_commit["${target}"]}"
+
+          # Fail on a tag name that isn't a valid ref, rather than pass it on
+          if ! git check-ref-format "refs/tags/${target}"; then
+            echo "::error::Invalid tag name: ${target}"
+            exit 1
+          fi
+          echo "target: ${target} (${target_commit})"
+
+          # Don't push again when the branch is already at or past the target, but still let the update
+          #   step open a pull request in case a previous run pushed and then failed
+          push=true
+          summary="- \`${SUBMODULE_PATH}\`: \`${current_label}\` → \`${target}\`"
+          if [[ -n "${branch_commit}" ]]; then
+            if ! branch_has_target="$(is_ancestor "${target_commit}" "${branch_commit}")"; then
+              echo "::error::Failed to compare commits ${target_commit} and ${branch_commit}"
+              exit 1
+            fi
+            if [[ "${branch_has_target}" == "true" ]]; then
+              echo "branch already at or past ${target}"
+              push=false
+              summary+=" (branch already updated)"
+            fi
+          fi
+          echo "${summary}" >> "${GITHUB_STEP_SUMMARY}"
+
+          # Link the upstream changes, and the release when there is one
+          body="Updates [${slug}](https://github.com/${slug}) from \`${current_label}\` to \`${target}\`."$'\n\n'"https://github.com/${slug}/compare/${main_commit}...${target}"
+          if [[ -n "${release_ts["${target}"]:-}" ]]; then
+            body+=$'\n'"https://github.com/${slug}/releases/tag/${target}"
+          fi
+
+          # Output the plan, with a random delimiter so the body can't end the multiline value early
+          delimiter="$(dd if=/dev/urandom bs=15 count=1 status=none | base64)"
+          {
+            echo "tag=${target}"
+            echo "commit=${target_commit}"
+            echo "branch=${branch}"
+            echo "branch_head=${branch_head}"
+            echo "push=${push}"
+            echo "title=Chore: update ${submodule_name} to ${target}"
+            echo "body<<${delimiter}"
+            echo "${body}"
+            echo "${delimiter}"
+          } >> "${GITHUB_OUTPUT}"
