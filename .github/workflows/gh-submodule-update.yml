@@ -234,7 +234,7 @@ jobs:
             if [[ "${release_prerelease["${name}"]:-false}" == "true" || "${name,,}" =~ ${prerelease_regex} ]]; then
               reason="pre-release"
             elif [[ $((now - ts)) -lt "${min_age_seconds}" ]]; then
-              reason="too new ($(( (now - ts) / 3600 )) hours old)"
+              reason="too new, $(( (now - ts) / 3600 )) hours old < $(( min_age_seconds / 3600 )) hours required"
             fi
 
             # Reject main's own commit, and tags behind main
