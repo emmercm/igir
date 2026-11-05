@@ -4,6 +4,7 @@ import path from 'node:path';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
+import Temp from '../../../src/globals/temp.js';
 import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
@@ -16,6 +17,7 @@ import Options from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateArchiveFileHasher from '../../../src/modules/candidates/candidateArchiveFileHasher.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const FIXTURE_ROMS_DIR = path.join('test', 'fixtures', 'roms');
@@ -115,5 +117,42 @@ describe('hash', () => {
     const result = await buildHasher(options).hash(dat, candidates);
     expect(result).toHaveLength(1);
     expect(result[0].getRomsWithFiles()[0].getInputFile()).toBe(inputFile);
+  });
+});
+
+describe('hash: moved inputs', () => {
+  it('should not hash an archive an earlier DAT already moved', async () => {
+    await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
+    const tempDir = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'hasher'));
+    const hashSpy = vi.spyOn(FileFactory.prototype, 'archiveFileFrom');
+    try {
+      const zipPath = path.join(tempDir, 'foobar.zip');
+      await FsUtil.copyFile(path.join(FIXTURE_ROMS_DIR, 'zip', 'foobar.zip'), zipPath);
+      const archiveEntry = await ArchiveEntry.entryOf({
+        archive: new Zip(zipPath),
+        entryPath: 'foobar.lnx',
+      });
+      const archiveFile = new ArchiveFile(archiveEntry);
+      const outputFile = await File.fileOf({ filePath: path.join(tempDir, 'out', 'foobar.zip') });
+      const rom = new ROM({ name: 'foobar.zip', size: archiveFile.getSize() });
+      const candidates = [
+        new WriteCandidate(new Game({ name: 'foobar' }), [
+          new ROMWithFiles(rom, archiveFile, outputFile),
+        ]),
+      ];
+      await FsUtil.mv(zipPath, path.join(tempDir, 'moved.zip'));
+
+      const options = new Options({ commands: ['move', 'test'], output: tempDir });
+      const result = await buildHasher(options).hash(
+        new LogiqxDAT({ header: new Header() }),
+        candidates,
+      );
+
+      expect(hashSpy).not.toHaveBeenCalled();
+      expect(result).toEqual(candidates);
+    } finally {
+      vi.restoreAllMocks();
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
