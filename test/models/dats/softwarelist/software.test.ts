@@ -1,6 +1,7 @@
 import assert from 'node:assert';
 
 import DATObject from '../../../../src/models/dats/datObject.js';
+import Disk from '../../../../src/models/dats/disk.js';
 import SoftwareListDAT from '../../../../src/models/dats/softwarelist/softwareListDat.js';
 
 const xml = `<?xml version="1.0"?>
@@ -25,6 +26,19 @@ const cdXml = `<?xml version="1.0"?>
     <part name="cdrom" interface="cdrom">
       <diskarea name="cdrom">
         <disk name="nihongo microsoft windows v3.0 with multimedia extensions v1.0 l10 (japan)" sha1="8426d9e6d652f830b378b06d0ea880607cc093b1"/>
+      </diskarea>
+    </part>
+  </software>
+</softwarelist>`;
+
+const multiDiskXml = `<?xml version="1.0"?>
+<softwarelist name="fmtowns_cd" description="Fujitsu FM Towns CD-ROMs">
+  <software name="multi">
+    <description>Two disc set</description>
+    <part name="cdrom" interface="cdrom">
+      <diskarea name="cdrom">
+        <disk name="two disc set (disc 1)" sha1="1111111111111111111111111111111111111111"/>
+        <disk name="two disc set (disc 2)" sha1="2222222222222222222222222222222222222222"/>
       </diskarea>
     </part>
   </software>
@@ -62,13 +76,32 @@ describe('getDisks', () => {
     const [software] = SoftwareListDAT.fromObject(
       DATObject.fromXmlString(cdXml).softwarelist ?? {},
     ).getGames();
+    assert.ok(software !== undefined);
 
     expect(software.getRoms()).toHaveLength(0);
-    expect(software.getDisks().map((disk) => [disk.getName(), disk.getSha1()])).toEqual([
-      [
-        'nihongo microsoft windows v3.0 with multimedia extensions v1.0 l10 (japan)',
-        '8426d9e6d652f830b378b06d0ea880607cc093b1',
-      ],
+    expect(software.getDisks()).toEqual([
+      new Disk({
+        name: 'nihongo microsoft windows v3.0 with multimedia extensions v1.0 l10 (japan)',
+        sha1: '8426d9e6d652f830b378b06d0ea880607cc093b1',
+      }),
+    ]);
+  });
+
+  it('should return every disk from a disk area that holds more than one', () => {
+    const [software] = SoftwareListDAT.fromObject(
+      DATObject.fromXmlString(multiDiskXml).softwarelist ?? {},
+    ).getGames();
+    assert.ok(software !== undefined);
+
+    expect(software.getDisks()).toEqual([
+      new Disk({
+        name: 'two disc set (disc 1)',
+        sha1: '1111111111111111111111111111111111111111',
+      }),
+      new Disk({
+        name: 'two disc set (disc 2)',
+        sha1: '2222222222222222222222222222222222222222',
+      }),
     ]);
   });
 });
