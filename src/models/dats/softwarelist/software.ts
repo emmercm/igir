@@ -1,5 +1,6 @@
 import { Expose, Transform, Type } from 'class-transformer';
 
+import Disk from '../disk.js';
 import Game, { GameProps } from '../game.js';
 import ROM from '../rom.js';
 import Part from './part.js';
@@ -31,11 +32,17 @@ export default class Software extends Game {
       .flatMap((dataArea) => dataArea.getRoms());
   }
 
+  override getDisks(): Disk[] {
+    return this.getParts()
+      .flatMap((part) => part.getDiskAreas())
+      .flatMap((diskArea) => diskArea.getDisks());
+  }
+
   /**
    * Return a new {@link Game} with some different properties. Special care is needed to preserve
-   * this game's ROMs, as it does not populate {@link Game#roms}.
+   * this game's ROMs and disks, as it does not populate {@link Game#roms} or {@link Game#disks}.
    */
   override withProps(props: GameProps): Game {
-    return new Game({ ...this, roms: this.getRoms(), ...props });
+    return new Game({ ...this, roms: this.getRoms(), disks: this.getDisks(), ...props });
   }
 }
