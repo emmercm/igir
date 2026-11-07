@@ -9,6 +9,7 @@ import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type FileFactory from '../../factories/fileFactory.js';
 import { CacheMode } from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
+import type Archive from '../../models/files/archives/archive.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import ArchiveFile from '../../models/files/archives/archiveFile.js';
 import Zip from '../../models/files/archives/zip.js';
@@ -730,6 +731,15 @@ export default class CandidateWriter extends Module {
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
+        // An archive's entries are read while they're still cached at its old path, with the
+        // checksums this run asked for, so caching them at the new path doesn't hash it again
+        let archiveEntries: ArchiveEntry<Archive>[] | undefined;
+        if (inputRomFile instanceof ArchiveFile) {
+          archiveEntries = await this.fileFactory.entriesFromArchive(
+            inputRomFile.getArchive(),
+            inputRomFile.getArchiveEntry().getChecksumBitmask(),
+          );
+        }
         const moveResult = await FsUtil.mv(
           inputRomFile.getFilePath(),
           outputFilePath,
@@ -737,6 +747,17 @@ export default class CandidateWriter extends Module {
             progressBar.setCompleted(progress);
           },
         );
+        if (moveResult === MoveResult.RENAMED) {
+          await this.fileFactory.computeAndSetFileChecksums(
+            inputRomFile.withFilePath(outputFilePath),
+          );
+          if (inputRomFile instanceof ArchiveFile && archiveEntries !== undefined) {
+            await this.fileFactory.computeAndSetArchiveChecksums(
+              inputRomFile.getArchive().withFilePath(outputFilePath),
+              archiveEntries,
+            );
+          }
+        }
         return [moveResult, outputFilePath];
       } catch (error) {
         this.prefixedLogger.error(
