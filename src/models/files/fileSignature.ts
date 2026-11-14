@@ -16,7 +16,7 @@ type SignaturePiece = (
       // Dynamic values
       value?: never;
       length: number;
-      match: (buffer: Buffer) => boolean;
+      match: (buffer: Buffer, fileSize: number) => boolean;
     }
 ) & {
   offset?: number;
@@ -79,6 +79,68 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
 }
 
 /**
+ * Matches a PC Engine file made of a 512-byte copier header followed by 16 KiB blocks of ROM data.
+ * @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/pce.c
+ */
+const pcEngineCopierFileSizePiece: SignaturePiece = {
+  length: 0,
+  match: (_buffer, fileSize): boolean => {
+    return fileSize > 512 && fileSize % 0x40_00 === 512;
+  },
+};
+
+/**
+ * Matches a PC Engine ROM's reset vector after a 512-byte copier header.
+ * @see https://github.com/mamedev/mame/blob/master/src/devices/cpu/h6280/h6280.cpp
+ */
+const pcEngineResetVectorPiece: SignaturePiece = {
+  offset: 512 + 0x1f_ff,
+  length: 1,
+  match: (buffer): boolean => {
+    if (buffer.length < 512 + 0x1f_ff + 1) {
+      return false;
+    }
+    // The HuC6280 maps bank 0 to $E000-$FFFF on reset, so the reset vector's high byte is always
+    // $E0-$FF, which also rejects most bit-swapped (TurboGrafx-16) dumps
+    return buffer.readUInt8(512 + 0x1f_ff) >= 0xe0;
+  },
+};
+
+/**
+ * Matches a Sega Master System or Game Gear file made of a 512-byte copier header followed by
+ * 16 KiB blocks of ROM data.
+ * @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/sms.c
+ */
+const segaMasterSystemCopierFileSizePiece: SignaturePiece = {
+  length: 0,
+  match: (_buffer, fileSize): boolean => {
+    return fileSize > 512 && fileSize % 0x40_00 === 512;
+  },
+};
+
+/**
+ * Build the SignaturePieces that match a Sega Master System or Game Gear ROM's 32 KiB-offset
+ * internal header with one of the given region codes, accounting for an optional fixed-size ROM
+ * header prefix.
+ */
+function segaMasterSystemHeaderPieces(headerSize: number, regionCodes: number[]): SignaturePiece[] {
+  return [
+    { offset: headerSize + 0x7f_f0, value: Buffer.from('TMR SEGA') },
+    {
+      offset: headerSize + 0x7f_ff,
+      length: 1,
+      match: (buffer): boolean => {
+        if (buffer.length < headerSize + 0x7f_ff + 1) {
+          return false;
+        }
+        // Region code (upper nibble)
+        return regionCodes.includes(buffer.readUInt8(headerSize + 0x7f_ff) >> 4);
+      },
+    },
+  ];
+}
+
+/**
  * A known file signature (magic bytes) used to identify a file's format from its contents.
  */
 export default class FileSignature {
@@ -95,6 +157,12 @@ export default class FileSignature {
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#The_SNES_header
     // @see https://wiki.superfamicom.org/game-doctor
     SMC: new ROMHeader(512, '.sfc'),
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/msg.h
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/pce.c
+    PCE: new ROMHeader(512, '.pce'),
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/smd.h
+    SMD_GG: new ROMHeader(512, '.gg'),
+    SMD_SMS: new ROMHeader(512, '.sms'),
   } as const;
 
   // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -339,6 +407,44 @@ export default class FileSignature {
       { offset: 0x1_00_00, value: Buffer.from('MICROSOFT*XBOX*MEDIA') },
       { offset: 0x1_07_ec, value: Buffer.from('MICROSOFT*XBOX*MEDIA') },
     ]),
+
+    // NEC - PC Engine / TurboGrafx-16
+    // Magic Super Griffin, file type 2 (PC Engine program)
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/ffe.h
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/pce.c
+    pce_msg: new FileSignature(
+      '.msg',
+      [
+        {
+          offset: 1,
+          length: 1,
+          match: (buffer): boolean => {
+            if (buffer.length < 2) {
+              return false;
+            }
+            // Emulation mode, set only for 3 Mbit ROMs
+            const emulation = buffer.readUInt8(1);
+            return emulation === 0x00 || emulation === 0x01;
+          },
+        },
+        { offset: 2, value: Buffer.from('00'.repeat(6), 'hex') }, // reserved
+        { offset: 8, value: Buffer.from('AABB02', 'hex') },
+        { offset: 11, value: Buffer.from('00'.repeat(501), 'hex') }, // reserved
+        pcEngineCopierFileSizePiece,
+        pcEngineResetVectorPiece,
+      ],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.PCE,
+    ),
+    // Non-Magic Super Griffin generic header
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/pce.c
+    // @see https://github.com/mamedev/mame/blob/master/src/devices/bus/pce/pce_slot.cpp
+    pce: new FileSignature(
+      '.pce',
+      [pcEngineCopierFileSizePiece, pcEngineResetVectorPiece],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.PCE,
+    ),
 
     // Nintendo - Nintendo 3DS
     // @see https://www.3dbrew.org/wiki/CCI
@@ -643,7 +749,7 @@ export default class FileSignature {
     // Super Wild Card, file type 4 (SNES program)
     // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/ffe.h
     swc: new FileSignature(
-      '.smc',
+      '.swc',
       [
         { offset: 8, value: Buffer.from('AABB04', 'hex') },
         { offset: 11, value: Buffer.from('00'.repeat(501), 'hex') }, // reserved
@@ -816,37 +922,60 @@ export default class FileSignature {
 
     // Sega - Game Gear
     // @see https://www.smspower.org/Development/ROMHeader
-    gg: new FileSignature('.gg', [
-      { offset: 0x7f_f0, value: Buffer.from('TMR SEGA') },
-      {
-        offset: 0x7f_ff,
-        length: 1,
-        match: (buffer): boolean => {
-          if (buffer.length < 0x7f_ff + 1) {
-            return false;
-          }
-          // Region code (upper nibble): 5 = GG Japan, 6 = GG Export, 7 = GG International
-          return [0x5, 0x6, 0x7].includes(buffer.readUInt8(0x7f_ff) >> 4);
-        },
-      },
-    ]),
+    gg: new FileSignature(
+      '.gg',
+      segaMasterSystemHeaderPieces(0, [
+        0x5, // Game Gear Japan
+        0x6, // Game Gear Export
+        0x7, // Game Gear International
+      ]),
+    ),
+    // Super Magic Drive, file type 6 (program), file ID code 0 1 (SMS/GG)
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/ffe.h
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/sms.c
+    gg_smd: new FileSignature(
+      '.smd',
+      [
+        { offset: 1, value: Buffer.from('01', 'hex') }, // ID code 0
+        { offset: 2, value: Buffer.from('00'.repeat(6), 'hex') }, // split, reserved
+        { offset: 8, value: Buffer.from('AABB06', 'hex') },
+        { offset: 11, value: Buffer.from('00'.repeat(501), 'hex') }, // reserved
+        segaMasterSystemCopierFileSizePiece,
+        ...segaMasterSystemHeaderPieces(512, [
+          0x5, // Game Gear Japan
+          0x6, // Game Gear Export
+          0x7, // Game Gear International
+        ]),
+      ],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.SMD_GG,
+    ),
 
     // Sega - Master System
     // @see https://www.smspower.org/Development/ROMHeader
-    sms: new FileSignature('.sms', [
-      { offset: 0x7f_f0, value: Buffer.from('TMR SEGA') },
-      {
-        offset: 0x7f_ff,
-        length: 1,
-        match: (buffer): boolean => {
-          if (buffer.length < 0x7f_ff + 1) {
-            return false;
-          }
-          // Region code (upper nibble): 3 = SMS Japan, 4 = SMS Export
-          return [0x3, 0x4].includes(buffer.readUInt8(0x7f_ff) >> 4);
-        },
-      },
-    ]),
+    sms: new FileSignature(
+      '.sms',
+      segaMasterSystemHeaderPieces(0, [
+        0x3, // Master System Japan
+        0x4, // Master System Export
+      ]),
+    ),
+    // Super Magic Drive, file type 6 (program), file ID code 0 1 (SMS/GG)
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/ffe.h
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/sms.c
+    sms_smd: new FileSignature(
+      '.smd',
+      [
+        { offset: 1, value: Buffer.from('01', 'hex') }, // ID code 0
+        { offset: 2, value: Buffer.from('00'.repeat(6), 'hex') }, // split, reserved
+        { offset: 8, value: Buffer.from('AABB06', 'hex') },
+        { offset: 11, value: Buffer.from('00'.repeat(501), 'hex') }, // reserved
+        segaMasterSystemCopierFileSizePiece,
+        ...segaMasterSystemHeaderPieces(512, [0x3, 0x4]),
+      ],
+      CanBeTrimmed.NO,
+      FileSignature.ROM_HEADERS.SMD_SMS,
+    ),
 
     // Sega - Mega-CD / Sega CD
     // @see https://segaretro.org/images/a/a5/Mega-CD_Disc_Format_Specifications.pdf
@@ -892,6 +1021,27 @@ export default class FileSignature {
     smd_3: new FileSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('EAMG_RV') }]),
     smd_4: new FileSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('EAMGDIE') }]),
     smd_5: new FileSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('SG EEI  ') }]),
+    // Super Magic Drive, file type 6 (program), file ID code 0 3 (Mega Drive)
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/backup/ffe.h
+    // @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/genesis.c
+    md_smd: new FileSignature('.smd', [
+      { offset: 1, value: Buffer.from('03', 'hex') }, // ID code 0
+      {
+        offset: 2,
+        length: 1,
+        match: (buffer): boolean => {
+          if (buffer.length < 3) {
+            return false;
+          }
+          // Split flag, set on every part of a split ROM except the last
+          const split = buffer.readUInt8(2);
+          return split === 0x00 || split === 0x40;
+        },
+      },
+      { offset: 3, value: Buffer.from('00'.repeat(5), 'hex') }, // reserved
+      { offset: 8, value: Buffer.from('AABB06', 'hex') },
+      { offset: 11, value: Buffer.from('00'.repeat(501), 'hex') }, // reserved
+    ]),
 
     // Sega - PICO
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
@@ -1071,16 +1221,16 @@ export default class FileSignature {
   }
 
   /**
-   * Return the {@link FileSignature} matching a file's leading bytes, or undefined if no known
-   * signature matches.
+   * Return the {@link FileSignature} matching a file's leading bytes and total size, or undefined
+   * if no known signature matches.
    */
-  static signatureFromBuffer(fileHead: Buffer): FileSignature | undefined {
+  static signatureFromBuffer(fileHead: Buffer, fileSize: number): FileSignature | undefined {
     const fileHeader = fileHead.subarray(0, this.MAX_HEADER_LENGTH_BYTES);
 
     for (const romSignature of this.SIGNATURES) {
       const didSignatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
         if (signaturePiece.value === undefined) {
-          return signaturePiece.match(fileHeader);
+          return signaturePiece.match(fileHeader, fileSize);
         }
         const signatureValue = fileHeader.subarray(
           signaturePiece.offset ?? 0,
