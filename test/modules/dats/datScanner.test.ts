@@ -5,7 +5,6 @@ import which from 'which';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import { logger } from '../../../src/console/logger.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import Game from '../../../src/models/dats/game.js';
