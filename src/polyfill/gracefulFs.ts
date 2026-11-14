@@ -160,6 +160,7 @@ const retryQueue = new RetryQueue();
 type FsMethod = (...args: unknown[]) => unknown;
 type AsyncFsMethod = (...args: unknown[]) => Promise<unknown>;
 
+// eslint-disable-next-line unicorn/prefer-smaller-scope
 type FsResultCallback = (err: NodeJS.ErrnoException | null, ...args: unknown[]) => void;
 
 interface RetryOptions {

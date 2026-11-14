@@ -16,7 +16,6 @@ import PathUtil from './pathUtil.js';
 import StreamUtil from './streamUtil.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
-// eslint-disable-next-line unicorn/no-top-level-side-effects
 gracefulFs.gracefulify(fs);
 
 export const MoveResult = {
