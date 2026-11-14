@@ -5,10 +5,14 @@ import which from 'which';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
+import { logger } from '../../../src/console/logger.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
+import Temp from '../../../src/globals/temp.js';
+import Game from '../../../src/models/dats/game.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import PathUtil from '../../../src/utils/pathUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -175,9 +179,10 @@ describe('single files', () => {
         new MappableSemaphore(os.availableParallelism()),
       ).scan();
       expect(dats).toHaveLength(1);
-      const datFile = dats[0].getFile();
-      expect(datFile?.getFilePath()).toEqual(PathUtil.resolve(datPath));
-      expect(datFile?.getExtractedFilePath()).toEqual(expectedExtractedFilePath);
+      const datFile = dats.at(0)?.getFile();
+      assert.isDefined(datFile);
+      expect(datFile.getFilePath()).toEqual(PathUtil.resolve(datPath));
+      expect(datFile.getExtractedFilePath()).toEqual(expectedExtractedFilePath);
     },
   );
 
@@ -237,11 +242,88 @@ describe('single files', () => {
         new MappableSemaphore(os.availableParallelism()),
       ).scan();
       expect(dats).toHaveLength(1);
-      const dat = dats[0];
+      const dat = dats.at(0);
+      assert.isDefined(dat);
       expect(dat.getParents().length).toBeLessThanOrEqual(dat.getGames().length);
       expect(dat.getParents()).toHaveLength(expectedParents);
       expect(dat.getGames()).toHaveLength(expectedGames);
       expect(dat.getGames().flatMap((game) => game.getRoms())).toHaveLength(expectedRoms);
     },
   );
+});
+
+describe('missing parents', () => {
+  const datContents = `<?xml version="1.0"?>
+<datafile>
+  <header>
+    <name>Missing Parents</name>
+  </header>
+  <game name="Parent" id="0001" isbios="no" isdevice="no"></game>
+  <game name="Clone" id="0002" cloneofid="0001" isbios="no" isdevice="no"></game>
+  <game name="Orphan A" id="0003" cloneofid="9999"></game>
+  <game name="Orphan B" id="0004" cloneofid="9999"></game>
+  <game name="Orphan C" cloneofid="9999"></game>
+  <game name="Orphan D" cloneof="Missing"></game>
+  <game name="Orphan E" cloneof="Missing"></game>
+</datafile>
+`;
+
+  it('should elect the first clone of every group with a missing parent as its parent', async () => {
+    // Given
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    const datPath = path.join(tempDir, 'orphans.dat');
+    await FsUtil.writeFile(datPath, datContents);
+
+    try {
+      // When
+      const dats = await createDatScanner({ dat: [datPath] }).scan();
+
+      // Then the orphaned clones were re-pointed to their elected parents
+      expect(dats).toHaveLength(1);
+      const dat = dats.at(0);
+      assert.isDefined(dat);
+      expect(dat.getGames()).toEqual([
+        new Game({ name: 'Parent', id: '0001' }),
+        new Game({ name: 'Clone', id: '0002', cloneOfId: '0001' }),
+        new Game({ name: 'Orphan A', id: '0003' }),
+        new Game({ name: 'Orphan B', id: '0004', cloneOfId: '0003' }),
+        new Game({ name: 'Orphan C', cloneOfId: '0003' }),
+        new Game({ name: 'Orphan D' }),
+        new Game({ name: 'Orphan E', cloneOf: 'Orphan D' }),
+      ]);
+      expect(
+        dat
+          .getParents()
+          .map((parent) => [
+            parent.getName(),
+            parent.getGames().map((game) => [game.getName(), game.isParent()]),
+          ]),
+      ).toEqual([
+        [
+          'Parent',
+          [
+            ['Parent', true],
+            ['Clone', false],
+          ],
+        ],
+        [
+          'Orphan A',
+          [
+            ['Orphan A', true],
+            ['Orphan B', false],
+            ['Orphan C', false],
+          ],
+        ],
+        [
+          'Orphan D',
+          [
+            ['Orphan D', true],
+            ['Orphan E', false],
+          ],
+        ],
+      ]);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
