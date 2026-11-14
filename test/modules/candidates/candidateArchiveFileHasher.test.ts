@@ -46,7 +46,7 @@ describe('hash', () => {
     const result = await buildHasher(options).hash(dat, candidates);
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toBe(candidates[0]);
+    expect(result.at(0)).toBe(candidates.at(0));
   });
 
   it('should return an empty array for an empty candidates list', async () => {
@@ -114,6 +114,6 @@ describe('hash', () => {
 
     const result = await buildHasher(options).hash(dat, candidates);
     expect(result).toHaveLength(1);
-    expect(result[0].getRomsWithFiles()[0].getInputFile()).toBe(inputFile);
+    expect(result.at(0)?.getRomsWithFiles().at(0)?.getInputFile()).toBe(inputFile);
   });
 });

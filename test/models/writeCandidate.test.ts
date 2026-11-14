@@ -87,7 +87,7 @@ describe('withRomsWithFiles', () => {
     const updated = original.withRomsWithFiles(newRomsWithFiles);
     expect(updated).not.toBe(original);
     expect(updated.getRomsWithFiles()).toHaveLength(1);
-    expect(updated.getRomsWithFiles()[0].getRom()).toEqual(rom2);
+    expect(updated.getRomsWithFiles().at(0)?.getRom()).toEqual(rom2);
   });
 });
 

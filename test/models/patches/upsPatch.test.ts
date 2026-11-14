@@ -23,11 +23,11 @@ const LARGE_TARGET = ((): Buffer => {
   const target = Buffer.alloc(LARGE_TARGET_SIZE);
   LARGE_SOURCE.copy(target);
   for (const [idx, xorByte] of LARGE_FIRST_BLOCK.entries()) {
-    target[idx] ^= xorByte;
+    target.writeUInt8(target.readUInt8(idx) ^ xorByte, idx);
   }
   const secondBlockOffset = LARGE_FIRST_BLOCK.length + 1 + LARGE_SECOND_BLOCK_GAP;
   for (const [idx, xorByte] of LARGE_SECOND_BLOCK.entries()) {
-    target[secondBlockOffset + idx] ^= xorByte;
+    target.writeUInt8(target.readUInt8(secondBlockOffset + idx) ^ xorByte, secondBlockOffset + idx);
   }
   return target;
 })();

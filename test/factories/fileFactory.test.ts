@@ -148,7 +148,10 @@ describe('filesFrom', () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(contentSummaries(archiveEntries).map((file) => file.isArchiveEntry)).toEqual(
         Array.from(
-          { length: ROM_ARCHIVE_ENTRY_COUNTS.get(path.basename(filePath).split('.', 1)[0]) ?? 1 },
+          {
+            length:
+              ROM_ARCHIVE_ENTRY_COUNTS.get(path.basename(filePath).split('.', 1).at(0) ?? '') ?? 1,
+          },
           () => true,
         ),
       );
@@ -212,7 +215,9 @@ describe('filesFrom', () => {
     'should read numbered parts of a %s file as one joined file',
     async (extension) => {
       // Any set of numbered parts will do, as long as its extension is replaced
-      const [{ parts, joinedPath }] = SPLIT_ARCHIVES;
+      const [firstSplitArchive] = SPLIT_ARCHIVES;
+      assert.isDefined(firstSplitArchive);
+      const { parts, joinedPath } = firstSplitArchive;
       await withTempDir(async (tempDir) => {
         const copies = await Promise.all(
           parts.map(async (part) => {
@@ -221,7 +226,9 @@ describe('filesFrom', () => {
             return copy;
           }),
         );
-        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(copies[0]);
+        const [firstCopy] = copies;
+        assert.isDefined(firstCopy);
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(firstCopy);
         expect(entrySummaries(archiveEntries)).toEqual([
           {
             archiveClass: Split,

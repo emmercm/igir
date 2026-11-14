@@ -149,7 +149,7 @@ describe('getROMHeader', () => {
         },
       ),
     );
-    expect(results.toSorted((a, b) => a[0].localeCompare(b[0]))).toEqual([
+    expect(results.toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey))).toEqual([
       ['allpads.nes', 'nes_2', FileSignature.romHeaderFromFilename('rom.nes')],
       [
         'color_test.nintendoentertainmentsystem',
