@@ -56,7 +56,7 @@ export default class DATDiscMerger extends Module {
 
     return [...gameNamesToGames].flatMap(([gameName, games]) => {
       if (games.length === 1) {
-        return games[0];
+        return games;
       }
 
       const roms = games.flatMap((game) => game.getRoms());

@@ -175,7 +175,7 @@ export default class MovedROMDeleter extends Module {
     // For each moved input path
     return [...groupedMovedRoms]
       .map(([filePath, movedEntries]) => {
-        if (movedEntries.length === 1 && !(movedEntries[0] instanceof ArchiveEntry)) {
+        if (movedEntries.length === 1 && !(movedEntries.at(0) instanceof ArchiveEntry)) {
           // The input file is either a plain File or an ArchiveFile; either way, it was fully moved
           return filePath;
         }

@@ -272,10 +272,15 @@ export default class DATGameInferrer extends Module {
       (file) => `${file.getFilePath()}|${file.getArchive().constructor.name}`,
     );
 
-    const results = Array.from(archivePathsToArchiveEntries.values(), (archiveEntries) => {
-      const gameName = DATGameInferrer.getGameName(archiveEntries[0]);
-      return [gameName, archiveEntries] satisfies [string, ArchiveEntry<Archive>[]];
-    });
+    const results = [...archivePathsToArchiveEntries.values()].flatMap(
+      (archiveEntries): [string, ArchiveEntry<Archive>[]][] => {
+        const [firstArchiveEntry] = archiveEntries;
+        if (firstArchiveEntry === undefined) {
+          return [];
+        }
+        return [[DATGameInferrer.getGameName(firstArchiveEntry), archiveEntries]];
+      },
+    );
 
     this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(results.length)} games from archives`,
@@ -359,7 +364,8 @@ export default class DATGameInferrer extends Module {
               .trim()
               .split(/\r?\n/)
               .slice(1)
-              .map((line) => line.split(' ', 5)[4]);
+              .map((line) => line.split(' ', 5).at(4))
+              .filter((trackFilePath) => trackFilePath !== undefined);
             const trackFiles = trackFilePaths
               .map((trackFilePath) => path.join(path.dirname(gdiFile.getFilePath()), trackFilePath))
               .map((trackFilePath) => rawFilePathsToFiles.get(trackFilePath))

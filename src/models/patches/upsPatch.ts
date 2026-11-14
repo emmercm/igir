@@ -149,7 +149,7 @@ export default class UPSPatch extends Patch {
       // 0x00
       const sourceData = await targetIOFile.peekNext(xorData.length);
       for (const [i, sourceDatum] of sourceData.entries()) {
-        xorData[i] ^= sourceDatum;
+        xorData[i] = (xorData.at(i) ?? 0x00) ^ sourceDatum;
       }
       await targetIOFile.write(xorData);
 

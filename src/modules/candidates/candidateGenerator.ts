@@ -76,9 +76,10 @@ export default class CandidateGenerator extends Module {
         let gameCandidates: WriteCandidate[] = [];
         try {
           gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
-          if (gameCandidates.length > 0) {
+          const [firstGameCandidate] = gameCandidates;
+          if (firstGameCandidate !== undefined) {
             this.prefixedLogger.trace(
-              `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
+              `${dat.getName()}: ${game.getName()}: found candidate: ${firstGameCandidate
                 .getRomsWithFiles()
                 .map((rwf) => rwf.getInputFile().toString())
                 .reduce(ArrayUtil.reduceUnique(), [])
@@ -314,18 +315,18 @@ export default class CandidateGenerator extends Module {
         // Resolve the disks that were held back above on their own, trusting that ROMIndexer
         // applied any preferences we wanted
         ...romsAndInputFiles
-          .filter(([rom, inputFiles]) => rom instanceof Disk && inputFiles.length > 0)
-          .map(([rom, inputFiles]): [ROM, File] => [rom, inputFiles[0]]),
+          .filter(([rom]) => rom instanceof Disk)
+          .flatMap(([rom, [firstInputFile]]): [ROM, File][] =>
+            firstInputFile === undefined ? [] : [[rom, firstInputFile]],
+          ),
       ]);
     }
 
     return new Map(
-      romsAndInputFiles
-        .filter(([, inputFiles]) => inputFiles.length > 0)
-        .map(([rom, inputFiles]) => {
-          // Trust that ROMIndexer applied any preferences we wanted
-          return [rom, inputFiles[0]];
-        }),
+      // Trust that ROMIndexer applied any preferences we wanted
+      romsAndInputFiles.flatMap(([rom, [firstInputFile]]): [ROM, File][] =>
+        firstInputFile === undefined ? [] : [[rom, firstInputFile]],
+      ),
     );
   }
 
@@ -343,10 +344,10 @@ export default class CandidateGenerator extends Module {
     // instance, so it survives any earlier reinstantiation
     const entryKey = (rom: ROM): string => `${rom.getName()}|${rom.hashCode()}`;
     const entriesByKey = new Map<string, [ROM, File[]]>(
-      romsAndInputFiles.map((romAndInputFiles) => [
-        entryKey(romAndInputFiles[0]),
-        romAndInputFiles,
-      ]),
+      romsAndInputFiles.map((romAndInputFiles): [string, [ROM, File[]]] => {
+        const [rom] = romAndInputFiles;
+        return [entryKey(rom), romAndInputFiles];
+      }),
     );
 
     // Resolve each sub-game's single containing archive, keyed by entryKey
@@ -844,8 +845,12 @@ export default class CandidateGenerator extends Module {
       // Every input file has to be coming from the same archive
       return 'input files are coming from different archives';
     }
+    const [firstNonDiskRomWithFiles] = nonDiskRomsWithFiles;
+    if (firstNonDiskRomWithFiles === undefined) {
+      return undefined;
+    }
     const inputArchive = (
-      nonDiskRomsWithFiles[0].getInputFile() as ArchiveEntry<Archive>
+      firstNonDiskRomWithFiles.getInputFile() as ArchiveEntry<Archive>
     ).getArchive();
 
     // If we're allowed to re-zip archives, check if the zip file is a valid structured archive or not
@@ -1025,6 +1030,9 @@ export default class CandidateGenerator extends Module {
       const [firstRomWithFiles, ...otherRomsWithFiles] = romsWithFiles.filter(
         (romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput,
       );
+      if (firstRomWithFiles === undefined) {
+        continue;
+      }
       const conflictedRomsWithFiles = otherRomsWithFiles.filter(
         (romWithFiles) => !romWithFiles.writesSameOutputAs(firstRomWithFiles),
       );
@@ -1138,7 +1146,7 @@ export default class CandidateGenerator extends Module {
 
     if (
       inputArchives.length === 1 &&
-      inputArchives[0] instanceof ChdBinCue &&
+      inputArchives.at(0) instanceof ChdBinCue &&
       CandidateGenerator.onlyCueFilesMissingFromChd(
         game,
         romsWithFiles.map((romWithFiles) => romWithFiles.getRom()),
@@ -1250,8 +1258,8 @@ export default class CandidateGenerator extends Module {
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
-    if (inputFile.getPaddings().length === 1) {
-      const desiredPadding = inputFile.getPaddings()[0];
+    const [desiredPadding, ...otherPaddings] = inputFile.getPaddings();
+    if (desiredPadding !== undefined && otherPaddings.length === 0) {
       outputFileCrc32 = desiredPadding.getCrc32();
       outputFileMd5 = desiredPadding.getMd5();
       outputFileSha1 = desiredPadding.getSha1();

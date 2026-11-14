@@ -181,16 +181,18 @@ export default class CandidateWriter extends Module {
     const inputToOutputZipEntries = candidate
       .getRomsWithFiles()
       .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry)
-      .map((romWithFiles) => [
+      .map((romWithFiles): [File, ArchiveEntry<Zip>] => [
         romWithFiles.getInputFile(),
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
-      ]) satisfies [File, ArchiveEntry<Zip>][];
-    if (inputToOutputZipEntries.length === 0) {
+      ]);
+    const [firstInputToOutputZipEntry] = inputToOutputZipEntries;
+    if (firstInputToOutputZipEntry === undefined) {
       return;
     }
 
     // Prep the single output file
-    const outputZip = inputToOutputZipEntries[0][1].getArchive() as Zip;
+    const [, firstOutputZipEntry] = firstInputToOutputZipEntry;
+    const outputZip = firstOutputZipEntry.getArchive() as Zip;
 
     const childBar = this.progressBar.addChildBar({
       name: outputZip.getFilePath(),
@@ -283,7 +285,7 @@ export default class CandidateWriter extends Module {
           dat,
           candidate,
           outputZip.getFilePath(),
-          inputToOutputZipEntries.map((entry) => entry[1]),
+          inputToOutputZipEntries.map(([, outputZipEntry]) => outputZipEntry),
           childBar,
         );
         if (!writtenTest) {
@@ -506,16 +508,20 @@ export default class CandidateWriter extends Module {
     const inputToOutputEntries = candidate
       .getRomsWithFiles()
       .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry))
-      .map((romWithFiles) => [romWithFiles.getInputFile(), romWithFiles.getOutputFile()]);
+      .map((romWithFiles): [File, File] => [
+        romWithFiles.getInputFile(),
+        romWithFiles.getOutputFile(),
+      ]);
 
     // Return no files if there are none to write
     if (inputToOutputEntries.length === 0) {
       return;
     }
 
-    const totalBytes = inputToOutputEntries
-      .flatMap(([, outputFile]) => outputFile)
-      .reduce((sum, file) => sum + file.getSize(), 0);
+    const totalBytes = inputToOutputEntries.reduce(
+      (sum, [, outputFile]) => sum + outputFile.getSize(),
+      0,
+    );
     this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldMove() ? 'moving' : 'copying'} ${FsUtil.sizeReadable(totalBytes)} of ${IntlUtil.toLocaleString(inputToOutputEntries.length)} ${inputToOutputEntries.some(([input]) => input instanceof ArchiveFile) ? 'archive' : 'raw'} file${inputToOutputEntries.length === 1 ? '' : 's'}`,
     );

@@ -110,19 +110,19 @@ export default class CMProParser {
   }
 
   private skipWhitespace(): void {
-    while (CMProParser.WHITESPACE_CHARS.has(this.contents.charAt(this.pos))) {
+    while (CMProParser.WHITESPACE_CHARS.has(this.contents.at(this.pos) ?? '')) {
       this.pos += 1;
     }
   }
 
   private parseObject(): CMProObject {
-    if (this.contents.charAt(this.pos) === '(') {
+    if (this.contents.at(this.pos) === '(') {
       this.pos += 1;
     }
     this.skipWhitespace();
 
     const result: CMProObject = {};
-    while (this.contents.charAt(this.pos) !== ')') {
+    while (this.contents.at(this.pos) !== ')') {
       const tag = this.parseTag();
       const value = this.parseValue();
 
@@ -147,7 +147,7 @@ export default class CMProParser {
     this.skipWhitespace();
 
     const initialPos = this.pos;
-    while (!CMProParser.WHITESPACE_CHARS.has(this.contents.charAt(this.pos))) {
+    while (!CMProParser.WHITESPACE_CHARS.has(this.contents.at(this.pos) ?? '')) {
       this.pos += 1;
     }
 
@@ -158,13 +158,13 @@ export default class CMProParser {
     this.skipWhitespace();
 
     // Parse object
-    if (this.contents.charAt(this.pos) === '(') {
+    if (this.contents.at(this.pos) === '(') {
       this.pos += 1;
       return this.parseObject();
     }
 
     // Parse quoted string
-    if (this.contents.charAt(this.pos) === '"') {
+    if (this.contents.at(this.pos) === '"') {
       return this.parseQuotedString();
     }
 
@@ -173,7 +173,7 @@ export default class CMProParser {
   }
 
   private parseQuotedString(): string {
-    if (this.contents.charAt(this.pos) !== '"') {
+    if (this.contents.at(this.pos) !== '"') {
       throw new IgirException('invalid quoted string');
     }
     this.pos += 1;
@@ -181,14 +181,14 @@ export default class CMProParser {
     const initialPos = this.pos;
     while (this.pos < this.contents.length) {
       // String termination, return the value
-      if (this.contents.charAt(this.pos) === '"') {
+      if (this.contents.at(this.pos) === '"') {
         const value = this.contents.slice(initialPos, this.pos);
         this.pos += 1;
         return value;
       }
 
       // Quoted character, skip it
-      if (this.contents.charAt(this.pos) === '\\') {
+      if (this.contents.at(this.pos) === '\\') {
         this.pos += 2;
       } else {
         this.pos += 1;
@@ -200,7 +200,7 @@ export default class CMProParser {
 
   private parseUnquotedString(): string {
     const initialPos = this.pos;
-    while (!CMProParser.WHITESPACE_CHARS.has(this.contents.charAt(this.pos))) {
+    while (!CMProParser.WHITESPACE_CHARS.has(this.contents.at(this.pos) ?? '')) {
       this.pos += 1;
     }
     return this.contents.slice(initialPos, this.pos);
