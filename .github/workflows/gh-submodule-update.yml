@@ -5,7 +5,6 @@
 name: GitHub Submodule Update
 
 on:
-  push:
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
@@ -353,3 +352,57 @@ jobs:
             echo "${body}"
             echo "${delimiter}"
           } >> "${GITHUB_OUTPUT}"
+
+      # Commit the new submodule pointer on top of the submodule's branch (never force-pushed, so fix
+      #   commits are kept), and open or update its auto-merging pull request
+      - if: ${{ steps.plan.outputs.tag != '' }}
+        env:
+          BRANCH: ${{ steps.plan.outputs.branch }}
+          BRANCH_HEAD: ${{ steps.plan.outputs.branch_head }}
+          PUSH: ${{ steps.plan.outputs.push }}
+          COMMIT: ${{ steps.plan.outputs.commit }}
+          TITLE: ${{ steps.plan.outputs.title }}
+          BODY: ${{ steps.plan.outputs.body }}
+          SUBMODULE_PATH: ${{ matrix.path }}
+          OWNER: ${{ github.repository_owner }}
+          OWNER_ID: ${{ github.repository_owner_id }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Annotate any unexpected failure with the command that failed
+          trap 'echo "::error::Failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
+
+          # Commit and push the new submodule pointer, unless the branch already has it
+          if [[ "${PUSH}" == "true" ]]; then
+            # Continue the existing branch, which the plan step already fetched, or start a new one
+            #   from main
+            git switch --create "${BRANCH}" "${BRANCH_HEAD:-HEAD}"
+
+            # Point the submodule at the new commit without checking it out
+            git update-index --cacheinfo "160000,${COMMIT},${SUBMODULE_PATH}"
+
+            # Commit as the repo owner, and push without force so no commits are lost
+            owner_name="$(gh api "/users/${OWNER}" --jq '.name // .login')"
+            git config user.name "${owner_name}"
+            git config user.email "${OWNER_ID}+${OWNER}@users.noreply.github.com"
+            git commit --message "${TITLE}"
+            git push origin "HEAD:refs/heads/${BRANCH}"
+          fi
+
+          # Update the open pull request, or open one if there isn't one
+          pr_url="$(gh pr list --head "${BRANCH}" --state open --json url --jq '.[0].url // empty')"
+          if [[ -n "${pr_url}" ]]; then
+            # Only retitle after pushing a new target, so a manual title isn't overwritten every day
+            if [[ "${PUSH}" == "true" ]]; then
+              gh pr edit "${pr_url}" --title "${TITLE}" --body "${BODY}"
+            fi
+          else
+            pr_url="$(gh pr create --base main --head "${BRANCH}" --title "${TITLE}" --body "${BODY}")"
+          fi
+
+          # Merge once the required checks pass
+          gh pr merge "${pr_url}" --squash --auto
+
+          # Link the pull request in the run summary
+          echo "- Pull request: ${pr_url}" >> "${GITHUB_STEP_SUMMARY}"
