@@ -6,6 +6,7 @@ import path from 'node:path';
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import micromatch from 'micromatch';
+import { Memoize } from 'typescript-memoize';
 
 import { LogLevel, LogLevelValue } from '../console/logLevel.js';
 import IgirException from '../exceptions/igirException.js';
@@ -715,6 +716,7 @@ export default class Options implements OptionsProps {
 
   // Commands
 
+  @Memoize()
   getCommands(): Set<string> {
     return new Set(this.commands.map((c) => c.toLowerCase()));
   }
