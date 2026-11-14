@@ -11,6 +11,7 @@ const BPSAction = {
   SOURCE_COPY: 2,
   TARGET_COPY: 3,
 } as const;
+// eslint-disable-next-line unicorn/prefer-smaller-scope
 type BPSActionValue = (typeof BPSAction)[keyof typeof BPSAction];
 
 /**

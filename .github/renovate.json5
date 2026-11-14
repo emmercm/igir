@@ -46,7 +46,7 @@
   packageRules: [
     // Update engine versions at any time
     {
-      matchPackageNames: ['node'],
+      matchPackageNames: ['node', '@types/node'],
       groupName: 'Node.js',
       // Keep Node.js on the 'current' major version (as opposed to LTS)
       allowedVersions: '/^v?\\d*[02468]\\./',

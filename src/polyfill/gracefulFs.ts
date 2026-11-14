@@ -160,6 +160,7 @@ const retryQueue = new RetryQueue();
 type FsMethod = (...args: unknown[]) => unknown;
 type AsyncFsMethod = (...args: unknown[]) => Promise<unknown>;
 
+// eslint-disable-next-line unicorn/prefer-smaller-scope
 type FsResultCallback = (err: NodeJS.ErrnoException | null, ...args: unknown[]) => void;
 
 interface RetryOptions {
@@ -414,7 +415,6 @@ export default {
     ) as typeof fs.promises.lchmod;
 
     fsToPatch.stat = wrapCallbackMethod(fsToPatch.stat as FsMethod) as typeof fs.stat;
-    // @ts-expect-error Reassigning a const
     fsToPatch.statSync = wrapSyncMethod(fsToPatch.statSync as FsMethod) as typeof fs.statSync;
     fsToPatch.promises.stat = wrapPromiseMethod(
       fsToPatch.promises.stat as AsyncFsMethod,
@@ -424,7 +424,6 @@ export default {
     fsToPatch.fstatSync = wrapSyncMethod(fsToPatch.fstatSync as FsMethod) as typeof fs.fstatSync;
 
     fsToPatch.lstat = wrapCallbackMethod(fsToPatch.lstat as FsMethod) as typeof fs.lstat;
-    // @ts-expect-error Reassigning a const
     fsToPatch.lstatSync = wrapSyncMethod(fsToPatch.lstatSync as FsMethod) as typeof fs.lstatSync;
     fsToPatch.promises.lstat = wrapPromiseMethod(
       fsToPatch.promises.lstat as AsyncFsMethod,

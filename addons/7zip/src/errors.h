@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "Common/MyWindows.h"
 
@@ -38,6 +39,6 @@ std::string FindEntryErrorMessage(HRESULT hr, const std::string& entryPath);
  * Converts a non-kOK extraction result into an actionable clause distinguishing
  * unsupported codecs, corruption, truncation, and encryption for appending to a failure message.
  */
-std::string OperationResultMessage(int32_t opResult);
+std::string_view OperationResultMessage(int32_t opResult);
 
 }  // namespace sevenzip
