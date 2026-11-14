@@ -670,10 +670,9 @@ interface OldCdTrack {
 }
 
 // The tracks of CRAFTED_CD_BASE: CD_TRACK_MODE1 and CD_TRACK_AUDIO
-const CRAFTED_CD_TRACKS: OldCdTrack[] = [
-  { trackType: 0, dataSize: 2048, frames: 30 },
-  { trackType: 7, dataSize: 2352, frames: 30 },
-];
+const CRAFTED_FIRST_CD_TRACK: OldCdTrack = { trackType: 0, dataSize: 2048, frames: 30 };
+const CRAFTED_SECOND_CD_TRACK: OldCdTrack = { trackType: 7, dataSize: 2352, frames: 30 };
+const CRAFTED_CD_TRACKS: OldCdTrack[] = [CRAFTED_FIRST_CD_TRACK, CRAFTED_SECOND_CD_TRACK];
 
 /**
  * Old-style CD-ROM metadata is a track count, then 99 tracks of six little-endian words each: the
@@ -744,7 +743,7 @@ const MALFORMED_CD_METADATA: { description: string; entries: CraftedMetadata[]; 
           tag: 'CHCD',
           data: encodeOldCdMetadata(2, [
             { trackType: 0, dataSize: 0, frames: 0xff_ff_ff_ff },
-            CRAFTED_CD_TRACKS[1],
+            CRAFTED_SECOND_CD_TRACK,
           ]),
         },
       ],
@@ -757,7 +756,7 @@ const MALFORMED_CD_METADATA: { description: string; entries: CraftedMetadata[]; 
           tag: 'CHCD',
           data: encodeOldCdMetadata(2, [
             { trackType: 0, dataSize: 4096, frames: 30 },
-            CRAFTED_CD_TRACKS[1],
+            CRAFTED_SECOND_CD_TRACK,
           ]),
         },
       ],

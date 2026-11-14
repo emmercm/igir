@@ -42,7 +42,7 @@ export default class RangeDecoder {
     this.end = end;
     this.position = start + 1;
     for (let i = 0; i < 4; i += 1) {
-      this.code = ((this.code << 8) | input[this.position]) >>> 0;
+      this.code = ((this.code << 8) | input.readUInt8(this.position)) >>> 0;
       this.position += 1;
     }
   }
@@ -56,7 +56,7 @@ export default class RangeDecoder {
       throw new Error('LZMA data is corrupt: the chunk ended before its data did');
     }
     this.range = (this.range << 8) >>> 0;
-    this.code = ((this.code << 8) | this.input[this.position]) >>> 0;
+    this.code = ((this.code << 8) | (this.input[this.position] ?? 0)) >>> 0;
     this.position += 1;
   }
 
@@ -65,7 +65,7 @@ export default class RangeDecoder {
    */
   decodeBit(probabilities: Uint16Array, index: number): number {
     this.normalize();
-    const probability = probabilities[index];
+    const probability = probabilities[index] ?? 0;
     const bound = (this.range >>> BIT_MODEL_TOTAL_BITS) * probability;
     if (this.code < bound) {
       this.range = bound;

@@ -77,7 +77,7 @@ for (const vulnerability of Object.values(auditReport.vulnerabilities)) {
     }
 
     for (const advisory of advisories) {
-      result[advisory.severity][key] = advisory.url;
+      (result[advisory.severity] ??= {})[key] = advisory.url;
       const symbol = severitySymbols[advisory.severity] ?? '';
       process.stderr.write(`${key} ... ${advisory.severity} ${symbol}\n`);
     }

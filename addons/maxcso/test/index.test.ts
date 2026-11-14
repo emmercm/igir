@@ -540,7 +540,7 @@ const DECODE_CORRUPTIONS: Corruption[] = [
     mutate: (bytes): Buffer => {
       const copy = Buffer.from(bytes);
       const last = copy.readUInt32LE(32) + copy.readUInt16LE(32 + 76 * 4) - 1;
-      copy[last] ^= 0xff;
+      copy.writeUInt8(copy.readUInt8(last) ^ 0xff, last);
       return copy;
     },
     error: 'block 0 failed to decompress (zlib)',
@@ -1148,13 +1148,13 @@ describe('openReader', () => {
 
   it('should serve more concurrent readers than the libuv threadpool has threads', async () => {
     const outputs = await Promise.all(
-      Array.from(
-        { length: 32 },
-        async (_, i) =>
-          await BufferUtil.fromReadable(
-            maxcso.openReader({ inputFilename: ALL_FIXTURES[i % ALL_FIXTURES.length].archivePath }),
-          ),
-      ),
+      Array.from({ length: 32 }, async (_, i) => {
+        const fixture = ALL_FIXTURES.at(i % ALL_FIXTURES.length);
+        assert.isDefined(fixture);
+        return await BufferUtil.fromReadable(
+          maxcso.openReader({ inputFilename: fixture.archivePath }),
+        );
+      }),
     );
     for (const output of outputs) {
       expect(firstMismatch(output, PAYLOAD)).toEqual(-1);

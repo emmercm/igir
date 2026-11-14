@@ -74,7 +74,7 @@ describe('decode', () => {
     // distantMatch.xz is one LZMA chunk with a match 8 KiB back, which a 4 KiB dictionary can't
     // reach
     const xz = await fs.promises.readFile(path.join(dirname, 'fixtures', 'distantMatch.xz'));
-    const chunkOffset = 12 + (xz[12] + 1) * 4;
+    const chunkOffset = 12 + (xz.readUInt8(12) + 1) * 4;
     const chunkEnd = chunkOffset + 6 + xz.readUInt16BE(chunkOffset + 3) + 1;
     const output = Buffer.alloc(FIXTURES['distantMatch.xz'].input().length);
     expect(() => {

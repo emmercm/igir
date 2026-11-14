@@ -85,7 +85,11 @@ const flaggedDependencies = Object.entries(packageJson)
             .stdout.toString(),
         ) as PackageJson;
 
-        const publishDate = new Date(depPackageJson.time[depPackageJson.version]);
+        const publishTime = depPackageJson.time[depPackageJson.version];
+        if (publishTime === undefined) {
+          throw new Error(`${depPackageName}@${depPackageVersion} has no publish time`);
+        }
+        const publishDate = new Date(publishTime);
         const age = formatAge(publishDate);
 
         if (depPackageJson.deprecated !== undefined) {

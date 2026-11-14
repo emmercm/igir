@@ -79,8 +79,8 @@ async function copyfiles(
                 magic === 0xcf_fa_ed_fe || // Mach-O 64-bit, byte-swapped
                 magic === 0xca_fe_ba_be || // Mach-O universal
                 magic === 0xca_fe_ba_bf || // Mach-O universal, 64-bit
-                (buffer[0] === 0x4d && buffer[1] === 0x5a) || // PE / DOS "MZ"
-                (buffer[0] === 0x23 && buffer[1] === 0x21); // script shebang "#!"
+                (buffer.at(0) === 0x4d && buffer.at(1) === 0x5a) || // PE / DOS "MZ"
+                (buffer.at(0) === 0x23 && buffer.at(1) === 0x21); // script shebang "#!"
               return isExecutable ? inputFile : undefined;
             } finally {
               await handle.close();
