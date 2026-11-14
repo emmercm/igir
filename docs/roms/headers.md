@@ -14,7 +14,7 @@ Igir can detect headers for the following consoles and file extensions:
 | Atari Lynx                     | LNX           | `.lnx`    |
 | Nintendo - NES                 | iNES, NES 2.0 | `.nes`    |
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`    |
-| Nintendo - SNES                | SMC           | `.smc`    |
+| Nintendo - SNES                | SMC, SWC      | `.smc`    |
 
 Those file extensions above are the commonly accepted "correct" extensions, and Igir will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
 
@@ -38,7 +38,7 @@ Some emulators cannot parse ROMs with headers and instead need a "headerless" ve
 | Atari Lynx                     | LNX           | `.lnx`                 | `.lyx`                   |
 | Nintendo - NES                 | iNES, NES 2.0 | `.nes`                 | (no change)              |
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | (no change)              |
-| Nintendo - SNES                | SMC           | `.smc`                 | `.sfc`                   |
+| Nintendo - SNES                | SMC, SWC      | `.smc`                 | `.sfc`                   |
 
 For every console that Igir can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "headerless" extensions, so you have to specify the extensions like this:
 
