@@ -8,13 +8,18 @@ Some of these headers are used to tell the emulator information about how to emu
 
 Igir can detect headers for the following consoles and file extensions:
 
-| Console                        | Header        | Extension |
-|--------------------------------|---------------|-----------|
-| Atari 7800                     | A78           | `.a78`    |
-| Atari Lynx                     | LNX           | `.lnx`    |
-| Nintendo - NES                 | iNES, NES 2.0 | `.nes`    |
-| Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`    |
-| Nintendo - SNES                | SMC, SWC      | `.smc`    |
+| Console                        | Header                | Extension |
+|--------------------------------|-----------------------|-----------|
+| Atari 7800                     | A78                   | `.a78`    |
+| Atari Lynx                     | LNX                   | `.lnx`    |
+| NEC - PC Engine                | Generic copier header | `.pce`    |
+| NEC - PC Engine                | Magic Super Griffin   | `.msg`    |
+| Nintendo - NES                 | iNES, NES 2.0         | `.nes`    |
+| Nintendo - Famicom Disk System | fsNES/FDS             | `.fds`    |
+| Nintendo - SNES                | SMC                   | `.smc`    |
+| Nintendo - SNES                | Super Wild Card       | `.swc`    |
+| Sega - Game Gear               | Super Magic Drive     | `.smd`    |
+| Sega - Master System           | Super Magic Drive     | `.smd`    |
 
 Those file extensions above are the commonly accepted "correct" extensions, and Igir will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
 
@@ -32,13 +37,18 @@ Igir will use this detected header information to compute both "headered" and "h
 
 Some emulators cannot parse ROMs with headers and instead need a "headerless" version. This seems most common with SNES. Sometimes "headerless" files will have a different file extension:
 
-| Console                        | Header        | Headered<br/>Extension | Headerless<br/>Extension |
-|--------------------------------|---------------|------------------------|--------------------------|
-| Atari 7800                     | A78           | `.a78`                 | (no change)              |
-| Atari Lynx                     | LNX           | `.lnx`                 | `.lyx`                   |
-| Nintendo - NES                 | iNES, NES 2.0 | `.nes`                 | (no change)              |
-| Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | (no change)              |
-| Nintendo - SNES                | SMC, SWC      | `.smc`                 | `.sfc`                   |
+| Console                        | Header                | Headered<br/>Extension | Headerless<br/>Extension |
+|--------------------------------|-----------------------|------------------------|--------------------------|
+| Atari 7800                     | A78                   | `.a78`                 | (no change)              |
+| Atari Lynx                     | LNX                   | `.lnx`                 | `.lyx`                   |
+| NEC - PC Engine                | Generic copier header | `.pce`                 | (no change)              |
+| NEC - PC Engine                | Magic Super Griffin   | `.msg`                 | `.pce`                   |
+| Nintendo - NES                 | iNES, NES 2.0         | `.nes`                 | (no change)              |
+| Nintendo - Famicom Disk System | fsNES/FDS             | `.fds`                 | (no change)              |
+| Nintendo - SNES                | SMC                   | `.smc`                 | `.sfc`                   |
+| Nintendo - SNES                | Super Wild Card       | `.swc`                 | `.sfc`                   |
+| Sega - Game Gear               | Super Magic Drive     | `.smd`                 | `.gg`                    |
+| Sega - Master System           | Super Magic Drive     | `.smd`                 | `.sms`                   |
 
 For every console that Igir can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "headerless" extensions, so you have to specify the extensions like this:
 
