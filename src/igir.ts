@@ -559,16 +559,16 @@ export default class Igir {
         chd,
         (await chd.getInfo()).type,
       ]);
-      const cdRom = chdToType.find(([, type]) => type === CHDType.CD_ROM);
-      if (cdRom !== undefined) {
+      const [cdRomChd] = chdToType.find(([, type]) => type === CHDType.CD_ROM) ?? [];
+      if (cdRomChd !== undefined) {
         logger.warn(
-          `${cdRom[0].getFilePath()}: quick checksumming will not process .cue/.bin files in CD-ROM CHDs!`,
+          `${cdRomChd.getFilePath()}: quick checksumming will not process .cue/.bin files in CD-ROM CHDs!`,
         );
       }
-      const gdRom = chdToType.find(([, type]) => type === CHDType.GD_ROM);
-      if (gdRom !== undefined) {
+      const [gdRomChd] = chdToType.find(([, type]) => type === CHDType.GD_ROM) ?? [];
+      if (gdRomChd !== undefined) {
         logger.warn(
-          `${gdRom[0].getFilePath()}: quick checksumming will not process .gdi/.bin/.raw files in GD-ROM CHDs!`,
+          `${gdRomChd.getFilePath()}: quick checksumming will not process .gdi/.bin/.raw files in GD-ROM CHDs!`,
         );
       }
     }

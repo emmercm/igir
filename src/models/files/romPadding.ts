@@ -1,5 +1,6 @@
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 
+import IgirException from '../../exceptions/igirException.js';
 import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
 import PadEndTransform from '../../streams/padEndTransform.js';
 import StreamUtil from '../../utils/streamUtil.js';
@@ -118,8 +119,12 @@ export default class ROMPadding implements ROMPaddingProps {
       try {
         return await Promise.all(
           this.POSSIBLE_FILL_BYTES.map(async (fillByte, idx) => {
+            const splitStream = splitStreams.at(idx);
+            if (splitStream === undefined) {
+              throw new IgirException(`missing split stream for fill byte ${fillByte}`);
+            }
             const checksums = await StreamUtil.pipelineSafe(
-              splitStreams[idx],
+              splitStream,
               new PadEndTransform(paddedSize, fillByte),
               async (padded) => await FileChecksums.hashStream(padded, file.getChecksumBitmask()),
             );

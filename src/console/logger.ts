@@ -207,16 +207,16 @@ export default class Logger {
     const midLine = Math.min(Math.ceil(logoSplit.length / 2), logoSplit.length - 1);
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
     logoSplit[midLine - 2] =
-      `${logoSplit[midLine - 2].padEnd(maxLineLen, ' ')}   ROM collection manager`;
+      `${(logoSplit.at(midLine - 2) ?? '').padEnd(maxLineLen, ' ')}   ROM collection manager`;
     logoSplit[midLine - 1] =
-      `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${terminalLink(Package.HOMEPAGE, Package.HOMEPAGE, { fallback: false })}`;
+      `${(logoSplit.at(midLine - 1) ?? '').padEnd(maxLineLen, ' ')}   ${terminalLink(Package.HOMEPAGE, Package.HOMEPAGE, { fallback: false })}`;
 
     let runtime = `Node.js v${process.versions.node}`;
     if (process.versions.bun) {
       runtime = `Bun v${process.versions.bun}`;
     }
     logoSplit[midLine + 1] =
-      `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
+      `${(logoSplit.at(midLine + 1) ?? '').padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
 
     this.write(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
   }
