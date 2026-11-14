@@ -31,7 +31,9 @@ function createRomIndexer(props?: OptionsProps): ROMIndexer {
 }
 
 function indexAndFind(files: File[], props?: OptionsProps): File[] {
-  return createRomIndexer(props).index(files).findFiles(files[0]);
+  const [firstFile] = files;
+  assert.isDefined(firstFile);
+  return createRomIndexer(props).index(files).findFiles(firstFile);
 }
 
 describe('isOutputFile priority', () => {
@@ -46,8 +48,8 @@ describe('isOutputFile priority', () => {
 
     const sorted = indexAndFind([outputFile, plain]);
 
-    expect(sorted[0]).toBe(plain);
-    expect(sorted[1]).toBe(outputFile);
+    expect(sorted.at(0)).toBe(plain);
+    expect(sorted.at(1)).toBe(outputFile);
   });
 
   it('should apply isOutputFile preference before archive type preference', async () => {
@@ -67,8 +69,8 @@ describe('isOutputFile priority', () => {
 
     const sorted = indexAndFind([outputPlain, zip]);
 
-    expect(sorted[0]).toBe(zip);
-    expect(sorted[1]).toBe(outputPlain);
+    expect(sorted.at(0)).toBe(zip);
+    expect(sorted.at(1)).toBe(outputPlain);
   });
 
   it('should not affect ordering when all files are non-output', async () => {
@@ -78,8 +80,8 @@ describe('isOutputFile priority', () => {
     const sorted = indexAndFind([b, a]);
 
     // Falls back to deterministic toString sort
-    expect(sorted[0]).toBe(a);
-    expect(sorted[1]).toBe(b);
+    expect(sorted.at(0)).toBe(a);
+    expect(sorted.at(1)).toBe(b);
   });
 
   it('should not affect ordering when all files are output files', async () => {
@@ -99,8 +101,8 @@ describe('isOutputFile priority', () => {
     const sorted = indexAndFind([b, a]);
 
     // Falls back to deterministic toString sort
-    expect(sorted[0]).toBe(a);
-    expect(sorted[1]).toBe(b);
+    expect(sorted.at(0)).toBe(a);
+    expect(sorted.at(1)).toBe(b);
   });
 });
 
@@ -122,7 +124,7 @@ describe('archiveEntryPriority (default sort)', () => {
 
     const sorted = indexAndFind([chd, zip, plain]);
 
-    expect(sorted[0]).toBe(plain);
+    expect(sorted.at(0)).toBe(plain);
   });
 
   it('should sort archive entries in type order: Zip < Tar < Rar < SevenZip < Cso < Rvz < ChdRaw', async () => {
@@ -171,13 +173,13 @@ describe('archiveEntryPriority (default sort)', () => {
 
     const sorted = indexAndFind([chd, rvz, cso, sevenZip, rar, tar, zip]);
 
-    expect(sorted[0]).toBe(zip);
-    expect(sorted[1]).toBe(tar);
-    expect(sorted[2]).toBe(rar);
-    expect(sorted[3]).toBe(sevenZip);
-    expect(sorted[4]).toBe(cso);
-    expect(sorted[5]).toBe(rvz);
-    expect(sorted[6]).toBe(chd);
+    expect(sorted.at(0)).toBe(zip);
+    expect(sorted.at(1)).toBe(tar);
+    expect(sorted.at(2)).toBe(rar);
+    expect(sorted.at(3)).toBe(sevenZip);
+    expect(sorted.at(4)).toBe(cso);
+    expect(sorted.at(5)).toBe(rvz);
+    expect(sorted.at(6)).toBe(chd);
   });
 
   it('should give every archive type a distinct priority', async () => {
@@ -224,8 +226,8 @@ describe('preferFiletype', () => {
 
     const sorted = indexAndFind([zip, plain], { preferFiletype: 'plain' });
 
-    expect(sorted[0]).toBe(plain);
-    expect(sorted[1]).toBe(zip);
+    expect(sorted.at(0)).toBe(plain);
+    expect(sorted.at(1)).toBe(zip);
   });
 
   it('should prefer archive entries when preferFiletype=archive', async () => {
@@ -239,8 +241,8 @@ describe('preferFiletype', () => {
 
     const sorted = indexAndFind([plain, zip], { preferFiletype: 'archive' });
 
-    expect(sorted[0]).toBeInstanceOf(ArchiveEntry);
-    expect(sorted[1]).not.toBeInstanceOf(ArchiveEntry);
+    expect(sorted.at(0)).toBeInstanceOf(ArchiveEntry);
+    expect(sorted.at(1)).not.toBeInstanceOf(ArchiveEntry);
   });
 
   it('should prefer plain files by default, even over archives with invented entry paths', async () => {
@@ -255,8 +257,8 @@ describe('preferFiletype', () => {
 
     const sorted = indexAndFind([bzip2, plain]);
 
-    expect(sorted[0]).toBe(plain);
-    expect(sorted[1]).toBe(bzip2);
+    expect(sorted.at(0)).toBe(plain);
+    expect(sorted.at(1)).toBe(bzip2);
   });
 
   it('should prefer archives with invented entry paths when preferFiletype=archive', async () => {
@@ -270,8 +272,8 @@ describe('preferFiletype', () => {
 
     const sorted = indexAndFind([plain, bzip2], { preferFiletype: 'archive' });
 
-    expect(sorted[0]).toBe(bzip2);
-    expect(sorted[1]).toBe(plain);
+    expect(sorted.at(0)).toBe(bzip2);
+    expect(sorted.at(1)).toBe(plain);
   });
 });
 
@@ -284,8 +286,8 @@ describe('preferFilenameRegex', () => {
       preferFilenameRegex: 'preferred',
     });
 
-    expect(sorted[0]).toBe(preferred);
-    expect(sorted[1]).toBe(other);
+    expect(sorted.at(0)).toBe(preferred);
+    expect(sorted.at(1)).toBe(other);
   });
 
   it('should keep relative order when neither file matches the regex', async () => {
@@ -295,8 +297,8 @@ describe('preferFilenameRegex', () => {
     const sorted = indexAndFind([a, b], { preferFilenameRegex: 'unmatched' });
 
     // Neither matches; falls back to deterministic toString sort
-    expect(sorted[0]).toBe(a);
-    expect(sorted[1]).toBe(b);
+    expect(sorted.at(0)).toBe(a);
+    expect(sorted.at(1)).toBe(b);
   });
 
   it('should keep relative order when all files match the regex', async () => {
@@ -306,8 +308,8 @@ describe('preferFilenameRegex', () => {
     const sorted = indexAndFind([a, b], { preferFilenameRegex: 'matching' });
 
     // Both match; falls back to deterministic toString sort
-    expect(sorted[0]).toBe(a);
-    expect(sorted[1]).toBe(b);
+    expect(sorted.at(0)).toBe(a);
+    expect(sorted.at(1)).toBe(b);
   });
 });
 
@@ -332,8 +334,8 @@ describe('overwrite preference', () => {
       overwrite: true,
     });
 
-    expect(sorted[0]).toBe(notInOutput);
-    expect(sorted[1]).toBe(inOutput);
+    expect(sorted.at(0)).toBe(notInOutput);
+    expect(sorted.at(1)).toBe(inOutput);
   });
 
   it('should prefer files NOT in the output dir when overwriteInvalid=true', async () => {
@@ -354,8 +356,8 @@ describe('overwrite preference', () => {
       overwriteInvalid: true,
     });
 
-    expect(sorted[0]).toBe(notInOutput);
-    expect(sorted[1]).toBe(inOutput);
+    expect(sorted.at(0)).toBe(notInOutput);
+    expect(sorted.at(1)).toBe(inOutput);
   });
 
   it('should not apply output dir preference when neither overwrite nor overwriteInvalid is set', async () => {
@@ -378,8 +380,8 @@ describe('overwrite preference', () => {
 
     // Falls back to deterministic toString (alphabetical); the non-output file's path sorts first
     // because "aaa" < "output" — output dir preference was NOT applied
-    expect(sorted[0]).toBe(notInOutput);
-    expect(sorted[1]).toBe(inOutput);
+    expect(sorted.at(0)).toBe(notInOutput);
+    expect(sorted.at(1)).toBe(inOutput);
   });
 });
 
@@ -391,9 +393,9 @@ describe('deterministic fallback', () => {
 
     const sorted = indexAndFind([z, m, a]);
 
-    expect(sorted[0]).toBe(a);
-    expect(sorted[1]).toBe(m);
-    expect(sorted[2]).toBe(z);
+    expect(sorted.at(0)).toBe(a);
+    expect(sorted.at(1)).toBe(m);
+    expect(sorted.at(2)).toBe(z);
   });
 
   it('should sort archive entries alphabetically by archive path when archive type is equal', async () => {
@@ -418,8 +420,8 @@ describe('deterministic fallback', () => {
 
     const sorted = indexAndFind([z, m, a]);
 
-    expect(sorted[0]).toBe(a);
-    expect(sorted[1]).toBe(m);
-    expect(sorted[2]).toBe(z);
+    expect(sorted.at(0)).toBe(a);
+    expect(sorted.at(1)).toBe(m);
+    expect(sorted.at(2)).toBe(z);
   });
 });

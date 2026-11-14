@@ -89,5 +89,5 @@ it('should combine candidates', async () => {
 
   // And the one candidate has all the ROMs
   expect(candidates).toHaveLength(1);
-  expect(candidates[0].getRomsWithFiles()).toHaveLength(romFiles.length);
+  expect(candidates.at(0)?.getRomsWithFiles()).toHaveLength(romFiles.length);
 });

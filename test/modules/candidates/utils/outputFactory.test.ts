@@ -934,7 +934,7 @@ describe('should respect "--dir-dat-mirror"', () => {
   ])('option is true: %s', async (datPath, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
-      dat: [datPath.split(/[\\/]/, 1)[0]],
+      dat: [datPath.split(/[\\/]/, 1).at(0) ?? ''],
       output: os.devNull,
       dirDatMirror: true,
     });
@@ -1588,8 +1588,10 @@ describe('multi-rom games with path structure included in game name', () => {
         ),
     );
 
-    expect(outputPaths[0].format()).toEqual(path.join(os.devNull, 'Top10', 'A-D', 'Cool Game.cue'));
-    expect(outputPaths[1].format()).toEqual(
+    expect(outputPaths.at(0)?.format()).toEqual(
+      path.join(os.devNull, 'Top10', 'A-D', 'Cool Game.cue'),
+    );
+    expect(outputPaths.at(1)?.format()).toEqual(
       path.join(os.devNull, 'Top10', 'A-D', 'Cool Game (Track 01).bin'),
     );
   });

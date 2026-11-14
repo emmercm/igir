@@ -321,8 +321,8 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
 
       // Then the output was touched
       const outputFilesAfter = await walkAndStat(outputTemp);
-      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-        outputFilesBefore.map((pair) => pair[0]),
+      expect(outputFilesAfter.map(([filePath]) => filePath)).toEqual(
+        outputFilesBefore.map(([filePath]) => filePath),
       );
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
 
@@ -407,8 +407,8 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
 
       // Then the output was touched
       const outputFilesAfter = await walkAndStat(outputTemp);
-      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-        outputFilesBefore.map((pair) => pair[0]),
+      expect(outputFilesAfter.map(([filePath]) => filePath)).toEqual(
+        outputFilesBefore.map(([filePath]) => filePath),
       );
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
 
@@ -534,11 +534,14 @@ describe('zip', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
+        const [firstOutputFile] = outputFiles;
+        assert.isDefined(firstOutputFile);
+        const [firstOutputFilePath] = firstOutputFile;
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
-          path.join(outputTemp, outputFiles[0][0]),
+          path.join(outputTemp, firstOutputFilePath),
         );
         expect(archiveEntries).toHaveLength(1);
-        const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
+        const archiveEntry = archiveEntries.at(0) as ArchiveEntry<Archive>;
         expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
         expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
       });
@@ -567,11 +570,14 @@ describe('zip', () => {
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
       const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
+      const [firstOutputFile] = outputFiles;
+      assert.isDefined(firstOutputFile);
+      const [firstOutputFilePath] = firstOutputFile;
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
-        path.join(outputTemp, outputFiles[0][0]),
+        path.join(outputTemp, firstOutputFilePath),
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
+      const archiveEntry = archiveEntries.at(0) as ArchiveEntry<Archive>;
       expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
       expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
     });
@@ -647,11 +653,11 @@ describe('zip', () => {
           )
         )
           .flat()
-          .map((entry) => [
+          .map((entry): [string, string] => [
             entry.toString().replace(outputTemp + path.sep, ''),
             entry.getCrc32() ?? '',
           ])
-          .toSorted((a, b) => a[0].localeCompare(b[0]));
+          .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
         expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
       });
     },
@@ -756,7 +762,7 @@ describe('zip', () => {
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
       const outputFiles = (await walkAndStat(outputTemp))
-        .map((pair) => pair[0])
+        .map(([filePath]) => filePath)
         .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
@@ -885,7 +891,7 @@ describe('zip', () => {
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = (await walkAndStat(outputTemp))
-          .map((pair) => pair[0])
+          .map(([filePath]) => filePath)
           .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
@@ -998,13 +1004,16 @@ describe('zip', () => {
 
         // Then
         expect(outputFiles).toHaveLength(1);
-        const outputFile = path.join(outputTemp, outputFiles[0][0]);
+        const [firstOutputFile] = outputFiles;
+        assert.isDefined(firstOutputFile);
+        const [firstOutputFilePath] = firstOutputFile;
+        const outputFile = path.join(outputTemp, firstOutputFilePath);
         const writtenRomsAndCrcs = (await new FileFactory(new FileCache()).filesFrom(outputFile))
-          .map((entry) => [
+          .map((entry): [string, string] => [
             entry.toString().replace(outputTemp + path.sep, ''),
             entry.getCrc32() ?? '',
           ])
-          .toSorted((a, b) => a[0].localeCompare(b[0]));
+          .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
         expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
       });
     },
@@ -1033,9 +1042,12 @@ describe('extract', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
-        expect(outputFiles[0][0]).toEqual(expectedFileName);
+        const [firstOutputFile] = outputFiles;
+        assert.isDefined(firstOutputFile);
+        const [firstOutputFilePath] = firstOutputFile;
+        expect(firstOutputFilePath).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
-          { filePath: path.join(outputTemp, outputFiles[0][0]) },
+          { filePath: path.join(outputTemp, firstOutputFilePath) },
           ChecksumBitmask.CRC32,
         );
         expect(outputFile.getCrc32()).toEqual(expectedCrc);
@@ -1065,9 +1077,12 @@ describe('extract', () => {
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
       const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
-      expect(outputFiles[0][0]).toEqual(expectedFileName);
+      const [firstOutputFile] = outputFiles;
+      assert.isDefined(firstOutputFile);
+      const [firstOutputFilePath] = firstOutputFile;
+      expect(firstOutputFilePath).toEqual(expectedFileName);
       const outputFile = await File.fileOf(
-        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        { filePath: path.join(outputTemp, firstOutputFilePath) },
         ChecksumBitmask.CRC32,
       );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
@@ -1131,11 +1146,11 @@ describe('extract', () => {
         )
       )
         .flat()
-        .map((entry) => [
+        .map((entry): [string, string] => [
           entry.toString().replace(outputTemp + path.sep, ''),
           entry.getCrc32() ?? '',
         ])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
+        .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
@@ -1172,11 +1187,11 @@ describe('extract', () => {
         )
       )
         .flat()
-        .map((entry) => [
+        .map((entry): [string, string] => [
           entry.toString().replace(outputTemp + path.sep, ''),
           entry.getCrc32() ?? '',
         ])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
+        .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
@@ -1317,7 +1332,7 @@ describe('extract', () => {
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
       const outputFiles = (await walkAndStat(outputTemp))
-        .map((pair) => pair[0])
+        .map(([filePath]) => filePath)
         .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
@@ -1515,7 +1530,7 @@ describe('extract', () => {
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = (await walkAndStat(outputTemp))
-          .map((pair) => pair[0])
+          .map(([filePath]) => filePath)
           .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
@@ -1560,9 +1575,12 @@ describe('raw', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
-        expect(outputFiles[0][0]).toEqual(expectedFileName);
+        const [firstOutputFile] = outputFiles;
+        assert.isDefined(firstOutputFile);
+        const [firstOutputFilePath] = firstOutputFile;
+        expect(firstOutputFilePath).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
-          { filePath: path.join(outputTemp, outputFiles[0][0]) },
+          { filePath: path.join(outputTemp, firstOutputFilePath) },
           ChecksumBitmask.CRC32,
         );
         expect(outputFile.getCrc32()).toEqual(expectedCrc);
@@ -1590,9 +1608,12 @@ describe('raw', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
-        expect(outputFiles[0][0]).toEqual(expectedFileName);
+        const [firstOutputFile] = outputFiles;
+        assert.isDefined(firstOutputFile);
+        const [firstOutputFilePath] = firstOutputFile;
+        expect(firstOutputFilePath).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
-          { filePath: path.join(outputTemp, outputFiles[0][0]) },
+          { filePath: path.join(outputTemp, firstOutputFilePath) },
           ChecksumBitmask.CRC32,
         );
         expect(outputFile.getCrc32()).toEqual(expectedCrc);
@@ -1643,11 +1664,11 @@ describe('raw', () => {
         )
       )
         .flat()
-        .map((entry) => [
+        .map((entry): [string, string] => [
           entry.toString().replace(outputTemp + path.sep, ''),
           entry.getCrc32() ?? '',
         ])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
+        .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
@@ -1770,7 +1791,7 @@ describe('raw', () => {
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
       const outputFiles = (await walkAndStat(outputTemp))
-        .map((pair) => pair[0])
+        .map(([filePath]) => filePath)
         .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
@@ -1982,7 +2003,7 @@ describe('raw', () => {
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = (await walkAndStat(outputTemp))
-          .map((pair) => pair[0])
+          .map(([filePath]) => filePath)
           .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
@@ -2096,8 +2117,8 @@ describe('link', () => {
 
         // Then the output was touched because the links were recreated
         const outputFilesAfter = await walkAndStat(outputTemp);
-        expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-          outputFilesBefore.map((pair) => pair[0]),
+        expect(outputFilesAfter.map(([filePath]) => filePath)).toEqual(
+          outputFilesBefore.map(([filePath]) => filePath),
         );
         /* eslint-disable vitest/no-conditional-expect */
         if (linkMode === LinkModeInverted[LinkMode.HARDLINK]) {
@@ -2162,8 +2183,8 @@ describe('link', () => {
 
         // Then the output was touched because the links were recreated
         const outputFilesAfter = await walkAndStat(outputTemp);
-        expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-          outputFilesBefore.map((pair) => pair[0]),
+        expect(outputFilesAfter.map(([filePath]) => filePath)).toEqual(
+          outputFilesBefore.map(([filePath]) => filePath),
         );
         /* eslint-disable vitest/no-conditional-expect */
         if (linkMode === LinkModeInverted[LinkMode.HARDLINK]) {

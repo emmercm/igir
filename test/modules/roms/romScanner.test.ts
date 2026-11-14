@@ -203,8 +203,11 @@ describe('multiple files', () => {
   it('should scan hard links', async () => {
     const romDir = path.join('test', 'fixtures', 'roms');
     const scannedRealFiles = (await createRomScanner([romDir]).scan())
-      .map((file) => [file.toString().replace(process.cwd() + path.sep, ''), file.getCrc32() ?? ''])
-      .toSorted((a, b) => a[0].localeCompare(b[0]));
+      .map((file): [string, string] => [
+        file.toString().replace(process.cwd() + path.sep, ''),
+        file.getCrc32() ?? '',
+      ])
+      .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
 
     // Given some hard linked files
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
@@ -235,8 +238,11 @@ describe('multiple files', () => {
 
       // When scanning symlinked files
       const scannedHardLinks = (await createRomScanner([linksDir]).scan())
-        .map((file) => [file.toString().replace(linksDir + path.sep, ''), file.getCrc32() ?? ''])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
+        .map((file): [string, string] => [
+          file.toString().replace(linksDir + path.sep, ''),
+          file.getCrc32() ?? '',
+        ])
+        .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
 
       // Then the files scan successfully
       expect(scannedHardLinks).toEqual(scannedRealFiles);
@@ -248,8 +254,11 @@ describe('multiple files', () => {
   it('should scan symlinks', async () => {
     const romDir = path.join('test', 'fixtures', 'roms');
     const scannedRealFiles = (await createRomScanner([romDir]).scan())
-      .map((file) => [file.toString().replace(process.cwd() + path.sep, ''), file.getCrc32() ?? ''])
-      .toSorted((a, b) => a[0].localeCompare(b[0]));
+      .map((file): [string, string] => [
+        file.toString().replace(process.cwd() + path.sep, ''),
+        file.getCrc32() ?? '',
+      ])
+      .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
 
     // Given some symlinked files
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
@@ -271,14 +280,14 @@ describe('multiple files', () => {
 
       // When scanning symlinked files
       const scannedSymlinks = (await createRomScanner([tempDir]).scan())
-        .map((file) => [
+        .map((file): [string, string] => [
           file
             .toString()
             .replace(tempDir + path.sep, '')
             .replace(/ -> .+$/, ''),
           file.getCrc32() ?? '',
         ])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
+        .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
 
       // Then the files scan successfully
       expect(scannedSymlinks).toEqual(scannedRealFiles);
@@ -292,8 +301,11 @@ describe('multiple files', () => {
     const romDirs = await FsUtil.dirs(realRomDir);
 
     const scannedRealFiles = (await createRomScanner(romDirs).scan())
-      .map((file) => [file.toString().replace(process.cwd() + path.sep, ''), file.getCrc32() ?? ''])
-      .toSorted((a, b) => a[0].localeCompare(b[0]));
+      .map((file): [string, string] => [
+        file.toString().replace(process.cwd() + path.sep, ''),
+        file.getCrc32() ?? '',
+      ])
+      .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
 
     // Given some symlinked dirs
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
@@ -314,8 +326,11 @@ describe('multiple files', () => {
 
       // When scanning symlink dirs
       const scannedSymlinks = (await createRomScanner([tempDir]).scan())
-        .map((file) => [file.toString().replace(tempDir + path.sep, ''), file.getCrc32() ?? ''])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
+        .map((file): [string, string] => [
+          file.toString().replace(tempDir + path.sep, ''),
+          file.getCrc32() ?? '',
+        ])
+        .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
 
       // Then the dirs scan successfully
       expect(scannedSymlinks).toEqual(scannedRealFiles);
@@ -504,7 +519,7 @@ describe('output directory scanning', () => {
         const outputFiles = files.filter((f) => !f.getCanBeCandidateInput());
         expect(inputFiles).toHaveLength(1);
         expect(outputFiles).toHaveLength(1);
-        expect(outputFiles[0].getFilePath()).toContain('loremipsum.rom');
+        expect(outputFiles.at(0)?.getFilePath()).toContain('loremipsum.rom');
       } finally {
         await FsUtil.rm(tempDir, { recursive: true });
       }
@@ -569,7 +584,7 @@ describe('output directory scanning', () => {
 
       // File appears only once (path already in input set, not re-added from output)
       expect(files).toHaveLength(1);
-      expect(files[0].getCanBeCandidateInput()).toBe(true);
+      expect(files.at(0)?.getCanBeCandidateInput()).toBe(true);
     } finally {
       await FsUtil.rm(tempDir, { recursive: true });
     }
