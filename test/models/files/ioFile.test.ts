@@ -44,20 +44,24 @@ const withIOFiles = async <T>(
   files: TempIOFile[],
   callback: (ioFiles: IOFile[]) => Promise<T>,
 ): Promise<{ result: T; contents: Buffer[] }> => {
-  const tempFiles = await Promise.all(
-    files.map(async () => await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'))),
+  const filesAndTempFiles = await Promise.all(
+    files.map(async (file): Promise<[TempIOFile, string]> => [
+      file,
+      await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file')),
+    ]),
   );
+  const tempFiles = filesAndTempFiles.map(([, tempFile]) => tempFile);
   const ioFiles: IOFile[] = [];
   try {
-    for (const [idx, file] of files.entries()) {
+    for (const [file, tempFile] of filesAndTempFiles) {
       const mode = file.mode ?? 'r+';
       if (file.contents !== undefined) {
-        await FsUtil.writeFile(tempFiles[idx], file.contents);
+        await FsUtil.writeFile(tempFile, file.contents);
       }
       ioFiles.push(
         file.size === undefined
-          ? await IOFile.fileFrom(tempFiles[idx], mode)
-          : await IOFile.fileOfSize(tempFiles[idx], mode, file.size),
+          ? await IOFile.fileFrom(tempFile, mode)
+          : await IOFile.fileOfSize(tempFile, mode, file.size),
       );
     }
     const result = await callback(ioFiles);
@@ -94,11 +98,13 @@ const withIOFile = async <T>(
   file: TempIOFile,
   callback: (ioFile: IOFile) => Promise<T>,
 ): Promise<{ result: T; contents: Buffer }> => {
-  const { result, contents } = await withIOFiles(
-    [file],
-    async ([ioFile]) => await callback(ioFile),
-  );
-  return { result, contents: contents[0] };
+  const { result, contents } = await withIOFiles([file], async ([ioFile]) => {
+    assert.isDefined(ioFile);
+    return await callback(ioFile);
+  });
+  const [fileContents] = contents;
+  assert.isDefined(fileContents);
+  return { result, contents: fileContents };
 };
 
 /**
@@ -950,8 +956,11 @@ describe('copyRange', () => {
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
-      async ([sourceIOFile, targetIOFile]) =>
-        await sourceIOFile.copyRange(targetIOFile, 5, 10, source.length - 20),
+      async ([sourceIOFile, targetIOFile]) => {
+        assert.isDefined(sourceIOFile);
+        assert.isDefined(targetIOFile);
+        return await sourceIOFile.copyRange(targetIOFile, 5, 10, source.length - 20);
+      },
     );
     const [sourceAfter, targetAfter] = contents;
 
@@ -967,7 +976,11 @@ describe('copyRange', () => {
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
-      async ([sourceIOFile, targetIOFile]) => await sourceIOFile.copyRange(targetIOFile),
+      async ([sourceIOFile, targetIOFile]) => {
+        assert.isDefined(sourceIOFile);
+        assert.isDefined(targetIOFile);
+        return await sourceIOFile.copyRange(targetIOFile);
+      },
     );
     const [, targetAfter] = contents;
 
@@ -980,8 +993,11 @@ describe('copyRange', () => {
 
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
-      async ([sourceIOFile, targetIOFile]) =>
-        await sourceIOFile.copyRange(targetIOFile, 0, 1, source.length * 3),
+      async ([sourceIOFile, targetIOFile]) => {
+        assert.isDefined(sourceIOFile);
+        assert.isDefined(targetIOFile);
+        return await sourceIOFile.copyRange(targetIOFile, 0, 1, source.length * 3);
+      },
     );
     const [, targetAfter] = contents;
 
@@ -1037,7 +1053,10 @@ describe('copyRange', () => {
       const expected = Buffer.alloc(Math.max(source.length, sourceStart + distance + size));
       source.copy(expected);
       for (let offset = 0; offset < size; offset += 1) {
-        expected[sourceStart + distance + offset] = expected[sourceStart + offset];
+        expected.writeUInt8(
+          expected.readUInt8(sourceStart + offset),
+          sourceStart + distance + offset,
+        );
       }
       expect(copied).toEqual(size);
       expect(sourceAfter).toEqual(expected);
@@ -1062,8 +1081,11 @@ describe('copyRange', () => {
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
       // Positions that would overlap if the source and target were the same file
-      async ([sourceIOFile, targetIOFile]) =>
-        await sourceIOFile.copyRange(targetIOFile, 13, 10, source.length - 3),
+      async ([sourceIOFile, targetIOFile]) => {
+        assert.isDefined(sourceIOFile);
+        assert.isDefined(targetIOFile);
+        return await sourceIOFile.copyRange(targetIOFile, 13, 10, source.length - 3);
+      },
     );
     const [, targetAfter] = contents;
 
@@ -1091,7 +1113,10 @@ describe('copyRange', () => {
       const expected = Buffer.alloc(sourceStart + distance + size);
       source.copy(expected);
       for (let offset = 0; offset < size; offset += 1) {
-        expected[sourceStart + distance + offset] = expected[sourceStart + offset];
+        expected.writeUInt8(
+          expected.readUInt8(sourceStart + offset),
+          sourceStart + distance + offset,
+        );
       }
       expect(copied).toEqual(size);
       expect(sourceAfter).toEqual(expected);
@@ -1104,6 +1129,8 @@ describe('copyNext', () => {
     const { contents } = await withIOFiles(
       [{ contents: 'ABCDEF0123456789', mode: 'r' }, { contents: '----------' }],
       async ([sourceIOFile, targetIOFile]) => {
+        assert.isDefined(sourceIOFile);
+        assert.isDefined(targetIOFile);
         sourceIOFile.seek(10);
         await expect(sourceIOFile.copyNext(targetIOFile, 2, 4)).resolves.toEqual(4);
         expect(sourceIOFile.getPosition()).toEqual(14);
@@ -1291,6 +1318,7 @@ describe('close', () => {
       await ioFile.writeAt(Buffer.from('ABCDEF01'), 0);
       // Writing the file's initial contents opened a handle first
       const [handle] = openedHandles.slice(-1);
+      assert.isDefined(handle);
       vi.spyOn(handle, 'writev').mockRejectedValue(new Error('flush failed'));
 
       await expect(ioFile.close()).rejects.toThrow('flush failed');

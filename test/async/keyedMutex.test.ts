@@ -300,9 +300,12 @@ describe('runExclusiveForKeys', () => {
       const out = [...keys];
       for (let i = out.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
-        const temp = out[i];
-        out[i] = out[j];
-        out[j] = temp;
+        const current = out.at(i);
+        const swapped = out.at(j);
+        assert.isDefined(current);
+        assert.isDefined(swapped);
+        out[i] = swapped;
+        out[j] = current;
       }
       return out;
     };

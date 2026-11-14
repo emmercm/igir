@@ -1,6 +1,7 @@
 import path from 'node:path';
 import type { Readable } from 'node:stream';
 
+import IgirException from '../../../exceptions/igirException.js';
 import Temp from '../../../globals/temp.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
@@ -51,7 +52,11 @@ export default abstract class Archive {
    * @returns the canonical extension for this archive type
    */
   getExtension(): string {
-    return this.getExtensions()[0];
+    const [extension] = this.getExtensions();
+    if (extension === undefined) {
+      throw new IgirException(`${this.constructor.name} doesn't have any extensions`);
+    }
+    return extension;
   }
 
   getFilePath(): string {

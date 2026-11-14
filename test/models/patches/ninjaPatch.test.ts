@@ -104,7 +104,7 @@ describe('createPatchedFile', () => {
 
     const expected = Buffer.concat([source, overflow]);
     for (const [idx, xorByte] of xorData.entries()) {
-      expected[xorOffset + idx] ^= xorByte;
+      expected.writeUInt8(expected.readUInt8(xorOffset + idx) ^ xorByte, xorOffset + idx);
     }
     await expect(
       applyPatch(patchFrom, FILE_NAME, patch.toString('hex'), source.toString('hex')),

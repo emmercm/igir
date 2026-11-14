@@ -149,7 +149,8 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
       // Then
       expect(candidates).toHaveLength(1);
-      const candidateWithNoRoms = candidates[0];
+      const candidateWithNoRoms = candidates.at(0);
+      assert.isDefined(candidateWithNoRoms);
       expect(candidateWithNoRoms.getRomsWithFiles()).toHaveLength(0);
     },
   );
@@ -179,9 +180,11 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
       (candidate) => candidate.getName() === gameWithTwoRomsParent.getName(),
     );
     expect(incompleteCandidates).toHaveLength(1);
-    expect(incompleteCandidates[0].getRomsWithFiles().length).toBeGreaterThan(0);
-    expect(incompleteCandidates[0].getRomsWithFiles()).not.toHaveLength(
-      incompleteCandidates[0].getGame().getRoms().length,
+    const [incompleteCandidate] = incompleteCandidates;
+    assert.isDefined(incompleteCandidate);
+    expect(incompleteCandidate.getRomsWithFiles().length).toBeGreaterThan(0);
+    expect(incompleteCandidate.getRomsWithFiles()).not.toHaveLength(
+      incompleteCandidate.getGame().getRoms().length,
     );
   });
 
@@ -267,7 +270,9 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
       // two.7z contains both ROMs but with the wrong entry names
       ...(command === 'raw' ? [] : [['game with two ROMs (parent)', 2]]),
     ]);
-    expect(candidates[1].getRomsWithFiles()[0].getInputFile()).not.toBeInstanceOf(ArchiveEntry); // preferred the non-archive
+    expect(candidates.at(1)?.getRomsWithFiles().at(0)?.getInputFile()).not.toBeInstanceOf(
+      ArchiveEntry,
+    ); // preferred the non-archive
   });
 });
 
@@ -782,7 +787,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       // Then the game is matched, and every ROM (including the empty one) is sourced from the
       // archive so it's raw-copied intact rather than the empty file becoming a stray output
       expect(candidates).toHaveLength(1);
-      const romsWithFiles = candidates[0].getRomsWithFiles();
+      const romsWithFiles = candidates.at(0)?.getRomsWithFiles();
+      assert.isDefined(romsWithFiles);
       expect(romsWithFiles).toHaveLength(gameWithEmptyRom.getRoms().length);
       for (const romWithFiles of romsWithFiles) {
         expect(romWithFiles.getInputFile().getFilePath()).toEqual(archive.getFilePath());
@@ -858,7 +864,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       // Then the Archive isn't used for every input file
       expect(candidates).toHaveLength(1);
 
-      const firstCandidate = candidates[0];
+      const firstCandidate = candidates.at(0);
+      assert.isDefined(firstCandidate);
       const romsWithFiles = firstCandidate.getRomsWithFiles();
       expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
@@ -891,15 +898,16 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         // Then the Archive isn't used for any input file
         expect(candidates).toHaveLength(1);
 
-        const firstCandidate = candidates[0];
+        const firstCandidate = candidates.at(0);
+        assert.isDefined(firstCandidate);
         const romsWithFiles = firstCandidate.getRomsWithFiles();
         expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
         for (const [idx, romsWithFile] of romsWithFiles.entries()) {
           const inputFile = romsWithFile.getInputFile();
-          expect(inputFile.getFilePath()).toEqual(
-            PathUtil.resolve(datGame.getRoms()[idx].getName()),
-          );
+          const rom = datGame.getRoms().at(idx);
+          assert.isDefined(rom);
+          expect(inputFile.getFilePath()).toEqual(PathUtil.resolve(rom.getName()));
         }
       });
 
@@ -929,7 +937,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
         // Then the Archive is used for every input file
         expect(candidates).toHaveLength(1);
-        const firstCandidate = candidates[0];
+        const firstCandidate = candidates.at(0);
+        assert.isDefined(firstCandidate);
         const romsWithFiles = firstCandidate.getRomsWithFiles();
         expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
 
@@ -976,7 +985,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
         // Then the Archive is used for every input file
         expect(candidates).toHaveLength(1);
-        const firstCandidate = candidates[0];
+        const firstCandidate = candidates.at(0);
+        assert.isDefined(firstCandidate);
         const romsWithFiles = firstCandidate.getRomsWithFiles();
         expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
 
@@ -1008,6 +1018,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       // And every game's ROMs are in its own archive, with the disk alongside
       const archiveWithoutDisk = new Zip('aaa.zip');
       const archiveWithDisk = new Zip('zzz.zip');
+      const disk = gameWithDisk.getDisks().at(0);
+      assert.isDefined(disk);
       const files = [
         ...(await Promise.all(
           gameWithoutDisk
@@ -1017,7 +1029,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         ...(await Promise.all(
           gameWithDisk.getRoms().map(async (rom) => await rom.toArchiveEntry(archiveWithDisk)),
         )),
-        await gameWithDisk.getDisks()[0].toFile(),
+        await disk.toFile(),
       ];
 
       // When
@@ -1025,7 +1037,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
       // Then the game with a disk isn't starved of its own archive by the game without one
       expect(candidates.map((candidate) => candidate.getGame().getName())).toEqual(['aaa', 'zzz']);
-      const candidateWithDisk = candidates[1];
+      const candidateWithDisk = candidates.at(1);
+      assert.isDefined(candidateWithDisk);
       expect(candidateWithDisk.getRomsWithFiles()).toHaveLength(3);
       for (const romWithFiles of candidateWithDisk.getRomsWithFiles()) {
         const inputFile = romWithFiles.getInputFile();
@@ -1069,7 +1082,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
         // Then the archive that contains every ROM is only used when archives are preferred
         expect(candidates).toHaveLength(1);
-        const romsWithFiles = candidates[0].getRomsWithFiles();
+        const romsWithFiles = candidates.at(0)?.getRomsWithFiles();
+        assert.isDefined(romsWithFiles);
         expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
         const expectedFilePaths = expectArchivePreferred
           ? datGame.getRoms().map(() => archive.getFilePath())
@@ -1099,7 +1113,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
       // Then the zip is used, so that it might be raw-copied instead of recreated
       expect(candidates).toHaveLength(1);
-      const romsWithFiles = candidates[0].getRomsWithFiles();
+      const romsWithFiles = candidates.at(0)?.getRomsWithFiles();
+      assert.isDefined(romsWithFiles);
       expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
       for (const romWithFiles of romsWithFiles) {
         expect(romWithFiles.getInputFile().getFilePath()).toEqual(archive.getFilePath());
@@ -1109,8 +1124,10 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     it('should prefer an archive containing every ROM when some ROM has no plain file', async () => {
       // Given only the first ROM is present raw, but both are inside one archive
       const archive = new Zip('archive.zip');
+      const firstRom = datGame.getRoms().at(0);
+      assert.isDefined(firstRom);
       const files = [
-        await datGame.getRoms()[0].toFile(),
+        await firstRom.toFile(),
         ...(await Promise.all(
           datGame.getRoms().map(async (rom) => await rom.toArchiveEntry(archive)),
         )),
@@ -1125,7 +1142,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
       // Then the archive is still used, because preferring plain files can't complete the game
       expect(candidates).toHaveLength(1);
-      const romsWithFiles = candidates[0].getRomsWithFiles();
+      const romsWithFiles = candidates.at(0)?.getRomsWithFiles();
+      assert.isDefined(romsWithFiles);
       expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
       for (const romWithFiles of romsWithFiles) {
         expect(romWithFiles.getInputFile().getFilePath()).toEqual(archive.getFilePath());
@@ -1184,10 +1202,11 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
     const mergedGameName = discMergedDat.getGames().at(0)?.getName() ?? '';
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].getName()).toEqual(mergedGameName);
+    expect(candidates.at(0)?.getName()).toEqual(mergedGameName);
     expect(
-      candidates[0]
-        .getRomsWithFiles()
+      candidates
+        .at(0)
+        ?.getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
     ).toEqual(
       files.map((file) => PathUtil.resolve(mergedGameName, path.basename(file.getFilePath()))),
@@ -1256,7 +1275,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     // The merged game should produce a candidate with every ROM, including both .cue files
     const mergedGame = discMergedDat.getGames().at(0);
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].getRomsWithFiles()).toHaveLength(mergedGame?.getRoms().length ?? 0);
+    expect(candidates.at(0)?.getRomsWithFiles()).toHaveLength(mergedGame?.getRoms().length ?? 0);
   });
 
   it('should not consider 3-disc-merged games incomplete when .cue files are unknown in CHDs', async () => {
@@ -1310,7 +1329,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
     const mergedGame = discMergedDat.getGames().at(0);
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].getRomsWithFiles()).toHaveLength(mergedGame?.getRoms().length ?? 0);
+    expect(candidates.at(0)?.getRomsWithFiles()).toHaveLength(mergedGame?.getRoms().length ?? 0);
   });
 
   it('should source each unknown .cue from the same CHD as its disc, with no output conflict', async () => {
@@ -1372,7 +1391,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
     // One complete candidate (no output-path conflict would have dropped it)
     expect(candidates).toHaveLength(1);
-    const romsWithFiles = candidates[0].getRomsWithFiles();
+    const romsWithFiles = candidates.at(0)?.getRomsWithFiles();
+    assert.isDefined(romsWithFiles);
     expect(romsWithFiles).toHaveLength(4);
 
     // Each disc's .cue must be sourced from the same CHD as that disc's .bin
@@ -1444,7 +1464,8 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     const candidates = await candidateGenerator(options, discMergedDat, files);
 
     expect(candidates).toHaveLength(1);
-    const romsWithFiles = candidates[0].getRomsWithFiles();
+    const romsWithFiles = candidates.at(0)?.getRomsWithFiles();
+    assert.isDefined(romsWithFiles);
     expect(romsWithFiles).toHaveLength(4);
 
     const inputPathFor = (substring: string, extension: string): string | undefined =>
@@ -1496,7 +1517,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     const reWrappedDat = discMergedDat.withGames(
       discMergedDat.getGames().map((game) => game.withProps({ cloneOf: undefined })),
     );
-    expect(reWrappedDat.getGames()[0]).toBeInstanceOf(MergedDiscGame);
+    expect(reWrappedDat.getGames().at(0)).toBeInstanceOf(MergedDiscGame);
 
     const files = (
       await Promise.all(
@@ -1527,7 +1548,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     const candidates = await candidateGenerator(options, reWrappedDat, files);
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].getRomsWithFiles()).toHaveLength(4);
+    expect(candidates.at(0)?.getRomsWithFiles()).toHaveLength(4);
   });
 
   it('should replace {category} for disc-merged games', async () => {
@@ -1584,8 +1605,9 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
     expect(candidates).toHaveLength(1);
     expect(
-      candidates[0]
-        .getRomsWithFiles()
+      candidates
+        .at(0)
+        ?.getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
     ).toEqual(
       files.map((file) =>
@@ -1620,7 +1642,7 @@ describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
     const candidates = await candidateGenerator(options, datWithFourGames, files);
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].getName()).toEqual(gameWithNoRoms.getName());
+    expect(candidates.at(0)?.getName()).toEqual(gameWithNoRoms.getName());
   });
 
   test.each([0x00, 0xff])(
@@ -1667,10 +1689,12 @@ describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
         const candidates = await candidateGenerator(options, dat, [trimmedFileWithPaddings]);
 
         expect(candidates).toHaveLength(1);
-        expect(candidates[0].getRomsWithFiles()).toHaveLength(1);
-        const inputFIle = candidates[0].getRomsWithFiles()[0].getInputFile();
+        expect(candidates.at(0)?.getRomsWithFiles()).toHaveLength(1);
+        const inputFIle = candidates.at(0)?.getRomsWithFiles().at(0)?.getInputFile();
+        assert.isDefined(inputFIle);
         expect(inputFIle.getPaddings()).toHaveLength(0);
-        const outputFile = candidates[0].getRomsWithFiles()[0].getOutputFile();
+        const outputFile = candidates.at(0)?.getRomsWithFiles().at(0)?.getOutputFile();
+        assert.isDefined(outputFile);
         expect(outputFile.getSize()).toEqual(trimmedFileContents.length);
         expect(outputFile.getCrc32()).toEqual(trimmedFile.getCrc32());
         expect(outputFile.getCrc32WithoutHeader()).toEqual(trimmedFile.getCrc32());
@@ -1732,10 +1756,12 @@ describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
       ]);
 
       expect(candidates).toHaveLength(1);
-      expect(candidates[0].getRomsWithFiles()).toHaveLength(1);
-      const inputFIle = candidates[0].getRomsWithFiles()[0].getInputFile();
+      expect(candidates.at(0)?.getRomsWithFiles()).toHaveLength(1);
+      const inputFIle = candidates.at(0)?.getRomsWithFiles().at(0)?.getInputFile();
+      assert.isDefined(inputFIle);
       expect(inputFIle.getPaddings()).toHaveLength(1);
-      const outputFile = candidates[0].getRomsWithFiles()[0].getOutputFile();
+      const outputFile = candidates.at(0)?.getRomsWithFiles().at(0)?.getOutputFile();
+      assert.isDefined(outputFile);
       expect(outputFile.getSize()).toEqual(paddedFileContents.length);
       expect(outputFile.getCrc32()).toEqual(paddedChecksums.crc32);
       expect(outputFile.getCrc32WithoutHeader()).toEqual(paddedChecksums.crc32);
@@ -1787,7 +1813,8 @@ describe('zip writing', () => {
       // Then the zip has to be rebuilt from the entries that were matched; writing it as-is would
       // carry its excess 'Five.rom' entry into the output
       expect(candidates).toHaveLength(1);
-      const romsWithFiles = candidates[0].getRomsWithFiles();
+      const romsWithFiles = candidates.at(0)?.getRomsWithFiles();
+      assert.isDefined(romsWithFiles);
       expect(romsWithFiles).toHaveLength(2);
       for (const romWithFiles of romsWithFiles) {
         expect(romWithFiles.getInputFile()).toBeInstanceOf(ArchiveEntry);

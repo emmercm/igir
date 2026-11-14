@@ -90,6 +90,24 @@ export default class Cache<V> {
   }
 
   /**
+   * Get the values of all keys, or undefined if any key is missing a value.
+   */
+  private static getAllKeys<T>(
+    keys: string[],
+    getter: (key: string) => T | undefined,
+  ): Map<string, T> | undefined {
+    const values = new Map<string, T>();
+    for (const key of keys) {
+      const value = getter(key);
+      if (value === undefined) {
+        return undefined;
+      }
+      values.set(key, value);
+    }
+    return values;
+  }
+
+  /**
    * Get the value of a key in the cache if it exists, or compute a value and set it in the cache
    * otherwise.
    */
@@ -133,24 +151,18 @@ export default class Cache<V> {
     }
 
     // Fast path: check all keys without obtaining any locks
-    const values = keys.map((key) => this.getUnsafe(key));
-    if (values.every((value) => value !== undefined)) {
-      return keys.reduce((map, key, idx) => {
-        map.set(key, values[idx]);
-        return map;
-      }, new Map<string, V>());
+    const values = Cache.getAllKeys(keys, (key) => this.getUnsafe(key));
+    if (values !== undefined) {
+      return values;
     }
 
     // Slow path: acquire all key locks, double-check, then compute if still needed.
     await this.keyedMutex.acquireMultiple(keys);
     try {
       // Re-check under lock using direct map access (not get(), which would deadlock)
-      const values = keys.map((key) => this.keyValues.get(key));
-      if (values.every((value) => value !== undefined)) {
-        return keys.reduce((map, key, idx) => {
-          map.set(key, values[idx]);
-          return map;
-        }, new Map<string, V>());
+      const values = Cache.getAllKeys(keys, (key) => this.keyValues.get(key));
+      if (values !== undefined) {
+        return values;
       }
 
       // Compute and store all values

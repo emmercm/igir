@@ -376,8 +376,8 @@ describe('similar games', () => {
       ungroupedDat,
     );
     expect(groupedDat.getParents()).toHaveLength(1);
-    expect(groupedDat.getParents()[0].getGames()).toHaveLength(ungroupedDat.getGames().length);
-    expect(groupedDat.getParents()[0].getName()).toEqual(expectedGameName);
+    expect(groupedDat.getParents().at(0)?.getGames()).toHaveLength(ungroupedDat.getGames().length);
+    expect(groupedDat.getParents().at(0)?.getName()).toEqual(expectedGameName);
   });
 });
 

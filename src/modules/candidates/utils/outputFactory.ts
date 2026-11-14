@@ -353,7 +353,9 @@ export default class OutputFactory {
       const pattern = datNameRegex.slice(1, lastSlash);
       const flags = datNameRegex.slice(lastSlash + 1);
       const tokensMap = new Map(
-        Object.entries(tokens).filter((entry): entry is [string, string] => entry[1] !== undefined),
+        Object.entries(tokens).filter(
+          (entry): entry is [string, string] => entry.at(1) !== undefined,
+        ),
       );
       for (const [primary, alias] of Object.entries(this.TOKEN_ALIASES)) {
         const primaryValue = tokensMap.get(primary);
@@ -437,7 +439,9 @@ export default class OutputFactory {
     const letterRuns: [string, Set<string>][][] = [];
     for (const tuple of tuples) {
       const lastRun = letterRuns.at(-1);
-      if (lastRun?.[0][0] === tuple[0]) {
+      const [letter] = tuple;
+      const [lastRunLetter] = lastRun?.at(0) ?? [];
+      if (lastRun !== undefined && lastRunLetter === letter) {
         lastRun.push(tuple);
       } else {
         letterRuns.push([tuple]);
@@ -492,7 +496,7 @@ export default class OutputFactory {
     if (options.getDirLetterGroup()) {
       // Flatten into a sorted list of [letter, Set(filenames)] tuples, one per subpath
       const flatTuples = [...lettersToFilenames]
-        .toSorted((a, b) => a[0].localeCompare(b[0]))
+        .toSorted(([aLetter], [bLetter]) => aLetter.localeCompare(bLetter))
         // Generate a tuple of [letter, Set(filenames)] for every subpath
         .reduce<[string, Set<string>][]>((arr, [letter, filenames]) => {
           // ROMs may have been grouped together into a subdirectory. For example, when a game has
@@ -525,8 +529,10 @@ export default class OutputFactory {
           }
           // A group that spans only a single letter is named for that letter alone (e.g. "A"),
           // not as a range (e.g. "A-A"); this also keeps numeric-suffix splits as "A1", not "A-A1".
+          const [firstLetter] = firstTuple;
+          const [lastLetter] = lastTuple;
           const letterRange =
-            firstTuple[0] === lastTuple[0] ? firstTuple[0] : `${firstTuple[0]}-${lastTuple[0]}`;
+            firstLetter === lastLetter ? firstLetter : `${firstLetter}-${lastLetter}`;
           const existingFilenames = map.get(letterRange) ?? new Set<string>();
           for (const [, filenames] of tuples) {
             for (const filename of filenames) {
@@ -571,8 +577,9 @@ export default class OutputFactory {
       }, new Map<string, Set<string>>());
     }
 
-    const foundEntry = [...lettersToFilenames].find(([, filenames]) => filenames.has(romBasename));
-    return foundEntry ? foundEntry[0] : undefined;
+    const [letter] =
+      [...lettersToFilenames].find(([, filenames]) => filenames.has(romBasename)) ?? [];
+    return letter;
   }
 
   /**
@@ -667,14 +674,14 @@ export default class OutputFactory {
       .some((ext) => inputFile.getFilePath().toLowerCase().endsWith(ext.toLowerCase()));
 
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
-    const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());
+    const inputExt = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath())?.at(1);
     const oldExt =
-      oldExtMatch === null || (options.shouldFixExtension() && !hasValidExt)
+      inputExt === undefined || (options.shouldFixExtension() && !hasValidExt)
         ? // The input file has no extension, or it has an invalid one we should correct, get the
           // canonical extension from the {@link Archive}
-          archive.getExtensions()[0]
+          archive.getExtension()
         : // Respect the input file's extension
-          oldExtMatch[1];
+          inputExt;
 
     // Generate the archive name from the game name
     const gameName =

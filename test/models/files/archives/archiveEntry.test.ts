@@ -110,7 +110,8 @@ describe('getSize', () => {
     it("should get the file's size", async () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = archiveEntries[0];
+      const archiveEntry = archiveEntries.at(0);
+      assert.isDefined(archiveEntry);
 
       expect(archiveEntry.getSize()).toEqual(expectedSize);
     });
@@ -127,7 +128,8 @@ describe('getSize', () => {
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
-        const archiveEntry = archiveEntries[0];
+        const archiveEntry = archiveEntries.at(0);
+        assert.isDefined(archiveEntry);
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
@@ -143,7 +145,8 @@ describe('getSize', () => {
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
-        const archiveEntry = archiveEntries[0];
+        const archiveEntry = archiveEntries.at(0);
+        assert.isDefined(archiveEntry);
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
@@ -159,7 +162,8 @@ describe('getSize', () => {
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
-        const archiveEntry = archiveEntries[0];
+        const archiveEntry = archiveEntries.at(0);
+        assert.isDefined(archiveEntry);
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
@@ -198,7 +202,8 @@ describe('getCrc32', () => {
   ])('should hash the full archive entry: %s', async (filePath, expectedCrc) => {
     const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+    const archiveEntry = archiveEntries.at(0);
+    assert.isDefined(archiveEntry);
 
     expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
     expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -242,7 +247,8 @@ describe('getCrc32WithoutHeader', () => {
     async (filePath, expectedCrc) => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = archiveEntries[0];
+      const archiveEntry = archiveEntries.at(0);
+      assert.isDefined(archiveEntry);
 
       expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
       expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -264,11 +270,13 @@ describe('getCrc32WithoutHeader', () => {
     async (filePath, expectedCrc) => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
-      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
+      const firstArchiveEntry = archiveEntries.at(0);
+      assert.isDefined(firstArchiveEntry);
+      const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
-        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+        throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);
       }
-      const archiveEntry = await archiveEntries[0].withFileHeader(header);
+      const archiveEntry = await firstArchiveEntry.withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);
       expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -317,7 +325,8 @@ describe('getMd5', () => {
       ChecksumBitmask.MD5,
     );
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+    const archiveEntry = archiveEntries.at(0);
+    assert.isDefined(archiveEntry);
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toEqual(expectedMd5);
@@ -366,7 +375,8 @@ describe('getMd5WithoutHeader', () => {
         ChecksumBitmask.MD5,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = archiveEntries[0];
+      const archiveEntry = archiveEntries.at(0);
+      assert.isDefined(archiveEntry);
 
       // Some archives store CRC32, or otherwise it won't be defined
       expect(archiveEntry.getMd5()).toEqual(expectedMd5);
@@ -393,11 +403,13 @@ describe('getMd5WithoutHeader', () => {
         ChecksumBitmask.MD5,
       );
       expect(archiveEntries).toHaveLength(1);
-      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
+      const firstArchiveEntry = archiveEntries.at(0);
+      assert.isDefined(firstArchiveEntry);
+      const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
-        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+        throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);
       }
-      const archiveEntry = await archiveEntries[0].withFileHeader(header);
+      const archiveEntry = await firstArchiveEntry.withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
@@ -452,7 +464,8 @@ describe('getSha1', () => {
       ChecksumBitmask.SHA1,
     );
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+    const archiveEntry = archiveEntries.at(0);
+    assert.isDefined(archiveEntry);
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
@@ -507,7 +520,8 @@ describe('getSha1WithoutHeader', () => {
         ChecksumBitmask.SHA1,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = archiveEntries[0];
+      const archiveEntry = archiveEntries.at(0);
+      assert.isDefined(archiveEntry);
 
       // Some archives store CRC32, or otherwise it won't be defined
       expect(archiveEntry.getMd5()).toBeUndefined();
@@ -540,11 +554,13 @@ describe('getSha1WithoutHeader', () => {
         ChecksumBitmask.SHA1,
       );
       expect(archiveEntries).toHaveLength(1);
-      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
+      const firstArchiveEntry = archiveEntries.at(0);
+      assert.isDefined(firstArchiveEntry);
+      const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
-        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+        throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);
       }
-      const archiveEntry = await archiveEntries[0].withFileHeader(header);
+      const archiveEntry = await firstArchiveEntry.withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
@@ -644,7 +660,8 @@ describe('getSha256', () => {
       ChecksumBitmask.SHA256,
     );
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+    const archiveEntry = archiveEntries.at(0);
+    assert.isDefined(archiveEntry);
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
@@ -744,7 +761,8 @@ describe('getSha256WithoutHeader', () => {
         ChecksumBitmask.SHA256,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = archiveEntries[0];
+      const archiveEntry = archiveEntries.at(0);
+      assert.isDefined(archiveEntry);
 
       // Some archives store CRC32, or otherwise it won't be defined
       expect(archiveEntry.getMd5()).toBeUndefined();
@@ -777,11 +795,13 @@ describe('getSha256WithoutHeader', () => {
         ChecksumBitmask.SHA256,
       );
       expect(archiveEntries).toHaveLength(1);
-      const header = FileSignature.romHeaderFromFilename(archiveEntries[0].getExtractedFilePath());
+      const firstArchiveEntry = archiveEntries.at(0);
+      assert.isDefined(firstArchiveEntry);
+      const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
-        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+        throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);
       }
-      const archiveEntry = await archiveEntries[0].withFileHeader(header);
+      const archiveEntry = await firstArchiveEntry.withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();

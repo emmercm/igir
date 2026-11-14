@@ -34,7 +34,7 @@ export function readStreamHeader(input: Buffer, offset: number): number {
   if (zlib.crc32(flags) !== input.readUInt32LE(offset + 8)) {
     throw new Error('xz stream header CRC32 mismatch');
   }
-  if (flags[0] !== 0x00 || (flags[1] & 0xf0) !== 0x00) {
+  if (flags.readUInt8(0) !== 0x00 || (flags.readUInt8(1) & 0xf0) !== 0x00) {
     throw new Error('xz stream flags are unsupported');
   }
   return offset + STREAM_HEADER_SIZE;
@@ -53,7 +53,7 @@ function readVli(
     if (offset + i >= end) {
       throw new Error('xz block header is corrupt: a number is truncated');
     }
-    const byte = input[offset + i];
+    const byte = input.readUInt8(offset + i);
     value += (byte & 0x7f) * 2 ** (7 * i);
     if ((byte & 0x80) === 0) {
       if (byte === 0x00 && i > 0) {
@@ -85,10 +85,10 @@ export function readBlockHeader(input: Buffer, offset: number): BlockHeader {
   if (offset >= input.length) {
     throw new Error('xz block header is truncated');
   }
-  if (input[offset] === 0x00) {
+  if (input.readUInt8(offset) === 0x00) {
     throw new Error('xz stream has no blocks');
   }
-  const headerSize = (input[offset] + 1) * 4;
+  const headerSize = (input.readUInt8(offset) + 1) * 4;
   const headerEnd = offset + headerSize;
   if (headerEnd > input.length) {
     throw new Error('xz block header is truncated');
@@ -98,7 +98,7 @@ export function readBlockHeader(input: Buffer, offset: number): BlockHeader {
     throw new Error('xz block header CRC32 mismatch');
   }
 
-  const flags = input[offset + 1];
+  const flags = input.readUInt8(offset + 1);
   if ((flags & 0x3c) !== 0) {
     throw new Error('xz block flags are unsupported');
   }
@@ -131,7 +131,7 @@ export function readBlockHeader(input: Buffer, offset: number): BlockHeader {
   if (position >= crcOffset) {
     throw new Error('xz block header is truncated');
   }
-  const dictionarySize = lzma2DictionarySize(input[position]);
+  const dictionarySize = lzma2DictionarySize(input.readUInt8(position));
   position += 1;
 
   for (; position < crcOffset; position += 1) {

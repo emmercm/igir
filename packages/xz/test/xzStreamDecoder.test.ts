@@ -22,9 +22,9 @@ interface Chunk {
  */
 function chunks(xz: Buffer): Chunk[] {
   const result: Chunk[] = [];
-  let offset = 12 + (xz[12] + 1) * 4;
-  while (xz[offset] !== 0x00) {
-    const control = xz[offset];
+  let offset = 12 + (xz.readUInt8(12) + 1) * 4;
+  while (xz.readUInt8(offset) !== 0x00) {
+    const control = xz.readUInt8(offset);
     if (control <= 0x02) {
       const size = xz.readUInt16BE(offset + 1) + 1;
       result.push({
@@ -52,25 +52,28 @@ async function readFixture(fileName: string): Promise<Buffer> {
 }
 
 describe('decode', () => {
-  test.each(Object.keys(FIXTURES))('should decode %s in one call', async (fileName) => {
+  test.each(Object.entries(FIXTURES))('should decode %s in one call', async (fileName, fixture) => {
     const xz = await readFixture(fileName);
-    const expected = FIXTURES[fileName].input();
+    const expected = fixture.input();
     // Everything but the end marker, index, and footer, which xdelta3 never writes
     const input = xz.subarray(0, chunks(xz).at(-1)?.end);
     expect(new XzStreamDecoder().decode(input, expected.length)).toEqual(expected);
   });
 
-  test.each(Object.keys(FIXTURES))('should decode %s one chunk per call', async (fileName) => {
-    const xz = await readFixture(fileName);
-    const xzStreamDecoder = new XzStreamDecoder();
-    const outputs = chunks(xz).map((chunk, index) =>
-      xzStreamDecoder.decode(
-        xz.subarray(index === 0 ? 0 : chunk.start, chunk.end),
-        chunk.uncompressedSize,
-      ),
-    );
-    expect(Buffer.concat(outputs)).toEqual(FIXTURES[fileName].input());
-  });
+  test.each(Object.entries(FIXTURES))(
+    'should decode %s one chunk per call',
+    async (fileName, fixture) => {
+      const xz = await readFixture(fileName);
+      const xzStreamDecoder = new XzStreamDecoder();
+      const outputs = chunks(xz).map((chunk, index) =>
+        xzStreamDecoder.decode(
+          xz.subarray(index === 0 ? 0 : chunk.start, chunk.end),
+          chunk.uncompressedSize,
+        ),
+      );
+      expect(Buffer.concat(outputs)).toEqual(fixture.input());
+    },
+  );
 
   it('should only read the headers on the first call', () => {
     const xzStreamDecoder = new XzStreamDecoder();
@@ -139,7 +142,10 @@ describe('decode', () => {
       throw new Error('the fixture has no chunks');
     }
     const corrupt = Buffer.from(xz.subarray(0, lastChunk.end));
-    corrupt[lastChunk.dataStart + 1000] ^= 0xff;
+    corrupt.writeUInt8(
+      corrupt.readUInt8(lastChunk.dataStart + 1000) ^ 0xff,
+      lastChunk.dataStart + 1000,
+    );
     const expectedSize = FIXTURES['randomFirst.xz'].input().length;
     expect(() => new XzStreamDecoder().decode(corrupt, expectedSize)).toThrow(
       /LZMA data is corrupt/,

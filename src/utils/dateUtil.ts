@@ -50,16 +50,16 @@ function ordinal(value: number): string {
 const TOKENS: Record<string, (date: Date) => string> = {
   YYYY: (date) => pad(date.getFullYear(), 4),
   YY: (date) => pad(date.getFullYear() % 100),
-  MMMM: (date) => MONTHS_LONG[date.getMonth()],
-  MMM: (date) => MONTHS_SHORT[date.getMonth()],
+  MMMM: (date) => MONTHS_LONG.at(date.getMonth()) ?? '',
+  MMM: (date) => MONTHS_SHORT.at(date.getMonth()) ?? '',
   MM: (date) => pad(date.getMonth() + 1),
   M: (date) => String(date.getMonth() + 1),
   Do: (date) => ordinal(date.getDate()),
   DD: (date) => pad(date.getDate()),
   D: (date) => String(date.getDate()),
-  dddd: (date) => DAYS_LONG[date.getDay()],
-  ddd: (date) => DAYS_SHORT[date.getDay()],
-  dd: (date) => DAYS_MIN[date.getDay()],
+  dddd: (date) => DAYS_LONG.at(date.getDay()) ?? '',
+  ddd: (date) => DAYS_SHORT.at(date.getDay()) ?? '',
+  dd: (date) => DAYS_MIN.at(date.getDay()) ?? '',
   d: (date) => String(date.getDay()),
   HH: (date) => pad(date.getHours()),
   H: (date) => String(date.getHours()),
@@ -93,6 +93,6 @@ export default {
   format: (pattern: string, date: Date = new Date()): string =>
     pattern.replace(
       TOKEN_PATTERN,
-      (match: string, literal: string | undefined) => literal ?? TOKENS[match](date),
+      (match: string, literal: string | undefined) => literal ?? TOKENS[match]?.(date) ?? match,
     ),
 };

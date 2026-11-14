@@ -52,11 +52,11 @@ export interface Fixture {
 }
 
 /** The fixtures in this directory, by file name */
-export const FIXTURES: Record<string, Fixture> = {
+export const FIXTURES = {
   // 8 KiB of pseudo-random bytes, then the same 8 KiB again, so one match is 8 KiB back
   'distantMatch.xz': {
     lzma2Options: 'preset=6',
-    input: () => {
+    input: (): Buffer => {
       const block = seededBytes(0x78_7c, 8 * 1024);
       return Buffer.concat([block, block]);
     },
@@ -65,14 +65,14 @@ export const FIXTURES: Record<string, Fixture> = {
   // (0xC0-0xDF), then an LZMA chunk without any reset (0x80-0x9F)
   'randomFirst.xz': {
     lzma2Options: 'preset=6',
-    input: () =>
+    input: (): Buffer =>
       Buffer.concat([seededBytes(0x78_7a, 66 * 1024), text('random', 2.5 * 1024 * 1024)]),
   },
   // An LZMA chunk with a dictionary reset (0xE0-0xFF), an uncompressed chunk without one (0x02),
   // then an LZMA chunk with a state reset (0xA0-0xBF)
   'randomMiddle.xz': {
     lzma2Options: 'preset=6',
-    input: () =>
+    input: (): Buffer =>
       Buffer.concat([
         text('before', 1024 * 1024),
         seededBytes(0x78_7b, 128 * 1024),
@@ -82,6 +82,6 @@ export const FIXTURES: Record<string, Fixture> = {
   // A 4 KiB dictionary, the smallest xz allows, which the output wraps around many times
   'smallDictionary.xz': {
     lzma2Options: 'preset=6,dict=4KiB',
-    input: () => repeatingText(300 * 1024),
+    input: (): Buffer => repeatingText(300 * 1024),
   },
-};
+} satisfies Record<string, Fixture>;

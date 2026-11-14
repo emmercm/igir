@@ -28,7 +28,7 @@ import FsUtil, { WalkMode } from '../src/utils/fsUtil.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
-  outputFilesAndCrcs: string[][];
+  outputFilesAndCrcs: [string, string][];
   movedFiles: string[];
   cleanedFiles: string[];
 }
@@ -55,7 +55,7 @@ async function copyFixturesToTemp(
   }
 }
 
-async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
+async function walkWithCrc(inputDir: string, outputDir: string): Promise<[string, string][]> {
   const fileFactory = new FileFactory(new FileCache());
 
   const files = await FsUtil.walk(outputDir, WalkMode.FILES);
@@ -79,16 +79,16 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
             file.getCrc32() ?? '',
           ] satisfies [string, string],
       )
-      .toSorted((a, b) => {
-        const pathCompare = a[0].localeCompare(b[0]);
+      .toSorted(([aPath, aCrc], [bPath, bCrc]) => {
+        const pathCompare = aPath.localeCompare(bPath);
         if (pathCompare !== 0) {
           return pathCompare;
         }
-        return a[1].localeCompare(b[1]);
+        return aCrc.localeCompare(bCrc);
       })
       // Some CHDs, such as raw ones, will produce multiple checksums for the same path. Just pick
       // the first one
-      .filter(ArrayUtil.filterUniqueMapped((tuple) => tuple[0]))
+      .filter(ArrayUtil.filterUniqueMapped(([filePath]) => filePath))
   );
 }
 
@@ -137,8 +137,8 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
           )
         )
           .flat()
-          .filter(ArrayUtil.filterUniqueMapped((tuple) => tuple[0]))
-          .toSorted((a, b) => a[0].localeCompare(b[0]));
+          .filter(ArrayUtil.filterUniqueMapped(([filePath]) => filePath))
+          .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
 
   const inputFilesAfter = (
     await Promise.all(
@@ -734,10 +734,12 @@ describe('with explicit DATs', () => {
   it('should copy merged discs while fixing extensions', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const input = await Promise.all(
-        [
-          [path.join(inputTemp, 'roms', 'chd', 'CD-ROM.chd'), 'Optical Game (Disc 1).chd'],
-          [path.join(inputTemp, 'roms', 'chd', 'GD-ROM.chd'), 'Optical Game (Disc 2).chd'],
-        ].map(async ([inputFile, newBasename]) => {
+        (
+          [
+            [path.join(inputTemp, 'roms', 'chd', 'CD-ROM.chd'), 'Optical Game (Disc 1).chd'],
+            [path.join(inputTemp, 'roms', 'chd', 'GD-ROM.chd'), 'Optical Game (Disc 2).chd'],
+          ] satisfies [string, string][]
+        ).map(async ([inputFile, newBasename]) => {
           const renamedFile = path.join(path.dirname(inputFile), newBasename);
           await FsUtil.mv(inputFile, renamedFile);
           return renamedFile;
@@ -1495,7 +1497,7 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toHaveLength(1);
-      expect(result.outputFilesAndCrcs[0][0]).toEqual('report.csv');
+      expect(result.outputFilesAndCrcs.at(0)?.at(0)).toEqual('report.csv');
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1522,7 +1524,7 @@ describe('with explicit DATs', () => {
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats.at(0)).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
@@ -1536,7 +1538,7 @@ describe('with explicit DATs', () => {
       //  Optical Game (Disc 2)
       //  UMD
       //  GameCube-240pSuite-1.19
-      expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats.at(1)).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1566,7 +1568,7 @@ describe('with explicit DATs', () => {
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats.at(0)).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
@@ -1580,7 +1582,7 @@ describe('with explicit DATs', () => {
       //  Optical Game (Disc 2)
       //  UMD
       //  GameCube-240pSuite-1.19
-      expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats.at(1)).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
@@ -2450,7 +2452,7 @@ describe('with inferred DATs', () => {
 
       // Only the "roms" input path was provided
       expect(writtenDir2Dats).toHaveLength(1);
-      expect(writtenDir2Dats[0]).toMatch(/^roms dir2dat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenDir2Dats.at(0)).toMatch(/^roms dir2dat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -2462,13 +2464,15 @@ describe('with inferred DATs', () => {
         new MappableSemaphore(2),
       ).scan();
       expect(dats).toHaveLength(1);
-      const roms = dats[0]
+      const [firstDat] = dats;
+      assert.isDefined(firstDat);
+      const roms = firstDat
         .getGames()
         .reduce<[string, string[]][]>((arr, game) => {
           arr.push([game.getName(), game.getRoms().map((rom) => rom.getName())]);
           return arr;
         }, [])
-        .toSorted((a, b) => a[0].localeCompare(b[0]));
+        .toSorted(([aKey], [bKey]) => aKey.localeCompare(bKey));
       expect(roms).toEqual([
         ['2048', []],
         ['4096', []],
@@ -2541,7 +2545,7 @@ describe('with inferred DATs', () => {
 
       // Only the "roms" input path was provided
       expect(writtenDir2Dats).toHaveLength(1);
-      expect(writtenDir2Dats[0]).toMatch(/^roms dir2dat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenDir2Dats.at(0)).toMatch(/^roms dir2dat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);

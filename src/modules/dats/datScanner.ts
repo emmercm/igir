@@ -187,15 +187,15 @@ export default class DATScanner extends Scanner {
     // Special case: if the DAT has only one BIOS game with a large number of ROMs, assume each of
     //  those ROMs should be a separate game. This is to help parse the libretro BIOS System.dat
     //  file which only has one game for every BIOS file, even though there are 90+ consoles.
+    const [onlyGame] = dat.getGames();
     if (
       dat.getGames().length === 1 &&
-      dat.getGames()[0].getIsBios() &&
-      dat.getGames()[0].getRoms().length > 10
+      onlyGame !== undefined &&
+      onlyGame.getIsBios() &&
+      onlyGame.getRoms().length > 10
     ) {
-      const game = dat.getGames()[0];
       dat = dat.withGames(
-        dat
-          .getGames()[0]
+        onlyGame
           .getRoms()
           .filter(ArrayUtil.filterUniqueMapped((rom) => `${rom.getName()}|${rom.hashCode()}`))
           .map((rom) => {
@@ -205,13 +205,15 @@ export default class DATScanner extends Scanner {
               dir,
               name,
             });
-            return game.withProps({
+            return onlyGame.withProps({
               name: gameName,
               roms: [rom],
             });
           }),
       );
     }
+
+    dat = this.electMissingParents(datFile, dat);
 
     const size = dat
       .getGames()
@@ -222,6 +224,51 @@ export default class DATScanner extends Scanner {
     );
 
     return dat;
+  }
+
+  /**
+   * Bad DATs can have clones that reference a parent that doesn't exist. Elect the first of those
+   * clones as the parent, and re-point the other clones to it.
+   */
+  private electMissingParents(datFile: File, dat: DAT): DAT {
+    const originalGamesToElectedGames = new Map<Game, Game>();
+
+    for (const parent of dat.getParents()) {
+      const games = parent.getGames();
+      const [electedGame, ...cloneGames] = games;
+      if (electedGame === undefined || games.some((game) => game.isParent())) {
+        // This group already has a parent
+        continue;
+      }
+
+      const missingParentId = electedGame.getCloneOfId();
+      const missingParent =
+        missingParentId === undefined ? `'${electedGame.getCloneOf()}'` : `ID ${missingParentId}`;
+      this.prefixedLogger.trace(
+        `${datFile.toString()}: ${IntlUtil.toLocaleString(games.length)} game${games.length === 1 ? '' : 's'} reference${games.length === 1 ? 's' : ''} the missing parent ${missingParent}, electing '${electedGame.getName()}' as the parent`,
+      );
+
+      const parentGame = electedGame.withProps({ cloneOf: undefined, cloneOfId: undefined });
+      originalGamesToElectedGames.set(electedGame, parentGame);
+      const parentId = parentGame.getId();
+      for (const cloneGame of cloneGames) {
+        originalGamesToElectedGames.set(
+          cloneGame,
+          parentId === undefined
+            ? // name/cloneof-based DAT
+              cloneGame.withProps({ cloneOfId: undefined, cloneOf: parentGame.getName() })
+            : // id/cloneofid-based DAT
+              cloneGame.withProps({ cloneOfId: parentId, cloneOf: undefined }),
+        );
+      }
+    }
+
+    if (originalGamesToElectedGames.size === 0) {
+      return dat;
+    }
+    return dat.withGames(
+      dat.getGames().map((game) => originalGamesToElectedGames.get(game) ?? game),
+    );
   }
 
   private async parseMameListxml(mameExecutable: File): Promise<DAT | undefined> {

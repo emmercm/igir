@@ -41,7 +41,7 @@ const heldBackDependencies = Object.entries(packageJson)
   .map(([dependencyType, dependencies]) => {
     const heldBackDependencies = Object.entries(dependencies as Record<string, string>)
       // Normalize the dependency version so 'semver' knows how to parse it
-      .map(([depPackageName, depPackageVersion]) => [
+      .map(([depPackageName, depPackageVersion]): [string, string] => [
         depPackageName,
         depPackageVersion.replace(/^[\^~]/, ''),
       ])

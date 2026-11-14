@@ -150,7 +150,8 @@ describe('getArchiveEntries', () => {
       const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(entries).toHaveLength(1);
 
-      const entry = entries[0];
+      const entry = entries.at(0);
+      assert.isDefined(entry);
       expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
       expect(entry.getCrc32()).toEqual(expectedCrc);
     },
@@ -181,7 +182,7 @@ describe('getArchiveEntries', () => {
         true,
       );
       expect(entries).toHaveLength(1);
-      expect(entries[0].getCrc32()).toEqual(expectedCrc);
+      expect(entries.at(0)?.getCrc32()).toEqual(expectedCrc);
     },
   );
 
@@ -224,8 +225,10 @@ describe('getArchiveEntries', () => {
 
     for (const [idx, entry] of entries.entries()) {
       const expectedEntry = expectedEntries[idx];
-      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntry[0]);
-      expect(entry.getCrc32()).toEqual(expectedEntry[1]);
+      assert.isDefined(expectedEntry);
+      const [expectedEntryPath, expectedCrc] = expectedEntry;
+      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
+      expect(entry.getCrc32()).toEqual(expectedCrc);
     }
   });
 
@@ -272,7 +275,8 @@ describe('getArchiveEntries', () => {
       );
 
       expect(entries).toHaveLength(1);
-      const size = entries[0].getSize();
+      const size = entries.at(0)?.getSize();
+      assert.isDefined(size);
       expect(progressCalls).toEqual([
         [0, size],
         [size, undefined],
@@ -291,6 +295,7 @@ describe('readEntryFirstBytes', () => {
     async (filePath, archiveFactory) => {
       const archive = archiveFactory(filePath);
       const [entry] = await archive.getArchiveEntries(ChecksumBitmask.CRC32);
+      assert.isDefined(entry);
       const contents = await archive.extractEntryToStream(
         entry,
         async (readable) => await BufferUtil.fromReadable(readable),

@@ -287,7 +287,7 @@ export default class CP437Encoder {
   static encode(input: string): Buffer<ArrayBuffer> {
     const buffer = Buffer.allocUnsafe(input.length);
     for (let i = 0; i < buffer.length; i++) {
-      buffer[i] = this.ENCODER_TABLE.get(input[i]) ?? 0;
+      buffer[i] = this.ENCODER_TABLE.get(input.at(i) ?? '') ?? 0;
     }
     return buffer;
   }

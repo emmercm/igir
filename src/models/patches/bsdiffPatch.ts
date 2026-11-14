@@ -192,9 +192,9 @@ export default class BSDiffPatch extends Patch {
           Math.min(diffLength - offset, Defaults.FILE_READING_CHUNK_SIZE),
         );
         const old = await BSDiffPatch.readOld(sourceIOFile, oldPosition + offset, diff.length);
-        for (let i = 0; i < diff.length; i += 1) {
+        for (const [i, diffDatum] of diff.entries()) {
           // Buffers wrap values mod 256 on assignment
-          diff[i] += old[i];
+          diff[i] = diffDatum + (old.at(i) ?? 0x00);
         }
         await targetIOFile.write(diff);
       }

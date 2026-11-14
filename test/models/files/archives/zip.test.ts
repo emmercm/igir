@@ -77,7 +77,10 @@ describe('createArchive', () => {
 
       // When the file is being zipped
       // Then any underlying exception will be re-thrown
-      const zip = inputToOutput[0][1].getArchive() as Zip;
+      const [firstInputToOutput] = inputToOutput;
+      assert.isDefined(firstInputToOutput);
+      const [, firstOutputEntry] = firstInputToOutput;
+      const zip = firstOutputEntry.getArchive() as Zip;
       await expect(zip.createArchive(inputToOutput, ZipFormat.TORRENTZIP, 1)).rejects.toThrow();
 
       // And we were able to continue
@@ -241,21 +244,21 @@ describe('getArchiveEntries', () => {
         undefined,
         true,
       );
-      const realCrc32 = realEntries[0].getCrc32();
-      expect(realCrc32).toBeDefined();
+      const realCrc32 = realEntries.at(0)?.getCrc32();
+      assert.isDefined(realCrc32);
 
       // And the CRC32 stored in the central directory has been corrupted without touching the bytes
       const endOfCentralDirectory = await new ZipReader(tempZipPath).endOfCentralDirectoryRecord();
       const crc32Offset = endOfCentralDirectory.centralDirectoryOffset + 16;
       const buffer = await fs.promises.readFile(tempZipPath);
-      buffer[crc32Offset] ^= 0xff;
+      buffer.writeUInt8(buffer.readUInt8(crc32Offset) ^ 0xff, crc32Offset);
       await fs.promises.writeFile(tempZipPath, buffer);
 
       // When reading the archive entries trusting the central directory (the default)
       const trustedEntries = await new Zip(tempZipPath).getArchiveEntries(ChecksumBitmask.CRC32);
 
       // Then the corrupted CRC32 is returned
-      expect(trustedEntries[0].getCrc32()).not.toEqual(realCrc32);
+      expect(trustedEntries.at(0)?.getCrc32()).not.toEqual(realCrc32);
 
       // When reading the archive entries forcing recalculation
       const recalculatedEntries = await new Zip(tempZipPath).getArchiveEntries(
@@ -265,7 +268,7 @@ describe('getArchiveEntries', () => {
       );
 
       // Then the real CRC32 is recomputed from the bytes, ignoring the corrupted central directory
-      expect(recalculatedEntries[0].getCrc32()).toEqual(realCrc32);
+      expect(recalculatedEntries.at(0)?.getCrc32()).toEqual(realCrc32);
     } finally {
       await FsUtil.rm(tempDir, { recursive: true, force: true });
     }

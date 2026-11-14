@@ -81,11 +81,10 @@ export default abstract class DAT {
     for (const game of this.getGames()) {
       const cloneOfId = game.getCloneOfId();
       if (cloneOfId !== undefined) {
-        const id = game.getId();
         const parent = gameIdsToParents.get(cloneOfId);
         if (parent) {
           parent.addChild(game);
-        } else if (id !== undefined) {
+        } else {
           // The DAT is bad, the game is referencing a parent that doesn't exist
           gameIdsToParents.set(cloneOfId, new Parent(game));
         }

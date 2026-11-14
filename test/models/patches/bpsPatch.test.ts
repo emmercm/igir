@@ -28,7 +28,7 @@ const LARGE_TARGET = ((): Buffer => {
     Buffer.alloc(LARGE_LENGTH),
   ]);
   for (let i = 3 * LARGE_LENGTH; i < target.length; i += 1) {
-    target[i] = target[i - LARGE_TARGET_COPY_DISTANCE];
+    target.writeUInt8(target.readUInt8(i - LARGE_TARGET_COPY_DISTANCE), i);
   }
   return target;
 })();

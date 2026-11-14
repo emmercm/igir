@@ -21,6 +21,7 @@ describe('withProps', () => {
     const [software] = SoftwareListDAT.fromObject(
       DATObject.fromXmlString(xml).softwarelist ?? {},
     ).getGames();
+    assert.isDefined(software);
     expect(software.getRoms().map((rom) => rom.getName())).toEqual(['smb.prg', 'smb.chr']);
 
     const copy = software.withProps({ cloneOf: undefined });
