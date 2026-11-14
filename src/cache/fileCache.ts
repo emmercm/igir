@@ -304,7 +304,7 @@ export default class FileCache {
         if (callback) {
           callback(fileHeader.length);
         }
-        const signature = FileSignature.signatureFromBuffer(fileHeader);
+        const signature = FileSignature.signatureFromBuffer(fileHeader, file.getSize());
         return signature?.getName();
       },
       (name) => FileSignature.signatureFromName(name),
