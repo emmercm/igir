@@ -27,6 +27,32 @@ const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
 
 const argumentsParser = new ArgumentsParser();
 
+describe('isVersionRequest', () => {
+  it.each([
+    [['--version']],
+    [['--version=true']],
+    [['--version', 'true']],
+    [['copy', '--version']],
+    [[...dummyCommandAndRequiredArgs, '--version']],
+  ])('should be a version request: %s', (argv) => {
+    expect(ArgumentsParser.isVersionRequest(argv)).toEqual(true);
+  });
+
+  it.each([
+    [[]],
+    [['copy']],
+    [dummyCommandAndRequiredArgs],
+    [['--version=false']],
+    [['--version', 'false']],
+    [['--version', '--help']],
+    [['--version', '-h']],
+    [['--help', '--version']],
+    [['--', '--version']],
+  ])('should not be a version request: %s', (argv) => {
+    expect(ArgumentsParser.isVersionRequest(argv)).toEqual(false);
+  });
+});
+
 describe('commands', () => {
   it('should throw on no commands', () => {
     expect(() => argumentsParser.parse([])).toThrow(Error);
@@ -5344,5 +5370,13 @@ describe('options', () => {
     expect(argumentsParser.parse(['-h']).getHelp()).toEqual(true);
     expect(argumentsParser.parse(['--help']).getHelp()).toEqual(true);
     expect(argumentsParser.parse(['--help', '100']).getHelp()).toEqual(true);
+  });
+
+  it('should parse "version"', () => {
+    expect(argumentsParser.parse(['--version']).getVersion()).toEqual(true);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--version']).getVersion(),
+    ).toEqual(true);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getVersion()).toEqual(false);
   });
 });

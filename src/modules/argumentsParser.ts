@@ -82,6 +82,24 @@ export default class ArgumentsParser {
   }
 
   /**
+   * Determine if the arguments will result in yargs printing the version the same way that
+   * {@link parse} would parse them.
+   */
+  static isVersionRequest(argv: string[]): boolean {
+    const parsedArgv = yargs([])
+      // Disable the built-ins so they don't print or exit, and declare them as plain booleans
+      .version(false)
+      .help(false)
+      .option('version', { type: 'boolean' })
+      .option('help', { type: 'boolean', alias: 'h' })
+      .parserConfiguration({ 'boolean-negation': false })
+      .exitProcess(false)
+      .parseSync(argv);
+    // yargs prints help instead of the version when both are given
+    return parsedArgv.version === true && parsedArgv.help !== true;
+  }
+
+  /**
    * Parse the arguments.
    */
   parse(argv: string[]): Options {
@@ -1234,7 +1252,7 @@ export default class ArgumentsParser {
       })
 
       .wrap(ArgumentsParser.getHelpWidth(argv))
-      .version(false)
+      .version(Package.VERSION)
 
       // NOTE(cemmer): the .epilogue() renders after .example() but I want them switched
       /* eslint-disable unicorn/no-incorrect-template-string-interpolation */
@@ -1317,6 +1335,7 @@ Example use cases:
         description: 'Show help',
         type: 'boolean',
       })
+      .group('version', groupHelpDebug)
       .fail((msg, err, _yargs) => {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions,@typescript-eslint/no-unnecessary-condition
         if (err) {
