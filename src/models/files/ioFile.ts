@@ -216,7 +216,7 @@ export default class IOFile {
     if (match === null) {
       throw new IgirException(`invalid file system flags: ${mode}`);
     }
-    const [, letters, plus] = match;
+    const [, letters = '', plus] = match;
     return (
       (plus === '+' ? fs.constants.O_RDWR : 0) |
       (plus === '' && !letters.includes('r') ? fs.constants.O_WRONLY : 0) |
@@ -861,10 +861,17 @@ export default class IOFile {
     // Cache the first page last, as the most recently used, as the pages after it may have been
     // read ahead. The rest of the pages that were asked for are marked as used when visited.
     for (let loadIndex = loadEnd - 1; loadIndex >= pageIndex; loadIndex -= 1) {
-      this.pages.set(loadIndex, loadedPages[loadIndex - pageIndex]);
+      const loadedPage = loadedPages.at(loadIndex - pageIndex);
+      if (loadedPage !== undefined) {
+        this.pages.set(loadIndex, loadedPage);
+      }
     }
     this.mostRecentPageIndex = pageIndex;
-    return loadedPages[0];
+    const [firstPage] = loadedPages;
+    if (firstPage === undefined) {
+      throw new IgirException(`failed to load page ${pageIndex} of ${this.pathLike.toString()}`);
+    }
+    return firstPage;
   }
 
   /**
@@ -958,10 +965,11 @@ export default class IOFile {
     while (position < end) {
       const runOffset = position - runStart;
       const pageOffset = runOffset % Defaults.IO_FILE_PAGE_SIZE;
-      const part = buffers[Math.floor(runOffset / Defaults.IO_FILE_PAGE_SIZE)].subarray(
-        pageOffset,
-        pageOffset + end - position,
-      );
+      const buffer = buffers.at(Math.floor(runOffset / Defaults.IO_FILE_PAGE_SIZE));
+      if (buffer === undefined) {
+        throw new IgirException(`file position ${position} is outside of the loaded pages`);
+      }
+      const part = buffer.subarray(pageOffset, pageOffset + end - position);
       parts.push(part);
       position += part.length;
     }

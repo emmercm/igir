@@ -362,7 +362,7 @@ export default class Terminal {
 
     for (let i = firstChangedRow; i < newlineCount; i++) {
       this.stream.cursorTo(0);
-      this.stream.write(newLines[i]);
+      this.stream.write(newLines[i] ?? '');
       this.stream.clearLine(1); // erase leftover chars if the new line is shorter
       this.stream.write('\n');
     }

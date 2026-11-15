@@ -29,21 +29,22 @@ export default class MappableSemaphore extends Semaphore {
 
     let firstError: Error | undefined;
     const results: Awaited<OUT>[] = [];
-    let nextIdx = 0;
 
     // Use a fixed pool of workers that each take the next value, rather than creating one promise
     // per value, so that at most `threads` waiters are ever queued on the semaphore per call
+    const valueEntries = values.entries();
     const worker = async (): Promise<void> => {
-      while (firstError === undefined && nextIdx < values.length) {
-        const idx = nextIdx;
-        nextIdx += 1;
+      for (const [idx, value] of valueEntries) {
+        if (firstError !== undefined) {
+          return;
+        }
         await this.runExclusive(async () => {
           // Skip work if a prior callback already failed
           if (firstError !== undefined) {
             return;
           }
           try {
-            results[idx] = await callback(values[idx]);
+            results[idx] = await callback(value);
           } catch (error) {
             firstError ??= error instanceof Error ? error : new Error(String(error));
           }

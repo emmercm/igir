@@ -34,6 +34,9 @@ export default class MergedDiscGame extends Game {
    */
   private static getSharedProps(subGames: Game[]): GameProps {
     const [firstGame, ...otherGames] = subGames;
+    if (firstGame === undefined) {
+      return {};
+    }
     const sharedProps: GameProps = { ...firstGame };
     for (const key of Object.keys(sharedProps)) {
       const firstValue: unknown = Reflect.get(firstGame, key);

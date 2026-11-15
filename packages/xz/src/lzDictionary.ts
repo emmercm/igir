@@ -95,7 +95,7 @@ export default class LzDictionary {
     if (index < 0) {
       index += this.buffer.length;
     }
-    return this.buffer[index];
+    return this.buffer[index] ?? 0;
   }
 
   /**
@@ -173,7 +173,7 @@ export default class LzDictionary {
       if (chunkLength < BULK_COPY_MIN) {
         // Short matches are common, so copy them with a plain loop instead of typed array calls
         for (let i = 0; i < chunkLength; i += 1) {
-          const byte = this.buffer[sourceIndex + i];
+          const byte = this.buffer[sourceIndex + i] ?? 0;
           this.buffer[this.bufferPosition + i] = byte;
           this.output[this.outputPosition + i] = byte;
         }

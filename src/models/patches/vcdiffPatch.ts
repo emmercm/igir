@@ -981,8 +981,16 @@ class VcdiffWindow {
 
       const instructionCodeIdx = await this.instructionsAndSizes.readByte();
 
+      const instructions = codeTable.at(instructionCodeIdx);
+      if (instructions === undefined) {
+        throw new IgirException(`Vcdiff instruction code ${instructionCodeIdx} isn't in the table`);
+      }
+
       for (let i = 0; i <= 1; i += 1) {
-        const instruction = codeTable[instructionCodeIdx][i];
+        const instruction = instructions.at(i);
+        if (instruction === undefined) {
+          throw new IgirException(`Vcdiff instruction code ${instructionCodeIdx} is incomplete`);
+        }
         if (instruction.type === VcdiffInstruction.NOOP) {
           continue;
         }
@@ -1030,9 +1038,9 @@ class VcdiffCache {
 
   constructor(sNear = 4, sSame = 3) {
     this.sNear = sNear;
-    this.near = Array.from({ length: sNear });
+    this.near = Array.from({ length: sNear }, () => 0);
     this.sSame = sSame;
-    this.same = Array.from({ length: sSame * 256 });
+    this.same = Array.from({ length: sSame * 256 }, () => 0);
   }
 
   /**
@@ -1069,10 +1077,19 @@ class VcdiffCache {
     } else if (mode === VcdiffCopyAddressMode.HERE) {
       addr = here - (await copyAddresses.readUint());
     } else if (mode >= 2 && mode <= this.sNear + 1) {
-      addr = this.near[mode - 2] + (await copyAddresses.readUint());
+      const nearAddr = this.near.at(mode - 2);
+      if (nearAddr === undefined) {
+        throw new IgirException(`Vcdiff near cache slot ${mode - 2} doesn't exist`);
+      }
+      addr = nearAddr + (await copyAddresses.readUint());
     } else {
       const sameMode = mode - (2 + this.sNear);
-      addr = this.same[sameMode * 256 + (await copyAddresses.readByte())];
+      const sameIdx = sameMode * 256 + (await copyAddresses.readByte());
+      const sameAddr = this.same.at(sameIdx);
+      if (sameAddr === undefined) {
+        throw new IgirException(`Vcdiff same cache slot ${sameIdx} doesn't exist`);
+      }
+      addr = sameAddr;
     }
 
     this.update(addr);

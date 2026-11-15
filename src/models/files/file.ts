@@ -490,11 +490,11 @@ export default class File implements FileProps {
         `multiple paddings present for ${this.toString()}; callers must narrow to one via withPaddings([...]) before writing`,
       );
     }
+    const [padding] = paddings;
     const wrappedCallback =
-      paddings.length === 0
+      padding === undefined
         ? callback
         : async (readable: stream.Readable): Promise<T> => {
-            const padding = paddings[0];
             return await StreamUtil.pipelineSafe(
               readable,
               new PadEndTransform(padding.getPaddedSize(), padding.getFillByte()),

@@ -36,7 +36,7 @@ describe('extension has possible header', () => {
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
       // CRC should NOT have changed
-      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(true);
+      expect(inputRomFiles.at(idx)?.equals(processedRomFile)).toEqual(true);
     }
   });
 
@@ -55,7 +55,7 @@ describe('extension has possible header', () => {
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(1);
-    expect(processedRomFiles[0].getFileHeader()).toBeUndefined();
+    expect(processedRomFiles.at(0)?.getFileHeader()).toBeUndefined();
   });
 
   it('should process raw headered files', async () => {
@@ -82,7 +82,7 @@ describe('extension has possible header', () => {
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
       expect(processedRomFile.getFileHeader()).not.toBeUndefined();
       // CRC should have changed
-      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(false);
+      expect(inputRomFiles.at(idx)?.equals(processedRomFile)).toEqual(false);
     }
   });
 
@@ -108,7 +108,7 @@ describe('extension has possible header', () => {
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
       expect(processedRomFile.getFileHeader()).toBeUndefined();
       // CRC should NOT have changed
-      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(true);
+      expect(inputRomFiles.at(idx)?.equals(processedRomFile)).toEqual(true);
     }
   });
 });
@@ -139,7 +139,7 @@ describe('should read file for header', () => {
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
       expect(processedRomFile.getFileHeader()).toBeUndefined();
       // CRC should NOT have changed
-      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(true);
+      expect(inputRomFiles.at(idx)?.equals(processedRomFile)).toEqual(true);
     }
   });
 
@@ -168,7 +168,7 @@ describe('should read file for header', () => {
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
       expect(processedRomFile.getFileHeader()).not.toBeUndefined();
       // CRC should have changed
-      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(false);
+      expect(inputRomFiles.at(idx)?.equals(processedRomFile)).toEqual(false);
     }
   });
 });

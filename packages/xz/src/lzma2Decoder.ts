@@ -58,7 +58,7 @@ export default class Lzma2Decoder {
         throw new Error(`xz decoder left ${end - offset} bytes of input unused`);
       }
 
-      const control = input[offset];
+      const control = input.readUInt8(offset);
       if (control === 0x00) {
         throw new Error('LZMA2 end of data is unsupported');
       }
@@ -80,7 +80,7 @@ export default class Lzma2Decoder {
         const compressedSize = input.readUInt16BE(offset + 3) + 1;
         if (control >= 0xc0) {
           this.needProperties = false;
-          this.readProperties(input[offset + 5]);
+          this.readProperties(input.readUInt8(offset + 5));
         } else if (this.needProperties) {
           throw new Error('LZMA data is corrupt: an LZMA2 chunk needs new properties');
         } else if (control >= 0xa0) {
