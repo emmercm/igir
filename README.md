@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v5.8.0 (Node.js v26.12.0)
+     @@   @@        @@   @@   @@       @@    v5.8.1 (Node.js v26.13.1)
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -181,8 +181,8 @@ link command options:
 ROM header options:
       --header          Glob pattern of input filenames to force header detection for [string]
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of
-                        comma-separated file extensions (supported: .a78, .fds, .lnx, .nes,
-                        .smc)                                                         [string]
+                        comma-separated file extensions (supported: .a78, .fds, .lnx, .msg,
+                        .nes, .pce, .smc, .smd, .swc)                                 [string]
 
 Trimmed ROM options:
       --trimmed-glob        Glob pattern of input filenames to force trimming detection for
