@@ -237,8 +237,11 @@ export default class Zip extends Archive {
       await torrentZip.finalize();
       await FsUtil.mv(tempZipFile, this.getFilePath());
     } finally {
-      await torrentZip.close();
-      await FsUtil.rm(tempZipFile, { force: true });
+      try {
+        await torrentZip.close();
+      } finally {
+        await FsUtil.rm(tempZipFile, { force: true });
+      }
     }
   }
 

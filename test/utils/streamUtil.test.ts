@@ -1,8 +1,16 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import stream from 'node:stream';
 
 import Defaults from '../../src/globals/defaults.js';
+import Temp from '../../src/globals/temp.js';
 import BufferUtil from '../../src/utils/bufferUtil.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import StreamUtil from '../../src/utils/streamUtil.js';
+
+if (!(await FsUtil.exists(Temp.getTempDir()))) {
+  await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
+}
 
 async function tick(): Promise<void> {
   await new Promise<void>((resolve) => {
@@ -124,6 +132,71 @@ describe('getChunkSize', () => {
       expect(StreamUtil.getChunkSize(start, end, size)).toEqual(expected);
     },
   );
+});
+
+describe('nonClosingWritable', () => {
+  /**
+   * Open a temp file pre-filled with {@link initialContents}, invoke the callback with it, and
+   * return the file's final contents.
+   */
+  const withTempFile = async (
+    initialContents: string,
+    callback: (fileHandle: fs.promises.FileHandle) => Promise<void>,
+  ): Promise<string> => {
+    const tempFilePath = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'nonClosingWritable'));
+    try {
+      await FsUtil.writeFile(tempFilePath, initialContents);
+      const fileHandle = await fs.promises.open(tempFilePath, 'r+');
+      try {
+        await callback(fileHandle);
+      } finally {
+        await fileHandle.close();
+      }
+      return (await FsUtil.readFile(tempFilePath)).toString();
+    } finally {
+      await FsUtil.rm(tempFilePath, { force: true });
+    }
+  };
+
+  it('writes every chunk contiguously, starting at the start position', async () => {
+    const contents = await withTempFile('0123456789', async (fileHandle) => {
+      await stream.promises.pipeline(
+        stream.Readable.from([Buffer.from('ab'), Buffer.from('cd')]),
+        StreamUtil.nonClosingWritable(fileHandle, 3),
+      );
+    });
+    expect(contents).toEqual('012abcd789');
+  });
+
+  it('leaves the file handle open for consecutive streams and positional writes', async () => {
+    const contents = await withTempFile('', async (fileHandle) => {
+      await stream.promises.pipeline(
+        stream.Readable.from([Buffer.from('aaaa')]),
+        StreamUtil.nonClosingWritable(fileHandle, 2),
+      );
+      await stream.promises.pipeline(
+        stream.Readable.from([Buffer.from('bbbb')]),
+        StreamUtil.nonClosingWritable(fileHandle, 8),
+      );
+      await fileHandle.write(Buffer.from('HH'), undefined, undefined, 0);
+      await fileHandle.write(Buffer.from('HH'), undefined, undefined, 6);
+    });
+    expect(contents).toEqual('HHaaaaHHbbbb');
+  });
+
+  it('leaves the file handle open when a pipeline fails after an earlier stream finished', async () => {
+    const contents = await withTempFile('', async (fileHandle) => {
+      await stream.promises.pipeline(
+        stream.Readable.from([Buffer.from('aaaa')]),
+        StreamUtil.nonClosingWritable(fileHandle, 0),
+      );
+      await expect(
+        stream.promises.pipeline(chunkThen('error'), StreamUtil.nonClosingWritable(fileHandle, 4)),
+      ).rejects.toThrow('source failed');
+      await fileHandle.write(Buffer.from('!'), undefined, undefined, 7);
+    });
+    expect(contents).toEqual('aaaaabc!');
+  });
 });
 
 describe('pipelineSafe', () => {
