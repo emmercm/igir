@@ -2743,10 +2743,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#supported-commands" class="md-nav__link">
+  <a href="#supported-command-combinations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported commands
+        Supported command combinations
       
     </span>
   </a>
@@ -2754,10 +2754,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#patch-types" class="md-nav__link">
+  <a href="#supported-patch-types" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Patch types
+        Supported patch types
       
     </span>
   </a>
@@ -2765,10 +2765,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rom-checksums" class="md-nav__link">
+  <a href="#rom-checksum-matching" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ROM checksums
+        ROM checksum matching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#patch-file-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patch file naming
       
     </span>
   </a>
@@ -3838,7 +3849,7 @@
 <p>Games and their ROMs are protected under copyrights, so patches are used to not share copyrighted code online. A person needs the original ROM file plus a patch file to get the resulting patched ROM that will be played with an emulator.</p>
 <h2 id="specifying-patch-files">Specifying patch files</h2>
 <p>Patch files can be specified with the <code>--patch &lt;path|glob&gt;</code> option. See the <a href="../../input/file-scanning/">file scanning docs</a> for more information.</p>
-<h2 id="supported-commands">Supported commands</h2>
+<h2 id="supported-command-combinations">Supported command combinations</h2>
 <p>Patching can be used with any combination of the <a href="../../commands/#rom-writing"><code>copy</code> or <code>move</code> commands</a>, with or without the <a href="../../commands/#rom-extracting-zipping"><code>extract</code> or <code>zip</code> commands</a>. Patching can't be used with the <a href="../../commands/#link"><code>link</code> command</a>.</p>
 <p>Patches need to read the ROM's contents, so there are some limitations when ROMs are archived and those archives would be copied or moved as-is:</p>
 <table>
@@ -3867,7 +3878,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="patch-types">Patch types</h2>
+<h2 id="supported-patch-types">Supported patch types</h2>
 <p>There are many, <em>many</em> patch types that ROM hackers use to distribute their changes on the internet (<a href="https://xkcd.com/927/">xkcd "Standards"</a>). Typically, a patch will only be distributed in one format, so gamers are entirely at the mercy of the ROM hacker's choice.</p>
 <p>Not all patch types are created equal. Here are some tables of some existing formats, whether Igir supports them, and what the patch supports.</p>
 <p><strong>Common patch types:</strong></p>
@@ -3882,28 +3893,28 @@
 </thead>
 <tbody>
 <tr>
-<td><code>.bps</code></td>
+<td><code>.bps</code> (Beat Patch - Single File)</td>
 <td>✅</td>
 <td>✅</td>
-<td></td>
+<td>byuu's ~2011 successor for both <code>.ips</code> and <code>.ups</code> patches.</td>
 </tr>
 <tr>
-<td><code>.ips</code></td>
+<td><code>.ips</code> (International Patching System)</td>
 <td>✅ IPS, IPS32</td>
 <td>❌</td>
 <td></td>
 </tr>
 <tr>
-<td><code>.ppf</code></td>
+<td><code>.ppf</code> (PlayStation Patch File)</td>
 <td>✅ v2, v3</td>
 <td>❌</td>
 <td></td>
 </tr>
 <tr>
-<td><code>.ups</code></td>
+<td><code>.ups</code> (Universal Patching System)</td>
 <td>✅</td>
 <td>✅</td>
-<td>The author, byuu, created <code>.ups</code> to replace <code>.ips</code>, but then created <code>.bps</code> as a replacement for <code>.ups</code>.</td>
+<td>byuu's ~2008 successor for <code>.ips</code> patches.</td>
 </tr>
 <tr>
 <td><code>.vcdiff</code>, <code>.xdelta</code></td>
@@ -3943,6 +3954,12 @@
 <td></td>
 </tr>
 <tr>
+<td><code>.bpm</code> (Beat Patch - Multi File)</td>
+<td>❌</td>
+<td>❓</td>
+<td>The multi-file version of <code>.bps</code>. Multi-file patches will likely never be supported.</td>
+</tr>
+<tr>
 <td><code>.bsp</code> (Binary Script Patching)</td>
 <td>❌</td>
 <td>❌</td>
@@ -3976,7 +3993,7 @@
 <td><code>.mod</code> (Paper Mario Star Rod)</td>
 <td>✅ PMSR, Yay0-compressed PMSR</td>
 <td>❌</td>
-<td>The source file has to be <code>Paper Mario (USA).z64</code> (CRC32 <code>A7F5CD7E</code>), so you don't need to put it in the patch filename.</td>
+<td>The input file has to be <code>Paper Mario (USA).z64</code> (CRC32 <code>A7F5CD7E</code>), so you don't need to put it in the patch filename.</td>
 </tr>
 <tr>
 <td><code>.ffp</code>, <code>.pat</code> (FireFlower)</td>
@@ -3994,7 +4011,7 @@
 <td><code>.rup</code> (NINJA 2.0)</td>
 <td>⚠️ only single file patches, only raw/binary file type</td>
 <td>❌ uses MD5</td>
-<td></td>
+<td>Multi-file patches will likely never be supported.</td>
 </tr>
 <tr>
 <td><code>.rxl</code> (ROM eXtension Library)</td>
@@ -4009,15 +4026,15 @@
 <p class="admonition-title">Note</p>
 <p>Igir can read patch files inside any supported <a href="../../input/reading-archives/">archive format</a> (just like DATs and ROMs), but most patch types will have to be fully extracted to a <a href="https://igir.io/advanced/temp-dir/">temporary file</a> before they can be applied.</p>
 </div>
-<h2 id="rom-checksums">ROM checksums</h2>
-<p>Igir needs to be able to know what source ROM each patch file applies to, and it does this using CRC32 checksums.</p>
-<p>A few patch formats include the source ROM's CRC32 checksum in the patch's file contents. This is the most accurate and therefore the best way to get source ROM information. <code>.bps</code> is a great example of an efficient and simple patch format that includes this information.</p>
-<p>Most patch formats <em>do not</em> include the source ROM's CRC32 checksum. <code>.ips</code> patches are some of the most likely you will come across. For those patches, you need to put the source ROM's CRC32 checksum in the patch's filename. Here are some examples:</p>
+<h2 id="rom-checksum-matching">ROM checksum matching</h2>
+<p>Igir needs to be able to know what input ROM each patch file applies to, and it does this using CRC32 checksums.</p>
+<p>A few patch formats include the input ROM's CRC32 checksum in the patch's file contents. This is the most accurate and therefore the best way to get input ROM information. <code>.bps</code> is a great example of an efficient and simple patch format that includes this information.</p>
+<p>Most patch formats <em>do not</em> include the input ROM's CRC32 checksum. <code>.ips</code> patches are some of the most likely you will come across. For those patches, you need to put the input ROM's CRC32 checksum in the patch's filename. Here are some examples:</p>
 <table>
 <thead>
 <tr>
-<th>Source ROM filename</th>
-<th>Patch filename</th>
+<th>Input ROM filename</th>
+<th>Patch filename with CRC32 information</th>
 </tr>
 </thead>
 <tbody>
@@ -4043,6 +4060,47 @@
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Providing <code>--patch &lt;path|glob&gt;</code> will cause Igir to calculate CRC32 checksums for input files regardless of what <a href="../matching/#automatically-using-other-checksum-algorithms"><code>--input-checksum-min &lt;algorithm&gt;</code></a> is provided. Igir will still prefer to match ROMs to DATs with the highest checksum possible.</p>
+</div>
+<h2 id="patch-file-naming">Patch file naming</h2>
+<p>Igir will generate the patched file's output filename from the patch's filename. The input ROM's filename is completely ignored (other than for <a href="#rom-checksum-matching">checksum matching</a>). Examples:</p>
+<table>
+<thead>
+<tr>
+<th>Input ROM filename</th>
+<th>Patch filename</th>
+<th>Output filename written</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Kirby's Dream Land 2 (USA, Europe) (SGB Enhanced).gb</code> (<code>8DC07C35</code>)</td>
+<td><code>Kirby's Dream Land 2 DX v1.2.bps</code></td>
+<td><code>Kirby's Dream Land 2 DX v1.2.gb</code></td>
+</tr>
+<tr>
+<td><code>Super Mario Land 2 - 6 Golden Coins (USA, Europe).gb</code></td>
+<td><code>Super Mario Land 2 - 6 Golden Coins v1.8.1 D5EC24E4.ips</code></td>
+<td><code>Super Mario Land 2 - 6 Golden Coins v1.8.1.gb</code></td>
+</tr>
+<tr>
+<td><code>Legend of Zelda, The - A Link to the Past (USA).sfc</code></td>
+<td><code>Legend of Zelda, The - A Link to the Past MSU-1 v1.2 777AAC2F.ips</code></td>
+<td><code>Legend of Zelda, The - A Link to the Past MSU-1 v1.2.sfc</code></td>
+</tr>
+<tr>
+<td><code>Super Smash Bros. (USA).z64</code></td>
+<td><code>Smash Remix v2.0.1 EB97929E.xdelta</code></td>
+<td><code>Smash Remix v2.0.1.z64</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Patch files should have a different name from their input ROM file. If they are the same, then Igir will report an error that two different files cannot write to the same output location.</p>
+</div>
 <h2 id="only-writing-patched-roms">Only writing patched ROMs</h2>
 <p>By default, Igir will write patched ROMs in <em>addition</em> to un-patched ROMs. This includes any ROMs that do not have any matching patches in a <code>--patch &lt;path|glob&gt;</code>.</p>
 <p>If you want to <em>only</em> write patched ROMs to the output directory, you can use the option:</p>
@@ -4072,7 +4130,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 16, 2026 05:11:10 UTC">October 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 24, 2026 19:11:59 UTC">October 24, 2026</span>
   </span>
 
     
