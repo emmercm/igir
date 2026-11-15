@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -2465,7 +2466,7 @@ describe('with inferred DATs', () => {
       ).scan();
       expect(dats).toHaveLength(1);
       const [firstDat] = dats;
-      assert.isDefined(firstDat);
+      assert.ok(firstDat !== undefined);
       const roms = firstDat
         .getGames()
         .reduce<[string, string[]][]>((arr, game) => {

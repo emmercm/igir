@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import type { OpenMode } from 'node:fs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -99,11 +100,11 @@ const withIOFile = async <T>(
   callback: (ioFile: IOFile) => Promise<T>,
 ): Promise<{ result: T; contents: Buffer }> => {
   const { result, contents } = await withIOFiles([file], async ([ioFile]) => {
-    assert.isDefined(ioFile);
+    assert.ok(ioFile !== undefined);
     return await callback(ioFile);
   });
   const [fileContents] = contents;
-  assert.isDefined(fileContents);
+  assert.ok(fileContents !== undefined);
   return { result, contents: fileContents };
 };
 
@@ -957,8 +958,8 @@ describe('copyRange', () => {
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
       async ([sourceIOFile, targetIOFile]) => {
-        assert.isDefined(sourceIOFile);
-        assert.isDefined(targetIOFile);
+        assert.ok(sourceIOFile !== undefined);
+        assert.ok(targetIOFile !== undefined);
         return await sourceIOFile.copyRange(targetIOFile, 5, 10, source.length - 20);
       },
     );
@@ -977,8 +978,8 @@ describe('copyRange', () => {
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
       async ([sourceIOFile, targetIOFile]) => {
-        assert.isDefined(sourceIOFile);
-        assert.isDefined(targetIOFile);
+        assert.ok(sourceIOFile !== undefined);
+        assert.ok(targetIOFile !== undefined);
         return await sourceIOFile.copyRange(targetIOFile);
       },
     );
@@ -994,8 +995,8 @@ describe('copyRange', () => {
     const { result: copied, contents } = await withIOFiles(
       [{ contents: source }, { contents: Buffer.alloc(0) }],
       async ([sourceIOFile, targetIOFile]) => {
-        assert.isDefined(sourceIOFile);
-        assert.isDefined(targetIOFile);
+        assert.ok(sourceIOFile !== undefined);
+        assert.ok(targetIOFile !== undefined);
         return await sourceIOFile.copyRange(targetIOFile, 0, 1, source.length * 3);
       },
     );
@@ -1082,8 +1083,8 @@ describe('copyRange', () => {
       [{ contents: source }, { contents: Buffer.alloc(source.length) }],
       // Positions that would overlap if the source and target were the same file
       async ([sourceIOFile, targetIOFile]) => {
-        assert.isDefined(sourceIOFile);
-        assert.isDefined(targetIOFile);
+        assert.ok(sourceIOFile !== undefined);
+        assert.ok(targetIOFile !== undefined);
         return await sourceIOFile.copyRange(targetIOFile, 13, 10, source.length - 3);
       },
     );
@@ -1129,8 +1130,8 @@ describe('copyNext', () => {
     const { contents } = await withIOFiles(
       [{ contents: 'ABCDEF0123456789', mode: 'r' }, { contents: '----------' }],
       async ([sourceIOFile, targetIOFile]) => {
-        assert.isDefined(sourceIOFile);
-        assert.isDefined(targetIOFile);
+        assert.ok(sourceIOFile !== undefined);
+        assert.ok(targetIOFile !== undefined);
         sourceIOFile.seek(10);
         await expect(sourceIOFile.copyNext(targetIOFile, 2, 4)).resolves.toEqual(4);
         expect(sourceIOFile.getPosition()).toEqual(14);
@@ -1318,7 +1319,7 @@ describe('close', () => {
       await ioFile.writeAt(Buffer.from('ABCDEF01'), 0);
       // Writing the file's initial contents opened a handle first
       const [handle] = openedHandles.slice(-1);
-      assert.isDefined(handle);
+      assert.ok(handle !== undefined);
       vi.spyOn(handle, 'writev').mockRejectedValue(new Error('flush failed'));
 
       await expect(ioFile.close()).rejects.toThrow('flush failed');

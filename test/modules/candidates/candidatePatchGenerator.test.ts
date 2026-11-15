@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -404,7 +405,7 @@ describe('with explicit DATs', () => {
         new MappableSemaphore(os.availableParallelism()),
       ).scan()
     ).at(0);
-    assert.isDefined(dat);
+    assert.ok(dat !== undefined);
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),

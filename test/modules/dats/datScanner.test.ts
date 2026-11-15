@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -179,7 +180,7 @@ describe('single files', () => {
       ).scan();
       expect(dats).toHaveLength(1);
       const datFile = dats.at(0)?.getFile();
-      assert.isDefined(datFile);
+      assert.ok(datFile !== undefined);
       expect(datFile.getFilePath()).toEqual(PathUtil.resolve(datPath));
       expect(datFile.getExtractedFilePath()).toEqual(expectedExtractedFilePath);
     },
@@ -242,7 +243,7 @@ describe('single files', () => {
       ).scan();
       expect(dats).toHaveLength(1);
       const dat = dats.at(0);
-      assert.isDefined(dat);
+      assert.ok(dat !== undefined);
       expect(dat.getParents().length).toBeLessThanOrEqual(dat.getGames().length);
       expect(dat.getParents()).toHaveLength(expectedParents);
       expect(dat.getGames()).toHaveLength(expectedGames);
@@ -280,7 +281,7 @@ describe('missing parents', () => {
       // Then the orphaned clones were re-pointed to their elected parents
       expect(dats).toHaveLength(1);
       const dat = dats.at(0);
-      assert.isDefined(dat);
+      assert.ok(dat !== undefined);
       expect(dat.getGames()).toEqual([
         new Game({ name: 'Parent', id: '0001' }),
         new Game({ name: 'Clone', id: '0002', cloneOfId: '0001' }),

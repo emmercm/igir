@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import events from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -1150,7 +1151,7 @@ describe('openReader', () => {
     const outputs = await Promise.all(
       Array.from({ length: 32 }, async (_, i) => {
         const fixture = ALL_FIXTURES.at(i % ALL_FIXTURES.length);
-        assert.isDefined(fixture);
+        assert.ok(fixture !== undefined);
         return await BufferUtil.fromReadable(
           maxcso.openReader({ inputFilename: fixture.archivePath }),
         );

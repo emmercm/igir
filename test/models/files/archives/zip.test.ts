@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -78,7 +79,7 @@ describe('createArchive', () => {
       // When the file is being zipped
       // Then any underlying exception will be re-thrown
       const [firstInputToOutput] = inputToOutput;
-      assert.isDefined(firstInputToOutput);
+      assert.ok(firstInputToOutput !== undefined);
       const [, firstOutputEntry] = firstInputToOutput;
       const zip = firstOutputEntry.getArchive() as Zip;
       await expect(zip.createArchive(inputToOutput, ZipFormat.TORRENTZIP, 1)).rejects.toThrow();
@@ -245,7 +246,7 @@ describe('getArchiveEntries', () => {
         true,
       );
       const realCrc32 = realEntries.at(0)?.getCrc32();
-      assert.isDefined(realCrc32);
+      assert.ok(realCrc32 !== undefined);
 
       // And the CRC32 stored in the central directory has been corrupted without touching the bytes
       const endOfCentralDirectory = await new ZipReader(tempZipPath).endOfCentralDirectoryRecord();

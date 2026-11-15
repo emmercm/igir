@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import crypto from 'node:crypto';
 import events from 'node:events';
 import fs from 'node:fs';
@@ -515,7 +516,7 @@ describe('listEntries', () => {
     async ({ format, archivePath }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
-        assert.isDefined(inputFilename);
+        assert.ok(inputFilename !== undefined);
         expect(await sevenZip.listEntries({ inputFilename, format })).toEqual(MULTI_ENTRIES);
         expect(await openFiles([inputFilename])).toEqual([]);
       });
@@ -527,7 +528,7 @@ describe('listEntries', () => {
     async ({ format, archivePath }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
-        assert.isDefined(inputFilename);
+        assert.ok(inputFilename !== undefined);
         expect(await sevenZip.listEntries({ inputFilename, format })).toEqual([
           {
             entryIndex: 0,
@@ -675,7 +676,7 @@ describe('listEntries', () => {
   it('should list many archives at once, more than the thread pool has threads, then release them', async () => {
     await withTempDir(async (directory) => {
       const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
-      assert.isDefined(inputFilename);
+      assert.ok(inputFilename !== undefined);
       const listings = await Promise.all(
         Array.from(
           { length: 32 },
@@ -749,10 +750,10 @@ describe('listEntries', () => {
     await withTempDir(async (directory) => {
       // The second volume is deliberately never copied
       const [firstSource, , thirdSource] = SPLIT_SET.volumes;
-      assert.isDefined(firstSource);
-      assert.isDefined(thirdSource);
+      assert.ok(firstSource !== undefined);
+      assert.ok(thirdSource !== undefined);
       const [firstVolume] = await copyInto(directory, [firstSource, thirdSource]);
-      assert.isDefined(firstVolume);
+      assert.ok(firstVolume !== undefined);
 
       const entries = await sevenZip.listEntries({
         inputFilename: firstVolume,
@@ -768,7 +769,7 @@ describe('listEntries', () => {
 
   it('should reject a split set opened from a volume other than the first', async () => {
     const secondVolume = SPLIT_SET.volumes.at(1);
-    assert.isDefined(secondVolume);
+    assert.ok(secondVolume !== undefined);
     await expect(
       sevenZip.listEntries({
         inputFilename: secondVolume,
@@ -784,7 +785,7 @@ describe('openEntryReader', () => {
     async ({ format, archivePath }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
-        assert.isDefined(inputFilename);
+        assert.ok(inputFilename !== undefined);
         for (const { entryPath, entryIndex, size, crc32 } of MULTI_ENTRIES) {
           for (const indexHint of [undefined, entryIndex]) {
             const extracted = await drain(
@@ -807,7 +808,7 @@ describe('openEntryReader', () => {
     // Every one of these fails the path check, so the scan runs and the entry
     // named is the entry extracted. A wrong index can cost time, never bytes.
     const firstEntry = MULTI_ENTRIES.at(0);
-    assert.isDefined(firstEntry);
+    assert.ok(firstEntry !== undefined);
     const { entryPath, size, crc32 } = firstEntry;
     const extracted = await drain(
       sevenZip.openEntryReader({
@@ -841,7 +842,7 @@ describe('openEntryReader', () => {
     async ({ options, rejectMessage }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
-        assert.isDefined(inputFilename);
+        assert.ok(inputFilename !== undefined);
         await expect(
           drain(
             sevenZip.openEntryReader({
@@ -861,7 +862,7 @@ describe('openEntryReader', () => {
     async ({ format, archivePath }) => {
       await withTempDir(async (directory) => {
         const [inputFilename] = await copyInto(directory, [archivePath]);
-        assert.isDefined(inputFilename);
+        assert.ok(inputFilename !== undefined);
         const extracted = await drain(sevenZip.openEntryReader({ inputFilename, format }));
         expect({ size: extracted.length, crc32: crc32Hex(extracted) }).toEqual({
           size: SINGLE_STREAM_SIZE,
@@ -1092,7 +1093,7 @@ describe('openEntryReader', () => {
   it('should close cleanly and release the archive when destroyed before it has opened', async () => {
     await withTempDir(async (directory) => {
       const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
-      assert.isDefined(inputFilename);
+      assert.ok(inputFilename !== undefined);
       const readables = Array.from({ length: 16 }, () =>
         sevenZip.openEntryReader({
           inputFilename,
@@ -1204,7 +1205,7 @@ describe('openEntryReader', () => {
           Buffer.from('the second one written'),
         ];
         const expectedContents = contentsByEntry.at(expectedContentsIndex);
-        assert.isDefined(expectedContents);
+        assert.ok(expectedContents !== undefined);
         await writeStoredZipEntries(
           archive,
           contentsByEntry.map((contents) => ({ entryName: 'dup.bin', contents })),
@@ -1324,7 +1325,7 @@ describe('openEntryReader', () => {
     await withTempDir(async (directory) => {
       const { copies, inputFilename } = await copyVolumesInto(directory, SPLIT_SET);
       const lastCopy = copies.at(-1);
-      assert.isDefined(lastCopy);
+      assert.ok(lastCopy !== undefined);
       const appended = crypto.randomBytes(2500);
 
       const readable = sevenZip.openEntryReader({
@@ -1515,7 +1516,7 @@ describe('openEntryReader', () => {
         const { copies, inputFilename } = await copyVolumesInto(directory, volumeSet);
         const { format } = volumeSet;
         const [firstEntry] = await sevenZip.listEntries({ inputFilename, format });
-        assert.isDefined(firstEntry);
+        assert.ok(firstEntry !== undefined);
         const { entryPath } = firstEntry;
         const readable = sevenZip.openEntryReader({
           inputFilename,
@@ -1536,7 +1537,7 @@ describe('openEntryReader', () => {
   it('should release the archive when destroyed before reading, emitting the same events as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
-      assert.isDefined(inputFilename);
+      assert.ok(inputFilename !== undefined);
       const expected = await eventsAfterDestroy(fs.createReadStream(inputFilename));
       expect(expected).toEqual(['close']);
 
@@ -1553,7 +1554,7 @@ describe('openEntryReader', () => {
   it('should release the archive when destroyed with a read in flight, reporting the same error as fs.ReadStream', async () => {
     await withTempDir(async (directory) => {
       const [inputFilename] = await copyInto(directory, [SEVEN_ZIP_ARCHIVE]);
-      assert.isDefined(inputFilename);
+      assert.ok(inputFilename !== undefined);
       const error = new Error('destroyed');
       // Flowing, so each stream has its next read in flight whenever a chunk arrives
       const fileStream = fs.createReadStream(inputFilename, { highWaterMark: 1 });
@@ -1586,7 +1587,7 @@ describe('openEntryReader', () => {
         const [archivePath] = await copyInto(directory, [
           path.join(FIXTURE_DIR, 'one-large-file', '7z-lz4-level1-non-solid.7z'),
         ]);
-        assert.isDefined(archivePath);
+        assert.ok(archivePath !== undefined);
         for (let i = 0; i < 20; i++) {
           const worker = new worker_threads.Worker(
             `const { parentPort, workerData } = require('node:worker_threads');

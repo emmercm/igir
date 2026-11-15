@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import path from 'node:path';
 
 import FileCache from '../../src/cache/fileCache.js';
@@ -216,7 +217,7 @@ describe('filesFrom', () => {
     async (extension) => {
       // Any set of numbered parts will do, as long as its extension is replaced
       const [firstSplitArchive] = SPLIT_ARCHIVES;
-      assert.isDefined(firstSplitArchive);
+      assert.ok(firstSplitArchive !== undefined);
       const { parts, joinedPath } = firstSplitArchive;
       await withTempDir(async (tempDir) => {
         const copies = await Promise.all(
@@ -227,7 +228,7 @@ describe('filesFrom', () => {
           }),
         );
         const [firstCopy] = copies;
-        assert.isDefined(firstCopy);
+        assert.ok(firstCopy !== undefined);
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(firstCopy);
         expect(entrySummaries(archiveEntries)).toEqual([
           {

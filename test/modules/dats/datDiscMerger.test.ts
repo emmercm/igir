@@ -1,3 +1,5 @@
+import assert from 'node:assert';
+
 import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
@@ -347,7 +349,7 @@ it('should de-conflict duplicate ROM names per sub-game in a MergedDiscGame', ()
 
   expect(result.getGames()).toHaveLength(1);
   const merged = result.getGames().at(0);
-  assert.isDefined(merged);
+  assert.ok(merged !== undefined);
   expect(merged).toBeInstanceOf(MergedDiscGame);
   // The duplicate names are de-conflicted by prefixing each sub-game's original name, and the
   // sub-games carry the same renamed ROM instances that getRoms() flattens.
@@ -385,7 +387,7 @@ it('should keep the categories shared by every disc in a MergedDiscGame', () => 
 
   expect(result.getGames()).toHaveLength(1);
   const merged = result.getGames().at(0);
-  assert.isDefined(merged);
+  assert.ok(merged !== undefined);
   expect(merged).toBeInstanceOf(MergedDiscGame);
   expect(merged.getCategories()).toEqual(['Games']);
 });
@@ -393,7 +395,7 @@ it('should keep the categories shared by every disc in a MergedDiscGame', () => 
 it('should return a plain Game (not a MergedDiscGame) for single-disc groups', () => {
   const options = new Options({ mergeDiscs: true });
   const [singleDiscGame] = singleDiscGames;
-  assert.isDefined(singleDiscGame);
+  assert.ok(singleDiscGame !== undefined);
   const dat = new LogiqxDAT({ header: new Header(), games: [singleDiscGame] });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);

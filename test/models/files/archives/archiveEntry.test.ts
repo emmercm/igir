@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -111,7 +112,7 @@ describe('getSize', () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries.at(0);
-      assert.isDefined(archiveEntry);
+      assert.ok(archiveEntry !== undefined);
 
       expect(archiveEntry.getSize()).toEqual(expectedSize);
     });
@@ -129,7 +130,7 @@ describe('getSize', () => {
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries.at(0);
-        assert.isDefined(archiveEntry);
+        assert.ok(archiveEntry !== undefined);
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
@@ -146,7 +147,7 @@ describe('getSize', () => {
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries.at(0);
-        assert.isDefined(archiveEntry);
+        assert.ok(archiveEntry !== undefined);
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
@@ -163,7 +164,7 @@ describe('getSize', () => {
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries.at(0);
-        assert.isDefined(archiveEntry);
+        assert.ok(archiveEntry !== undefined);
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
@@ -203,7 +204,7 @@ describe('getCrc32', () => {
     const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries.at(0);
-    assert.isDefined(archiveEntry);
+    assert.ok(archiveEntry !== undefined);
 
     expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
     expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -248,7 +249,7 @@ describe('getCrc32WithoutHeader', () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries.at(0);
-      assert.isDefined(archiveEntry);
+      assert.ok(archiveEntry !== undefined);
 
       expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
       expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -271,7 +272,7 @@ describe('getCrc32WithoutHeader', () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const firstArchiveEntry = archiveEntries.at(0);
-      assert.isDefined(firstArchiveEntry);
+      assert.ok(firstArchiveEntry !== undefined);
       const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);
@@ -326,7 +327,7 @@ describe('getMd5', () => {
     );
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries.at(0);
-    assert.isDefined(archiveEntry);
+    assert.ok(archiveEntry !== undefined);
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toEqual(expectedMd5);
@@ -376,7 +377,7 @@ describe('getMd5WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries.at(0);
-      assert.isDefined(archiveEntry);
+      assert.ok(archiveEntry !== undefined);
 
       // Some archives store CRC32, or otherwise it won't be defined
       expect(archiveEntry.getMd5()).toEqual(expectedMd5);
@@ -404,7 +405,7 @@ describe('getMd5WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const firstArchiveEntry = archiveEntries.at(0);
-      assert.isDefined(firstArchiveEntry);
+      assert.ok(firstArchiveEntry !== undefined);
       const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);
@@ -465,7 +466,7 @@ describe('getSha1', () => {
     );
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries.at(0);
-    assert.isDefined(archiveEntry);
+    assert.ok(archiveEntry !== undefined);
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
@@ -521,7 +522,7 @@ describe('getSha1WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries.at(0);
-      assert.isDefined(archiveEntry);
+      assert.ok(archiveEntry !== undefined);
 
       // Some archives store CRC32, or otherwise it won't be defined
       expect(archiveEntry.getMd5()).toBeUndefined();
@@ -555,7 +556,7 @@ describe('getSha1WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const firstArchiveEntry = archiveEntries.at(0);
-      assert.isDefined(firstArchiveEntry);
+      assert.ok(firstArchiveEntry !== undefined);
       const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);
@@ -661,7 +662,7 @@ describe('getSha256', () => {
     );
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries.at(0);
-    assert.isDefined(archiveEntry);
+    assert.ok(archiveEntry !== undefined);
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
@@ -762,7 +763,7 @@ describe('getSha256WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries.at(0);
-      assert.isDefined(archiveEntry);
+      assert.ok(archiveEntry !== undefined);
 
       // Some archives store CRC32, or otherwise it won't be defined
       expect(archiveEntry.getMd5()).toBeUndefined();
@@ -796,7 +797,7 @@ describe('getSha256WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const firstArchiveEntry = archiveEntries.at(0);
-      assert.isDefined(firstArchiveEntry);
+      assert.ok(firstArchiveEntry !== undefined);
       const header = FileSignature.romHeaderFromFilename(firstArchiveEntry.getExtractedFilePath());
       if (header === undefined) {
         throw new Error(`couldn't get header for: ${firstArchiveEntry.getExtractedFilePath()}`);

@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import type { Stats } from 'node:fs';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -535,7 +536,7 @@ describe('zip', () => {
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         const [firstOutputFile] = outputFiles;
-        assert.isDefined(firstOutputFile);
+        assert.ok(firstOutputFile !== undefined);
         const [firstOutputFilePath] = firstOutputFile;
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
           path.join(outputTemp, firstOutputFilePath),
@@ -571,7 +572,7 @@ describe('zip', () => {
       const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
       const [firstOutputFile] = outputFiles;
-      assert.isDefined(firstOutputFile);
+      assert.ok(firstOutputFile !== undefined);
       const [firstOutputFilePath] = firstOutputFile;
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
         path.join(outputTemp, firstOutputFilePath),
@@ -1005,7 +1006,7 @@ describe('zip', () => {
         // Then
         expect(outputFiles).toHaveLength(1);
         const [firstOutputFile] = outputFiles;
-        assert.isDefined(firstOutputFile);
+        assert.ok(firstOutputFile !== undefined);
         const [firstOutputFilePath] = firstOutputFile;
         const outputFile = path.join(outputTemp, firstOutputFilePath);
         const writtenRomsAndCrcs = (await new FileFactory(new FileCache()).filesFrom(outputFile))
@@ -1043,7 +1044,7 @@ describe('extract', () => {
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         const [firstOutputFile] = outputFiles;
-        assert.isDefined(firstOutputFile);
+        assert.ok(firstOutputFile !== undefined);
         const [firstOutputFilePath] = firstOutputFile;
         expect(firstOutputFilePath).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1078,7 +1079,7 @@ describe('extract', () => {
       const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
       const [firstOutputFile] = outputFiles;
-      assert.isDefined(firstOutputFile);
+      assert.ok(firstOutputFile !== undefined);
       const [firstOutputFilePath] = firstOutputFile;
       expect(firstOutputFilePath).toEqual(expectedFileName);
       const outputFile = await File.fileOf(
@@ -1576,7 +1577,7 @@ describe('raw', () => {
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         const [firstOutputFile] = outputFiles;
-        assert.isDefined(firstOutputFile);
+        assert.ok(firstOutputFile !== undefined);
         const [firstOutputFilePath] = firstOutputFile;
         expect(firstOutputFilePath).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1609,7 +1610,7 @@ describe('raw', () => {
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         const [firstOutputFile] = outputFiles;
-        assert.isDefined(firstOutputFile);
+        assert.ok(firstOutputFile !== undefined);
         const [firstOutputFilePath] = firstOutputFile;
         expect(firstOutputFilePath).toEqual(expectedFileName);
         const outputFile = await File.fileOf(

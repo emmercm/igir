@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -54,7 +55,7 @@ async function processFile(
 
     expect(processedFiles).toHaveLength(1);
     const [processedFile] = processedFiles;
-    assert.isDefined(processedFile);
+    assert.ok(processedFile !== undefined);
     return processedFile;
   } finally {
     await FsUtil.rm(tempTrimmedFilePath, { force: true });

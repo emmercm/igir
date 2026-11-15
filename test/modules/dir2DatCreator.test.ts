@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -39,7 +40,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   ).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
-  assert.isDefined(inferredDat);
+  assert.ok(inferredDat !== undefined);
 
   // And candidates
   const candidates = await new CandidateGenerator(
@@ -81,7 +82,7 @@ it('should write a valid DAT', async () => {
   ).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
-  assert.isDefined(inferredDat);
+  assert.ok(inferredDat !== undefined);
 
   // And candidates
   const candidates = await new CandidateGenerator(
@@ -118,7 +119,7 @@ it('should write a valid DAT', async () => {
     ).scan();
     expect(writtenDats).toHaveLength(1);
     const [firstWrittenDat] = writtenDats;
-    assert.isDefined(firstWrittenDat);
+    assert.ok(firstWrittenDat !== undefined);
     writtenDat = firstWrittenDat;
   } finally {
     await FsUtil.rm(dir2dat, { force: true });
@@ -176,7 +177,7 @@ it('should use the candidates for games and ROMs', async () => {
   ).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
-  assert.isDefined(inferredDat);
+  assert.ok(inferredDat !== undefined);
 
   // And candidates
   const candidates = await new CandidateGenerator(
@@ -228,7 +229,7 @@ it('should use the candidates for games and ROMs', async () => {
     ).scan();
     expect(writtenDats).toHaveLength(1);
     const [firstWrittenDat] = writtenDats;
-    assert.isDefined(firstWrittenDat);
+    assert.ok(firstWrittenDat !== undefined);
     writtenDat = firstWrittenDat;
   } finally {
     await FsUtil.rm(dir2dat, { force: true });

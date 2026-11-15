@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import path from 'node:path';
 
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
@@ -32,7 +33,7 @@ function createRomIndexer(props?: OptionsProps): ROMIndexer {
 
 function indexAndFind(files: File[], props?: OptionsProps): File[] {
   const [firstFile] = files;
-  assert.isDefined(firstFile);
+  assert.ok(firstFile !== undefined);
   return createRomIndexer(props).index(files).findFiles(firstFile);
 }
 

@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -151,7 +152,7 @@ describe('getArchiveEntries', () => {
       expect(entries).toHaveLength(1);
 
       const entry = entries.at(0);
-      assert.isDefined(entry);
+      assert.ok(entry !== undefined);
       expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
       expect(entry.getCrc32()).toEqual(expectedCrc);
     },
@@ -225,7 +226,7 @@ describe('getArchiveEntries', () => {
 
     for (const [idx, entry] of entries.entries()) {
       const expectedEntry = expectedEntries[idx];
-      assert.isDefined(expectedEntry);
+      assert.ok(expectedEntry !== undefined);
       const [expectedEntryPath, expectedCrc] = expectedEntry;
       expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
       expect(entry.getCrc32()).toEqual(expectedCrc);
@@ -276,7 +277,7 @@ describe('getArchiveEntries', () => {
 
       expect(entries).toHaveLength(1);
       const size = entries.at(0)?.getSize();
-      assert.isDefined(size);
+      assert.ok(size !== undefined);
       expect(progressCalls).toEqual([
         [0, size],
         [size, undefined],
@@ -295,7 +296,7 @@ describe('readEntryFirstBytes', () => {
     async (filePath, archiveFactory) => {
       const archive = archiveFactory(filePath);
       const [entry] = await archive.getArchiveEntries(ChecksumBitmask.CRC32);
-      assert.isDefined(entry);
+      assert.ok(entry !== undefined);
       const contents = await archive.extractEntryToStream(
         entry,
         async (readable) => await BufferUtil.fromReadable(readable),

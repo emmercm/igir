@@ -1,3 +1,5 @@
+import assert from 'node:assert';
+
 import DATObject from '../../../../src/models/dats/datObject.js';
 import SoftwareListDAT from '../../../../src/models/dats/softwarelist/softwareListDat.js';
 
@@ -21,7 +23,7 @@ describe('withProps', () => {
     const [software] = SoftwareListDAT.fromObject(
       DATObject.fromXmlString(xml).softwarelist ?? {},
     ).getGames();
-    assert.isDefined(software);
+    assert.ok(software !== undefined);
     expect(software.getRoms().map((rom) => rom.getName())).toEqual(['smb.prg', 'smb.chr']);
 
     const copy = software.withProps({ cloneOf: undefined });
