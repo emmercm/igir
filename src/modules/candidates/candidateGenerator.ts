@@ -219,6 +219,9 @@ export default class CandidateGenerator extends Module {
     return await this.generateWriteCandidates(dat, game, foundRomsWithArchiveFiles);
   }
 
+  /**
+   * Filter to only the input files that can be used for a {@link Game}'s {@link ROM}s.
+   */
   private filterLegalInputFilesForGame(
     dat: DAT,
     game: Game,
@@ -235,14 +238,12 @@ export default class CandidateGenerator extends Module {
         return [rom, inputFiles];
       }
 
-      const isAreRawWriting =
-        this.options.shouldWrite() &&
-        !this.options.shouldExtractRom(rom) &&
-        !this.options.shouldZipRom(rom);
+      const areRewritingRom = this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom);
+      const areRawWriting = this.options.shouldWrite() && !areRewritingRom;
 
       const filteredInputFiles = inputFiles.filter((inputFile) => {
         if (
-          !isAreRawWriting &&
+          !areRawWriting &&
           inputFile instanceof ArchiveEntry &&
           !(rom instanceof Disk) &&
           !inputFile.canExtract()
@@ -255,17 +256,19 @@ export default class CandidateGenerator extends Module {
         }
 
         if (
-          isAreRawWriting &&
+          // We aren't extracting or zipping, so archive entries are used as-is and must be named
+          // correctly
+          !areRewritingRom &&
           inputFile instanceof ArchiveEntry &&
           rom.getName().trim() !== '' &&
           inputFile.getArchive().hasMeaningfulEntryPaths()
         ) {
-          const outputPath = OutputFactory.getPath(this.options, dat, game, rom, inputFile);
-          if (outputPath.entryPath !== inputFile.getExtractedFilePath()) {
+          const expectedEntryPath = OutputFactory.getEntryPath(this.options, game, rom, inputFile);
+          if (expectedEntryPath !== inputFile.getExtractedFilePath()) {
             // The input file is an ArchiveEntry that we won't rewrite and its name doesn't match
             // what we want it to be
             this.prefixedLogger.trace(
-              `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because the entry '${inputFile.getExtractedFilePath()}' doesn't have the correct path '${outputPath.entryPath}'`,
+              `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because the entry '${inputFile.getExtractedFilePath()}' doesn't have the correct path '${expectedEntryPath}'`,
             );
             return false;
           }
