@@ -164,7 +164,7 @@ describe('createPatchedFile', () => {
     let position = literalData.length;
     for (const distance of [200, 300]) {
       for (let i = 0; i < 273; i += 1) {
-        decompressed[position] = decompressed[position - distance];
+        decompressed.writeUInt8(decompressed.readUInt8(position - distance), position);
         position += 1;
       }
     }

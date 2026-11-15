@@ -12,4 +12,4 @@ type LogLevelKey = keyof typeof LogLevel;
 export type LogLevelValue = (typeof LogLevel)[LogLevelKey];
 export const LogLevelInverted = Object.fromEntries(
   Object.entries(LogLevel).map(([key, value]) => [value, key]),
-) as Record<number, LogLevelKey>;
+) as Record<LogLevelValue, LogLevelKey>;

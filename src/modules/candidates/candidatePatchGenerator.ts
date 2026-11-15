@@ -155,8 +155,9 @@ export default class CandidatePatchGenerator extends Module {
           inputFile = inputFile.withPatch(patch);
 
           // Build a new output file
-          const extMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(romWithFiles.getRom().getName());
-          const extractedFileName = patchedRomName + (extMatch === null ? '' : extMatch[1]);
+          const extension =
+            /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(romWithFiles.getRom().getName())?.at(1) ?? '';
+          const extractedFileName = patchedRomName + extension;
           if (outputFile instanceof ArchiveEntry) {
             outputFile = outputFile.withProps({
               archive: outputFile

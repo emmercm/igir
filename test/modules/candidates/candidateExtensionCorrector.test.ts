@@ -196,7 +196,7 @@ it('should not truncate names with periods when correcting from file signature',
     ).correct(dat, candidates);
 
     expect(correctedCandidates).toHaveLength(1);
-    expect(correctedCandidates[0].getRomsWithFiles()).toHaveLength(1);
+    expect(correctedCandidates.at(0)?.getRomsWithFiles()).toHaveLength(1);
     const correctedRomName = correctedCandidates
       .at(0)
       ?.getRomsWithFiles()

@@ -225,6 +225,13 @@ export default eslintConfig.defineConfig([
       // Superseded by other rules
       'unicorn/no-this-outside-of-class': 'off', // made safe by @typescript-eslint/unbound-method
       // Fixes
+      'unicorn/prefer-at': [
+        'error',
+        {
+          // Also check non-negative index access, so the result is typed as possibly undefined
+          checkAllIndexAccess: true,
+        },
+      ],
       'unicorn/prefer-single-call': [
         'error',
         {

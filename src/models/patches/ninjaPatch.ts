@@ -178,8 +178,8 @@ export default class NinjaPatch extends Patch {
       const chunkSize = Math.min(overflowSize - read, Defaults.FILE_READING_CHUNK_SIZE);
       const overflow = await patchIOFile.readNext(chunkSize);
       read += chunkSize;
-      for (let i = 0; i < overflow.length; i += 1) {
-        overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
+      for (const [i, overflowDatum] of overflow.entries()) {
+        overflow[i] = overflowDatum ^ 255; // NOTE(cemmer): this isn't documented anywhere
       }
       await targetIOFile.writeAt(overflow, targetIOFile.getSize());
       if (overflow.length < chunkSize) {
@@ -208,7 +208,7 @@ export default class NinjaPatch extends Patch {
           : Buffer.concat([xorData, Buffer.alloc(chunkSize - xorData.length)]);
       // Bytes past the end of the target are 0x00, so they're left as the XOR data
       for (const [i, sourceDatum] of sourceData.entries()) {
-        targetData[i] ^= sourceDatum;
+        targetData[i] = (targetData.at(i) ?? 0x00) ^ sourceDatum;
       }
       await targetIOFile.writeAt(targetData, offset + xored);
     }

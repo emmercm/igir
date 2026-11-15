@@ -137,8 +137,9 @@ export default class PlaylistCreator extends Module {
   }
 
   private static getCommonDirectory(files: File[]): string {
-    if (files.length === 1) {
-      return path.dirname(files[0].getFilePath());
+    const [firstFile] = files;
+    if (files.length === 1 && firstFile !== undefined) {
+      return path.dirname(firstFile.getFilePath());
     }
 
     const fileDirsSplit = files.map((file) => path.dirname(file.getFilePath()).split(path.sep));
@@ -148,10 +149,14 @@ export default class PlaylistCreator extends Module {
     let depth = 0;
     while (depth <= maxDepth) {
       const fileSubPaths = fileDirsSplit.map((split) => split.slice(0, depth).join(path.sep));
-      if (fileSubPaths.some((p) => p !== fileSubPaths[0])) {
+      const [firstFileSubPath] = fileSubPaths;
+      if (
+        firstFileSubPath === undefined ||
+        fileSubPaths.some((fileSubPath) => fileSubPath !== firstFileSubPath)
+      ) {
         break;
       }
-      lastCommonDir = fileSubPaths[0];
+      lastCommonDir = firstFileSubPath;
       depth += 1;
     }
     return lastCommonDir;

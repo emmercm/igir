@@ -73,6 +73,7 @@ export default class CandidateValidator extends Module {
             .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === outputPath),
         );
         if (
+          firstCandidate !== undefined &&
           otherCandidates.every((romsWithFiles) =>
             CandidateValidator.writeTheSameOutputs(firstCandidate, romsWithFiles),
           )

@@ -129,11 +129,14 @@ export default class Gzip extends Archive {
     const fileHandle = await fs.promises.open(this.getFilePath(), 'r');
     try {
       const header = await Gzip.readAt(fileHandle, 0, 10);
-      if (header[0] !== 0x1f || header[1] !== 0x8b) {
+      if (header.at(0) !== 0x1f || header.at(1) !== 0x8b) {
         // Not a valid gzip file
         throw new IgirException('missing gzip magic number');
       }
-      const flags = header[3];
+      const flags = header.at(3);
+      if (flags === undefined) {
+        throw new IgirException('truncated gzip header');
+      }
 
       let fname = '';
       if (flags & 0x08) {

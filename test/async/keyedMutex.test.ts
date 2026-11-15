@@ -1,3 +1,5 @@
+import assert from 'node:assert';
+
 import KeyedMutex from '../../src/async/keyedMutex.js';
 
 describe('runExclusiveGlobally', () => {
@@ -300,9 +302,12 @@ describe('runExclusiveForKeys', () => {
       const out = [...keys];
       for (let i = out.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
-        const temp = out[i];
-        out[i] = out[j];
-        out[j] = temp;
+        const current = out.at(i);
+        const swapped = out.at(j);
+        assert.ok(current !== undefined);
+        assert.ok(swapped !== undefined);
+        out[i] = swapped;
+        out[j] = current;
       }
       return out;
     };

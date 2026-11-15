@@ -413,6 +413,10 @@ export default class FileCache {
 
       const resultMap = new Map<string, CacheValue>();
       for (const [i, bitmask] of activeChecksums.entries()) {
+        const cacheKey = cacheKeys[i];
+        if (cacheKey === undefined) {
+          continue;
+        }
         const perTypePaddings: ROMPaddingProps[] = paddingProps.map((props) => ({
           paddedSize: props.paddedSize,
           fillByte: props.fillByte,
@@ -423,7 +427,7 @@ export default class FileCache {
           ...(bitmask === ChecksumBitmask.SHA256 &&
             props.sha256 !== undefined && { sha256: props.sha256 }),
         }));
-        resultMap.set(cacheKeys[i], { value: perTypePaddings });
+        resultMap.set(cacheKey, { value: perTypePaddings });
       }
       return resultMap;
     });
@@ -536,10 +540,10 @@ export default class FileCache {
       [ChecksumBitmask.SHA256, file.getSha256()],
     ];
     return checksumEntries
-      .filter(
-        (entry): entry is [number, string] =>
-          (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
-      )
+      .filter((entry): entry is [number, string] => {
+        const [bitmask, checksum] = entry;
+        return (file.getChecksumBitmask() & bitmask) > 0 && checksum !== undefined;
+      })
       .map(([, checksum]) => this.getCacheKey('', checksum, valueType));
   }
 

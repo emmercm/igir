@@ -140,7 +140,7 @@ describe('game name regex', () => {
     const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
-      testGameAdvanceWars[0].getName(),
+      testGameAdvanceWars.at(0)?.getName(),
     ]);
   });
 
@@ -167,7 +167,7 @@ describe('ROM name regex', () => {
     const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
-      testGameAdvanceWars[0].getName(),
+      testGameAdvanceWars.at(0)?.getName(),
     ]);
   });
 
@@ -317,7 +317,7 @@ describe('prefer languages', () => {
     // If DATPreferer#preferLanguagesSort() didn't return early with a tie and instead continued to
     // tie-break with lower priority languages, then "Speed Racer - The Videogame (USA) (En,Fr,Es,Pt)"
     // would win because it has Spanish and "Speed Racer - The Videogame (Europe) (En,Fr,De,Es,It,Nl)" doesn't
-    expect(preferredDat.getGames()[0].getName()).toEqual(
+    expect(preferredDat.getGames().at(0)?.getName()).toEqual(
       'Speed Racer - The Videogame (Europe) (En,Fr,De,Es,It,Nl)',
     );
   });
@@ -395,7 +395,9 @@ describe('prefer regions', () => {
     // If DATPreferer#preferRegionsSort() didn't return early with a tie and instead continued to
     // tie-break with lower priority regions, then "Sonic Rush (Japan, USA) (En,Ja) (Demo) (Kiosk, E3 2005)"
     // would win, because it is from Japan and "Sonic Rush (USA) (En,Ja,Fr,De,Es,It)" isn't
-    expect(preferredDat.getGames()[0].getName()).toEqual('Sonic Rush (USA) (En,Ja,Fr,De,Es,It)');
+    expect(preferredDat.getGames().at(0)?.getName()).toEqual(
+      'Sonic Rush (USA) (En,Ja,Fr,De,Es,It)',
+    );
   });
 });
 

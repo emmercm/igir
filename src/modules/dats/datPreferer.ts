@@ -55,18 +55,19 @@ export default class DATPreferer extends Module {
           return parent.getGames().at(0);
         }
 
-        const preferredGame = parent
+        const preferredGameAndIndex = parent
           .getGames()
           .map((game, idx): [Game, number] => [game, idx])
           .toSorted((one, two) => this.sort(one, two))
           .at(0);
-        if (preferredGame === undefined) {
+        if (preferredGameAndIndex === undefined) {
           return undefined;
         }
+        const [preferredGame] = preferredGameAndIndex;
         this.prefixedLogger.trace(
-          `${dat.getName()}: ${parent.getName()} (parent): out of ${IntlUtil.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'}, preferred: ${preferredGame[0].getName()}`,
+          `${dat.getName()}: ${parent.getName()} (parent): out of ${IntlUtil.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'}, preferred: ${preferredGame.getName()}`,
         );
-        return preferredGame[0].withProps({ cloneOf: undefined });
+        return preferredGame.withProps({ cloneOf: undefined });
       })
       .filter((game) => game !== undefined);
     const preferredDat = dat.withGames(preferredGames);
@@ -92,18 +93,20 @@ export default class DATPreferer extends Module {
    */
 
   private sort(one: [Game, number], two: [Game, number]): number {
+    const [oneGame, oneIdx] = one;
+    const [twoGame, twoIdx] = two;
     return (
-      this.preferGameRegexSort(one[0], two[0]) ||
-      this.preferRomRegexSort(one[0], two[0]) ||
-      this.preferVerifiedSort(one[0], two[0]) ||
-      this.preferGoodSort(one[0], two[0]) ||
-      this.preferLanguagesSort(one[0], two[0]) ||
-      this.preferRegionsSort(one[0], two[0]) ||
-      this.preferRevisionSort(one[0], two[0]) ||
-      this.preferRetailSort(one[0], two[0]) ||
-      this.preferParentSort(one[0], two[0]) ||
+      this.preferGameRegexSort(oneGame, twoGame) ||
+      this.preferRomRegexSort(oneGame, twoGame) ||
+      this.preferVerifiedSort(oneGame, twoGame) ||
+      this.preferGoodSort(oneGame, twoGame) ||
+      this.preferLanguagesSort(oneGame, twoGame) ||
+      this.preferRegionsSort(oneGame, twoGame) ||
+      this.preferRevisionSort(oneGame, twoGame) ||
+      this.preferRetailSort(oneGame, twoGame) ||
+      this.preferParentSort(oneGame, twoGame) ||
       // If there's truly no preference, then sort by the original index
-      one[1] - two[1]
+      oneIdx - twoIdx
     );
   }
 

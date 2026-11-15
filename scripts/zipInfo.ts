@@ -184,7 +184,7 @@ function describeExtraFields(
 ): Map<string, YamlValue> {
   return ordered(
     [...extraFields]
-      .toSorted((a, b) => a[0] - b[0])
+      .toSorted(([aHeaderId], [bHeaderId]) => aHeaderId - bHeaderId)
       .map(([headerId, bytes]) => [
         `0x${headerId.toString(16).padStart(4, '0')}`,
         ordered([
@@ -345,10 +345,10 @@ function describeEndOfCentralDirectory(eocd: EndOfCentralDirectory): Map<string,
   ]);
 }
 
-if (process.argv.length < 3) {
+const zipFilePath = process.argv.at(2);
+if (zipFilePath === undefined) {
   throw new Error('Usage: tsx scripts/zipInfo.ts <path/to/file.zip>');
 }
-const zipFilePath = process.argv[2];
 
 const zipReader = new ZipReader(zipFilePath);
 const fileHandle = await fs.promises.open(zipFilePath, 'r');
@@ -375,9 +375,7 @@ try {
 
   // The first local file header should be at offset 0; anything before it is a preamble.
   const firstHeaderOffset =
-    entriesInByteOrder.length > 0
-      ? entriesInByteOrder[0].cdfh.localFileHeaderRelativeOffsetResolved()
-      : 0;
+    entriesInByteOrder.at(0)?.cdfh.localFileHeaderRelativeOffsetResolved() ?? 0;
 
   // Each entry's local file header, encryption header, file data, and data descriptor, in physical
   // order. The byte position immediately after the last entry is also tracked.

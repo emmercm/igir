@@ -2,6 +2,7 @@ import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
 import MameDAT from '../../../src/models/dats/mame/mameDat.js';
+import Parent from '../../../src/models/dats/parent.js';
 
 describe('getGames', () => {
   it('should always return a list for Logiqx DATs', () => {
@@ -50,5 +51,22 @@ describe('isMame', () => {
 
   it('should be true for a MAME DAT', () => {
     expect(new MameDAT({ machine: new Game({ name: 'machine name' }) }).isMame()).toEqual(true);
+  });
+});
+
+describe('getParents', () => {
+  it('should group clones without an ID that reference a missing parent ID', () => {
+    // Given
+    const parent = new Game({ name: 'Parent', id: '1' });
+    const clone = new Game({ name: 'Clone', id: '2', cloneOfId: '1' });
+    const orphanA = new Game({ name: 'Orphan A', cloneOfId: '9' });
+    const orphanB = new Game({ name: 'Orphan B', cloneOfId: '9' });
+    const dat = new LogiqxDAT({ header: new Header(), games: [parent, clone, orphanA, orphanB] });
+
+    // When / Then
+    expect(dat.getParents()).toEqual([
+      new Parent(parent, [parent, clone]),
+      new Parent(orphanA, [orphanA, orphanB]),
+    ]);
   });
 });

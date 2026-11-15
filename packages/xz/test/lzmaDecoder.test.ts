@@ -10,9 +10,9 @@ import { FIXTURES } from './fixtures/fixtures.js';
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const xz = await fs.promises.readFile(path.join(dirname, 'fixtures', 'smallDictionary.xz'));
 const expected = FIXTURES['smallDictionary.xz'].input();
-const chunkOffset = 12 + (xz[12] + 1) * 4;
+const chunkOffset = 12 + (xz.readUInt8(12) + 1) * 4;
 const uncompressedSize =
-  (xz[chunkOffset] & 0x1f) * 0x1_00_00 + xz.readUInt16BE(chunkOffset + 1) + 1;
+  (xz.readUInt8(chunkOffset) & 0x1f) * 0x1_00_00 + xz.readUInt16BE(chunkOffset + 1) + 1;
 const dataStart = chunkOffset + 6;
 const dataEnd = dataStart + xz.readUInt16BE(chunkOffset + 3) + 1;
 const DICTIONARY_SIZE = 4096;
@@ -64,7 +64,7 @@ describe('decodeChunk', () => {
 
   it('should throw on corrupt data', () => {
     const corrupt = Buffer.from(xz);
-    corrupt[dataStart + 1000] ^= 0xff;
+    corrupt.writeUInt8(corrupt.readUInt8(dataStart + 1000) ^ 0xff, dataStart + 1000);
     expect(() => decodeChunk(lzmaDecoderOf(), new LzDictionary(DICTIONARY_SIZE), corrupt)).toThrow(
       /LZMA data is corrupt/,
     );

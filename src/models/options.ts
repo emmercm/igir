@@ -706,9 +706,9 @@ export default class Options implements OptionsProps {
       .split(/\r?\n/)
       .filter((line) => line.length > 0)
       .map((line) => {
-        const flagsMatch = /^\/(.+)\/([a-z]*)$/.exec(line);
-        if (flagsMatch !== null) {
-          return new RegExp(flagsMatch[1], flagsMatch[2]);
+        const [, source, flags] = /^\/(.+)\/([a-z]*)$/.exec(line) ?? [];
+        if (source !== undefined) {
+          return new RegExp(source, flags);
         }
         return new RegExp(line);
       });
@@ -1111,8 +1111,8 @@ export default class Options implements OptionsProps {
   getOutputDirRoot(): string {
     const resolvedOutput = PathUtil.resolve(this.getOutput());
     const outputSplit = resolvedOutput.split(path.sep);
-    for (let i = 0; i < outputSplit.length; i += 1) {
-      if (/{[a-zA-Z]+}/.test(outputSplit[i])) {
+    for (const [i, outputSegment] of outputSplit.entries()) {
+      if (/{[a-zA-Z]+}/.test(outputSegment)) {
         return outputSplit.slice(0, i).join(path.sep) || path.sep;
       }
     }
@@ -1321,7 +1321,7 @@ export default class Options implements OptionsProps {
       // Option wasn't provided, we shouldn't remove headers
       return false;
     }
-    if (this.removeHeaders.length === 1 && this.removeHeaders[0] === '') {
+    if (this.removeHeaders.length === 1 && this.removeHeaders.at(0) === '') {
       // Option was provided without any extensions, we should remove headers from every file
       return true;
     }

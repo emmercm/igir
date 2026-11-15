@@ -73,7 +73,7 @@ describe('readBlockHeader', () => {
   });
 
   const corruptCrc = blockHeader([0x00, 0x21, 0x01, 0x16]);
-  corruptCrc[11] ^= 0xff;
+  corruptCrc.writeUInt8(corruptCrc.readUInt8(11) ^ 0xff, 11);
 
   test.each([
     ['no input', Buffer.alloc(0), 'xz block header is truncated'],
