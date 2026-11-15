@@ -1998,3 +1998,119 @@ describe('MAME v0.260', () => {
     ]);
   });
 });
+
+describe('archive entry names', () => {
+  const misnamedZip = new Zip('misnamed.zip');
+
+  it('should return a candidate for a correctly named archive entry when only reporting', async () => {
+    // Given
+    const options = new Options({ commands: ['report'] });
+    const files = [
+      await ArchiveEntry.entryOf({
+        archive: new Zip('one.zip'),
+        entryPath: 'one.rom',
+        size: 1,
+        crc32: '12345678',
+      }),
+    ];
+
+    // When
+    const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+    // Then
+    expect(
+      candidates.map((candidate) => [
+        candidate.getName(),
+        candidate.getRomsWithFiles().map((rwf) => rwf.getInputFile().toString()),
+      ]),
+    ).toEqual([
+      ['game with no ROMs', []],
+      ['game with one ROM and multiple releases', [PathUtil.resolve('one.zip')]],
+    ]);
+  });
+
+  describe.each([['report'], ['copy'], ['move'], ['copy', 'test', 'report']])(
+    'not rewriting archives: %s',
+    (...commands) => {
+      const options = new Options({ commands });
+
+      it('should not return a candidate for a misnamed archive entry', async () => {
+        // Given
+        const files = [
+          await ArchiveEntry.entryOf({
+            archive: misnamedZip,
+            entryPath: 'misnamed.rom',
+            size: 1,
+            crc32: '12345678',
+          }),
+        ];
+
+        // When
+        const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+        // Then
+        expect(
+          candidates.map((candidate) => [
+            candidate.getName(),
+            candidate.getRomsWithFiles().map((rwf) => rwf.getInputFile().toString()),
+          ]),
+        ).toEqual([['game with no ROMs', []]]);
+      });
+
+      it('should return a candidate for a misnamed plain file', async () => {
+        // Given
+        const files = [await File.fileOf({ filePath: 'misnamed.rom', size: 1, crc32: '12345678' })];
+
+        // When
+        const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+        // Then
+        expect(
+          candidates.map((candidate) => [
+            candidate.getName(),
+            candidate.getRomsWithFiles().map((rwf) => rwf.getInputFile().toString()),
+          ]),
+        ).toEqual([
+          ['game with no ROMs', []],
+          ['game with one ROM and multiple releases', [PathUtil.resolve('misnamed.rom')]],
+        ]);
+      });
+    },
+  );
+
+  describe.each([
+    ['copy', 'zip'],
+    ['copy', 'extract'],
+  ])('rewriting archives: %s', (...commands) => {
+    const options = new Options({ commands });
+
+    it('should return a candidate for a misnamed archive entry', async () => {
+      // Given
+      const files = [
+        await ArchiveEntry.entryOf({
+          archive: misnamedZip,
+          entryPath: 'misnamed.rom',
+          size: 1,
+          crc32: '12345678',
+        }),
+      ];
+
+      // When
+      const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+      // Then
+      expect(
+        candidates.map((candidate) => [
+          candidate.getName(),
+          candidate.getRomsWithFiles().map((rwf) => rwf.getInputFile().toString()),
+        ]),
+      ).toEqual([
+        ['game with no ROMs', []],
+        [
+          'game with one ROM and multiple releases',
+          [`${PathUtil.resolve('misnamed.zip')}|misnamed.rom`],
+        ],
+      ]);
+    });
+  });
+});
