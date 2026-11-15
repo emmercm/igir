@@ -706,7 +706,12 @@ export default class OutputFactory {
     return gameName + oldExt;
   }
 
-  private static getEntryPath(options: Options, game: Game, rom: ROM, inputFile: File): string {
+  /**
+   * Get the archive entry path that a {@link ROM} should have according to its {@link DAT}.
+   * Unlike {@link getPath}, this doesn't return the input file's own entry path when not writing,
+   * so it can be used to validate input archive entries.
+   */
+  static getEntryPath(options: Options, game: Game, rom: ROM, inputFile: File): string {
     const romBasename = this.getRomBasename(rom, inputFile);
     if (!options.shouldZipRom(rom)) {
       return romBasename;
