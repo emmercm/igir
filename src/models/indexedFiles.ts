@@ -283,13 +283,17 @@ export default class IndexedFiles {
         // Map.groupBy() sizes its arrays exactly, unlike growing them with push()
         const filesByPath = Map.groupBy(files, (file) => file.getFilePath());
         for (const [filePath, filesAtPath] of filesByPath) {
+          const [firstFileAtPath] = filesAtPath;
+          if (firstFileAtPath === undefined) {
+            continue;
+          }
           let fileOrChecksumsToFiles = checksumsByFilePath.get(filePath);
           if (fileOrChecksumsToFiles instanceof File) {
             continue;
           }
           if (fileOrChecksumsToFiles === undefined) {
             if ((filesByFilePath.get(filePath)?.length ?? 0) <= 1) {
-              checksumsByFilePath.set(filePath, filesAtPath[0]);
+              checksumsByFilePath.set(filePath, firstFileAtPath);
               continue;
             }
             fileOrChecksumsToFiles = new Map();
@@ -297,7 +301,7 @@ export default class IndexedFiles {
           }
           fileOrChecksumsToFiles.set(
             checksum,
-            filesAtPath.length === 1 ? filesAtPath[0] : filesAtPath,
+            filesAtPath.length === 1 ? firstFileAtPath : filesAtPath,
           );
         }
       }

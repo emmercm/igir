@@ -13,9 +13,8 @@ test('addChildBar', () => {
 });
 
 describe('setSymbol', () => {
-  test.each(Object.keys(ProgressBarSymbol))('should get after set: %s', (symbolKey) => {
+  test.each(Object.entries(ProgressBarSymbol))('should get after set: %s', (_symbolKey, symbol) => {
     const singleBar = new SingleBar(MULTIBAR);
-    const symbol = ProgressBarSymbol[symbolKey];
     singleBar.setSymbol(symbol);
     expect(singleBar.getSymbol()).toEqual(symbol);
   });

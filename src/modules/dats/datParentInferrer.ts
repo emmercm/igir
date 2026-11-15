@@ -168,7 +168,7 @@ export default class DATParentInferrer extends Module {
       return strippedGameName;
     });
     const groupedGames = [...strippedNamesToGames]
-      .toSorted((a, b) => a[0].localeCompare(b[0]))
+      .toSorted(([aName], [bName]) => aName.localeCompare(bName))
       .map(([, games]) => games);
 
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
@@ -335,6 +335,11 @@ export default class DATParentInferrer extends Module {
   }
 
   private static electParent(games: Game[]): Game[] {
+    const [firstGame] = games;
+    if (firstGame === undefined) {
+      return [];
+    }
+
     // Index games by their name without the region and language
     const strippedNamesToGames = games.reduce((map, game) => {
       let strippedGameName = game.getName();
@@ -378,12 +383,12 @@ export default class DATParentInferrer extends Module {
         // This game is the parent
         return game.withProps({ cloneOf: undefined, cloneOfId: undefined });
       }
-      if (games[0].getId() !== undefined) {
+      if (firstGame.getId() !== undefined) {
         // id/cloneofid-based DAT
-        return game.withProps({ cloneOfId: games[0].getId(), cloneOf: undefined });
+        return game.withProps({ cloneOfId: firstGame.getId(), cloneOf: undefined });
       }
       // name/cloneof-based DAT
-      return game.withProps({ cloneOfId: undefined, cloneOf: games[0].getName() });
+      return game.withProps({ cloneOfId: undefined, cloneOf: firstGame.getName() });
     });
   }
 }

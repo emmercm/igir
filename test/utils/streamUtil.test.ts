@@ -408,11 +408,11 @@ describe('split', () => {
     const outputs = StreamUtil.split(source, 2);
     await tick();
 
-    outputs[0].destroy();
+    outputs.at(0)?.destroy();
     await tick();
     expect(source.destroyed).toEqual(false);
 
-    outputs[1].destroy();
+    outputs.at(1)?.destroy();
     await tick();
     expect(source.destroyed).toEqual(true);
   });
