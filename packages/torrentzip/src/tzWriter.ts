@@ -1,9 +1,9 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import type { Readable } from 'node:stream';
 import stream from 'node:stream';
 import zlib from 'node:zlib';
 
+import StreamUtil from '../../../src/utils/streamUtil.js';
 import CompressedTransform from './compressedTransform.js';
 import CP437Encoder from './cp437Encoder.js';
 import type { ProgressCallback } from './progressTransform.js';
@@ -117,11 +117,10 @@ export default class TZWriter {
       new ProgressTransform(progressCallback),
       compressorTransform,
       compressedTransform,
-      fs.createWriteStream(os.devNull, {
-        fd: this.fileHandle.fd,
-        autoClose: false,
-        start: this.filePosition + localFileHeaderPlaceholder.length,
-      }),
+      StreamUtil.nonClosingWritable(
+        this.fileHandle,
+        this.filePosition + localFileHeaderPlaceholder.length,
+      ),
     );
 
     // Write the final local file header

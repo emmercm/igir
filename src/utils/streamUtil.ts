@@ -1,3 +1,4 @@
+import type fs from 'node:fs';
 import stream from 'node:stream';
 
 import Defaults from '../globals/defaults.js';
@@ -23,6 +24,46 @@ export default {
       chunkSize = Math.min(chunkSize, end - start + 1);
     }
     return Math.max(1, chunkSize);
+  },
+
+  /**
+   * Create a writable stream that writes to the caller-owned {@link fileHandle}, starting at byte
+   * {@link start}. The file handle is never closed even when the writable is destroyed, so it is
+   * safe to use the writable in situations such as stream.promises.pipeline() that will
+   * automatically destroy the writable on any pipeline failure.
+   */
+  nonClosingWritable(fileHandle: fs.promises.FileHandle, start: number): stream.Writable {
+    let position = start;
+    return new stream.Writable({
+      write: (
+        chunk: Buffer<ArrayBuffer>,
+        _encoding: BufferEncoding,
+        callback: (error?: Error | null) => void,
+      ): void => {
+        void (async (): Promise<void> => {
+          try {
+            let chunkOffset = 0;
+            while (chunkOffset < chunk.length) {
+              const { bytesWritten } = await fileHandle.write(
+                chunk,
+                chunkOffset,
+                chunk.length - chunkOffset,
+                position,
+              );
+              if (bytesWritten === 0) {
+                throw new Error(`failed to write any bytes at position ${position}`);
+              }
+              chunkOffset += bytesWritten;
+              position += bytesWritten;
+            }
+          } catch (error) {
+            callback(error instanceof Error ? error : new Error(String(error)));
+            return;
+          }
+          callback();
+        })();
+      },
+    });
   },
 
   /**
