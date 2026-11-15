@@ -81,10 +81,9 @@ jobs:
           # NOTE(cemmer): `template` can't be supplied here, only `header` and `footer`, so have to pick one of those
           #   and make sure the .github/gh-release-drafter.yml's `template` is empty-ish.
           header: ${{ steps.auto-changelog.outputs.MARKDOWN }}
-        env:
           # NOTE(cemmer): PAT here causes the release to be made under your account.
           #   ${{ secrets.GITHUB_TOKEN }} would cause it to be created from `github-actions`, even when published.
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - if: ${{ steps.release-drafter.outputs.id }}
         run: |
           {
