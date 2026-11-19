@@ -38,7 +38,32 @@ export type FsWalkCallback = (increment: number) => void;
  * A collection of static filesystem utility functions.
  */
 export default class FsUtil {
-  private static readonly SIZE_READABLE_SUFFIXES = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+  private static readonly SIZE_READABLE_SUFFIXES_DECIMAL = [
+    'B',
+    'kB',
+    'MB',
+    'GB',
+    'TB',
+    'PB',
+    'EB',
+    'ZB',
+    'YB',
+    'RB',
+    'QB',
+  ];
+  private static readonly SIZE_READABLE_SUFFIXES_BINARY = [
+    'B',
+    'KiB',
+    'MiB',
+    'GiB',
+    'TiB',
+    'PiB',
+    'EiB',
+    'ZiB',
+    'YiB',
+    'RiB',
+    'QiB',
+  ];
 
   /**
    * @param dirPath the path to a temporary directory
@@ -640,7 +665,7 @@ export default class FsUtil {
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
     const bytesDivided = bytes / k ** i;
     if (Number.isSafeInteger(bytesDivided)) {
-      return `${bytesDivided}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
+      return `${bytesDivided}${k === 1024 ? this.SIZE_READABLE_SUFFIXES_BINARY[i] : this.SIZE_READABLE_SUFFIXES_DECIMAL[i]}`;
     }
     let fractionDigits = 1;
     if (bytesDivided === 0) {
@@ -655,7 +680,7 @@ export default class FsUtil {
     ) {
       fractionDigits = 0;
     }
-    return `${bytesDivided.toFixed(fractionDigits)}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
+    return `${bytesDivided.toFixed(fractionDigits)}${k === 1024 ? this.SIZE_READABLE_SUFFIXES_BINARY[i] : this.SIZE_READABLE_SUFFIXES_DECIMAL[i]}`;
   }
 
   /**
