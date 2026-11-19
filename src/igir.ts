@@ -138,11 +138,13 @@ export default class Igir {
 
     // Scan and process input files
     let dats = await this.processDATScanner(fileFactory, readerSemaphore);
+    const scanningBitmask = this.determineScanningBitmask(dats);
+    this.warnUnmatchableChecksums(dats, scanningBitmask);
     const indexedRoms = await this.processROMScanner(
       dats,
       fileFactory,
       readerSemaphore,
-      this.determineScanningBitmask(dats),
+      scanningBitmask,
       this.determineScanningChecksumArchives(dats),
     );
     const roms = indexedRoms.getFiles();
@@ -503,6 +505,40 @@ export default class Igir {
     }
 
     return matchChecksum;
+  }
+
+  /**
+   * Warn about every DAT ROM and disk that has no possibility of matching any
+   * input file, because none of its checksums will be calculated given the
+   * --input-checksum-min and --input-checksum-max options.
+   */
+  private warnUnmatchableChecksums(dats: DAT[], scanningBitmask: number): void {
+    // Unmatchable ROMs have none of the calculated checksums, so they're missing all of them
+    const missingNames = Object.values(ChecksumBitmask)
+      .filter((checksum) => checksum !== ChecksumBitmask.NONE && (scanningBitmask & checksum) !== 0)
+      .map((checksum) => ChecksumBitmaskInverted[checksum])
+      .join(', ');
+
+    for (const dat of dats) {
+      const unmatchableLines = dat
+        .getGames()
+        .flatMap((game) => [
+          ...game.getRoms(),
+          ...(this.options.getExcludeDisks() ? [] : game.getDisks()),
+        ])
+        .filter((rom) => {
+          const romBitmask = rom.getChecksumBitmask();
+          return romBitmask !== ChecksumBitmask.NONE && (romBitmask & scanningBitmask) === 0;
+        })
+        .map((rom) => `  ${rom.getName()} (missing ${missingNames})`);
+      if (unmatchableLines.length === 0) {
+        continue;
+      }
+
+      logger.warn(
+        `${dat.getName()}: ${IntlUtil.toLocaleString(unmatchableLines.length)} ROM${unmatchableLines.length === 1 ? '' : 's'} can't match due to provided checksum restrictions:\n${unmatchableLines.join('\n')}`,
+      );
+    }
   }
 
   private determineScanningChecksumArchives(dats: DAT[]): boolean {
