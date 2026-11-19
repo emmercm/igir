@@ -5,7 +5,7 @@ import FsUtil from '../../utils/fsUtil.js';
 import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
-import { ChecksumProps } from '../files/fileChecksums.js';
+import { ChecksumBitmask, ChecksumProps } from '../files/fileChecksums.js';
 
 type ROMStatus = 'baddump' | 'nodump' | 'good';
 
@@ -158,6 +158,27 @@ export default class ROM implements ROMProps {
 
   getBios(): string | undefined {
     return this.bios;
+  }
+
+  /**
+   * Get the bitmask of every checksum that can be used to match this {@link ROM} to a file.
+   */
+  getChecksumBitmask(): number {
+    let checksumBitmask: number = ChecksumBitmask.NONE;
+    // Zero-byte ROMs can still match by CRC32, so don't require a non-zero size
+    if (this.getCrc32()) {
+      checksumBitmask |= ChecksumBitmask.CRC32;
+    }
+    if (this.getMd5()) {
+      checksumBitmask |= ChecksumBitmask.MD5;
+    }
+    if (this.getSha1()) {
+      checksumBitmask |= ChecksumBitmask.SHA1;
+    }
+    if (this.getSha256()) {
+      checksumBitmask |= ChecksumBitmask.SHA256;
+    }
+    return checksumBitmask;
   }
 
   /**
