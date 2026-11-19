@@ -3,8 +3,12 @@ import { Memoize } from 'typescript-memoize';
 import File from '../models/files/file.js';
 import ArrayUtil from '../utils/arrayUtil.js';
 import ROM from './dats/rom.js';
+import type { ChecksumBitmaskValue } from './files/fileChecksums.js';
+import { ChecksumBitmask } from './files/fileChecksums.js';
 
 type ChecksumsToFiles = Map<string, File[]>;
+
+type FileComparator = (fileOne: File, fileTwo: File) => number;
 
 /**
  * A lookup table of {@link File}s based on their checksums.
@@ -18,26 +22,27 @@ export default class IndexedFiles {
 
   private readonly sha256: ChecksumsToFiles;
 
+  private readonly comparator?: FileComparator;
+
   private constructor(
     crc32: ChecksumsToFiles,
     md5: ChecksumsToFiles,
     sha1: ChecksumsToFiles,
     sha256: ChecksumsToFiles,
+    comparator?: FileComparator,
   ) {
     this.crc32 = crc32;
     this.md5 = md5;
     this.sha1 = sha1;
     this.sha256 = sha256;
+    this.comparator = comparator;
   }
 
   /**
-   * Generate a {@link IndexedFiles} based on a set of {@link File}s, optionally sorting the files
-   * that share each checksum with {@link comparator}.
+   * Generate a {@link IndexedFiles} based on a set of {@link File}s, sorting the files that share
+   * each checksum with {@link comparator} (if provided), then by location.
    */
-  static fromFiles(
-    files: File[],
-    comparator?: (fileOne: File, fileTwo: File) => number,
-  ): IndexedFiles {
+  static fromFiles(files: File[], comparator?: FileComparator): IndexedFiles {
     const crc32RawMap = new Map<string, File[]>();
     const crc32WithoutHeaderMap = new Map<string, File[]>();
     const crc32PaddedMap = new Map<string, File[]>();
@@ -171,15 +176,24 @@ export default class IndexedFiles {
     const sha1Map = this.combineMaps(sha1RawMap, sha1WithoutHeaderMap, sha1PaddedMap);
     const sha256Map = this.combineMaps(sha256RawMap, sha256WithoutHeaderMap, sha256PaddedMap);
 
-    if (comparator !== undefined) {
-      for (const checksumsToFiles of [crc32Map, md5Map, sha1Map, sha256Map]) {
-        for (const checksumFiles of checksumsToFiles.values()) {
-          checksumFiles.sort(comparator);
+    // Sort each checksum's files once by the comparator, then by location, so that findFiles() and
+    // findFilesAtPath() can usually return them already in order without sorting again
+    for (const checksumsToFiles of [crc32Map, md5Map, sha1Map, sha256Map]) {
+      for (const [checksum, checksumFiles] of checksumsToFiles) {
+        if (checksumFiles.length > 1) {
+          checksumsToFiles.set(
+            checksum,
+            checksumFiles.toSorted(
+              (fileOne, fileTwo) =>
+                (comparator?.(fileOne, fileTwo) ?? 0) ||
+                fileOne.getLocationKey().localeCompare(fileTwo.getLocationKey()),
+            ),
+          );
         }
       }
     }
 
-    return new IndexedFiles(crc32Map, md5Map, sha1Map, sha256Map);
+    return new IndexedFiles(crc32Map, md5Map, sha1Map, sha256Map, comparator);
   }
 
   private static combineMaps(
@@ -232,15 +246,14 @@ export default class IndexedFiles {
    * Find file(s) in the index based some search criteria.
    */
   findFiles(file: File | ROM): File[] {
-    const foundFiles = this.getChecksumKeys(file)
-      .map(([checksumsToFiles, checksum]) => checksumsToFiles.get(checksum))
-      .filter((checksumFiles) => checksumFiles !== undefined);
-    if (foundFiles.length <= 1) {
-      // Files commonly only have a CRC32, so skip de-duplicating a single list, which is already
-      // unique. Copy it so callers can't modify the index.
-      return foundFiles.at(0)?.slice() ?? [];
+    const foundFiles: [ChecksumBitmaskValue, File[]][] = [];
+    for (const [checksumsToFiles, checksum, checksumBitmask] of this.getChecksumKeys(file)) {
+      const checksumFiles = checksumsToFiles.get(checksum);
+      if (checksumFiles !== undefined) {
+        foundFiles.push([checksumBitmask, checksumFiles]);
+      }
     }
-    return [...new Set(foundFiles.flat())];
+    return this.sortFoundFiles(foundFiles);
   }
 
   /**
@@ -253,6 +266,7 @@ export default class IndexedFiles {
     if (fileOrChecksumsToFiles === undefined) {
       return [];
     }
+
     const checksumKeys = this.getChecksumKeys(file);
     if (fileOrChecksumsToFiles instanceof File) {
       // There's only one file at this path
@@ -262,11 +276,86 @@ export default class IndexedFiles {
         ? [fileOrChecksumsToFiles]
         : [];
     }
-    return [
-      ...new Set(
-        checksumKeys.flatMap(([, checksum]) => fileOrChecksumsToFiles.get(checksum) ?? []),
-      ),
-    ];
+
+    const foundFiles: [ChecksumBitmaskValue, File[]][] = [];
+    for (const [, checksum, checksumBitmask] of checksumKeys) {
+      const fileOrFiles = fileOrChecksumsToFiles.get(checksum);
+      if (fileOrFiles !== undefined) {
+        foundFiles.push([
+          checksumBitmask,
+          fileOrFiles instanceof File ? [fileOrFiles] : fileOrFiles,
+        ]);
+      }
+    }
+    return this.sortFoundFiles(foundFiles);
+  }
+
+  /**
+   * De-duplicate and sort the files found by each checksum.
+   */
+  private sortFoundFiles(foundFiles: [ChecksumBitmaskValue, File[]][]): File[] {
+    const [firstFoundFiles] = foundFiles;
+    if (firstFoundFiles === undefined) {
+      // No checksum keys were returned, do nothing
+      return [];
+    }
+
+    // We can trust fromFiles()'s sorting if only one checksum found files
+    const [firstChecksumBitmask, firstChecksumFiles] = firstFoundFiles;
+    if (foundFiles.length === 1) {
+      return [...firstChecksumFiles];
+    }
+
+    // There's nothing to sort if every checksum found the same one file
+    const [onlyFile] = firstChecksumFiles;
+    if (
+      firstChecksumFiles.length === 1 &&
+      foundFiles.every(
+        ([, checksumFiles]) => checksumFiles.length === 1 && checksumFiles.at(0) === onlyFile,
+      )
+    ) {
+      return [...firstChecksumFiles];
+    }
+
+    // Remember the highest checksum that each file matched
+    const checksumBitmasks = new Map<File, ChecksumBitmaskValue>();
+    for (const [checksumBitmask, checksumFiles] of foundFiles) {
+      for (const checksumFile of checksumFiles) {
+        if (checksumBitmask > (checksumBitmasks.get(checksumFile) ?? ChecksumBitmask.NONE)) {
+          checksumBitmasks.set(checksumFile, checksumBitmask);
+        }
+      }
+    }
+
+    // We can trust fromFiles()'s sorting if the first checksum found every file, and it was every
+    // file's highest matched checksum
+    if (
+      checksumBitmasks.size === firstChecksumFiles.length &&
+      firstChecksumFiles.every(
+        (checksumFile) => checksumBitmasks.get(checksumFile) === firstChecksumBitmask,
+      )
+    ) {
+      return [...firstChecksumFiles];
+    }
+
+    // If files' highest matched checksums differ then we have to re-sort after combining
+    return [...checksumBitmasks.keys()].toSorted((fileOne, fileTwo) => {
+      const comparison = this.comparator?.(fileOne, fileTwo) ?? 0;
+      if (comparison !== 0) {
+        return comparison;
+      }
+
+      // Then, prefer files matched by a stronger checksum
+      const checksumBitmaskComparison =
+        (checksumBitmasks.get(fileTwo) ?? ChecksumBitmask.NONE) -
+        (checksumBitmasks.get(fileOne) ?? ChecksumBitmask.NONE);
+      if (checksumBitmaskComparison !== 0) {
+        return checksumBitmaskComparison;
+      }
+
+      // Otherwise, be deterministic
+      return fileOne.getLocationKey().localeCompare(fileTwo.getLocationKey());
+    });
   }
 
   /**
@@ -310,29 +399,29 @@ export default class IndexedFiles {
   }
 
   /**
-   * The checksum index and key to look up for each of a file's checksums, strongest first.
+   * The checksum index, key, and checksum type to look up for each of a file's checksums.
    */
-  private getChecksumKeys(file: File | ROM): [ChecksumsToFiles, string][] {
-    const keys: [ChecksumsToFiles, string][] = [];
+  private getChecksumKeys(file: File | ROM): [ChecksumsToFiles, string, ChecksumBitmaskValue][] {
+    const keys: [ChecksumsToFiles, string, ChecksumBitmaskValue][] = [];
 
     const sha256 = file.sha256?.replaceAll(/[^0-9a-f]/gi, '');
     if (sha256) {
-      keys.push([this.sha256, sha256]);
+      keys.push([this.sha256, sha256, ChecksumBitmask.SHA256]);
     }
 
     const sha1 = file.sha1?.replaceAll(/[^0-9a-f]/gi, '');
     if (sha1) {
-      keys.push([this.sha1, sha1]);
+      keys.push([this.sha1, sha1, ChecksumBitmask.SHA1]);
     }
 
     const md5 = file.md5?.replaceAll(/[^0-9a-f]/gi, '');
     if (md5) {
-      keys.push([this.md5, md5]);
+      keys.push([this.md5, md5, ChecksumBitmask.MD5]);
     }
 
     const crc32 = file.crc32?.replaceAll(/[^0-9a-f]/gi, '');
     if (crc32) {
-      keys.push([this.crc32, `${crc32}|${file.getSize()}`]);
+      keys.push([this.crc32, `${crc32}|${file.getSize()}`, ChecksumBitmask.CRC32]);
     }
 
     return keys;

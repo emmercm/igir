@@ -26,6 +26,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 const CRC = '12345678';
 const SIZE = 1;
+const SHA1 = '1234567812345678123456781234567812345678';
 
 function createRomIndexer(props?: OptionsProps): ROMIndexer {
   return new ROMIndexer(new Options(props), new ProgressBarFake());
@@ -72,6 +73,27 @@ describe('isOutputFile priority', () => {
 
     expect(sorted.at(0)).toBe(zip);
     expect(sorted.at(1)).toBe(outputPlain);
+  });
+
+  it('should prefer non-output files that only matched by CRC32', async () => {
+    // Output files are hashed fully, but archive entries may only have a CRC32
+    const outputPlain = await File.fileOf({
+      filePath: 'output/rom.rom',
+      size: SIZE,
+      crc32: CRC,
+      sha1: SHA1,
+      canBeCandidateInput: false,
+    });
+    const zip = await ArchiveEntry.entryOf({
+      archive: new Zip('rom.zip'),
+      entryPath: 'rom.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
+
+    const sorted = indexAndFind([outputPlain, zip]);
+
+    expect(sorted).toEqual([zip, outputPlain]);
   });
 
   it('should not affect ordering when all files are non-output', async () => {
@@ -246,6 +268,21 @@ describe('preferFiletype', () => {
     expect(sorted.at(1)).not.toBeInstanceOf(ArchiveEntry);
   });
 
+  it('should prefer archive entries that only matched by CRC32 when preferFiletype=archive', async () => {
+    // Plain files are hashed fully, but archive entries may only have a CRC32
+    const plain = await File.fileOf({ filePath: 'rom.rom', size: SIZE, crc32: CRC, sha1: SHA1 });
+    const zip = await ArchiveEntry.entryOf({
+      archive: new Zip('rom.zip'),
+      entryPath: 'rom.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
+
+    const sorted = indexAndFind([plain, zip], { preferFiletype: 'archive' });
+
+    expect(sorted).toEqual([zip, plain]);
+  });
+
   it('should prefer plain files by default, even over archives with invented entry paths', async () => {
     const bzip2 = await ArchiveEntry.entryOf({
       archive: new Bzip2('a.bz2'),
@@ -289,6 +326,26 @@ describe('preferFilenameRegex', () => {
 
     expect(sorted.at(0)).toBe(preferred);
     expect(sorted.at(1)).toBe(other);
+  });
+
+  it('should prefer files matching the regex that only matched by CRC32', async () => {
+    const other = await ArchiveEntry.entryOf({
+      archive: new Zip('other.zip'),
+      entryPath: 'rom.rom',
+      size: SIZE,
+      crc32: CRC,
+      sha1: SHA1,
+    });
+    const preferred = await ArchiveEntry.entryOf({
+      archive: new Zip('preferred.zip'),
+      entryPath: 'rom.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
+
+    const sorted = indexAndFind([other, preferred], { preferFilenameRegex: 'preferred' });
+
+    expect(sorted).toEqual([preferred, other]);
   });
 
   it('should keep relative order when neither file matches the regex', async () => {

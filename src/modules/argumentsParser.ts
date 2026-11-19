@@ -453,7 +453,7 @@ export default class ArgumentsParser {
           )
         ) {
           logger.warn(
-            `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
+            `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended`,
           );
         }
       }, false)
@@ -926,6 +926,11 @@ export default class ArgumentsParser {
         description:
           'Output only a single game per parent (1G1R) (required for all options below, requires DATs with parent/clone information)',
         type: 'boolean',
+      })
+      .middleware((middlewareArgv) => {
+        if (middlewareArgv.single && middlewareArgv.patch) {
+          logger.warn('--single might filter out files that you intended to patch');
+        }
       })
       .option('prefer-game-regex', {
         group: groupRomPriority,
