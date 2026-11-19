@@ -58,6 +58,9 @@ export default class ROMIndexer extends Module {
 
   private getFileComparator(): (fileOne: File, fileTwo: File) => number {
     const outputDir = this.options.getOutputDirRoot();
+    const preferFiletype = this.options.getPreferFiletype();
+    const preferFilenameRegex = this.options.getPreferFilenameRegex();
+    const isOverwrite = this.options.getOverwrite() || this.options.getOverwriteInvalid();
 
     return (fileOne, fileTwo): number => {
       // First, prefer files that aren't from the output directory
@@ -72,7 +75,7 @@ export default class ROMIndexer extends Module {
       // Prefer either archives or un-archived/plain files
       let fileOneArchive;
       let fileTwoArchive;
-      if (this.options.getPreferFiletype() === PreferFiletype.ARCHIVE) {
+      if (preferFiletype === PreferFiletype.ARCHIVE) {
         fileOneArchive = fileOne instanceof ArchiveEntry ? 0 : 1;
         fileTwoArchive = fileTwo instanceof ArchiveEntry ? 0 : 1;
       } else {
@@ -84,7 +87,6 @@ export default class ROMIndexer extends Module {
       }
 
       // Then, prefer files whose filename matches the preferred regex
-      const preferFilenameRegex = this.options.getPreferFilenameRegex();
       if (preferFilenameRegex) {
         const fileOneMatches = preferFilenameRegex.some((regex) =>
           regex.test(fileOne.getFilePath()),
@@ -114,7 +116,7 @@ export default class ROMIndexer extends Module {
       // This is in case the output file is invalid and we're trying to overwrite it with
       // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
       // itself, still resulting in an invalid output file.
-      if (this.options.getOverwrite() || this.options.getOverwriteInvalid()) {
+      if (isOverwrite) {
         const fileOneInOutput = fileOne.getFilePath().startsWith(outputDir) ? 1 : 0;
         const fileTwoInOutput = fileTwo.getFilePath().startsWith(outputDir) ? 1 : 0;
         if (fileOneInOutput !== fileTwoInOutput) {
@@ -122,8 +124,8 @@ export default class ROMIndexer extends Module {
         }
       }
 
-      // Otherwise, be deterministic
-      return fileOne.getLocationKey().localeCompare(fileTwo.getLocationKey());
+      // Otherwise, leave the original order alone
+      return 0;
     };
   }
 
