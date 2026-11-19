@@ -293,6 +293,7 @@ export interface OptionsProps {
   readonly verbose?: number;
   readonly debugLog?: string;
   readonly help?: boolean;
+  readonly version?: boolean;
 }
 
 /**
@@ -523,6 +524,8 @@ export default class Options implements OptionsProps {
 
   readonly help: boolean;
 
+  readonly version: boolean;
+
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
 
@@ -670,6 +673,7 @@ export default class Options implements OptionsProps {
     this.verbose = options?.verbose ?? 0;
     this.debugLog = options?.debugLog;
     this.help = options?.help ?? false;
+    this.version = options?.version ?? false;
   }
 
   /**
@@ -1658,6 +1662,10 @@ export default class Options implements OptionsProps {
 
   getHelp(): boolean {
     return this.help;
+  }
+
+  getVersion(): boolean {
+    return this.version;
   }
 
   private static filterUniqueUpper(array: string[]): string[] {

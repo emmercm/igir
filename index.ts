@@ -20,7 +20,10 @@ import UpdateChecker from './src/modules/updateChecker.js';
 Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);
 
 logger.setLogLevel(LogLevel.WARN); // don't print any timestamps
-logger.printHeader();
+if (!ArgumentsParser.isVersionRequest(process.argv.slice(2))) {
+  // Keep `--version` output machine-readable
+  logger.printHeader();
+}
 
 if (
   !process.versions.bun &&
@@ -73,7 +76,7 @@ try {
   logger.trace(`Parsing CLI arguments: ${argvString}`);
   logger.trace(`Parsed CLI options: ${options.toString()}`);
 
-  if (options.getHelp()) {
+  if (options.getHelp() || options.getVersion()) {
     process.exit(0);
   }
 } catch (error) {
