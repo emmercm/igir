@@ -4,9 +4,11 @@ When Igir [scans ROM files](../input/file-scanning.md) in the input directory, i
 
 By default, Igir will use CRC32 + filesize to match input files to ROMs found in DATs. CRC32 checksums are fast to calculate, and many [archive formats](../input/reading-archives.md) include them in their directory of files, which greatly speeds up scanning.
 
+Igir will use every calculated checksum to match input files to ROMs found in DATs. Options below can constrain what checksums are calculated.
+
 !!! note
 
-    The main drawback of CRC32 checksums are their small keyspace of 4.29 billion unique values (below). This might seem like a lot, but it's sufficiently small enough that it is very possible for two different files to have the same CRC32. Chances of these "collisions" can be reduced by also comparing the filesize of the two different files, which Igir does.
+    CRC32 checksums have a small keyspace of 4.29 billion unique values. This might seem like a lot, but it's sufficiently small enough that it is very possible for two different files to have the same CRC32. Chances of these "collisions" can be reduced by also comparing the filesize of the two different files, which Igir does.
 
 ## Preferences for input files
 
@@ -48,23 +50,15 @@ Regex [flags](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regu
 
 ## Automatically using other checksum algorithms
 
-Some DAT release groups do not include every checksum type for every file. For example, CHDs in MAME DATs only include SHA1 checksums and nothing else, not even filesize information.
+Some DAT release groups do not include every checksum type for every file. For example, CHD disks in modern MAME DATs only include SHA1 checksums and nothing else, not even filesize information.
 
 Some DAT release groups do not include filesize information for every file, preventing safe matching of CRC32. For example, not every [Hardware Target Game Database SMDB](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) includes file sizes, but they typically include all common checksum types.
 
-!!! warning
+Because of this, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This _does_ have the chance of greatly slowing down file scanning, especially with archives. The options below let you constrain what checksums are calculated, but they all come with tradeoffs and warnings.
 
-    For situations like these, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This _does_ have the chance of greatly slowing down file scanning, especially with archives.
+!!! note
 
-    To constrain what checksums are calculated, you can use the `--input-checksum-quick` option (below), or `--input-checksum-max <algorithm>` which accepts the same algorithm options as `--input-checksum-min <algorithm>` (also below).
-
-For example, if you provide all of these DATs at once with the [`--dat <path|glob|url>` option](../dats/scanning.md):
-
-- No-Intro's Nintendo Game Boy DAT (which includes filesize, CRC32, MD5, and SHA1 information)
-- Hardware Target Game Database's Atari Lynx SMBD (which includes CRC32, MD5, SHA1, and SHA256 information but _not_ filesize)
-- MAME ListXML (which only includes SHA1 information for CHD "disks")
-
-...then Igir will determine that SHA1 is the minimum necessary checksum to calculate. Igir will also calculate CRC32 and MD5 at the same time, as they are "lesser" checksums.
+    If there is a checksum that none of your DATs provide, then Igir won't bother calculating it for input files. But because most DAT groups provide most checksums in most of their DATs, Igir will likely calculate _all_ checksums between `--input-checksum-min <algorithm>` and `--input-checksum-max <algorithm>` for every input file.
 
 !!! note
 
@@ -72,29 +66,29 @@ For example, if you provide all of these DATs at once with the [`--dat <path|glo
 
 ## Quick scanning files
 
-Many archives store a single checksum type in their file directory, and this checksum is quick to read. Calculating any other checksum requires decompression of the file, which can be expensive, and may require temporary files. Igir's default settings will give you the best chance of matching input files to DATs, but there may be situations where you want to make scanning faster.
+Many archives store a single checksum type in their file directory, and this checksum is typically quick to read. Calculating any other checksum requires decompression of the file, which can take a long time. Igir's default settings will give you the best chance of matching input files to ROMs in DATs, but there may be situations where you want to make scanning faster.
 
-The `--input-checksum-quick` option will prevent any extraction of archives (both in-memory _and_ using temporary files) to calculate checksums of files contained inside. This means that Igir will rely solely on the information available in the archive's file directory. Unarchived files will still have their checksum calculated as normal. See the [archive formats](../input/reading-archives.md) page for more information about what file types contain what checksum information.
+The `--input-checksum-quick` option will prevent any decompression of files in archives to calculate checksums. This means that Igir will rely solely on the information available in the archive's file directory. Unarchived files will still have their checksum calculated as normal. See the [archive formats](../input/reading-archives.md) page for more information about what file types contain what checksum information.
 
 !!! tip
 
-    MAME DATs catalog CHDs by the SHA1 found in their header, regardless of what type of CHD it is ("raw", CD-ROM, GD-ROM, etc.). As long as you're ok with trusting the headers in all other archives, you can greatly speed up the scanning of CHD files with `--input-checksum-quick` when only processing MAME DATs.
+    MAME DATs catalog CHDs by the SHA1 found in their header, regardless of what type of CHD it is (hard drive, CD-ROM, GD-ROM, etc.). As long as you're alright with trusting the headers in all other archives, you can greatly speed up the scanning of CHD files with `--input-checksum-quick` when using MAME DATs.
 
 !!! warning
 
-    If an archive format doesn't contain any checksum information (e.g. `.cso`, `.tar.gz`), then there will be no way to match those input files to DATs when quick scanning! Only use quick scanning when all input archives store checksums of their files!
+    If an archive format doesn't contain any checksum information (e.g. `.bz2`, `.cso`, `.rvz`, `.tar.gz`, etc.), then there will be no way to match those input files to ROMs in DATs when quick scanning! Only use quick scanning when all input archives store checksums of their files!
 
 !!! warning
 
-    Different DAT groups catalog CHDs of CD-ROMs (`.bin` & `.cue`) and GD-ROMs (`.gdi` & `.bin`/`.raw`) that use a track sheet plus one or more track files differently. Take the Sega Dreamcast for example, Redump catalogs `.bin` & `.cue` files (which is [problematic with CHDs](https://github.com/mamedev/mame/issues/11903)), [MAME Redump](https://github.com/MetalSlug/MAMERedump) catalogs `.chd` CD files, and TOSEC catalogs `.gdi` & `.bin`/`.raw` files. Quick scanning of CHDs means only the SHA1 stored in its header will be used for matching, which may or may not work depending on the DATs you use.
+    Different DAT groups catalog CHDs of CD-ROMs (`.bin` & `.cue`) and GD-ROMs (`.gdi` & `.bin`/`.raw`) that use a track sheet plus one or more track files differently. Take the Sega Dreamcast for example, Redump catalogs `.bin` & `.cue` files, [MAME Redump](https://github.com/MetalSlug/MAMERedump) catalogs `.chd` CD files, and TOSEC catalogs `.gdi` & `.bin`/`.raw` files. Quick scanning of CHDs means only the SHA1 stored in its header will be used for matching, which may or may not work depending on the DATs you use.
 
 ## Manually using other checksum algorithms
 
 !!! danger
 
-    Most people do not need to calculate checksums above CRC32. CRC32 + filesize is sufficient to match ROMs and test written files in the gross majority of cases. The below information is for people that _truly_ know they need higher checksums.
+    Most people do not need to modify Igir's default behavior of enabling checksums as needed (described above). The below information is for people that have very specific use cases.
 
-You can specify higher checksum algorithms with the `--input-checksum-min <algorithm>` option like this:
+You can increase the _minimum_ allowed checksum algorithm with the `--input-checksum-min <algorithm>` option like this:
 
 ```shell
 igir [commands..] [options] --input-checksum-min MD5
@@ -102,18 +96,20 @@ igir [commands..] [options] --input-checksum-min SHA1
 igir [commands..] [options] --input-checksum-min SHA256
 ```
 
-This option defines the _minimum_ checksum that will be used based on digest size (below). If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above), but never lower.
+This will disallow Igir from matching input files to ROMs in DATs using any checksum lower than the minimum. The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs because checksums with a larger digest size reduce the chances of collisions.
 
-The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives (see `--input-checksum-quick` above).
+You can also set the _maximum_ allowed checksum algorithm with the `--input-checksum-max <algorithm>` option. It works in combination with `--input-checksum-min <algorithm>` like this:
 
-You can also set the _maximum_ checksum that will be used with `--input-checksum-max <algorithm>`. It works in combination with `--input-checksum-min <algorithm>` like this:
+| Minimum checksum                       | Maximum checksum                      | Effect                                                                        |
+|----------------------------------------|---------------------------------------|-------------------------------------------------------------------------------|
+| `--input-checksum-min CRC32` (default) | `--input-checksum-max SHA1` (default) | The most common checksum types will be calculated and used for matching       |
+| `--input-checksum-min CRC32` (default) | `--input-checksum-max SHA256`         | Every checksum type will be calculated and used for matching                  |
+| `--input-checksum-min MD5`             | `--input-checksum-max SHA256`         | Every checksum type other than CRC32 will be calculated and used for matching |
+| `--input-checksum-min SHA1`            | `--input-checksum-max SHA1`           | Only SHA1 will be calculated and used for matching                            |
 
-| Minimum checksum                       | Maximum checksum                      | Effect                                                         |
-|----------------------------------------|---------------------------------------|----------------------------------------------------------------|
-| `--input-checksum-min CRC32` (default) | `--input-checksum-max SHA1` (default) | The most common checksum types will be used for matching       |
-| `--input-checksum-min CRC32` (default) | `--input-checksum-max SHA256`         | Every checksum type will be used for matching                  |
-| `--input-checksum-min MD5`             | `--input-checksum-max SHA256`         | Every checksum type other than CRC32 will be used for matching |
-| `--input-checksum-min SHA1`            | `--input-checksum-max SHA1`           | Only SHA1 will be used for matching                            |
+!!! warning
+
+    It is possible to set these settings so restrictive that there is no possibility of matching input files to ROMs in DATs. For example, modern MAME DATs only include SHA1 checksums for CHD disks, so you wouldn't want to set `--input-checksum-min SHA256` (or higher) or `--input-checksum-max MD5` (or lower). If your goal is to make scanning faster, consider using `--input-checksum-quick` instead.
 
 Here is a table that shows the keyspace for each checksum algorithm, where the higher number of bits reduces the chances of collisions:
 
