@@ -15,6 +15,7 @@ import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import type { OptionsProps } from '../../../src/models/options.js';
@@ -490,6 +491,8 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
 
         // Then all matched input files were queued for deletion...
         expect(results.moved.length).toBeGreaterThan(0);
+        // ...each game once, however many files it has
+        expect(new Set(results.moved).size).toEqual(results.moved.length);
         // ...and nonmatch.rom was not one of them
         expect(
           results.moved.flatMap((c) =>
@@ -2230,6 +2233,93 @@ describe('link', () => {
         );
         await expect(FsUtil.exists(outputPathResolved)).resolves.toEqual(true);
         expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
+      }
+    });
+  });
+});
+
+describe('renamed files', () => {
+  it('should cache the checksums of a file moved by renaming', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const fileSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetFileChecksums');
+      const archiveSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetArchiveChecksums');
+      try {
+        const options = new Options({ commands: ['move', 'test'] });
+        await candidateWriter(
+          options,
+          inputTemp,
+          path.join('raw', 'fizzbuzz.nes'),
+          undefined,
+          outputTemp,
+        );
+
+        expect(fileSpy).toHaveBeenCalledTimes(1);
+        const file = fileSpy.mock.calls.at(0)?.at(0);
+        assert.ok(file !== undefined);
+        expect(file.getFilePath()).toContain(outputTemp);
+        expect(file.getCrc32()).toBeDefined();
+        expect(archiveSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+  });
+
+  it('should cache the entries of an archive moved by renaming', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const fileSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetFileChecksums');
+      const archiveSpy = vi.spyOn(FileFactory.prototype, 'computeAndSetArchiveChecksums');
+      try {
+        const options = new Options({ commands: ['move', 'test'] });
+        await candidateWriter(
+          options,
+          inputTemp,
+          path.join('zip', 'foobar.zip'),
+          undefined,
+          outputTemp,
+        );
+
+        expect(fileSpy).toHaveBeenCalledTimes(1);
+        const file = fileSpy.mock.calls.at(0)?.at(0);
+        assert.ok(file !== undefined);
+        expect(file.getFilePath()).toContain(outputTemp);
+        expect(archiveSpy).toHaveBeenCalledTimes(1);
+        const call = archiveSpy.mock.calls.at(0);
+        assert.ok(call !== undefined);
+        const [archive, archiveEntries] = call;
+        expect(archive).toBeInstanceOf(Zip);
+        expect(archive.getFilePath()).toEqual(file.getFilePath());
+        expect(archiveEntries.map((entry) => entry.getCrc32())).toEqual(['b22c9747']);
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+  });
+
+  it("should read a moved archive's entries with the input's checksums, not just cached ones", async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const entriesSpy = vi.spyOn(FileFactory.prototype, 'entriesFromArchive');
+      try {
+        // The input is scanned with every checksum (candidateWriter above), so its lookup asks for SHA1 too
+        const options = new Options({ commands: ['move', 'test'] });
+        await candidateWriter(
+          options,
+          inputTemp,
+          path.join('zip', 'foobar.zip'),
+          undefined,
+          outputTemp,
+        );
+
+        const movedArchiveLookups = entriesSpy.mock.calls.filter(
+          ([archive]) =>
+            archive.getFilePath() === path.join(inputTemp, 'roms', 'zip', 'foobar.zip'),
+        );
+        expect(movedArchiveLookups.length).toBeGreaterThan(0);
+        for (const [, checksumBitmask] of movedArchiveLookups) {
+          expect(checksumBitmask & ChecksumBitmask.SHA1).toEqual(ChecksumBitmask.SHA1);
+        }
+      } finally {
+        vi.restoreAllMocks();
       }
     });
   });
