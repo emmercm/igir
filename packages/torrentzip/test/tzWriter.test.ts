@@ -269,6 +269,41 @@ describe('addStream', () => {
       }
     },
   );
+
+  test.each(Object.values(CompressionMethod))(
+    'should write the same valid zip whether or not the size is known: %s',
+    async (compressionMethod) => {
+      const contents = Buffer.from('the size of this file is not known ahead of time\n'.repeat(64));
+      const knownSizeZipPath = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'known.zip'));
+      const unknownSizeZipPath = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'unknown.zip'));
+      try {
+        const zipPathsAndSizes: [string, number | undefined][] = [
+          [knownSizeZipPath, contents.length],
+          [unknownSizeZipPath, undefined],
+        ];
+        for (const [zipPath, size] of zipPathsAndSizes) {
+          const tempZip = await TZWriter.open(zipPath, compressionMethod);
+          await tempZip.addStream(
+            stream.Readable.from([contents]),
+            'file.rom',
+            size,
+            os.availableParallelism(),
+          );
+          await tempZip.finalize();
+        }
+
+        await expect(TZValidator.validate(new ZipReader(unknownSizeZipPath))).resolves.toEqual(
+          VALIDATION_MAP[compressionMethod],
+        );
+        expect((await FileChecksums.hashFile(unknownSizeZipPath, ChecksumBitmask.MD5)).md5).toEqual(
+          (await FileChecksums.hashFile(knownSizeZipPath, ChecksumBitmask.MD5)).md5,
+        );
+      } finally {
+        await FsUtil.rm(knownSizeZipPath, { force: true });
+        await FsUtil.rm(unknownSizeZipPath, { force: true });
+      }
+    },
+  );
 });
 
 // @ts-expect-error __coverage__ exists

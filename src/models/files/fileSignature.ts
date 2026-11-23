@@ -16,7 +16,7 @@ type SignaturePiece = (
       // Dynamic values
       value?: never;
       length: number;
-      match: (buffer: Buffer, fileSize: number) => boolean;
+      match: (buffer: Buffer, fileSize: number | undefined) => boolean;
     }
 ) & {
   offset?: number;
@@ -85,7 +85,7 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
 const pcEngineCopierFileSizePiece: SignaturePiece = {
   length: 0,
   match: (_buffer, fileSize): boolean => {
-    return fileSize > 512 && fileSize % 0x40_00 === 512;
+    return fileSize !== undefined && fileSize > 512 && fileSize % 0x40_00 === 512;
   },
 };
 
@@ -114,7 +114,7 @@ const pcEngineResetVectorPiece: SignaturePiece = {
 const segaMasterSystemCopierFileSizePiece: SignaturePiece = {
   length: 0,
   match: (_buffer, fileSize): boolean => {
-    return fileSize > 512 && fileSize % 0x40_00 === 512;
+    return fileSize !== undefined && fileSize > 512 && fileSize % 0x40_00 === 512;
   },
 };
 
@@ -1224,7 +1224,10 @@ export default class FileSignature {
    * Return the {@link FileSignature} matching a file's leading bytes and total size, or undefined
    * if no known signature matches.
    */
-  static signatureFromBuffer(fileHead: Buffer, fileSize: number): FileSignature | undefined {
+  static signatureFromBuffer(
+    fileHead: Buffer,
+    fileSize: number | undefined,
+  ): FileSignature | undefined {
     const fileHeader = fileHead.subarray(0, this.MAX_HEADER_LENGTH_BYTES);
 
     for (const romSignature of this.SIGNATURES) {

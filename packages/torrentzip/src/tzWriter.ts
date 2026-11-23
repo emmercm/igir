@@ -77,18 +77,21 @@ export default class TZWriter {
   }
 
   /**
-   * Add a stream to the TorrentZip.
+   * Add a stream to the TorrentZip. An {@link uncompressedSize} of undefined means the size isn't
+   * known ahead of time, the stream is then compressed and is assumed to not need Zip64.
    */
   async addStream(
     readable: Readable,
     filename: string,
-    uncompressedSize: number,
+    uncompressedSize: number | undefined,
     compressorThreads: number,
     progressCallback?: ProgressCallback,
   ): Promise<void> {
+    const isZip64 = uncompressedSize !== undefined && uncompressedSize >= 0xff_ff_ff_ff;
+
     // Figure out how long the local file header will be
     let localFileHeaderPlaceholder: Buffer<ArrayBuffer>;
-    if (uncompressedSize >= 0xff_ff_ff_ff) {
+    if (isZip64) {
       localFileHeaderPlaceholder = this.zip64LocalFileHeader(filename, this.filePosition);
     } else {
       localFileHeaderPlaceholder = this.localFileHeader(filename);
@@ -125,7 +128,7 @@ export default class TZWriter {
 
     // Write the final local file header
     let localFileHeader: Buffer<ArrayBuffer>;
-    if (uncompressedSize >= 0xff_ff_ff_ff) {
+    if (isZip64) {
       localFileHeader = this.zip64LocalFileHeader(
         filename,
         this.filePosition,

@@ -53,6 +53,19 @@ describe('constructor', () => {
     const archive = new Zip('/some/archive.zip');
     await expect(ArchiveEntry.entryOf({ archive, entryPath })).resolves.toBeDefined();
   });
+
+  it("should leave the size and checksums unknown when they aren't given", async () => {
+    const archive = new Zip(path.join(Temp.getTempDir(), 'nonexistent.zip'));
+    const entry = await ArchiveEntry.entryOf({ archive, entryPath: 'game.rom' });
+    expect(entry.getSize()).toBeUndefined();
+    expect(entry.getSizeWithoutHeader()).toBeUndefined();
+    expect(entry.getCrc32()).toBeUndefined();
+    expect(entry.getCrc32WithoutHeader()).toBeUndefined();
+    expect(entry.getMd5()).toBeUndefined();
+    expect(entry.getSha1()).toBeUndefined();
+    expect(entry.getSha256()).toBeUndefined();
+    expect(entry.getChecksumBitmask()).toEqual(ChecksumBitmask.NONE);
+  });
 });
 
 describe('getEntryPath', () => {
@@ -940,7 +953,7 @@ describe('extractToStream', () => {
   test.each(
     archiveEntries
       // Some CHDs can't/shouldn't be extracted, ignore those
-      .filter((file) => !(file.getArchive() instanceof Chd) || file.getSize() > 0)
+      .filter((file) => !(file.getArchive() instanceof Chd) || (file.getSize() ?? 0) > 0)
       .map((file) => [file.toString(), file]),
   )('should extract archived files: %s', async (_, archiveEntry) => {
     await archiveEntry.extractToStream(async (readable) => {
@@ -950,7 +963,9 @@ describe('extractToStream', () => {
   });
 
   test.each(
-    archiveEntries.filter((file) => file.getSize() > 0).map((file) => [file.toString(), file]),
+    archiveEntries
+      .filter((file) => (file.getSize() ?? 0) > 0)
+      .map((file) => [file.toString(), file]),
   )('should read archived files from byte offsets: %s', async (_, archiveEntry) => {
     const contents = await archiveEntry.extractToStream(
       async (readable) => await bufferUtil.fromReadable(readable),
@@ -973,7 +988,9 @@ describe('extractToStream', () => {
 
 describe('readFirstBytes', () => {
   test.each(
-    archiveEntries.filter((file) => file.getSize() > 0).map((file) => [file.toString(), file]),
+    archiveEntries
+      .filter((file) => (file.getSize() ?? 0) > 0)
+      .map((file) => [file.toString(), file]),
   )('should read the leading bytes of archived files: %s', async (_, archiveEntry) => {
     const contents = await archiveEntry.extractToStream(
       async (readable) => await bufferUtil.fromReadable(readable),

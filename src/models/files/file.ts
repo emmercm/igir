@@ -45,7 +45,7 @@ export default class File implements FileProps {
   readonly filePath: string;
 
   @Expose()
-  readonly size: number;
+  readonly size?: number;
 
   readonly checksumBitmask?: number;
 
@@ -85,7 +85,7 @@ export default class File implements FileProps {
     const isUrl = URLUtil.canParse(fileProps.filePath);
 
     this.filePath = isUrl ? fileProps.filePath : PathUtil.resolve(fileProps.filePath);
-    this.size = fileProps.size ?? 0;
+    this.size = fileProps.size;
     this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.crc32WithoutHeader = fileProps.crc32WithoutHeader
@@ -177,8 +177,6 @@ export default class File implements FileProps {
       if (await FsUtil.isSymlink(fileProps.filePath)) {
         finalSymlinkSource = await FsUtil.readlink(fileProps.filePath);
       }
-    } else {
-      finalSize ??= 0;
     }
     finalCrcWithoutHeader ??= finalCrcWithHeader;
     finalMd5WithoutHeader ??= finalMd5WithHeader;
@@ -233,11 +231,14 @@ export default class File implements FileProps {
     return this.filePath;
   }
 
-  getSize(): number {
+  getSize(): number | undefined {
     return this.size;
   }
 
-  getSizeWithoutHeader(): number {
+  getSizeWithoutHeader(): number | undefined {
+    if (this.size === undefined) {
+      return undefined;
+    }
     return this.size - (this.fileHeader?.getDataOffsetBytes() ?? 0);
   }
 

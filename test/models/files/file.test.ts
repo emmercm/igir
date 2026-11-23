@@ -29,8 +29,8 @@ describe('fileOf', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
     const file = await File.fileOf({ filePath: tempFile });
     expect(file.getFilePath()).toEqual(tempFile);
-    expect(file.getSize()).toEqual(0);
-    expect(file.getSizeWithoutHeader()).toEqual(0);
+    expect(file.getSize()).toBeUndefined();
+    expect(file.getSizeWithoutHeader()).toBeUndefined();
     expect(file.getExtractedFilePath()).toEqual(path.basename(tempFile));
     expect(file.getCrc32()).toBeUndefined();
     expect(file.getCrc32WithoutHeader()).toBeUndefined();
