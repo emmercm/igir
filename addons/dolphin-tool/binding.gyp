@@ -168,7 +168,9 @@
           "cflags": [
             "-iquote../<(dolphin)/Externals/zlib-ng",
             "-iquote../<(dolphin)/Externals/zlib-ng/zlib-ng"
-          ]
+          ],
+          # zlib-ng's CMakeLists.txt only supports C99/C11 and builds as C11
+          "cflags_c": ["-std=gnu11"]
         }],
         ["OS=='win'", {
           # MSVC has no -iquote, so list these in AdditionalIncludeDirectories,
