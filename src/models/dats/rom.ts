@@ -14,7 +14,7 @@ export interface ROMProps extends ChecksumProps {
   // @see http://www.logiqx.com/Dats/datafile.dtd
 
   readonly name: string;
-  readonly size: number;
+  readonly size?: number;
   readonly status?: ROMStatus;
   readonly merge?: string;
   readonly bios?: string;

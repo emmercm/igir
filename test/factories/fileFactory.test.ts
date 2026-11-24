@@ -99,7 +99,9 @@ const SPLIT_ARCHIVES = (
 function entrySummaries(
   files: File[],
   archiveClass?: ArchiveClass,
-): (File | { archiveClass: unknown; entryPath: string; size: number; crc32?: string })[] {
+): (
+  File | { archiveClass: unknown; entryPath: string; size: number | undefined; crc32?: string }
+)[] {
   return files.map((file) =>
     file instanceof ArchiveEntry
       ? {
@@ -115,7 +117,7 @@ function entrySummaries(
 // Each file's contents, which don't depend on the name of the file they were read from
 function contentSummaries(
   files: File[],
-): { isArchiveEntry: boolean; size: number; crc32: string | undefined }[] {
+): { isArchiveEntry: boolean; size: number | undefined; crc32: string | undefined }[] {
   return files.map((file) => ({
     isArchiveEntry: file instanceof ArchiveEntry,
     size: file.getSize(),

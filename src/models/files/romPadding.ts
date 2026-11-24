@@ -97,15 +97,20 @@ export default class ROMPadding implements ROMPaddingProps {
    * up to the next power-of-two size with each of the known fill bytes.
    */
   static async paddingsFromFile(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
-    const paddedSize = Math.pow(2, Math.ceil(Math.log(file.getSize()) / Math.log(2)));
-    if (paddedSize === file.getSize()) {
+    const fileSize = file.getSize();
+    if (fileSize === undefined) {
+      return [];
+    }
+
+    const paddedSize = Math.pow(2, Math.ceil(Math.log(fileSize) / Math.log(2)));
+    if (paddedSize === fileSize) {
       // The file isn't trimmed
       return [];
     }
 
     if (callback !== undefined) {
       // The padding is generated, only the file's own bytes are read
-      callback(0, file.getSize());
+      callback(0, fileSize);
     }
 
     return await file.extractToStream(async (readable) => {

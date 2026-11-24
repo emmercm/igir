@@ -121,8 +121,13 @@ export default class ROMTrimProcessor extends Module {
       return false;
     }
 
+    const size = inputFile.getSize();
+    if (size === undefined) {
+      return false;
+    }
+
     // Is a power of two, so it isn't trimmed
-    return !(inputFile.getSize() === 0 || (inputFile.getSize() & (inputFile.getSize() - 1)) === 0);
+    return !(size === 0 || (size & (size - 1)) === 0);
   }
 
   private async getFile(inputFile: File, progressBar: ProgressBar): Promise<File> {
