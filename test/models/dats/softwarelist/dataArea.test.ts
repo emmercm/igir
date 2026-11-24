@@ -80,3 +80,38 @@ describe('getRoms', () => {
     ]);
   });
 });
+
+describe('fromObject', () => {
+  it('should read a data area holding a single ROM', () => {
+    const roms = SoftwareListDAT.fromObject({
+      name: 'single',
+      software: {
+        name: 'single',
+        part: { dataarea: { rom: { name: 'cart.bin', size: '0x4000', crc: '12345678' } } },
+      },
+    })
+      .getGames()
+      .flatMap((game) => game.getRoms());
+    expect(roms.map((rom) => [rom.getName(), rom.getSize()])).toEqual([['cart.bin', 0x40_00]]);
+  });
+
+  it('should add a continue entry given as a number to the file before it', () => {
+    const [dataArea] = SoftwareListDAT.fromObject({
+      name: 'numeric',
+      software: {
+        name: 'numeric',
+        part: {
+          dataarea: {
+            rom: [
+              { name: 'cart.bin', size: 0x20_00, crc: '12345678' },
+              { size: 0x10_00, loadflag: 'continue' },
+            ],
+          },
+        },
+      },
+    })
+      .getGames()
+      .flatMap((game) => game.getRoms());
+    expect([dataArea?.getName(), dataArea?.getSize()]).toEqual(['cart.bin', 0x30_00]);
+  });
+});
