@@ -82,6 +82,34 @@ describe('getRoms', () => {
 });
 
 describe('fromObject', () => {
+  const sized = (rom: object[]): [string, number][] =>
+    SoftwareListDAT.fromObject({
+      name: 'sized',
+      software: { name: 'sized', part: { dataarea: { rom } } },
+    })
+      .getGames()
+      .flatMap((game) => game.getRoms())
+      .map((r) => [r.getName(), r.getSize()]);
+
+  it('should take the longest run when a reload restarts the file, as rom_file_size() does', () => {
+    expect(
+      sized([
+        { name: 'cart.bin', size: '0x1000', crc: '12345678' },
+        { size: '0x1000', loadflag: 'reload' },
+        { size: '0x800', loadflag: 'continue' },
+      ]),
+    ).toEqual([['cart.bin', 0x18_00]]);
+  });
+
+  it('should read a size MAME can not parse as 0, as strtol() does', () => {
+    expect(
+      sized([
+        { name: 'cart.bin', size: '0x1000', crc: '12345678' },
+        { size: 'unknown', loadflag: 'continue' },
+      ]),
+    ).toEqual([['cart.bin', 0x10_00]]);
+  });
+
   it('should add only the continue entries straight after a file, as rom_file_size() does', () => {
     const roms = SoftwareListDAT.fromObject({
       name: 'interrupted',

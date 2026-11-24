@@ -35,38 +35,64 @@ export default class DataArea {
   }
 
   /**
-   * A `<rom>` without a name isn't a file. MAME (romload.cpp, `rom_file_size()`) reads a file's
-   * size as its named entry's plus each `loadflag="continue"` or `"ignore"` entry straight after
-   * it, stopping at the first entry that is neither, and its checksums are of all of those bytes;
-   * `reload` reads the same bytes again, and `fill` and `copy` aren't from the file. So those sizes
-   * are added to the named entry they follow, and the rest are left out.
+   * A `<rom>` without a name isn't a file. MAME (romload.cpp, `rom_file_size()`) reads a file's size
+   * as the longest of its runs: the named entry, or a `loadflag="reload"` entry that starts reading
+   * it again, plus each `continue` or `ignore` entry straight after. Its checksums are of those
+   * bytes; `fill` and `copy` aren't from the file and end it. So each named entry's size is set to
+   * its longest run, and the unnamed entries are left out.
    */
   private static fileRoms(rom: RawRom | RawRom[] | undefined): RawRom[] {
     const entries = rom === undefined ? [] : [rom].flat();
     const roms: RawRom[] = [];
-    // The file a continue or ignore entry still extends; any other entry ends that run
-    let extending: RawRom | undefined;
+    // The file still being read, the length of its current run, and its longest run so far
+    let file: RawRom | undefined;
+    let run = 0;
+    let longest = 0;
+    const end = (): void => {
+      if (file !== undefined) {
+        file.size = Math.max(longest, run);
+      }
+      file = undefined;
+    };
     for (const entry of entries) {
       if (entry.name !== undefined) {
-        extending = { ...entry };
-        roms.push(extending);
+        end();
+        file = { ...entry };
+        roms.push(file);
+        run = this.sizeOf(entry.size);
+        longest = 0;
+      } else if (file !== undefined && entry.loadflag === 'reload') {
+        longest = Math.max(longest, run);
+        run = this.sizeOf(entry.size);
       } else if (
-        extending !== undefined &&
+        file !== undefined &&
         (entry.loadflag === 'continue' || entry.loadflag === 'ignore')
       ) {
-        extending.size = this.sizeOf(extending.size) + this.sizeOf(entry.size);
+        run += this.sizeOf(entry.size);
       } else {
-        extending = undefined;
+        end();
       }
     }
+    end();
     return roms;
   }
 
+  // As MAME's strtol(size, nullptr, 0): hex with 0x, octal with a leading 0, else decimal; 0 if
+  // it doesn't parse
   private static sizeOf(size: string | number | undefined): number {
     if (typeof size === 'number') {
       return size;
     }
-    return size === undefined ? 0 : Number.parseInt(size);
+    const text = (size ?? '').trim();
+    const hex = /^0x([\da-f]+)/i.exec(text)?.at(1);
+    if (hex !== undefined) {
+      return Number.parseInt(hex, 16);
+    }
+    const octal = /^0([0-7]+)/.exec(text)?.at(1);
+    if (octal !== undefined) {
+      return Number.parseInt(octal, 8);
+    }
+    return Number(/^\d*/.exec(text)?.at(0) ?? '') || 0;
   }
 
   getRoms(): ROM[] {
