@@ -152,8 +152,8 @@ describe('getArchiveEntries', () => {
       expect(entries).toHaveLength(1);
 
       const entry = entries.at(0);
-      assert.ok(entry !== undefined);
-      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
+      assert.ok(entry instanceof ArchiveEntry);
+      expect(entry.getEntryPath()).toEqual(expectedEntryPath);
       expect(entry.getCrc32()).toEqual(expectedCrc);
     },
   );
@@ -228,7 +228,8 @@ describe('getArchiveEntries', () => {
       const expectedEntry = expectedEntries[idx];
       assert.ok(expectedEntry !== undefined);
       const [expectedEntryPath, expectedCrc] = expectedEntry;
-      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
+      assert.ok(entry instanceof ArchiveEntry);
+      expect(entry.getEntryPath()).toEqual(expectedEntryPath);
       expect(entry.getCrc32()).toEqual(expectedCrc);
     }
   });

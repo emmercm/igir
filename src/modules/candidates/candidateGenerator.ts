@@ -852,9 +852,11 @@ export default class CandidateGenerator extends Module {
     if (firstNonDiskRomWithFiles === undefined) {
       return undefined;
     }
-    const inputArchive = (
-      firstNonDiskRomWithFiles.getInputFile() as ArchiveEntry<Archive>
-    ).getArchive();
+    const firstInputFile = firstNonDiskRomWithFiles.getInputFile();
+    if (!(firstInputFile instanceof ArchiveEntry)) {
+      return `input file isn't from an archive`;
+    }
+    const inputArchive = firstInputFile.getArchive();
 
     // If we're allowed to re-zip archives, check if the zip file is a valid structured archive or not
     if (

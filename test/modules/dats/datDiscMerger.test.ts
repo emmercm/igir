@@ -359,7 +359,8 @@ it('should de-conflict duplicate ROM names per sub-game in a MergedDiscGame', ()
     'Pippo (Disc 2)/track01.bin',
     'Pippo (Disc 2)/track02.bin',
   ]);
-  const subGames = (merged as MergedDiscGame).getSubGames();
+  assert.ok(merged instanceof MergedDiscGame);
+  const subGames = merged.getSubGames();
   expect(subGames).toHaveLength(2);
   expect(
     subGames

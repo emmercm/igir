@@ -81,7 +81,8 @@ describe('createArchive', () => {
       const [firstInputToOutput] = inputToOutput;
       assert.ok(firstInputToOutput !== undefined);
       const [, firstOutputEntry] = firstInputToOutput;
-      const zip = firstOutputEntry.getArchive() as Zip;
+      const zip = firstOutputEntry.getArchive();
+      assert.ok(zip instanceof Zip);
       await expect(zip.createArchive(inputToOutput, ZipFormat.TORRENTZIP, 1)).rejects.toThrow();
 
       // And we were able to continue
