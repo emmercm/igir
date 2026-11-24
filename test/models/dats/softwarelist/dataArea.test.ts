@@ -82,6 +82,27 @@ describe('getRoms', () => {
 });
 
 describe('fromObject', () => {
+  it('should add only the continue entries straight after a file, as rom_file_size() does', () => {
+    const roms = SoftwareListDAT.fromObject({
+      name: 'interrupted',
+      software: {
+        name: 'interrupted',
+        part: {
+          dataarea: {
+            rom: [
+              { name: 'cart.bin', size: '0x1000', crc: '12345678' },
+              { size: '0x1000', loadflag: 'fill' },
+              { size: '0x800', loadflag: 'continue' },
+            ],
+          },
+        },
+      },
+    })
+      .getGames()
+      .flatMap((game) => game.getRoms());
+    expect(roms.map((rom) => [rom.getName(), rom.getSize()])).toEqual([['cart.bin', 0x10_00]]);
+  });
+
   it('should read a data area holding a single ROM', () => {
     const roms = SoftwareListDAT.fromObject({
       name: 'single',

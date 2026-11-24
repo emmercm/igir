@@ -1,4 +1,4 @@
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
+import { Expose, plainToInstance, Transform } from 'class-transformer';
 
 import ROM from '../rom.js';
 
@@ -21,7 +21,7 @@ export default class DataArea {
   // readonly size?: number;
 
   @Expose()
-  @Type(() => ROM)
+  // The transform builds each ROM from the raw entries itself, so no @Type conversion runs first
   @Transform(({ obj }: { obj: { rom?: RawRom | RawRom[] } }) =>
     plainToInstance(ROM, DataArea.fileRoms(obj.rom), {
       enableImplicitConversion: true,
@@ -36,22 +36,27 @@ export default class DataArea {
 
   /**
    * A `<rom>` without a name isn't a file. MAME (romload.cpp, `rom_file_size()`) reads a file's
-   * size as its named entry's plus each `loadflag="continue"` or `"ignore"` entry right after it,
-   * and its checksums are of all of those bytes; `reload` reads the same bytes again, and `fill`
-   * and `copy` aren't from the file. So those sizes are added to the named entry before it, and
-   * the rest are left out.
+   * size as its named entry's plus each `loadflag="continue"` or `"ignore"` entry straight after
+   * it, stopping at the first entry that is neither, and its checksums are of all of those bytes;
+   * `reload` reads the same bytes again, and `fill` and `copy` aren't from the file. So those sizes
+   * are added to the named entry they follow, and the rest are left out.
    */
   private static fileRoms(rom: RawRom | RawRom[] | undefined): RawRom[] {
     const entries = rom === undefined ? [] : [rom].flat();
     const roms: RawRom[] = [];
+    // The file a continue or ignore entry still extends; any other entry ends that run
+    let extending: RawRom | undefined;
     for (const entry of entries) {
       if (entry.name !== undefined) {
-        roms.push({ ...entry });
-        continue;
-      }
-      const named = roms.at(-1);
-      if (named !== undefined && (entry.loadflag === 'continue' || entry.loadflag === 'ignore')) {
-        named.size = this.sizeOf(named.size) + this.sizeOf(entry.size);
+        extending = { ...entry };
+        roms.push(extending);
+      } else if (
+        extending !== undefined &&
+        (entry.loadflag === 'continue' || entry.loadflag === 'ignore')
+      ) {
+        extending.size = this.sizeOf(extending.size) + this.sizeOf(entry.size);
+      } else {
+        extending = undefined;
       }
     }
     return roms;
