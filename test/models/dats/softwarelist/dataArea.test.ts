@@ -101,6 +101,15 @@ describe('fromObject', () => {
     ).toEqual([['cart.bin', 0x18_00]]);
   });
 
+  it('should read a leading 0 as octal, stopping at an 8 or 9, as strtol() does', () => {
+    expect(
+      sized([
+        { name: 'cart.bin', size: '0x1000', crc: '12345678' },
+        { size: '09', loadflag: 'continue' },
+      ]),
+    ).toEqual([['cart.bin', 0x10_00]]);
+  });
+
   it('should read a size MAME can not parse as 0, as strtol() does', () => {
     expect(
       sized([

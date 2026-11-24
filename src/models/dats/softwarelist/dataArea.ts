@@ -77,22 +77,23 @@ export default class DataArea {
     return roms;
   }
 
-  // As MAME's strtol(size, nullptr, 0): hex with 0x, octal with a leading 0, else decimal; 0 if
-  // it doesn't parse
+  // As MAME's strtol(size, nullptr, 0): after optional space and sign, 0x is hex, a leading 0 is
+  // octal (stopping at the first 8 or 9), anything else decimal; the leading digits only, and 0 when
+  // none parse
   private static sizeOf(size: string | number | undefined): number {
     if (typeof size === 'number') {
       return size;
     }
-    const text = (size ?? '').trim();
-    const hex = /^0x([\da-f]+)/i.exec(text)?.at(1);
-    if (hex !== undefined) {
-      return Number.parseInt(hex, 16);
+    const match = /^\s*([+-]?)(0x[\da-f]+|0[0-7]*|\d*)/i.exec(size ?? '');
+    const sign = match?.at(1) === '-' ? -1 : 1;
+    const digits = match?.at(2) ?? '';
+    if (/^0x/i.test(digits)) {
+      return sign * Number.parseInt(digits.slice(2), 16);
     }
-    const octal = /^0([0-7]+)/.exec(text)?.at(1);
-    if (octal !== undefined) {
-      return Number.parseInt(octal, 8);
+    if (digits.startsWith('0')) {
+      return sign * (Number.parseInt(digits, 8) || 0);
     }
-    return Number(/^\d*/.exec(text)?.at(0) ?? '') || 0;
+    return sign * (Number(digits) || 0);
   }
 
   getRoms(): ROM[] {
