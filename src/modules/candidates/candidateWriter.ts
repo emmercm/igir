@@ -27,6 +27,7 @@ import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 export interface CandidateWriterResults {
+  candidates: WriteCandidate[];
   wrote: WriteCandidate[];
   moved: WriteCandidate[];
 }
@@ -43,7 +44,7 @@ export default class CandidateWriter extends Module {
   private readonly candidateSemaphore: CandidateWriterSemaphore;
   private readonly moveMutex: FileMoveMutex;
 
-  private readonly filesQueuedForDeletion: WriteCandidate[] = [];
+  private readonly filesQueuedForDeletion = new Map<WriteCandidate, ROMWithFiles[]>();
 
   constructor(
     options: Options,
@@ -65,6 +66,7 @@ export default class CandidateWriter extends Module {
   async write(dat: DAT, candidates: WriteCandidate[]): Promise<CandidateWriterResults> {
     if (candidates.length === 0) {
       return {
+        candidates: [],
         wrote: [],
         moved: [],
       };
@@ -73,11 +75,13 @@ export default class CandidateWriter extends Module {
     // Return early if we shouldn't write (are only reporting)
     if (!this.options.shouldWrite() && !this.options.shouldTest()) {
       return {
+        candidates,
         wrote: candidates,
         moved: [],
       };
     }
 
+    const deduplicatedToRepresentative = new Map<ROMWithFiles, ROMWithFiles>();
     const outputLocationsToRomsWithFiles = new Map<string, ROMWithFiles[]>();
     const writableCandidates = candidates
       .filter((candidate) => candidate.canWrite())
@@ -90,11 +94,11 @@ export default class CandidateWriter extends Module {
             outputLocationsToRomsWithFiles.set(outputLocation, [romWithFiles]);
             return true;
           }
-          if (
-            previousRomsWithFiles.some((previousRomWithFiles) =>
-              previousRomWithFiles.writesSameOutputAs(romWithFiles),
-            )
-          ) {
+          const duplicateOf = previousRomsWithFiles.find((previousRomWithFiles) =>
+            previousRomWithFiles.writesSameOutputAs(romWithFiles),
+          );
+          if (duplicateOf !== undefined) {
+            deduplicatedToRepresentative.set(romWithFiles, duplicateOf);
             return false;
           }
           previousRomsWithFiles.push(romWithFiles);
@@ -118,35 +122,51 @@ export default class CandidateWriter extends Module {
     }
     this.progressBar.resetProgress(writableCandidates.length);
 
-    await this.candidateSemaphore.mapCandidates(writableCandidates, async (candidate) => {
-      this.progressBar.incrementInProgress();
-      this.prefixedLogger.trace(
-        `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
-      );
+    const failedPerCandidate = await this.candidateSemaphore.mapCandidates(
+      writableCandidates,
+      async (candidate): Promise<ROMWithFiles[]> => {
+        this.progressBar.incrementInProgress();
+        this.prefixedLogger.trace(
+          `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+        );
 
-      if (this.options.shouldLink()) {
-        await this.writeLink(dat, candidate);
-      } else {
-        await this.writeZip(dat, candidate);
-        await this.writeRaw(dat, candidate);
-      }
+        let failed: ROMWithFiles[];
+        if (this.options.shouldLink()) {
+          failed = await this.writeLink(dat, candidate);
+        } else {
+          const failedZip = await this.writeZip(dat, candidate);
+          const failedRaw = await this.writeRaw(dat, candidate);
+          failed = [...failedZip, ...failedRaw];
+        }
 
-      this.prefixedLogger.trace(
-        `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
-      );
-      this.progressBar.incrementCompleted();
-    });
+        this.prefixedLogger.trace(
+          `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+        );
+        this.progressBar.incrementCompleted();
+        return failed;
+      },
+    );
+    const failedRomsWithFiles = new Set(failedPerCandidate.flat());
 
     this.prefixedLogger.trace(
       `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlUtil.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
+    const wrote = writableCandidates
+      .map((candidate) =>
+        candidate.withRomsWithFiles(
+          candidate
+            .getRomsWithFiles()
+            .filter((romWithFiles) => !failedRomsWithFiles.has(romWithFiles)),
+        ),
+      )
+      .filter((candidate) => candidate.getRomsWithFiles().length > 0);
+
     const writtenFilePaths = new Set(
-      writableCandidates.flatMap((c) =>
-        c.getRomsWithFiles().map((r) => r.getOutputFile().getFilePath()),
-      ),
+      wrote.flatMap((c) => c.getRomsWithFiles().map((r) => r.getOutputFile().getFilePath())),
     );
-    const movedCandidates = this.filesQueuedForDeletion
+    const movedCandidates = [...this.filesQueuedForDeletion]
+      .map(([writeCandidate, romsWithFiles]) => writeCandidate.withRomsWithFiles(romsWithFiles))
       // Of the WriteCandidates that were queued for deletion, exclude all that have at least one
       // input file that was an output file. This can happen if the output directory was also
       // provided as an input directory.
@@ -155,8 +175,26 @@ export default class CandidateWriter extends Module {
           .getRomsWithFiles()
           .some((romWithFiles) => !writtenFilePaths.has(romWithFiles.getInputFile().getFilePath())),
       );
+
+    const validCandidates = candidates
+      .map((candidate) => {
+        if (candidate.getRomsWithFiles().length === 0) {
+          return candidate;
+        }
+        const validRomsWithFiles = candidate.getRomsWithFiles().filter((romWithFiles) => {
+          const representative = deduplicatedToRepresentative.get(romWithFiles) ?? romWithFiles;
+          return !failedRomsWithFiles.has(representative);
+        });
+        if (validRomsWithFiles.length === 0) {
+          return undefined;
+        }
+        return candidate.withRomsWithFiles(validRomsWithFiles);
+      })
+      .filter((candidate) => candidate !== undefined);
+
     return {
-      wrote: writableCandidates,
+      candidates: validCandidates,
+      wrote,
       moved: movedCandidates,
     };
   }
@@ -176,18 +214,20 @@ export default class CandidateWriter extends Module {
    ***********************
    */
 
-  private async writeZip(dat: DAT, candidate: WriteCandidate): Promise<void> {
+  private async writeZip(dat: DAT, candidate: WriteCandidate): Promise<ROMWithFiles[]> {
     // Return no files if there are none to write
-    const inputToOutputZipEntries = candidate
+    const zipRomsWithFiles = candidate
       .getRomsWithFiles()
-      .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry)
-      .map((romWithFiles): [File, ArchiveEntry<Zip>] => [
+      .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry);
+    const inputToOutputZipEntries = zipRomsWithFiles.map(
+      (romWithFiles): [File, ArchiveEntry<Zip>] => [
         romWithFiles.getInputFile(),
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
-      ]);
+      ],
+    );
     const [firstInputToOutputZipEntry] = inputToOutputZipEntries;
     if (firstInputToOutputZipEntry === undefined) {
-      return;
+      return [];
     }
 
     // Prep the single output file
@@ -219,7 +259,7 @@ export default class CandidateWriter extends Module {
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
             );
           }
-          return;
+          return [];
         }
 
         if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
@@ -235,16 +275,16 @@ export default class CandidateWriter extends Module {
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
-            for (const [inputRomFile] of inputToOutputZipEntries) {
-              this.enqueueFileDeletion(candidate, inputRomFile);
+            for (const zipRomWithFiles of zipRomsWithFiles) {
+              this.enqueueFileDeletion(candidate, zipRomWithFiles);
             }
-            return;
+            return [];
           }
           if (!this.options.shouldWrite() && existingTest) {
             this.prefixedLogger.error(
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: ${existingTest}`,
             );
-            return;
+            return zipRomsWithFiles;
           }
         }
 
@@ -258,13 +298,14 @@ export default class CandidateWriter extends Module {
         }
       }
       if (!this.options.shouldWrite()) {
-        return;
+        return [];
       }
 
       CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputZip.getFilePath(), dat.getName());
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
       let wasWritten = false;
+      let didPassTest = !this.options.shouldTest();
       for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
         wasWritten = await this.writeZipFile(
           dat,
@@ -274,12 +315,12 @@ export default class CandidateWriter extends Module {
           childBar,
         );
 
-        if (wasWritten && !this.options.shouldTest()) {
+        if (!wasWritten) {
+          continue;
+        }
+        if (!this.options.shouldTest()) {
           // Successfully written, unknown if valid
           break;
-        }
-        if (!wasWritten || !this.options.shouldTest()) {
-          continue;
         }
         const writtenTest = await this.testZipContents(
           dat,
@@ -290,6 +331,7 @@ export default class CandidateWriter extends Module {
         );
         if (!writtenTest) {
           // Successfully validated
+          didPassTest = true;
           break;
         }
         const message = `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
@@ -297,15 +339,18 @@ export default class CandidateWriter extends Module {
           this.prefixedLogger.warn(`${message}, retrying`);
         } else {
           this.prefixedLogger.error(message);
-          return; // final error, do not continue
+          return zipRomsWithFiles; // final error, do not continue
         }
       }
 
-      if (wasWritten) {
-        for (const [inputRomFile] of inputToOutputZipEntries) {
-          this.enqueueFileDeletion(candidate, inputRomFile);
-        }
+      if (!wasWritten || !didPassTest) {
+        return zipRomsWithFiles;
       }
+
+      for (const zipRomWithFiles of zipRomsWithFiles) {
+        this.enqueueFileDeletion(candidate, zipRomWithFiles);
+      }
+      return [];
     } finally {
       childBar.delete();
     }
@@ -521,48 +566,54 @@ export default class CandidateWriter extends Module {
    ***********************
    */
 
-  private async writeRaw(dat: DAT, candidate: WriteCandidate): Promise<void> {
-    const inputToOutputEntries = candidate
+  private async writeRaw(dat: DAT, candidate: WriteCandidate): Promise<ROMWithFiles[]> {
+    const rawRomsWithFiles = candidate
       .getRomsWithFiles()
-      .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry))
-      .map((romWithFiles): [File, File] => [
-        romWithFiles.getInputFile(),
-        romWithFiles.getOutputFile(),
-      ]);
+      .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry));
 
     // Return no files if there are none to write
-    if (inputToOutputEntries.length === 0) {
-      return;
+    if (rawRomsWithFiles.length === 0) {
+      return [];
     }
 
-    const totalBytes = inputToOutputEntries.reduce(
-      (sum, [, outputFile]) => sum + (outputFile.getSize() ?? 0),
+    const totalBytes = rawRomsWithFiles.reduce(
+      (sum, romWithFiles) => sum + (romWithFiles.getOutputFile().getSize() ?? 0),
       0,
     );
     this.prefixedLogger.trace(
-      `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldMove() ? 'moving' : 'copying'} ${FsUtil.sizeReadable(totalBytes)} of ${IntlUtil.toLocaleString(inputToOutputEntries.length)} ${inputToOutputEntries.some(([input]) => input instanceof ArchiveFile) ? 'archive' : 'raw'} file${inputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldMove() ? 'moving' : 'copying'} ${FsUtil.sizeReadable(totalBytes)} of ${IntlUtil.toLocaleString(rawRomsWithFiles.length)} ${rawRomsWithFiles.some((romWithFiles) => romWithFiles.getInputFile() instanceof ArchiveFile) ? 'archive' : 'raw'} file${rawRomsWithFiles.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
     // the same input archive at the same time, to benefit from batch extraction.
-    const uniqueInputToOutputEntriesMap = Map.groupBy(inputToOutputEntries, ([inputRomFile]) =>
-      inputRomFile.getFilePath(),
+    const uniqueInputEntriesMap = Map.groupBy(rawRomsWithFiles, (romWithFiles) =>
+      romWithFiles.getInputFile().getFilePath(),
     );
-    for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
-      await Promise.all(
-        groupedInputToOutput.map(async ([inputRomFile, outputRomFile]) => {
-          await this.writeRawSingle(dat, candidate, inputRomFile, outputRomFile);
+    const failedRomsWithFiles: ROMWithFiles[] = [];
+    for (const groupedRomsWithFiles of uniqueInputEntriesMap.values()) {
+      const results = await Promise.all(
+        groupedRomsWithFiles.map(async (romWithFiles): Promise<ROMWithFiles | undefined> => {
+          const didSucceed = await this.writeRawSingle(dat, candidate, romWithFiles);
+          return didSucceed ? undefined : romWithFiles;
         }),
       );
+      for (const failed of results) {
+        if (failed !== undefined) {
+          failedRomsWithFiles.push(failed);
+        }
+      }
     }
+    return failedRomsWithFiles;
   }
 
   private async writeRawSingle(
     dat: DAT,
     candidate: WriteCandidate,
-    inputRomFile: File,
-    outputRomFile: File,
-  ): Promise<void> {
+    romWithFiles: ROMWithFiles,
+  ): Promise<boolean> {
+    const inputRomFile = romWithFiles.getInputFile();
+    const outputRomFile = romWithFiles.getOutputFile();
+
     // Input and output are the exact same, maybe do nothing
     if (this.options.shouldWrite() && outputRomFile.equals(inputRomFile)) {
       const wasMoved =
@@ -579,7 +630,7 @@ export default class CandidateWriter extends Module {
         this.prefixedLogger.debug(
           `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
         );
-        return;
+        return true;
       }
     }
 
@@ -608,7 +659,7 @@ export default class CandidateWriter extends Module {
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
             );
           }
-          return;
+          return true;
         }
 
         if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
@@ -624,14 +675,14 @@ export default class CandidateWriter extends Module {
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
-            this.enqueueFileDeletion(candidate, inputRomFile);
-            return;
+            this.enqueueFileDeletion(candidate, romWithFiles);
+            return true;
           }
           if (!this.options.shouldWrite() && existingTest) {
             this.prefixedLogger.error(
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: ${existingTest}`,
             );
-            return;
+            return false;
           }
         }
 
@@ -645,13 +696,14 @@ export default class CandidateWriter extends Module {
         }
       }
       if (!this.options.shouldWrite()) {
-        return;
+        return true;
       }
 
       CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputFilePath, dat.getName());
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
       let written: MoveResultValue | undefined;
+      let didPassTest = !this.options.shouldTest();
       for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
         if (this.options.shouldMove()) {
           written = await this.moveRawFile(dat, candidate, inputRomFile, outputFilePath, childBar);
@@ -659,41 +711,47 @@ export default class CandidateWriter extends Module {
           written = await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, childBar);
         }
 
-        if (written !== undefined && !this.options.shouldTest()) {
+        if (written === undefined) {
+          continue;
+        }
+        if (!this.options.shouldTest()) {
           // Successfully written, unknown if valid
           break;
         }
-        if (written === MoveResult.COPIED && this.options.shouldTest()) {
-          // Only test the output file if it was copied, we don't need to test the file if it was
-          // just renamed
-          const writtenTest = await this.testWrittenRaw(
-            dat,
-            candidate,
-            outputFilePath,
-            outputRomFile,
-            childBar,
-          );
-          if (!writtenTest) {
-            // Successfully validated
-            break;
-          }
-          const message = `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
-          if (i < this.options.getWriteRetry()) {
-            this.prefixedLogger.warn(`${message}, retrying`);
-          } else {
-            this.prefixedLogger.error(message);
-            return; // final error, do not continue
-          }
-        }
-        if (written === MoveResult.RENAMED && this.options.shouldTest()) {
+        if (written === MoveResult.RENAMED) {
           // No need to test, the file was only renamed, not newly written
+          didPassTest = true;
           break;
+        }
+        // Only test the output file if it was copied, we don't need to test the file if it was
+        // just renamed
+        const writtenTest = await this.testWrittenRaw(
+          dat,
+          candidate,
+          outputFilePath,
+          outputRomFile,
+          childBar,
+        );
+        if (!writtenTest) {
+          // Successfully validated
+          didPassTest = true;
+          break;
+        }
+        const message = `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
+        if (i < this.options.getWriteRetry()) {
+          this.prefixedLogger.warn(`${message}, retrying`);
+        } else {
+          this.prefixedLogger.error(message);
+          return false; // final error, do not continue
         }
       }
 
-      if (written) {
-        this.enqueueFileDeletion(candidate, inputRomFile);
+      if (written === undefined || !didPassTest) {
+        return false;
       }
+
+      this.enqueueFileDeletion(candidate, romWithFiles);
+      return true;
     } finally {
       childBar.delete();
     }
@@ -795,10 +853,14 @@ export default class CandidateWriter extends Module {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
       const tempRawFile = await FsUtil.mktemp(outputFilePath);
-      await inputRomFile.extractAndTransformToFile(tempRawFile, (progress) => {
-        progressBar.setCompleted(progress);
-      });
-      await FsUtil.mv(tempRawFile, outputFilePath);
+      try {
+        await inputRomFile.extractAndTransformToFile(tempRawFile, (progress) => {
+          progressBar.setCompleted(progress);
+        });
+        await FsUtil.mv(tempRawFile, outputFilePath);
+      } finally {
+        await FsUtil.rm(tempRawFile, { force: true });
+      }
       return MoveResult.COPIED;
     } catch (error) {
       this.prefixedLogger.error(
@@ -887,14 +949,19 @@ export default class CandidateWriter extends Module {
   // Input files may be needed for multiple output files, such as an archive with hundreds of ROMs
   //  in it. That means we need to "move" (delete) files at the very end after all DATs have
   //  finished writing.
-  private enqueueFileDeletion(candidate: WriteCandidate, inputRomFile: File): void {
+  private enqueueFileDeletion(candidate: WriteCandidate, romWithFiles: ROMWithFiles): void {
     if (!this.options.shouldMove()) {
       return;
     }
-    if (inputRomFile instanceof ZeroSizeFile) {
+    if (romWithFiles.getInputFile() instanceof ZeroSizeFile) {
       return;
     }
-    this.filesQueuedForDeletion.push(candidate);
+    const queued = this.filesQueuedForDeletion.get(candidate);
+    if (queued === undefined) {
+      this.filesQueuedForDeletion.set(candidate, [romWithFiles]);
+    } else {
+      queued.push(romWithFiles);
+    }
   }
 
   /**
@@ -905,28 +972,31 @@ export default class CandidateWriter extends Module {
    ************************
    */
 
-  private async writeLink(dat: DAT, candidate: WriteCandidate): Promise<void> {
-    const inputToOutputEntries = candidate.getRomsWithFiles();
-
-    for (const inputToOutputEntry of inputToOutputEntries) {
-      const inputRomFile = inputToOutputEntry.getInputFile();
-      const outputRomFile = inputToOutputEntry.getOutputFile();
-      await this.writeLinkSingle(dat, candidate, inputRomFile, outputRomFile);
+  private async writeLink(dat: DAT, candidate: WriteCandidate): Promise<ROMWithFiles[]> {
+    const failedRomsWithFiles: ROMWithFiles[] = [];
+    for (const romWithFiles of candidate.getRomsWithFiles()) {
+      const didSucceed = await this.writeLinkSingle(dat, candidate, romWithFiles);
+      if (!didSucceed) {
+        failedRomsWithFiles.push(romWithFiles);
+      }
     }
+    return failedRomsWithFiles;
   }
 
   private async writeLinkSingle(
     dat: DAT,
     candidate: WriteCandidate,
-    inputRomFile: File,
-    outputRomFile: File,
-  ): Promise<void> {
+    romWithFiles: ROMWithFiles,
+  ): Promise<boolean> {
+    const inputRomFile = romWithFiles.getInputFile();
+    const outputRomFile = romWithFiles.getOutputFile();
+
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
       this.prefixedLogger.debug(
         `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
       );
-      return;
+      return true;
     }
 
     const linkPath = outputRomFile.getFilePath();
@@ -952,11 +1022,11 @@ export default class CandidateWriter extends Module {
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file`,
           );
         }
-        return;
+        return true;
       }
 
       if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
-        let existingTest;
+        let existingTest: string | undefined;
         if (this.options.getLinkMode() === LinkMode.SYMLINK) {
           existingTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
         } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
@@ -971,13 +1041,13 @@ export default class CandidateWriter extends Module {
           this.prefixedLogger.debug(
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, the existing link is correct`,
           );
-          return;
+          return true;
         }
         if (!this.options.shouldWrite() && existingTest) {
           this.prefixedLogger.error(
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: ${existingTest}`,
           );
-          return;
+          return false;
         }
       }
 
@@ -988,23 +1058,25 @@ export default class CandidateWriter extends Module {
       }
     }
     if (!this.options.shouldWrite()) {
-      return;
+      return true;
     }
 
     CandidateWriter.OUTPUT_PATHS_WRITTEN.set(linkPath, dat.getName());
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    let wasWritten = false;
+    let didPassTest = !this.options.shouldTest();
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      const wasWritten = await this.writeRawLink(dat, candidate, targetPath, linkPath);
+      wasWritten = await this.writeRawLink(dat, candidate, targetPath, linkPath);
 
-      if (wasWritten && !this.options.shouldTest()) {
+      if (!wasWritten) {
+        continue;
+      }
+      if (!this.options.shouldTest()) {
         // Successfully written, unknown if valid
         break;
       }
-      if (!wasWritten || !this.options.shouldTest()) {
-        continue;
-      }
-      let writtenTest;
+      let writtenTest: string | undefined;
       if (this.options.getLinkMode() === LinkMode.SYMLINK) {
         writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
       } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
@@ -1017,6 +1089,7 @@ export default class CandidateWriter extends Module {
       }
       if (!writtenTest) {
         // Successfully validated
+        didPassTest = true;
         break;
       }
       const message = `${dat.getName()}: ${candidate.getName()} ${linkPath}: written link ${writtenTest}`;
@@ -1024,9 +1097,11 @@ export default class CandidateWriter extends Module {
         this.prefixedLogger.warn(`${message}, retrying`);
       } else {
         this.prefixedLogger.error(message);
-        return; // final error, do not continue
+        return false; // final error, do not continue
       }
     }
+
+    return wasWritten && didPassTest;
   }
 
   private async writeRawLink(

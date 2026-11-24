@@ -2,8 +2,10 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import stream from 'node:stream';
 
 import async from 'async';
+import stripAnsi from 'strip-ansi';
 
 import MappableSemaphore from '../src/async/mappableSemaphore.js';
 import FileCache from '../src/cache/fileCache.js';
@@ -11,19 +13,23 @@ import { terminal } from '../src/console/terminal.js';
 import FileFactory from '../src/factories/fileFactory.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
+import Zip from '../src/models/files/archives/zip.js';
+import File from '../src/models/files/file.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/models/files/fileChecksums.js';
 import type { OptionsProps } from '../src/models/options.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,
+  GameSubdirMode,
+  GameSubdirModeInverted,
   InputChecksumArchivesMode,
   InputChecksumArchivesModeInverted,
   LinkMode,
   LinkModeInverted,
 } from '../src/models/options.js';
-import { GameSubdirMode, GameSubdirModeInverted } from '../src/models/options.js';
 import ArgumentsParser from '../src/modules/argumentsParser.js';
 import DATScanner from '../src/modules/dats/datScanner.js';
+import NullWritable from '../src/streams/nullWritable.js';
 import ArrayUtil from '../src/utils/arrayUtil.js';
 import FsUtil, { WalkMode } from '../src/utils/fsUtil.js';
 import ProgressBarFake from './console/progressBarFake.js';
@@ -1768,6 +1774,204 @@ describe('with explicit DATs', () => {
       for (const [filePath] of copyResult.outputFilesAndCrcs) {
         expect(cleanedFiles).toContain(path.join('wrongfolder', filePath));
       }
+    });
+  });
+
+  describe.each(['extract', 'zip'])('write and test failures (%s)', (command) => {
+    const captureTerminal = (): { getOutput: () => Promise<string> } => {
+      const passThrough = new stream.PassThrough();
+      const chunks: Buffer[] = [];
+      const done = new Promise<string>((resolve) => {
+        passThrough.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+        });
+        passThrough.on('end', () => {
+          resolve(Buffer.concat(chunks).toString());
+        });
+      });
+      terminal.setStream(passThrough);
+      return {
+        getOutput: async (): Promise<string> => {
+          passThrough.end();
+          return await done;
+        },
+      };
+    };
+
+    test.each(['write failure', 'post-write test failure'])(
+      'should not count failed game as written or FOUND in report and should include in fixdat: %s',
+      async (failureType) => {
+        await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+          const singleDatPath = path.join(inputTemp, 'single.dat');
+          await FsUtil.writeFile(
+            singleDatPath,
+            `<?xml version="1.0"?>
+<datafile>
+  <header><name>Test</name></header>
+  <game name="Foobar">
+    <description>Foobar</description>
+    <rom name="Foobar.lnx" size="7" crc="b22c9747"/>
+  </game>
+</datafile>`,
+          );
+
+          const inputFile =
+            command === 'extract'
+              ? path.join(inputTemp, 'roms', 'zip', 'foobar.zip')
+              : path.join(inputTemp, 'roms', 'raw', 'foobar.lnx');
+          const reportOutput = path.join(outputTemp, 'report.csv');
+          const terminalCapture = captureTerminal();
+
+          try {
+            if (command === 'extract') {
+              if (failureType === 'write failure') {
+                vi.spyOn(File.prototype, 'extractAndTransformToFile').mockRejectedValue(
+                  new Error('write failed'),
+                );
+              } else {
+                vi.spyOn(File.prototype, 'extractAndTransformToFile').mockImplementation(
+                  async (destinationPath) => {
+                    await FsUtil.writeFile(destinationPath, 'corrupt');
+                  },
+                );
+              }
+            } else if (failureType === 'write failure') {
+              vi.spyOn(Zip.prototype, 'createArchive').mockRejectedValue(
+                new Error('zip write failed'),
+              );
+            } else {
+              vi.spyOn(Zip.prototype, 'createArchive').mockImplementation(async function (
+                this: Zip,
+              ) {
+                const dir = path.dirname(this.getFilePath());
+                if (!(await FsUtil.exists(dir))) {
+                  await FsUtil.mkdir(dir, { recursive: true });
+                }
+                await FsUtil.writeFile(this.getFilePath(), 'corrupt');
+              });
+            }
+
+            const result = await runIgir({
+              commands: ['copy', command, 'test', 'report', 'fixdat'],
+              dat: [singleDatPath],
+              input: [inputFile],
+              output: outputTemp,
+              fixdatOutput: outputTemp,
+              reportOutput,
+              cachePath: path.join(inputTemp, 'igir.cache'),
+              writeRetry: 0,
+            });
+
+            const consoleOutput = stripAnsi(await terminalCapture.getOutput());
+            expect(consoleOutput).toContain('0/1 games, 0/1 retail releases written');
+
+            const reportCsv = (await FsUtil.readFile(reportOutput)).toString();
+            expect(reportCsv).toContain('Test,Foobar,MISSING,');
+            expect(reportCsv).not.toContain(',FOUND,');
+            expect(reportCsv).toContain(`,UNUSED,${inputFile},`);
+
+            const fixdatFiles = result.outputFilesAndCrcs
+              .map(([filePath]) => filePath)
+              .filter((filePath) => filePath.endsWith('.dat'));
+            expect(fixdatFiles).toHaveLength(1);
+            const [fixdatFile] = fixdatFiles;
+            assert.ok(fixdatFile !== undefined);
+            const fixdatContents = (
+              await FsUtil.readFile(path.join(outputTemp, fixdatFile))
+            ).toString();
+            expect(fixdatContents).toContain('Foobar');
+          } finally {
+            vi.restoreAllMocks();
+            terminal.setStream(new NullWritable());
+          }
+        });
+      },
+    );
+
+    it('should still report existing output files (canBeCandidateInput: false) as FOUND when another game fails', async () => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        const twoGamesDatPath = path.join(inputTemp, 'two-games.dat');
+        await FsUtil.writeFile(
+          twoGamesDatPath,
+          `<?xml version="1.0"?>
+<datafile>
+  <header><name>Test</name></header>
+  <game name="Foobar">
+    <description>Foobar</description>
+    <rom name="Foobar.lnx" size="7" crc="b22c9747"/>
+  </game>
+  <game name="Fizzbuzz">
+    <description>Fizzbuzz</description>
+    <rom name="Fizzbuzz.nes" size="9" crc="370517b5"/>
+  </game>
+</datafile>`,
+        );
+
+        const foobarInput =
+          command === 'extract'
+            ? path.join(inputTemp, 'roms', 'zip', 'foobar.zip')
+            : path.join(inputTemp, 'roms', 'raw', 'foobar.lnx');
+        const fizzbuzzInput =
+          command === 'extract'
+            ? path.join(inputTemp, 'roms', 'zip', 'fizzbuzz.zip')
+            : path.join(inputTemp, 'roms', 'raw', 'fizzbuzz.nes');
+
+        // First copy Foobar to output
+        const firstCopy = await runIgir({
+          commands: ['copy', command],
+          dat: [twoGamesDatPath],
+          input: [foobarInput],
+          output: outputTemp,
+          cachePath: path.join(inputTemp, 'igir.cache'),
+        });
+        expect(firstCopy.outputFilesAndCrcs).toHaveLength(1);
+
+        const reportOutput = path.join(outputTemp, 'report.csv');
+        const terminalCapture = captureTerminal();
+
+        try {
+          if (command === 'extract') {
+            vi.spyOn(File.prototype, 'extractAndTransformToFile').mockImplementation(
+              async (destinationPath) => {
+                await FsUtil.writeFile(destinationPath, 'corrupt');
+              },
+            );
+          } else {
+            vi.spyOn(Zip.prototype, 'createArchive').mockImplementation(async function (this: Zip) {
+              const dir = path.dirname(this.getFilePath());
+              if (!(await FsUtil.exists(dir))) {
+                await FsUtil.mkdir(dir, { recursive: true });
+              }
+              await FsUtil.writeFile(this.getFilePath(), 'corrupt');
+            });
+          }
+
+          await runIgir({
+            commands: ['copy', command, 'test', 'report', 'clean'],
+            dat: [twoGamesDatPath],
+            input: [fizzbuzzInput],
+            output: outputTemp,
+            reportOutput,
+            cachePath: path.join(inputTemp, 'igir.cache'),
+            writeRetry: 0,
+          });
+
+          const consoleOutput = stripAnsi(await terminalCapture.getOutput());
+          expect(consoleOutput).toContain('1/2 games, 1/2 retail releases written');
+
+          const reportCsv = (await FsUtil.readFile(reportOutput)).toString();
+          expect(reportCsv).toContain('Test,Foobar,FOUND,');
+          expect(reportCsv).toContain('Test,Fizzbuzz,MISSING,');
+          await expect(
+            FsUtil.exists(
+              path.join(outputTemp, command === 'extract' ? 'Foobar.lnx' : 'Foobar.zip'),
+            ),
+          ).resolves.toEqual(true);
+        } finally {
+          vi.restoreAllMocks();
+          terminal.setStream(new NullWritable());
+        }
+      });
     });
   });
 });
