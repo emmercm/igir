@@ -249,7 +249,7 @@ describe('getArchiveEntries', () => {
         },
       );
 
-      const entrySizes = entries.map((entry) => entry.getSize());
+      const entrySizes = entries.map((entry) => entry.getSize() ?? 0);
       const total = entrySizes.reduce((sum, size) => sum + size, 0);
       expect(progressCalls).toEqual([
         [0, total],

@@ -257,7 +257,10 @@ export default class Zip extends Archive {
     );
 
     let sizeWritten = 0;
-    const sizeTotal = inputToOutputSorted.reduce((sum, [, output]) => sum + output.getSize(), 0);
+    const sizeTotal = inputToOutputSorted.reduce(
+      (sum, [, output]) => sum + (output.getSize() ?? 0),
+      0,
+    );
 
     for (const [inputFile, outputArchiveEntry] of inputToOutputSorted) {
       // TZWriter requires files to be compressed sequentially

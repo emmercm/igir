@@ -298,7 +298,8 @@ export default class FileCache {
         const byteCount = FileSignature.MAX_HEADER_LENGTH_BYTES;
         if (callback) {
           // Only the leading bytes are read, not the whole file
-          callback(0, Math.min(byteCount, file.getSize()));
+          const fileSize = file.getSize();
+          callback(0, fileSize === undefined ? byteCount : Math.min(byteCount, fileSize));
         }
         const fileHeader = await file.readFirstBytes(byteCount);
         if (callback) {
@@ -533,7 +534,9 @@ export default class FileCache {
     const checksumEntries: [number, string | undefined][] = [
       [
         ChecksumBitmask.CRC32,
-        file.getCrc32() === undefined ? undefined : `${file.getCrc32()}:${file.getSize()}`,
+        file.getCrc32() === undefined || file.getSize() === undefined
+          ? undefined
+          : `${file.getCrc32()}:${file.getSize()}`,
       ],
       [ChecksumBitmask.MD5, file.getMd5()],
       [ChecksumBitmask.SHA1, file.getSha1()],

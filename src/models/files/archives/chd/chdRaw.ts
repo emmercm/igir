@@ -27,7 +27,8 @@ export default class ChdRaw extends Chd {
    */
   canExtract(archiveEntry: ArchiveEntry<this>): boolean {
     // The data+metadata version of this file can't be extracted
-    return archiveEntry.getSize() > 0;
+    const size = archiveEntry.getSize();
+    return size !== undefined && size > 0;
   }
 
   /**

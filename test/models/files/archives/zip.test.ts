@@ -42,7 +42,7 @@ describe('createArchive', () => {
     expect.assertions(2);
 
     // Given a temp ROM file copied from fixtures
-    const rom = (await findRoms(input)).find((file) => file.getSize() > 0);
+    const rom = (await findRoms(input)).find((file) => (file.getSize() ?? 0) > 0);
     if (!rom) {
       throw new Error('no ROM of a non-zero size was found');
     }
@@ -99,7 +99,7 @@ describe('createArchive', () => {
     './test/fixtures/roms/**/*.tar.gz',
     './test/fixtures/roms/**/*.zip',
   ])('should create TorrentZip files: %s', async (input) => {
-    const romFiles = (await findRoms(input)).filter((file) => file.getSize() > 0);
+    const romFiles = (await findRoms(input)).filter((file) => (file.getSize() ?? 0) > 0);
     if (romFiles.length === 0) {
       throw new Error('no ROMs of a non-zero size were found');
     }
@@ -139,7 +139,7 @@ describe('createArchive', () => {
     './test/fixtures/roms/**/*.tar.gz',
     './test/fixtures/roms/**/*.zip',
   ])('should create RVZSTD files: %s', async (input) => {
-    const romFiles = (await findRoms(input)).filter((file) => file.getSize() > 0);
+    const romFiles = (await findRoms(input)).filter((file) => (file.getSize() ?? 0) > 0);
     if (romFiles.length === 0) {
       throw new Error('no ROMs of a non-zero size were found');
     }
@@ -216,7 +216,7 @@ describe('getArchiveEntries', () => {
   it('should trust the central directory CRC32 by default but recalculate it when forced', async () => {
     // Given a valid zip created from a fixture ROM
     const romFile = (await findRoms('./test/fixtures/roms/**/*.rom')).find(
-      (file) => file.getSize() > 0,
+      (file) => (file.getSize() ?? 0) > 0,
     );
     if (!romFile) {
       throw new Error('no ROM of a non-zero size was found');

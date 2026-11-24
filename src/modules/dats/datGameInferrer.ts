@@ -187,11 +187,12 @@ export default class DATGameInferrer extends Module {
    * known checksum information.
    */
   private static enrichLikeFiles(files: File[]): File[] {
-    const crc32Map = this.combineLikeChecksums(files, (file) =>
-      file.getCrc32() !== undefined && file.getSize() > 0
-        ? `${file.getCrc32()}|${file.getSize()}`
-        : undefined,
-    );
+    const crc32Map = this.combineLikeChecksums(files, (file) => {
+      const size = file.getSize();
+      return file.getCrc32() !== undefined && size !== undefined && size > 0
+        ? `${file.getCrc32()}|${size}`
+        : undefined;
+    });
     const md5Map = this.combineLikeChecksums(files, (file) => file.getMd5());
     const sha1Map = this.combineLikeChecksums(files, (file) => file.getSha1());
     const sha256Map = this.combineLikeChecksums(files, (file) => file.getSha256());
