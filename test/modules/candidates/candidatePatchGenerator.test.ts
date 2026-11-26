@@ -383,8 +383,8 @@ describe('with archive file inputs', () => {
 
         // and patched candidates' output files should be ArchiveEntry backed by a Zip archive
         const outputFile = romWithFiles.getOutputFile();
-        expect(outputFile).toBeInstanceOf(ArchiveEntry);
-        expect((outputFile as ArchiveEntry<Zip>).getArchive()).toBeInstanceOf(Zip);
+        assert.ok(outputFile instanceof ArchiveEntry);
+        expect(outputFile.getArchive()).toBeInstanceOf(Zip);
       }
     }
   });

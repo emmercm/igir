@@ -180,11 +180,14 @@ export default class CandidateWriter extends Module {
     // Return no files if there are none to write
     const inputToOutputZipEntries = candidate
       .getRomsWithFiles()
-      .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry)
-      .map((romWithFiles): [File, ArchiveEntry<Zip>] => [
+      .map((romWithFiles): [File, File] => [
         romWithFiles.getInputFile(),
-        romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
-      ]);
+        romWithFiles.getOutputFile(),
+      ])
+      .filter((inputToOutput): inputToOutput is [File, ArchiveEntry<Zip>] => {
+        const [, outputFile] = inputToOutput;
+        return outputFile instanceof ArchiveEntry && outputFile.getArchive() instanceof Zip;
+      });
     const [firstInputToOutputZipEntry] = inputToOutputZipEntries;
     if (firstInputToOutputZipEntry === undefined) {
       return;
@@ -192,7 +195,10 @@ export default class CandidateWriter extends Module {
 
     // Prep the single output file
     const [, firstOutputZipEntry] = firstInputToOutputZipEntry;
-    const outputZip = firstOutputZipEntry.getArchive() as Zip;
+    const outputZip = firstOutputZipEntry.getArchive();
+    if (!(outputZip instanceof Zip)) {
+      return;
+    }
 
     const childBar = this.progressBar.addChildBar({
       name: outputZip.getFilePath(),

@@ -218,7 +218,7 @@ export default class DATMergerSplitter extends Module {
     ];
   }
 
-  private static diffGameRoms(parentRoms: ROM[], childRoms: ROM[]): ROM[] {
+  private static diffGameRoms<T extends ROM>(parentRoms: T[], childRoms: T[]): T[] {
     const parentRomNamesToHashCodes = parentRoms.reduce((map, rom) => {
       map.set(rom.getName(), rom.hashCode());
       return map;
