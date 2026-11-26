@@ -234,7 +234,7 @@ export default class Igir {
         this.options,
         progressBar,
         writerSemaphore,
-      ).write(processedDat, candidates);
+      ).write(processedDat, writerResults.candidates);
       for (const playlistPath of playlistPaths) {
         filePathsToExcludeFromCleaning.add(PathUtil.resolve(playlistPath));
       }
@@ -244,7 +244,7 @@ export default class Igir {
         this.options,
         progressBar,
         writerSemaphore,
-      ).create(processedDat, candidates);
+      ).create(processedDat, writerResults.candidates);
       if (dir2DatPath) {
         filePathsToExcludeFromCleaning.add(PathUtil.resolve(dir2DatPath));
       }
@@ -252,7 +252,7 @@ export default class Igir {
       // Write a fixdat
       const fixdatPath = await new FixdatCreator(this.options, progressBar, writerSemaphore).create(
         processedDat,
-        candidates,
+        writerResults.candidates,
       );
       if (fixdatPath) {
         filePathsToExcludeFromCleaning.add(PathUtil.resolve(fixdatPath));
@@ -261,7 +261,7 @@ export default class Igir {
       // Write the output report
       const datStatus = new StatusGenerator(this.options, progressBar).generate(
         processedDat,
-        candidates,
+        writerResults.candidates,
       );
       datsStatuses.push(datStatus);
       progressBar.finish(

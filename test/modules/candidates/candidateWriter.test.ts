@@ -13,8 +13,13 @@ import FileCache from '../../../src/cache/fileCache.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../../src/models/dats/rom.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import type { OptionsProps } from '../../../src/models/options.js';
@@ -26,6 +31,8 @@ import Options, {
   ZipFormat,
   ZipFormatInverted,
 } from '../../../src/models/options.js';
+import ROMWithFiles from '../../../src/models/romWithFiles.js';
+import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
@@ -2233,4 +2240,294 @@ describe('link', () => {
       }
     });
   });
+});
+
+describe('write and test failures', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should exclude failed zip write from wrote, candidates, and moved', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      vi.spyOn(Zip.prototype, 'createArchive').mockRejectedValue(new Error('zip write failed'));
+      const inputFilesBefore = await walkAndStat(path.join(inputTemp, 'roms', 'raw'));
+
+      const results = await candidateWriter(
+        { commands: ['move', 'zip'], writeRetry: 0 },
+        inputTemp,
+        'raw/foobar.lnx',
+        undefined,
+        outputTemp,
+      );
+
+      expect(results.wrote).toHaveLength(0);
+      expect(results.candidates).toHaveLength(0);
+      expect(results.moved).toHaveLength(0);
+      await expect(walkAndStat(path.join(inputTemp, 'roms', 'raw'))).resolves.toEqual(
+        inputFilesBefore,
+      );
+    });
+  });
+
+  it('should exclude failed post-write zip test from wrote, candidates, and moved', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      vi.spyOn(Zip.prototype, 'createArchive').mockImplementation(async function (this: Zip) {
+        const dir = path.dirname(this.getFilePath());
+        if (!(await FsUtil.exists(dir))) {
+          await FsUtil.mkdir(dir, { recursive: true });
+        }
+        await FsUtil.writeFile(this.getFilePath(), 'corrupt zip');
+      });
+      const inputFilesBefore = await walkAndStat(path.join(inputTemp, 'roms', 'raw'));
+
+      const results = await candidateWriter(
+        { commands: ['move', 'zip', 'test'], writeRetry: 0 },
+        inputTemp,
+        'raw/foobar.lnx',
+        undefined,
+        outputTemp,
+      );
+
+      expect(results.wrote).toHaveLength(0);
+      expect(results.candidates).toHaveLength(0);
+      expect(results.moved).toHaveLength(0);
+      await expect(walkAndStat(path.join(inputTemp, 'roms', 'raw'))).resolves.toEqual(
+        inputFilesBefore,
+      );
+      await expect(FsUtil.exists(path.join(outputTemp, 'foobar.zip'))).resolves.toEqual(true);
+    });
+  });
+
+  test.each([[['copy']], [['copy', 'extract']], [['move', 'extract']]] satisfies [string[]][])(
+    'should exclude failed raw/extract write from wrote, candidates, and moved: %s',
+    async (commands) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        vi.spyOn(File.prototype, 'extractAndTransformToFile').mockRejectedValue(
+          new Error('write failed'),
+        );
+
+        const results = await candidateWriter(
+          { commands, writeRetry: 0 },
+          inputTemp,
+          'zip/foobar.zip',
+          undefined,
+          outputTemp,
+        );
+
+        expect(results.wrote).toHaveLength(0);
+        expect(results.candidates).toHaveLength(0);
+        expect(results.moved).toHaveLength(0);
+        await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+      });
+    },
+  );
+
+  test.each([[['copy']], [['copy', 'extract']], [['move', 'extract']]] satisfies [string[]][])(
+    'should exclude failed post-write raw/extract test from wrote, candidates, and moved: %s',
+    async (commands) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        vi.spyOn(File.prototype, 'extractAndTransformToFile').mockImplementation(
+          async (destinationPath) => {
+            await FsUtil.writeFile(destinationPath, 'corrupt rom');
+          },
+        );
+
+        const results = await candidateWriter(
+          { commands: [...commands, 'test'], writeRetry: 0 },
+          inputTemp,
+          'zip/foobar.zip',
+          undefined,
+          outputTemp,
+        );
+
+        expect(results.wrote).toHaveLength(0);
+        expect(results.candidates).toHaveLength(0);
+        expect(results.moved).toHaveLength(0);
+      });
+    },
+  );
+
+  it('should exclude failed link write from wrote and candidates', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      vi.spyOn(FsUtil, 'hardlink').mockRejectedValue(new Error('hardlink failed'));
+
+      const results = await candidateWriter(
+        {
+          commands: ['link'],
+          linkMode: LinkModeInverted[LinkMode.HARDLINK].toLowerCase(),
+          writeRetry: 0,
+        },
+        inputTemp,
+        'raw/foobar.lnx',
+        undefined,
+        outputTemp,
+      );
+
+      expect(results.wrote).toHaveLength(0);
+      expect(results.candidates).toHaveLength(0);
+      expect(results.moved).toHaveLength(0);
+    });
+  });
+
+  it('should exclude failed post-write link test from wrote and candidates', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      vi.spyOn(FsUtil, 'hardlink').mockImplementation(async (_target, link) => {
+        await FsUtil.writeFile(link, 'wrong inode');
+      });
+
+      const results = await candidateWriter(
+        {
+          commands: ['link', 'test'],
+          linkMode: LinkModeInverted[LinkMode.HARDLINK].toLowerCase(),
+          writeRetry: 0,
+        },
+        inputTemp,
+        'raw/foobar.lnx',
+        undefined,
+        outputTemp,
+      );
+
+      expect(results.wrote).toHaveLength(0);
+      expect(results.candidates).toHaveLength(0);
+      expect(results.moved).toHaveLength(0);
+    });
+  });
+
+  it('should only enqueue succeeded ROMWithFiles for deletion on partial multi-ROM move failure', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const oneRomPath = path.join(inputTemp, 'roms', 'raw', 'one.rom');
+      const threeRomPath = path.join(inputTemp, 'roms', 'raw', 'three.rom');
+      const oneFile = await File.fileOf({ filePath: oneRomPath }, ChecksumBitmask.CRC32);
+      const threeFile = await File.fileOf({ filePath: threeRomPath }, ChecksumBitmask.CRC32);
+      const romOne = new ROM({
+        name: 'one.rom',
+        size: oneFile.getSize() ?? 0,
+        crc32: oneFile.getCrc32(),
+      });
+      const romThree = new ROM({
+        name: 'three.rom',
+        size: threeFile.getSize() ?? 0,
+        crc32: threeFile.getCrc32(),
+      });
+      const game = new Game({ name: 'One Three', roms: [romOne, romThree] });
+      const dat = new LogiqxDAT({ header: new Header({ name: 'Test' }), games: [game] });
+      const candidate = new WriteCandidate(game, [
+        new ROMWithFiles(romOne, oneFile, oneFile.withFilePath(path.join(outputTemp, 'one.rom'))),
+        new ROMWithFiles(
+          romThree,
+          threeFile,
+          threeFile.withFilePath(path.join(outputTemp, 'three.rom')),
+        ),
+      ]);
+
+      const originalMv = FsUtil.mv.bind(FsUtil);
+      vi.spyOn(FsUtil, 'mv').mockImplementation(async (oldPath, newPath, callback) => {
+        if (oldPath === threeRomPath) {
+          throw new Error('move failed for three.rom');
+        }
+        return await originalMv(oldPath, newPath, callback);
+      });
+
+      const results = await new CandidateWriter(
+        new Options({ commands: ['move'], output: outputTemp, writeRetry: 0 }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache()),
+        new CandidateWriterSemaphore(2),
+        new FileMoveMutex(),
+      ).write(dat, [candidate]);
+
+      expect(results.wrote).toHaveLength(1);
+      expect(
+        results.wrote
+          .at(0)
+          ?.getRomsWithFiles()
+          .map((rwf) => rwf.getRom().getName()),
+      ).toEqual(['one.rom']);
+      expect(results.candidates).toHaveLength(1);
+      expect(
+        results.candidates
+          .at(0)
+          ?.getRomsWithFiles()
+          .map((rwf) => rwf.getRom().getName()),
+      ).toEqual(['one.rom']);
+      expect(results.moved).toHaveLength(1);
+      expect(
+        results.moved
+          .at(0)
+          ?.getRomsWithFiles()
+          .map((rwf) => rwf.getRom().getName()),
+      ).toEqual(['one.rom']);
+    });
+  });
+
+  test.each([true, false])(
+    'should preserve canBeCandidateInput:false and propagate deduplicated write outcome (shouldFail: %s)',
+    async (shouldFail) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        const sharedInputPath = path.join(inputTemp, 'roms', 'raw', 'foobar.lnx');
+        const existingOutputPath = path.join(outputTemp, 'existing.rom');
+        await FsUtil.mkdir(outputTemp, { recursive: true });
+        await FsUtil.copyFile(sharedInputPath, existingOutputPath);
+
+        const sharedInput = await File.fileOf({ filePath: sharedInputPath }, ChecksumBitmask.CRC32);
+        const existingInput = await File.fileOf(
+          { filePath: existingOutputPath, canBeCandidateInput: false },
+          ChecksumBitmask.CRC32,
+        );
+        const sharedOutput = sharedInput.withFilePath(path.join(outputTemp, 'shared.lnx'));
+
+        const romShared = new ROM({
+          name: 'shared.lnx',
+          size: sharedInput.getSize() ?? 0,
+          crc32: sharedInput.getCrc32(),
+        });
+        const romExisting = new ROM({
+          name: 'existing.rom',
+          size: existingInput.getSize() ?? 0,
+          crc32: existingInput.getCrc32(),
+        });
+        const gameFirst = new Game({ name: 'First', roms: [romShared] });
+        const gameDuplicate = new Game({ name: 'Duplicate', roms: [romShared] });
+        const gameExisting = new Game({ name: 'Existing', roms: [romExisting] });
+        const dat = new LogiqxDAT({
+          header: new Header({ name: 'Test' }),
+          games: [gameFirst, gameDuplicate, gameExisting],
+        });
+
+        if (shouldFail) {
+          vi.spyOn(File.prototype, 'extractAndTransformToFile').mockRejectedValue(
+            new Error('copy failed'),
+          );
+        }
+
+        const results = await new CandidateWriter(
+          new Options({ commands: ['copy'], output: outputTemp, writeRetry: 0 }),
+          new ProgressBarFake(),
+          new FileFactory(new FileCache()),
+          new CandidateWriterSemaphore(2),
+          new FileMoveMutex(),
+        ).write(dat, [
+          new WriteCandidate(gameFirst, [new ROMWithFiles(romShared, sharedInput, sharedOutput)]),
+          new WriteCandidate(gameDuplicate, [
+            new ROMWithFiles(romShared, sharedInput, sharedOutput),
+          ]),
+          new WriteCandidate(gameExisting, [
+            new ROMWithFiles(romExisting, existingInput, existingInput),
+          ]),
+        ]);
+
+        if (shouldFail) {
+          expect(results.wrote).toHaveLength(0);
+          expect(results.candidates.map((c) => c.getName())).toEqual(['Existing']);
+        } else {
+          expect(results.wrote.map((c) => c.getName())).toEqual(['First']);
+          expect(results.candidates.map((c) => c.getName())).toEqual([
+            'First',
+            'Duplicate',
+            'Existing',
+          ]);
+        }
+      });
+    },
+  );
 });
