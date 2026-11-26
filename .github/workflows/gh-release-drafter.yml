@@ -72,7 +72,7 @@ jobs:
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
         id: release-drafter
-        uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
+        uses: release-drafter/release-drafter@d1a19e60e81a7e650d00a7de9277f87e439117ea # v7.11.0
         with:
           name: v${{ steps.check.outputs.version }}
           tag: v${{ steps.check.outputs.version }}
