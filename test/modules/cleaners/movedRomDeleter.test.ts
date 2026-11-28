@@ -527,3 +527,45 @@ it("should not delete files that weren't moved", async () => {
     await FsUtil.rm(inputPath, { recursive: true, force: true });
   }
 });
+
+it('should look up the duplicates of each input file once', async () => {
+  const inputPath = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+  try {
+    const options = new Options({ commands: ['move'], input: [inputPath], output: 'output' });
+
+    // Given one input file used by many ROMs, the way one placeholder image fills many slots in an
+    // EXTRAs category
+    const rawFile = path.join(inputPath, 'blank.png');
+    await FsUtil.touch(rawFile);
+    const inputFile = await File.fileOf({ filePath: rawFile }, ChecksumBitmask.CRC32);
+    const movedWriteCandidate = new WriteCandidate(
+      new Game({ name: 'snap' }),
+      Array.from(
+        { length: 100 },
+        (_, i) =>
+          new ROMWithFiles(
+            new ROM({ name: `game${i}.png`, size: 0, crc32: '00000000' }),
+            inputFile,
+            inputFile.withFilePath(path.join('output', `game${i}.png`)),
+          ),
+      ),
+    );
+    const indexedFiles = IndexedFiles.fromFiles([inputFile]);
+    const findSpy = vi.spyOn(indexedFiles, 'findFiles');
+
+    try {
+      const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
+        indexedFiles,
+        [movedWriteCandidate],
+        [],
+      );
+
+      expect(findSpy).toHaveBeenCalledTimes(1);
+      expect(deletedPaths).toEqual([rawFile]);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  } finally {
+    await FsUtil.rm(inputPath, { recursive: true, force: true });
+  }
+});
