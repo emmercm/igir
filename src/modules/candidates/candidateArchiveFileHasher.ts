@@ -87,9 +87,17 @@ export default class CandidateArchiveFileHasher extends Module {
       candidates.map(async (candidate) => {
         // A WriteCandidate with multiple ROMs with have duplicate input files, so we de-duplicate them for semaphore
         // efficiency, and to provide a more accurate progress bar
-        const uniqueInputArchiveFiles = candidate
+        // An input a ROM in an earlier DAT moved is gone, and the writer copies it from its new home
+        const needingProcessing: ROMWithFiles[] = candidate
           .getRomsWithFiles()
-          .filter((rwf) => this.romWithFilesNeedsProcessing(rwf))
+          .filter((rwf: ROMWithFiles) => this.romWithFilesNeedsProcessing(rwf));
+        const inputFilesExist = await Promise.all(
+          needingProcessing.map(
+            async (rwf) => await FsUtil.exists(rwf.getInputFile().getFilePath()),
+          ),
+        );
+        const romsWithFilesToHash = needingProcessing.filter((_, index) => inputFilesExist[index]);
+        const uniqueInputArchiveFiles = romsWithFilesToHash
           .map((rwf) => rwf.getInputFile())
           .filter((inputFile): inputFile is ArchiveFile => inputFile instanceof ArchiveFile)
           .filter(ArrayUtil.filterUniqueMapped((inputFile) => inputFile.getFilePath()));
