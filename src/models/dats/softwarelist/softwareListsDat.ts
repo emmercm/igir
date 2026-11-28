@@ -6,6 +6,8 @@ import Header from '../logiqx/header.js';
 import SoftwareListDAT from './softwareListDat.js';
 
 export interface SoftwareListsDATProps extends DATProps {
+  name?: string;
+  description?: string;
   softwarelist?: SoftwareListDAT | SoftwareListDAT[];
 }
 
@@ -13,6 +15,11 @@ export interface SoftwareListsDATProps extends DATProps {
  * MAME-schema DAT that documents {@link SoftwareListDAT}s.
  */
 export default class SoftwareListsDAT extends DAT implements SoftwareListsDATProps {
+  // Not read from the file (the root element has neither); named after the lists it holds
+  name?: string;
+
+  description?: string;
+
   @Expose()
   @Type(() => SoftwareListDAT)
   @Transform(({ value }: { value: undefined | SoftwareListDAT | SoftwareListDAT[] }) => value ?? [])
@@ -20,6 +27,8 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
 
   constructor(props?: SoftwareListsDATProps) {
     super(props);
+    this.name = props?.name;
+    this.description = props?.description;
     this.softwarelist = props?.softwarelist;
     this.generateGameNamesToParents();
   }
@@ -31,21 +40,22 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
   static fromObject(obj: object, props?: DATProps): SoftwareListsDAT {
     // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
     // not overwrite properties with a defined value
-    const dat = new SoftwareListsDAT(props);
-    return plainToClassFromExist(dat, obj, {
+    const dat = plainToClassFromExist(new SoftwareListsDAT(props), obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
-    }).generateGameNamesToParents();
+    });
+    const softwareLists = dat.getSoftwareLists();
+    return new SoftwareListsDAT({
+      ...dat,
+      name: softwareLists.map((softwareList) => softwareList.getName()).join(', '),
+      description: softwareLists.map((softwareList) => softwareList.getDescription()).join(', '),
+    });
   }
 
   getHeader(): Header {
     return new Header({
-      name: this.getSoftwareLists()
-        .map((softwareList) => softwareList.getName())
-        .join(', '),
-      description: this.getSoftwareLists()
-        .map((softwareList) => softwareList.getDescription())
-        .join(', '),
+      name: this.name,
+      description: this.description,
     });
   }
 
@@ -72,6 +82,11 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
 
   withGames(games: Game[]): DAT {
     // This DAT is a list of DATs, so we need to type change here
-    return new SoftwareListDAT({ ...this, software: games });
+    return new SoftwareListDAT({
+      ...this,
+      name: this.name,
+      description: this.description,
+      software: games,
+    });
   }
 }
