@@ -41,6 +41,7 @@ function superWildcardFile(fileType: number): Buffer {
 function pcEngineFile(headerSize: number): Buffer {
   const buffer = Buffer.alloc(headerSize + 0x2_00_00);
   buffer.writeUInt16LE(0xe0_00, headerSize + 0x1f_fe); // reset vector
+  buffer.write('a9ff5301', headerSize, 'hex'); // start-up code: LDA #$FF, TAM #$01
   return buffer;
 }
 
@@ -312,6 +313,63 @@ describe('getROMHeader', () => {
   it('should not get a signature for a copier-headered PC Engine file with a bit-swapped ROM', () => {
     const file = pcEngineFile(512);
     file.writeUInt16LE(0x07_00, 512 + 0x1f_fe); // bit-swapped $E000 reset vector
+    expect(FileSignature.signatureFromBuffer(file, file.length)).toBeUndefined();
+  });
+
+  it('should not get a signature for a SNES file behind an unrecognized copier header', () => {
+    const file = superWildcardFile(0x04);
+    file.writeUInt8(0x01, 0x1_00); // zero in every recognized SNES copier header
+    file.writeUInt8(0xff, 512 + 0x1f_ff); // would be a valid PC Engine reset vector
+    expect(FileSignature.signatureFromBuffer(file, file.length)).toBeUndefined();
+  });
+
+  it.each([
+    ['LDA (immediate) and TAM instructions', 'a9ff5301'],
+    ['LDA (absolute) and TAM instructions', 'ad00205301'],
+    ['CLA and TAM instructions', '625380'],
+    ['a TAM instruction at its end', `${'ea'.repeat(44)}a9ff5380`],
+    ['SEI and CSH instructions', '78ead4'],
+    ['SEI and CSH instructions at the end of its opening', 'eaead478'],
+  ])('should get the PCE ROM header for start-up code with %s', (_name, startupCode) => {
+    const file = pcEngineFile(512);
+    file.fill(0, 512, 512 + 4);
+    file.write(startupCode, 512, 'hex');
+    const signature = FileSignature.signatureFromBuffer(file, file.length);
+    expect([signature?.getName(), signature?.getROMHeader()]).toEqual([
+      'pce',
+      FileSignature.romHeaderFromFilename('rom.pce'),
+    ]);
+  });
+
+  it('should get the PCE ROM header for start-up code that is not at the start of the ROM', () => {
+    const file = pcEngineFile(512);
+    file.fill(0, 512, 512 + 4);
+    file.writeUInt16LE(0xf2_34, 512 + 0x1f_fe); // reset vector
+    file.write('a9ff5301', 512 + 0x12_34, 'hex');
+    const signature = FileSignature.signatureFromBuffer(file, file.length);
+    expect([signature?.getName(), signature?.getROMHeader()]).toEqual([
+      'pce',
+      FileSignature.romHeaderFromFilename('rom.pce'),
+    ]);
+  });
+
+  it.each([
+    ['no recognized instruction', ''],
+    ['text that contains a TAM instruction', Buffer.from('BEAVIS & BUTT').toString('hex')],
+    ['a TAM instruction for no bank', 'a9ff5300'],
+    ['a TAM instruction for several banks', 'a9ff5303'],
+    ['a TAM instruction and nothing before it', '5301'],
+    ['a TAM instruction not directly after LDA (immediate)', 'a9eaea5301'],
+    ['a TAM instruction not directly after LDA (absolute)', 'adea5301'],
+    ['a TAM instruction not directly after CLA', '62ea5301'],
+    ['a TAM instruction too far in', `${'ea'.repeat(45)}a9ff5301`],
+    ['SEI but not CSH', '78d854'],
+    ['CSH but not SEI', 'd4d854'],
+    ['SEI and CSH too far in', 'eaeaea78d4'],
+  ])('should not get a signature for start-up code with %s', (_name, startupCode) => {
+    const file = pcEngineFile(512);
+    file.fill(0, 512, 512 + 4);
+    file.write(startupCode, 512, 'hex');
     expect(FileSignature.signatureFromBuffer(file, file.length)).toBeUndefined();
   });
 

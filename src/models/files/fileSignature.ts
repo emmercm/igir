@@ -107,6 +107,38 @@ const pcEngineResetVectorPiece: SignaturePiece = {
 };
 
 /**
+ * Matches a PC Engine ROM's start-up code after a 512-byte copier header, found by its reset vector.
+ * @see https://github.com/mamedev/mame/blob/master/src/devices/cpu/h6280/h6280.cpp
+ */
+const pcEngineStartupCodePiece: SignaturePiece = {
+  offset: 512,
+  length: 0x20_00,
+  match: (buffer): boolean => {
+    if (buffer.length < 512 + 0x20_00) {
+      return false;
+    }
+    const bank = buffer.subarray(512, 512 + 0x20_00);
+    const startupCode = bank.subarray(bank.readUInt16LE(0x1f_fe) & 0x1f_ff);
+
+    // Games commonly open by disabling interrupts (SEI) and setting the CPU's high speed (CSH)
+    const opening = startupCode.subarray(0, 4);
+    if (opening.includes(0x78) && opening.includes(0xd4)) {
+      return true;
+    }
+
+    // Only bank 0 is mapped on reset, so games soon load another bank's number and map it (TAM)
+    return startupCode.subarray(0, 48).some(
+      (byte, idx, code) =>
+        byte === 0x53 &&
+        [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80].includes(code[idx + 1] ?? 0) &&
+        (code[idx - 2] === 0xa9 || // LDA (immediate)
+          code[idx - 3] === 0xad || // LDA (absolute)
+          code[idx - 1] === 0x62), // CLA
+    );
+  },
+};
+
+/**
  * Matches a Sega Master System or Game Gear file made of a 512-byte copier header followed by
  * 16 KiB blocks of ROM data.
  * @see https://sourceforge.net/p/ucon64/svn/HEAD/tree/trunk/ucon64/src/console/sms.c
@@ -441,7 +473,7 @@ export default class FileSignature {
     // @see https://github.com/mamedev/mame/blob/master/src/devices/bus/pce/pce_slot.cpp
     pce: new FileSignature(
       '.pce',
-      [pcEngineCopierFileSizePiece, pcEngineResetVectorPiece],
+      [pcEngineCopierFileSizePiece, pcEngineResetVectorPiece, pcEngineStartupCodePiece],
       CanBeTrimmed.NO,
       FileSignature.ROM_HEADERS.PCE,
     ),
